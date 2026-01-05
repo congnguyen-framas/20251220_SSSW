@@ -1,5 +1,6 @@
 ﻿using DevExpress.Utils;
 using DevExpress.XtraEditors.Controls;
+using ScanAndScale.Driver;
 using System.Windows.Forms;
 
 namespace SSSW
@@ -626,7 +627,7 @@ namespace SSSW
             // 
             // frmShotWeightScale
             // 
-            Appearance.Options.UseFont = true;
+            //Appearance.Options.UseFont = true;
             AutoScaleDimensions = new System.Drawing.SizeF(8F, 18F);
             AutoScaleMode = AutoScaleMode.Font;
             ClientSize = new System.Drawing.Size(1917, 958);

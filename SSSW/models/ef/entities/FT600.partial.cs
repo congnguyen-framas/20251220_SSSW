@@ -1,7 +1,7 @@
 ﻿using System.ComponentModel;
 using System.ComponentModel.DataAnnotations.Schema;
 
-namespace SSSW.Model
+namespace SSSW.models
 {
     public partial class FT600
     {

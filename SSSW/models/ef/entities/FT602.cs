@@ -1,7 +1,7 @@
 ﻿using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
-namespace SSSW.Model
+namespace SSSW.models
 {
     [Table("FT602")]
     public class FT602: EntityCommon

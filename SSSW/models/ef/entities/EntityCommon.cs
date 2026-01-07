@@ -1,7 +1,7 @@
 ﻿using System.ComponentModel;
 using System.ComponentModel.DataAnnotations;
 
-namespace SSSW.Model;
+namespace SSSW.models;
 
 public class EntityCommon
 {

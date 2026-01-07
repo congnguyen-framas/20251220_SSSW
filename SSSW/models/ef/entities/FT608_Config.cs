@@ -1,19 +1,22 @@
 ﻿using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
 
 namespace SSSW.models
 {
-    public class FT606_Label : EntityCommon
+    [Table("FT608")]
+    public class FT608_Config: EntityCommon
     {
         [Key]
         public Guid Id { get; set; }
 
         /// <summary>
-        /// FT601.Id
+        /// PC name.
         /// </summary>
-        public Guid? c000 { get; set; }
+        public string? c000 { get; set; }
 
         /// <summary>
-        /// QR code.
+        /// config json.
+        /// configModel.
         /// </summary>
 
         public string? c001 { get; set; }

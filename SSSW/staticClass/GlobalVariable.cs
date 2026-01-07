@@ -1,4 +1,6 @@
 ﻿using Microsoft.Extensions.Logging;
+using ScanAndScale.Driver;
+using SSSW.modelss;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -9,7 +11,9 @@ namespace SSSW
 {
     public class GlobalVariable
     {
-        public static string ConStringDogeWH { get; set; }
+        public static string ConStringSSSW { get; set; }
+
+        public static ConfigModel ConfigSystem { get; set; } = new ConfigModel();
 
         /// <summary>
         /// Invoke contol multi thread.

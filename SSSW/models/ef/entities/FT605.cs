@@ -1,7 +1,7 @@
 ﻿using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
-namespace SSSW.models
+namespace SSSW.modelss
 {
     [Table("FT605")]
     public class FT605

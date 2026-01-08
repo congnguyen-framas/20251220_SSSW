@@ -523,7 +523,7 @@ namespace SSSW
             // CheckEnableScale();
 
             _lkStepCode.Properties.DataSource = _allStepCodeMaster;
-            _lkStepCode.Properties.DisplayMember = "StepItemCode";
+            _lkStepCode.Properties.DisplayMember = "StepItemName";
             _lkStepCode.Properties.ValueMember = "StepItemCode";
             _lkStepCode.Properties.PopulateColumns();
 
@@ -653,20 +653,44 @@ namespace SSSW
         private async void _scanBarcode_DataValueChanged(object? sender, DataValueChangedEventArgs e)
         {
             var sen = sender as ButtonEdit;
-            //get cac thong tin lien quan den nguye lieu
+            try
+            {
+                //get cac thong tin lien quan den nguye lieu
 
-            //get cac thong tin lien quan den nguye lieu
-            _qrCodeScan = e.NewValue.Value.ToString();
+                //get cac thong tin lien quan den nguye lieu
+                _qrCodeScan = e.NewValue.Value.ToString();
 
-            //using (var dbContext = new Entities2())
-            //{
-            //    _labelInfo = await dbContext.FT606s
-            //        .Where(x => x.Actived == true && x.Mesoyear == _mesoYear)
-            //        .OrderByDescending(x => x.CreatedDate)
-            //        .FirstOrDefaultAsync();
-            //}
 
-            //GlobalVariable.InvokeIfRequired(this, () => _lkStepCode.EditValue = "");
+                using var dbContext = _dbFactory.CreateDbContext();
+
+                _labelInfo = await dbContext.FT606s.FirstOrDefaultAsync(x => x.c001 == _qrCodeScan);
+
+                if (_labelInfo == null)
+                {
+                    throw new Exception("The label information was not found.");
+                }
+
+                var stepInfo = await dbContext.FT601s.FirstOrDefaultAsync(x => x.Id == _labelInfo.c000);
+
+                if (stepInfo == null)
+                {
+                    throw new Exception("The step information was not found.");
+                }
+
+                _lkStepCode.EditValue = stepInfo.C004;
+
+                //GlobalVariable.InvokeIfRequired(this, () => _lkStepCode.EditValue = "");
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error in _scanBarcode_DataValueChanged");
+                MessageBox.Show(ex.Message, "WARNING", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+            }
+            finally
+            {
+                sen.EditValue = null;
+                this.Focus();
+            }
         }
 
         private void Properties_ButtonClick(object sender, DevExpress.XtraEditors.Controls.ButtonPressedEventArgs e)
@@ -700,7 +724,11 @@ namespace SSSW
                                                                                       // Với GridLookUpEdit:
                                                                                       // var gridEditor = sender as GridLookUpEdit;
                                                                                       // var row = gridEditor.Properties.View.GetFocusedRow();
-                                                                                      //truy vấn master data để lấy thông tin FG code
+                if (_stepCodeMasterSelect == null)
+                {
+                    return;
+                }                                                                      //truy vấn master data để lấy thông tin FG code
+
                 _fgCode = _dataHydra.FirstOrDefault(x => x.C004 == _stepCodeMasterSelect.StepItemCode &&
                     x.C015 == _stepCodeMasterSelect.Machine &&
                     x.C018 == _stepCodeMasterSelect.HydraOrderNo
@@ -732,7 +760,7 @@ namespace SSSW
             _stepCodeMasterSelect = new StepSelectModel();
             NewScale = true;
 
-            UpdateUI();
+            UpdateUI(false);
         }
 
         private void ResetAll()
@@ -1291,8 +1319,9 @@ namespace SSSW
         {
             GlobalVariable.InvokeIfRequired(this, () =>
             {
-                _lkStepCode.Text = _rowSelect?.C002;
-                _scanBarcode.Text = _rowSelect?.C003;
+                _txtStepCode.Text = _rowSelect?.C002;
+                //_lkStepCode.Text = _rowSelect?.C002;
+                //_scanBarcode.Text = _qrCodeScan;
                 _txtMachine.Text = _rowSelect?.C004;
                 _txtSize.Text = _rowSelect?.C008;
                 _txtStepIndex.Text = _rowSelect?.C015.ToString();
@@ -1301,6 +1330,7 @@ namespace SSSW
                 _txtArticle.Text = _rowSelect?.C005;
                 _txtQty.Text = _rowSelect?.C025.ToString();
                 _txtFgItemCode.Text = _rowSelect?.C013;
+                _txtFGName.Text = _rowSelect?.C014;
 
                 if (refresh)
                 {
@@ -1388,6 +1418,6 @@ namespace SSSW
                 _grcTotalStep.RepositoryItems.Add(_buttonEdit);
             }
         }
-        #endregion       
+        #endregion
     }
 }

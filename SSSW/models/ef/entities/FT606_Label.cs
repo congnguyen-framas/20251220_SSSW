@@ -1,7 +1,9 @@
 ﻿using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
 
 namespace SSSW.models
 {
+    [Table("FT606")]
     public class FT606_Label : EntityCommon
     {
         [Key]

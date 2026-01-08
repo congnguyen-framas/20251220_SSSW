@@ -34,7 +34,6 @@ namespace SSSW
         private void InitializeComponent()
         {
             EditorButtonImageOptions editorButtonImageOptions1 = new EditorButtonImageOptions();
-            System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(frmShotWeightScale));
             SerializableAppearanceObject serializableAppearanceObject1 = new SerializableAppearanceObject();
             SerializableAppearanceObject serializableAppearanceObject2 = new SerializableAppearanceObject();
             SerializableAppearanceObject serializableAppearanceObject3 = new SerializableAppearanceObject();
@@ -70,6 +69,10 @@ namespace SSSW
             _btnCancel = new DevExpress.XtraEditors.SimpleButton();
             _btnConfirm = new DevExpress.XtraEditors.SimpleButton();
             groupInfo = new DevExpress.XtraEditors.GroupControl();
+            labelControl13 = new DevExpress.XtraEditors.LabelControl();
+            _txtStepCode = new DevExpress.XtraEditors.TextEdit();
+            labelControl12 = new DevExpress.XtraEditors.LabelControl();
+            _txtFGName = new DevExpress.XtraEditors.TextEdit();
             _lkStepCode = new DevExpress.XtraEditors.LookUpEdit();
             _scanBarcode = new BarcodeButtonEdit();
             _toggleSwitchRunner = new DevExpress.XtraEditors.ToggleSwitch();
@@ -105,8 +108,11 @@ namespace SSSW
             _grcTotalStep = new DevExpress.XtraGrid.GridControl();
             _grvTotalStep = new DevExpress.XtraGrid.Views.Grid.GridView();
             _repositoryItemButtonEditScale = new DevExpress.XtraEditors.Repository.RepositoryItemButtonEdit();
+            panelControl1 = new DevExpress.XtraEditors.PanelControl();
             ((System.ComponentModel.ISupportInitialize)groupInfo).BeginInit();
             groupInfo.SuspendLayout();
+            ((System.ComponentModel.ISupportInitialize)_txtStepCode.Properties).BeginInit();
+            ((System.ComponentModel.ISupportInitialize)_txtFGName.Properties).BeginInit();
             ((System.ComponentModel.ISupportInitialize)_lkStepCode.Properties).BeginInit();
             ((System.ComponentModel.ISupportInitialize)_scanBarcode.Properties).BeginInit();
             ((System.ComponentModel.ISupportInitialize)_toggleSwitchRunner.Properties).BeginInit();
@@ -130,6 +136,8 @@ namespace SSSW
             ((System.ComponentModel.ISupportInitialize)_grcTotalStep).BeginInit();
             ((System.ComponentModel.ISupportInitialize)_grvTotalStep).BeginInit();
             ((System.ComponentModel.ISupportInitialize)_repositoryItemButtonEditScale).BeginInit();
+            ((System.ComponentModel.ISupportInitialize)panelControl1).BeginInit();
+            panelControl1.SuspendLayout();
             SuspendLayout();
             // 
             // ribbonPageGroup6
@@ -149,12 +157,12 @@ namespace SSSW
             // 
             // _btnCancel
             // 
-            _btnCancel.Appearance.BackColor = Color.FromArgb(43, 45, 66);
+            _btnCancel.Appearance.BackColor = DevExpress.LookAndFeel.DXSkinColors.FillColors.Warning;
             _btnCancel.Appearance.Font = new Font("Segoe UI", 23F, FontStyle.Bold);
             _btnCancel.Appearance.Options.UseBackColor = true;
             _btnCancel.Appearance.Options.UseFont = true;
             _btnCancel.ImageOptions.ImageToTextAlignment = DevExpress.XtraEditors.ImageAlignToText.LeftCenter;
-            _btnCancel.Location = new Point(308, 820);
+            _btnCancel.Location = new Point(451, 19);
             _btnCancel.Margin = new Padding(3, 1, 3, 1);
             _btnCancel.Name = "_btnCancel";
             _btnCancel.Size = new Size(454, 50);
@@ -163,12 +171,12 @@ namespace SSSW
             // 
             // _btnConfirm
             // 
-            _btnConfirm.Appearance.BackColor = Color.FromArgb(43, 45, 66);
+            _btnConfirm.Appearance.BackColor = DevExpress.LookAndFeel.DXSkinColors.FillColors.Success;
             _btnConfirm.Appearance.Font = new Font("Segoe UI", 23F, FontStyle.Bold);
             _btnConfirm.Appearance.Options.UseBackColor = true;
             _btnConfirm.Appearance.Options.UseFont = true;
             _btnConfirm.ImageOptions.ImageToTextAlignment = DevExpress.XtraEditors.ImageAlignToText.LeftCenter;
-            _btnConfirm.Location = new Point(844, 820);
+            _btnConfirm.Location = new Point(1021, 19);
             _btnConfirm.Margin = new Padding(3, 1, 3, 1);
             _btnConfirm.Name = "_btnConfirm";
             _btnConfirm.Size = new Size(454, 50);
@@ -181,6 +189,10 @@ namespace SSSW
             groupInfo.AppearanceCaption.Font = new Font("Segoe UI", 23F, FontStyle.Bold);
             groupInfo.AppearanceCaption.Options.UseBorderColor = true;
             groupInfo.AppearanceCaption.Options.UseFont = true;
+            groupInfo.Controls.Add(labelControl13);
+            groupInfo.Controls.Add(_txtStepCode);
+            groupInfo.Controls.Add(labelControl12);
+            groupInfo.Controls.Add(_txtFGName);
             groupInfo.Controls.Add(_lkStepCode);
             groupInfo.Controls.Add(_scanBarcode);
             groupInfo.Controls.Add(_toggleSwitchRunner);
@@ -204,42 +216,97 @@ namespace SSSW
             groupInfo.Controls.Add(_txtArticle);
             groupInfo.Controls.Add(labelControl23);
             groupInfo.GroupStyle = GroupStyle.Card;
-            groupInfo.Location = new Point(10, 98);
+            groupInfo.Location = new Point(12, 55);
             groupInfo.Margin = new Padding(3, 1, 3, 1);
             groupInfo.Name = "groupInfo";
-            groupInfo.Size = new Size(1435, 309);
+            groupInfo.Size = new Size(1425, 478);
             groupInfo.TabIndex = 31;
             groupInfo.Text = "Step information";
             // 
+            // labelControl13
+            // 
+            labelControl13.Appearance.Font = new Font("Tahoma", 15F);
+            labelControl13.Appearance.Options.UseFont = true;
+            labelControl13.AutoSizeMode = DevExpress.XtraEditors.LabelAutoSizeMode.None;
+            labelControl13.Location = new Point(13, 60);
+            labelControl13.Margin = new Padding(3, 1, 3, 1);
+            labelControl13.Name = "labelControl13";
+            labelControl13.Size = new Size(102, 27);
+            labelControl13.TabIndex = 92;
+            labelControl13.Text = "QR Code";
+            // 
+            // _txtStepCode
+            // 
+            _txtStepCode.Location = new Point(204, 159);
+            _txtStepCode.Margin = new Padding(3, 1, 3, 1);
+            _txtStepCode.Name = "_txtStepCode";
+            _txtStepCode.Properties.Appearance.Font = new Font("Tahoma", 20F);
+            _txtStepCode.Properties.Appearance.Options.UseFont = true;
+            _txtStepCode.Properties.ReadOnly = true;
+            _txtStepCode.Size = new Size(601, 40);
+            _txtStepCode.TabIndex = 91;
+            // 
+            // labelControl12
+            // 
+            labelControl12.Appearance.Font = new Font("Tahoma", 15F);
+            labelControl12.Appearance.Options.UseFont = true;
+            labelControl12.AutoSizeMode = DevExpress.XtraEditors.LabelAutoSizeMode.None;
+            labelControl12.Location = new Point(13, 431);
+            labelControl12.Margin = new Padding(3, 1, 3, 1);
+            labelControl12.Name = "labelControl12";
+            labelControl12.Size = new Size(151, 27);
+            labelControl12.TabIndex = 89;
+            labelControl12.Text = "FG Item Code";
+            // 
+            // _txtFGName
+            // 
+            _txtFGName.EditValue = "";
+            _txtFGName.Location = new Point(204, 424);
+            _txtFGName.Margin = new Padding(3, 1, 3, 1);
+            _txtFGName.Name = "_txtFGName";
+            _txtFGName.Properties.Appearance.Font = new Font("Tahoma", 15F);
+            _txtFGName.Properties.Appearance.Options.UseFont = true;
+            _txtFGName.Properties.Appearance.Options.UseTextOptions = true;
+            _txtFGName.Properties.Appearance.TextOptions.WordWrap = WordWrap.Wrap;
+            _txtFGName.Properties.AutoHeight = false;
+            _txtFGName.Properties.ReadOnly = true;
+            _txtFGName.Size = new Size(1210, 40);
+            _txtFGName.TabIndex = 90;
+            // 
             // _lkStepCode
             // 
-            _lkStepCode.Location = new Point(204, 104);
+            _lkStepCode.Location = new Point(204, 106);
             _lkStepCode.Name = "_lkStepCode";
             _lkStepCode.Properties.ActionButtonIndex = 1;
+            _lkStepCode.Properties.Appearance.Font = new Font("Tahoma", 20F);
+            _lkStepCode.Properties.Appearance.Options.UseFont = true;
             _lkStepCode.Properties.AutoHeight = false;
-            editorButtonImageOptions1.SvgImage = (DevExpress.Utils.Svg.SvgImage)resources.GetObject("editorButtonImageOptions1.SvgImage");
-            editorButtonImageOptions1.SvgImageSize = new Size(15, 15);
-            editorButtonImageOptions2.SvgImage = (DevExpress.Utils.Svg.SvgImage)resources.GetObject("editorButtonImageOptions2.SvgImage");
-            editorButtonImageOptions2.SvgImageSize = new Size(15, 15);
+            editorButtonImageOptions1.SvgImageSize = new Size(30, 30);
+            editorButtonImageOptions2.SvgImageSize = new Size(30, 30);
             _lkStepCode.Properties.Buttons.AddRange(new EditorButton[] { new EditorButton(ButtonPredefines.Glyph, "Delete", -1, true, true, false, editorButtonImageOptions1, new KeyShortcut(Keys.None), serializableAppearanceObject1, serializableAppearanceObject2, serializableAppearanceObject3, serializableAppearanceObject4, "", null, null, ToolTipAnchor.Default), new EditorButton(ButtonPredefines.Glyph, "Select", -1, true, true, false, editorButtonImageOptions2, new KeyShortcut(Keys.None), serializableAppearanceObject5, serializableAppearanceObject6, serializableAppearanceObject7, serializableAppearanceObject8, "", null, null, ToolTipAnchor.Default) });
             _lkStepCode.Properties.PopupFilterMode = DevExpress.XtraEditors.PopupFilterMode.Contains;
             _lkStepCode.Properties.SearchMode = SearchMode.AutoSuggest;
-            _lkStepCode.Size = new Size(601, 30);
+            _lkStepCode.Size = new Size(1210, 40);
             _lkStepCode.TabIndex = 88;
             // 
             // _scanBarcode
             // 
             _scanBarcode.Config = null;
-            _scanBarcode.Location = new Point(204, 59);
+            _scanBarcode.EditValue = "";
+            _scanBarcode.Location = new Point(204, 53);
             _scanBarcode.Name = "_scanBarcode";
+            _scanBarcode.Properties.Appearance.Font = new Font("Tahoma", 15F);
+            _scanBarcode.Properties.Appearance.Options.UseFont = true;
+            _scanBarcode.Properties.Appearance.Options.UseTextOptions = true;
+            _scanBarcode.Properties.Appearance.TextOptions.WordWrap = WordWrap.Wrap;
             _scanBarcode.Properties.AutoHeight = false;
             _scanBarcode.Properties.Buttons.AddRange(new EditorButton[] { new EditorButton() });
-            _scanBarcode.Size = new Size(1210, 30);
+            _scanBarcode.Size = new Size(1210, 40);
             _scanBarcode.TabIndex = 87;
             // 
             // _toggleSwitchRunner
             // 
-            _toggleSwitchRunner.Location = new Point(667, 259);
+            _toggleSwitchRunner.Location = new Point(1009, 329);
             _toggleSwitchRunner.Margin = new Padding(3, 2, 3, 2);
             _toggleSwitchRunner.Name = "_toggleSwitchRunner";
             _toggleSwitchRunner.Properties.OffText = "Off";
@@ -252,24 +319,24 @@ namespace SSSW
             labelControl11.Appearance.Font = new Font("Tahoma", 15F);
             labelControl11.Appearance.Options.UseFont = true;
             labelControl11.AutoSizeMode = DevExpress.XtraEditors.LabelAutoSizeMode.None;
-            labelControl11.Location = new Point(549, 254);
+            labelControl11.Location = new Point(834, 325);
             labelControl11.Margin = new Padding(3, 1, 3, 1);
             labelControl11.Name = "labelControl11";
-            labelControl11.Size = new Size(109, 27);
+            labelControl11.Size = new Size(127, 27);
             labelControl11.TabIndex = 82;
             labelControl11.Text = "Have Runner";
             // 
             // _txtActiclePairShot
             // 
             _txtActiclePairShot.EditValue = "0";
-            _txtActiclePairShot.Location = new Point(204, 250);
+            _txtActiclePairShot.Location = new Point(204, 318);
             _txtActiclePairShot.Margin = new Padding(3, 1, 3, 1);
             _txtActiclePairShot.Name = "_txtActiclePairShot";
-            _txtActiclePairShot.Properties.Appearance.Font = new Font("Tahoma", 15F);
+            _txtActiclePairShot.Properties.Appearance.Font = new Font("Tahoma", 20F);
             _txtActiclePairShot.Properties.Appearance.Options.UseFont = true;
             _txtActiclePairShot.Properties.Appearance.Options.UseTextOptions = true;
             _txtActiclePairShot.Properties.Appearance.TextOptions.HAlignment = HorzAlignment.Far;
-            _txtActiclePairShot.Size = new Size(285, 30);
+            _txtActiclePairShot.Size = new Size(285, 40);
             _txtActiclePairShot.TabIndex = 78;
             // 
             // labelControl3
@@ -277,7 +344,7 @@ namespace SSSW
             labelControl3.Appearance.Font = new Font("Tahoma", 15F);
             labelControl3.Appearance.Options.UseFont = true;
             labelControl3.AutoSizeMode = DevExpress.XtraEditors.LabelAutoSizeMode.None;
-            labelControl3.Location = new Point(13, 251);
+            labelControl3.Location = new Point(13, 325);
             labelControl3.Margin = new Padding(3, 1, 3, 1);
             labelControl3.Name = "labelControl3";
             labelControl3.Size = new Size(169, 27);
@@ -289,7 +356,7 @@ namespace SSSW
             labelControl2.Appearance.Font = new Font("Tahoma", 15F);
             labelControl2.Appearance.Options.UseFont = true;
             labelControl2.AutoSizeMode = DevExpress.XtraEditors.LabelAutoSizeMode.None;
-            labelControl2.Location = new Point(834, 251);
+            labelControl2.Location = new Point(13, 378);
             labelControl2.Margin = new Padding(3, 1, 3, 1);
             labelControl2.Name = "labelControl2";
             labelControl2.Size = new Size(151, 27);
@@ -298,24 +365,24 @@ namespace SSSW
             // 
             // _txtFgItemCode
             // 
-            _txtFgItemCode.Location = new Point(1009, 253);
+            _txtFgItemCode.Location = new Point(204, 371);
             _txtFgItemCode.Margin = new Padding(3, 1, 3, 1);
             _txtFgItemCode.Name = "_txtFgItemCode";
-            _txtFgItemCode.Properties.Appearance.Font = new Font("Tahoma", 15F);
+            _txtFgItemCode.Properties.Appearance.Font = new Font("Tahoma", 20F);
             _txtFgItemCode.Properties.Appearance.Options.UseFont = true;
             _txtFgItemCode.Properties.ReadOnly = true;
-            _txtFgItemCode.Size = new Size(405, 30);
+            _txtFgItemCode.Size = new Size(405, 40);
             _txtFgItemCode.TabIndex = 77;
             // 
             // _txtQty
             // 
-            _txtQty.Location = new Point(668, 155);
+            _txtQty.Location = new Point(668, 212);
             _txtQty.Margin = new Padding(3, 1, 3, 1);
             _txtQty.Name = "_txtQty";
-            _txtQty.Properties.Appearance.Font = new Font("Tahoma", 15F);
+            _txtQty.Properties.Appearance.Font = new Font("Tahoma", 20F);
             _txtQty.Properties.Appearance.Options.UseFont = true;
             _txtQty.Properties.ReadOnly = true;
-            _txtQty.Size = new Size(137, 30);
+            _txtQty.Size = new Size(137, 40);
             _txtQty.TabIndex = 74;
             // 
             // labelControl1
@@ -323,7 +390,7 @@ namespace SSSW
             labelControl1.Appearance.Font = new Font("Tahoma", 15F);
             labelControl1.Appearance.Options.UseFont = true;
             labelControl1.AutoSizeMode = DevExpress.XtraEditors.LabelAutoSizeMode.None;
-            labelControl1.Location = new Point(549, 156);
+            labelControl1.Location = new Point(549, 219);
             labelControl1.Margin = new Padding(3, 1, 3, 1);
             labelControl1.Name = "labelControl1";
             labelControl1.Size = new Size(78, 27);
@@ -332,13 +399,13 @@ namespace SSSW
             // 
             // _txtStepIndex
             // 
-            _txtStepIndex.Location = new Point(1009, 101);
+            _txtStepIndex.Location = new Point(1009, 159);
             _txtStepIndex.Margin = new Padding(3, 1, 3, 1);
             _txtStepIndex.Name = "_txtStepIndex";
-            _txtStepIndex.Properties.Appearance.Font = new Font("Tahoma", 15F);
+            _txtStepIndex.Properties.Appearance.Font = new Font("Tahoma", 20F);
             _txtStepIndex.Properties.Appearance.Options.UseFont = true;
             _txtStepIndex.Properties.ReadOnly = true;
-            _txtStepIndex.Size = new Size(405, 30);
+            _txtStepIndex.Size = new Size(405, 40);
             _txtStepIndex.TabIndex = 72;
             // 
             // labelControl7
@@ -346,7 +413,7 @@ namespace SSSW
             labelControl7.Appearance.Font = new Font("Tahoma", 15F);
             labelControl7.Appearance.Options.UseFont = true;
             labelControl7.AutoSizeMode = DevExpress.XtraEditors.LabelAutoSizeMode.None;
-            labelControl7.Location = new Point(13, 52);
+            labelControl7.Location = new Point(13, 113);
             labelControl7.Margin = new Padding(3, 1, 3, 1);
             labelControl7.Name = "labelControl7";
             labelControl7.Size = new Size(102, 27);
@@ -358,7 +425,7 @@ namespace SSSW
             labelControl4.Appearance.Font = new Font("Tahoma", 15F);
             labelControl4.Appearance.Options.UseFont = true;
             labelControl4.AutoSizeMode = DevExpress.XtraEditors.LabelAutoSizeMode.None;
-            labelControl4.Location = new Point(13, 153);
+            labelControl4.Location = new Point(13, 219);
             labelControl4.Margin = new Padding(3, 1, 3, 1);
             labelControl4.Name = "labelControl4";
             labelControl4.Size = new Size(102, 27);
@@ -371,7 +438,7 @@ namespace SSSW
             labelControl5.Appearance.Options.UseFont = true;
             labelControl5.AutoSizeMode = DevExpress.XtraEditors.LabelAutoSizeMode.None;
             labelControl5.LineLocation = DevExpress.XtraEditors.LineLocation.Left;
-            labelControl5.Location = new Point(834, 103);
+            labelControl5.Location = new Point(834, 166);
             labelControl5.Margin = new Padding(3, 1, 3, 1);
             labelControl5.Name = "labelControl5";
             labelControl5.Size = new Size(151, 27);
@@ -380,24 +447,24 @@ namespace SSSW
             // 
             // _txtMoldPairShot
             // 
-            _txtMoldPairShot.Location = new Point(204, 203);
+            _txtMoldPairShot.Location = new Point(204, 265);
             _txtMoldPairShot.Margin = new Padding(3, 1, 3, 1);
             _txtMoldPairShot.Name = "_txtMoldPairShot";
-            _txtMoldPairShot.Properties.Appearance.Font = new Font("Tahoma", 15F);
+            _txtMoldPairShot.Properties.Appearance.Font = new Font("Tahoma", 20F);
             _txtMoldPairShot.Properties.Appearance.Options.UseFont = true;
             _txtMoldPairShot.Properties.ReadOnly = true;
-            _txtMoldPairShot.Size = new Size(285, 30);
+            _txtMoldPairShot.Size = new Size(285, 40);
             _txtMoldPairShot.TabIndex = 70;
             // 
             // _txtSize
             // 
-            _txtSize.Location = new Point(1009, 152);
+            _txtSize.Location = new Point(1009, 212);
             _txtSize.Margin = new Padding(3, 1, 3, 1);
             _txtSize.Name = "_txtSize";
-            _txtSize.Properties.Appearance.Font = new Font("Tahoma", 15F);
+            _txtSize.Properties.Appearance.Font = new Font("Tahoma", 20F);
             _txtSize.Properties.Appearance.Options.UseFont = true;
             _txtSize.Properties.ReadOnly = true;
-            _txtSize.Size = new Size(405, 30);
+            _txtSize.Size = new Size(405, 40);
             _txtSize.TabIndex = 64;
             // 
             // labelControl6
@@ -406,19 +473,19 @@ namespace SSSW
             labelControl6.Appearance.Options.UseFont = true;
             labelControl6.AutoSizeMode = DevExpress.XtraEditors.LabelAutoSizeMode.None;
             labelControl6.LineLocation = DevExpress.XtraEditors.LineLocation.Left;
-            labelControl6.Location = new Point(13, 102);
+            labelControl6.Location = new Point(13, 166);
             labelControl6.Margin = new Padding(3, 1, 3, 1);
             labelControl6.Name = "labelControl6";
             labelControl6.Size = new Size(158, 27);
             labelControl6.TabIndex = 67;
-            labelControl6.Text = "Step Item Code";
+            labelControl6.Text = "Step Code";
             // 
             // labelControl10
             // 
             labelControl10.Appearance.Font = new Font("Tahoma", 15F);
             labelControl10.Appearance.Options.UseFont = true;
             labelControl10.AutoSizeMode = DevExpress.XtraEditors.LabelAutoSizeMode.None;
-            labelControl10.Location = new Point(834, 203);
+            labelControl10.Location = new Point(834, 272);
             labelControl10.Margin = new Padding(3, 1, 3, 1);
             labelControl10.Name = "labelControl10";
             labelControl10.Size = new Size(88, 27);
@@ -427,13 +494,13 @@ namespace SSSW
             // 
             // _txtMachine
             // 
-            _txtMachine.Location = new Point(204, 152);
+            _txtMachine.Location = new Point(204, 212);
             _txtMachine.Margin = new Padding(3, 1, 3, 1);
             _txtMachine.Name = "_txtMachine";
-            _txtMachine.Properties.Appearance.Font = new Font("Tahoma", 15F);
+            _txtMachine.Properties.Appearance.Font = new Font("Tahoma", 20F);
             _txtMachine.Properties.Appearance.Options.UseFont = true;
             _txtMachine.Properties.ReadOnly = true;
-            _txtMachine.Size = new Size(285, 30);
+            _txtMachine.Size = new Size(285, 40);
             _txtMachine.TabIndex = 61;
             // 
             // labelControl9
@@ -441,7 +508,7 @@ namespace SSSW
             labelControl9.Appearance.Font = new Font("Tahoma", 15F);
             labelControl9.Appearance.Options.UseFont = true;
             labelControl9.AutoSizeMode = DevExpress.XtraEditors.LabelAutoSizeMode.None;
-            labelControl9.Location = new Point(13, 204);
+            labelControl9.Location = new Point(13, 272);
             labelControl9.Margin = new Padding(3, 1, 3, 1);
             labelControl9.Name = "labelControl9";
             labelControl9.Size = new Size(169, 27);
@@ -450,13 +517,13 @@ namespace SSSW
             // 
             // _txtArticle
             // 
-            _txtArticle.Location = new Point(1009, 203);
+            _txtArticle.Location = new Point(1009, 265);
             _txtArticle.Margin = new Padding(3, 1, 3, 1);
             _txtArticle.Name = "_txtArticle";
-            _txtArticle.Properties.Appearance.Font = new Font("Tahoma", 15F);
+            _txtArticle.Properties.Appearance.Font = new Font("Tahoma", 20F);
             _txtArticle.Properties.Appearance.Options.UseFont = true;
             _txtArticle.Properties.ReadOnly = true;
-            _txtArticle.Size = new Size(405, 30);
+            _txtArticle.Size = new Size(405, 40);
             _txtArticle.TabIndex = 69;
             // 
             // labelControl23
@@ -464,7 +531,7 @@ namespace SSSW
             labelControl23.Appearance.Font = new Font("Tahoma", 15F);
             labelControl23.Appearance.Options.UseFont = true;
             labelControl23.AutoSizeMode = DevExpress.XtraEditors.LabelAutoSizeMode.None;
-            labelControl23.Location = new Point(834, 152);
+            labelControl23.Location = new Point(834, 219);
             labelControl23.Margin = new Padding(3, 1, 3, 1);
             labelControl23.Name = "labelControl23";
             labelControl23.Size = new Size(53, 27);
@@ -478,7 +545,7 @@ namespace SSSW
             _btnSaveWeight.Appearance.Options.UseBackColor = true;
             _btnSaveWeight.Appearance.Options.UseFont = true;
             _btnSaveWeight.ImageOptions.ImageToTextAlignment = DevExpress.XtraEditors.ImageAlignToText.LeftCenter;
-            _btnSaveWeight.Location = new Point(146, 99);
+            _btnSaveWeight.Location = new Point(151, 178);
             _btnSaveWeight.Margin = new Padding(3, 1, 3, 1);
             _btnSaveWeight.Name = "_btnSaveWeight";
             _btnSaveWeight.Size = new Size(290, 40);
@@ -495,10 +562,10 @@ namespace SSSW
             groupControl6.Controls.Add(_txtScaleValue);
             groupControl6.Controls.Add(labelControl8);
             groupControl6.GroupStyle = GroupStyle.Card;
-            groupControl6.Location = new Point(1451, 253);
+            groupControl6.Location = new Point(1453, 298);
             groupControl6.Margin = new Padding(3, 1, 3, 1);
             groupControl6.Name = "groupControl6";
-            groupControl6.Size = new Size(455, 153);
+            groupControl6.Size = new Size(455, 235);
             groupControl6.TabIndex = 34;
             groupControl6.Text = "Scale";
             // 
@@ -509,17 +576,17 @@ namespace SSSW
             _txtScaleValue.Config = null;
             _txtScaleValue.DecimalNum = 4;
             _txtScaleValue.EnableReadScale = true;
-            _txtScaleValue.Location = new Point(146, 54);
+            _txtScaleValue.Location = new Point(13, 112);
             _txtScaleValue.Margin = new Padding(3, 1, 3, 1);
             _txtScaleValue.Name = "_txtScaleValue";
-            _txtScaleValue.Properties.Appearance.Font = new Font("Tahoma", 15F, FontStyle.Bold);
+            _txtScaleValue.Properties.Appearance.Font = new Font("Tahoma", 20F, FontStyle.Bold);
             _txtScaleValue.Properties.Appearance.Options.UseFont = true;
             _txtScaleValue.Properties.Appearance.Options.UseTextOptions = true;
             _txtScaleValue.Properties.Appearance.TextOptions.HAlignment = HorzAlignment.Far;
             _txtScaleValue.Properties.Buttons.AddRange(new EditorButton[] { new EditorButton() });
             _txtScaleValue.Properties.DisplayFormat.FormatString = "n3";
             _txtScaleValue.Properties.DisplayFormat.FormatType = FormatType.Numeric;
-            _txtScaleValue.Size = new Size(290, 30);
+            _txtScaleValue.Size = new Size(428, 40);
             _txtScaleValue.Stable = true;
             _txtScaleValue.TabIndex = 18;
             _txtScaleValue.Tare = false;
@@ -530,11 +597,13 @@ namespace SSSW
             // 
             // labelControl8
             // 
+            labelControl8.Appearance.Font = new Font("Tahoma", 15F);
+            labelControl8.Appearance.Options.UseFont = true;
             labelControl8.AutoSizeMode = DevExpress.XtraEditors.LabelAutoSizeMode.None;
-            labelControl8.Location = new Point(8, 59);
+            labelControl8.Location = new Point(13, 59);
             labelControl8.Margin = new Padding(3, 1, 3, 1);
             labelControl8.Name = "labelControl8";
-            labelControl8.Size = new Size(116, 27);
+            labelControl8.Size = new Size(145, 27);
             labelControl8.TabIndex = 12;
             labelControl8.Text = "Scale value (g)";
             // 
@@ -549,10 +618,10 @@ namespace SSSW
             groupControl4.Controls.Add(_txtRFIDCode);
             groupControl4.Controls.Add(labelControl15);
             groupControl4.GroupStyle = GroupStyle.Card;
-            groupControl4.Location = new Point(1451, 98);
+            groupControl4.Location = new Point(1453, 55);
             groupControl4.Margin = new Padding(3, 1, 3, 1);
             groupControl4.Name = "groupControl4";
-            groupControl4.Size = new Size(455, 143);
+            groupControl4.Size = new Size(455, 235);
             groupControl4.TabIndex = 33;
             groupControl4.Text = "Scan RFID";
             // 
@@ -561,7 +630,7 @@ namespace SSSW
             labelControl14.Appearance.Font = new Font("Tahoma", 15F);
             labelControl14.Appearance.Options.UseFont = true;
             labelControl14.AutoSizeMode = DevExpress.XtraEditors.LabelAutoSizeMode.None;
-            labelControl14.Location = new Point(10, 101);
+            labelControl14.Location = new Point(13, 133);
             labelControl14.Margin = new Padding(3, 1, 3, 1);
             labelControl14.Name = "labelControl14";
             labelControl14.Size = new Size(83, 27);
@@ -570,24 +639,25 @@ namespace SSSW
             // 
             // _txtRFIDName
             // 
-            _txtRFIDName.Location = new Point(108, 99);
+            _txtRFIDName.EditValue = "CONG NGUYEN";
+            _txtRFIDName.Location = new Point(13, 169);
             _txtRFIDName.Margin = new Padding(3, 1, 3, 1);
             _txtRFIDName.Name = "_txtRFIDName";
-            _txtRFIDName.Properties.Appearance.Font = new Font("Tahoma", 15F);
+            _txtRFIDName.Properties.Appearance.Font = new Font("Tahoma", 20F);
             _txtRFIDName.Properties.Appearance.Options.UseFont = true;
-            _txtRFIDName.Size = new Size(328, 30);
+            _txtRFIDName.Size = new Size(428, 40);
             _txtRFIDName.TabIndex = 14;
             // 
             // _txtRFIDCode
             // 
             _txtRFIDCode.Config = null;
-            _txtRFIDCode.Location = new Point(108, 59);
+            _txtRFIDCode.Location = new Point(13, 84);
             _txtRFIDCode.Margin = new Padding(3, 1, 3, 1);
             _txtRFIDCode.Name = "_txtRFIDCode";
-            _txtRFIDCode.Properties.Appearance.Font = new Font("Tahoma", 15F);
+            _txtRFIDCode.Properties.Appearance.Font = new Font("Tahoma", 20F);
             _txtRFIDCode.Properties.Appearance.Options.UseFont = true;
             _txtRFIDCode.Properties.Buttons.AddRange(new EditorButton[] { new EditorButton(ButtonPredefines.OK, "", -1, true, false, false, editorButtonImageOptions3, new KeyShortcut(Keys.None), serializableAppearanceObject9, serializableAppearanceObject10, serializableAppearanceObject11, serializableAppearanceObject12, "", null, null, ToolTipAnchor.Default), new EditorButton(ButtonPredefines.OK, "", -1, true, false, false, editorButtonImageOptions4, new KeyShortcut(Keys.None), serializableAppearanceObject13, serializableAppearanceObject14, serializableAppearanceObject15, serializableAppearanceObject16, "", null, null, ToolTipAnchor.Default), new EditorButton(ButtonPredefines.OK, "", -1, true, false, false, editorButtonImageOptions5, new KeyShortcut(Keys.None), serializableAppearanceObject17, serializableAppearanceObject18, serializableAppearanceObject19, serializableAppearanceObject20, "", null, null, ToolTipAnchor.Default) });
-            _txtRFIDCode.Size = new Size(328, 30);
+            _txtRFIDCode.Size = new Size(428, 40);
             _txtRFIDCode.TabIndex = 13;
             _txtRFIDCode.ToolTip = "COM3";
             // 
@@ -596,7 +666,7 @@ namespace SSSW
             labelControl15.Appearance.Font = new Font("Tahoma", 15F);
             labelControl15.Appearance.Options.UseFont = true;
             labelControl15.AutoSizeMode = DevExpress.XtraEditors.LabelAutoSizeMode.None;
-            labelControl15.Location = new Point(10, 59);
+            labelControl15.Location = new Point(13, 48);
             labelControl15.Margin = new Padding(3, 1, 3, 1);
             labelControl15.Name = "labelControl15";
             labelControl15.Size = new Size(83, 27);
@@ -611,10 +681,10 @@ namespace SSSW
             groupControl5.AppearanceCaption.Options.UseFont = true;
             groupControl5.Controls.Add(_grcTotalStep);
             groupControl5.GroupStyle = GroupStyle.Card;
-            groupControl5.Location = new Point(10, 417);
+            groupControl5.Location = new Point(10, 549);
             groupControl5.Margin = new Padding(3, 1, 3, 1);
             groupControl5.Name = "groupControl5";
-            groupControl5.Size = new Size(1898, 392);
+            groupControl5.Size = new Size(1898, 448);
             groupControl5.TabIndex = 34;
             groupControl5.Text = "Total Steps";
             // 
@@ -631,7 +701,7 @@ namespace SSSW
             _grcTotalStep.Margin = new Padding(3, 2, 3, 2);
             _grcTotalStep.Name = "_grcTotalStep";
             _grcTotalStep.RepositoryItems.AddRange(new DevExpress.XtraEditors.Repository.RepositoryItem[] { _repositoryItemButtonEditScale });
-            _grcTotalStep.Size = new Size(1894, 347);
+            _grcTotalStep.Size = new Size(1894, 403);
             _grcTotalStep.TabIndex = 36;
             _grcTotalStep.UseEmbeddedNavigator = true;
             _grcTotalStep.ViewCollection.AddRange(new DevExpress.XtraGrid.Views.Base.BaseView[] { _grvTotalStep });
@@ -649,15 +719,24 @@ namespace SSSW
             _repositoryItemButtonEditScale.Buttons.AddRange(new EditorButton[] { new EditorButton(ButtonPredefines.Glyph, "Scale", -1, true, true, false, editorButtonImageOptions6, new KeyShortcut(Keys.None), serializableAppearanceObject21, serializableAppearanceObject22, serializableAppearanceObject23, serializableAppearanceObject24, "", null, null, ToolTipAnchor.Default) });
             _repositoryItemButtonEditScale.Name = "_repositoryItemButtonEditScale";
             // 
+            // panelControl1
+            // 
+            panelControl1.Controls.Add(_btnCancel);
+            panelControl1.Controls.Add(_btnConfirm);
+            panelControl1.Dock = DockStyle.Bottom;
+            panelControl1.Location = new Point(0, 1001);
+            panelControl1.Name = "panelControl1";
+            panelControl1.Size = new Size(1920, 79);
+            panelControl1.TabIndex = 35;
+            // 
             // frmShotWeightScale
             // 
             AutoScaleDimensions = new SizeF(7F, 15F);
             AutoScaleMode = AutoScaleMode.Font;
             ClientSize = new Size(1920, 1080);
+            Controls.Add(panelControl1);
             Controls.Add(groupControl5);
-            Controls.Add(_btnCancel);
             Controls.Add(groupControl4);
-            Controls.Add(_btnConfirm);
             Controls.Add(groupInfo);
             Controls.Add(groupControl6);
             FormBorderStyle = FormBorderStyle.None;
@@ -668,6 +747,8 @@ namespace SSSW
             WindowState = FormWindowState.Maximized;
             ((System.ComponentModel.ISupportInitialize)groupInfo).EndInit();
             groupInfo.ResumeLayout(false);
+            ((System.ComponentModel.ISupportInitialize)_txtStepCode.Properties).EndInit();
+            ((System.ComponentModel.ISupportInitialize)_txtFGName.Properties).EndInit();
             ((System.ComponentModel.ISupportInitialize)_lkStepCode.Properties).EndInit();
             ((System.ComponentModel.ISupportInitialize)_scanBarcode.Properties).EndInit();
             ((System.ComponentModel.ISupportInitialize)_toggleSwitchRunner.Properties).EndInit();
@@ -691,6 +772,8 @@ namespace SSSW
             ((System.ComponentModel.ISupportInitialize)_grcTotalStep).EndInit();
             ((System.ComponentModel.ISupportInitialize)_grvTotalStep).EndInit();
             ((System.ComponentModel.ISupportInitialize)_repositoryItemButtonEditScale).EndInit();
+            ((System.ComponentModel.ISupportInitialize)panelControl1).EndInit();
+            panelControl1.ResumeLayout(false);
             ResumeLayout(false);
         }
 
@@ -789,5 +872,10 @@ namespace SSSW
         private DevExpress.XtraEditors.ToggleSwitch _toggleSwitchRunner;
         private BarcodeButtonEdit _scanBarcode;
         private DevExpress.XtraEditors.LookUpEdit _lkStepCode;
+        private DevExpress.XtraEditors.LabelControl labelControl12;
+        private DevExpress.XtraEditors.TextEdit _txtFGName;
+        private DevExpress.XtraEditors.LabelControl labelControl13;
+        private DevExpress.XtraEditors.TextEdit _txtStepCode;
+        private DevExpress.XtraEditors.PanelControl panelControl1;
     }
 }

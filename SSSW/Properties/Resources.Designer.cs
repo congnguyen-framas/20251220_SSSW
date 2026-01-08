@@ -133,6 +133,16 @@ namespace SSSW.Properties {
         /// <summary>
         ///   Looks up a localized resource of type System.Drawing.Bitmap.
         /// </summary>
+        public static System.Drawing.Bitmap reload_white_30 {
+            get {
+                object obj = ResourceManager.GetObject("reload_white_30", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.Drawing.Bitmap.
+        /// </summary>
         public static System.Drawing.Bitmap scale_30 {
             get {
                 object obj = ResourceManager.GetObject("scale_30", resourceCulture);

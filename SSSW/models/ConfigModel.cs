@@ -23,7 +23,7 @@ namespace SSSW.modelss
             Port = 23,
             ModelName = "Scale_Vibra_HAW30",
             CalibGain = 1.0,
-            DecimalNum = 0,
+            DecimalNum = 3,
         };
     }
 }

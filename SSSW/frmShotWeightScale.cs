@@ -7,6 +7,7 @@ using DevExpress.XtraEditors.Controls;
 using DevExpress.XtraEditors.Repository;
 using DevExpress.XtraGrid.Columns;
 using DevExpress.XtraPrinting.Native;
+using DevExpress.XtraSplashScreen;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
@@ -18,6 +19,7 @@ using SSSW.modelss;
 using System;
 using System.Runtime.InteropServices;
 using System.Text.Json.Serialization;
+using System.Threading.Tasks;
 
 namespace SSSW
 {
@@ -33,6 +35,7 @@ namespace SSSW
         private Button btnMaximize;
         private Button btnMinimize;
         private Button btnUpdateVersion;
+        private Button btnReload;
 
         #region Public properties
         /// <summary>
@@ -104,6 +107,113 @@ namespace SSSW
         private readonly IDbContextFactory<DbContextDogeWH> _dbFactory;
         private readonly ILogger<frmShotWeightScale> _logger;
 
+        // Nguồn hủy chung cho mỗi lần tải
+        private CancellationTokenSource _loadCts;
+
+        // Field trong lớp form (ở trên cùng của class)
+        private DevExpress.XtraEditors.SimpleButton btnCancel;
+
+        // Gọi hàm này trong constructor, sau InitializeComponent()
+        private void InitCancelButton()
+        {
+            btnCancel = new DevExpress.XtraEditors.SimpleButton
+            {
+                Name = "btnCancel",
+                Text = "Hủy tải",
+                Enabled = false,
+                Anchor = AnchorStyles.Top | AnchorStyles.Right
+            };
+            btnCancel.Size = new Size(80, 28);
+            btnCancel.Location = new Point(this.ClientSize.Width - btnCancel.Width - 10, 10);
+            btnCancel.Click += btnCancel_Click;
+            this.Controls.Add(btnCancel);
+        }
+
+        // Ví dụ: nút Cancel (nếu muốn cho phép người dùng hủy)
+        private void btnCancel_Click(object sender, EventArgs e)
+        {
+            _loadCts?.Cancel();
+        }
+
+        // Hàm bạn cần: tải dữ liệu + overlay
+        private async Task LoadDataAsync(
+            Control overlayTarget = null,
+            TimeSpan? timeout = null,
+            DevExpress.XtraEditors.SimpleButton cancelButton = null) // <= truyền nút nếu có
+        {
+            overlayTarget ??= this;
+            timeout ??= TimeSpan.FromSeconds(30);
+
+            _loadCts?.Cancel();
+            _loadCts?.Dispose();
+            _loadCts = new CancellationTokenSource();
+
+            using var timeoutCts = new CancellationTokenSource(timeout.Value);
+            using var linkedCts = CancellationTokenSource.CreateLinkedTokenSource(_loadCts.Token, timeoutCts.Token);
+            var token = linkedCts.Token;
+
+            IOverlaySplashScreenHandle overlay = null;
+
+            try
+            {
+                overlay = DevExpress.XtraSplashScreen.SplashScreenManager.ShowOverlayForm(overlayTarget);
+
+                if (cancelButton != null)
+                    cancelButton.Enabled = true;
+
+                // *** TẢI DỮ LIỆU BẤT ĐỒNG BỘ ***
+                var data = await Task.Run(async () =>
+                {
+                    // Mô phỏng công việc nặng: DB/API
+                    // Hãy kiểm tra token để dừng sớm khi bị hủy:
+                    token.ThrowIfCancellationRequested();
+
+                    // TODO: thay bằng repo thực tế
+                    using var dbContext = _dbFactory.CreateDbContext();
+                    var result = await dbContext.FT601s.ToListAsync(); // truyền token vào repo nếu có
+                                                                       //get all data master
+                    return result;
+
+                }, token);
+
+                //// Cập nhật UI sau khi tải xong
+                _dataHydra = data;
+                _allStepCodeMaster = _dataHydra.Select(x => new StepSelectModel()
+                {
+                    StepItemCode = x.C004,
+                    StepItemName = x.C005,
+                    Machine = x.C015,
+                    HydraOrderNo = x.C018
+                }).Distinct().ToList();
+
+                GlobalVariable.InvokeIfRequired(this, () =>
+                {
+                    _lkStepCode.Properties.DataSource = null;
+                    _lkStepCode.Properties.DataSource = _allStepCodeMaster;
+                    _lkStepCode.Properties.DisplayMember = "StepItemCode";
+                    _lkStepCode.Properties.ValueMember = "StepItemCode";
+                    _lkStepCode.Properties.PopulateColumns();
+                });
+            }
+            catch (OperationCanceledException)
+            {
+                // bị hủy (user/timeout) -> có thể im lặng
+            }
+            catch (Exception ex)
+            {
+                DevExpress.XtraEditors.XtraMessageBox.Show(this,
+                    $"Load data failure:\n{ex.Message}", "Load data",
+                    MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
+            finally
+            {
+                if (overlay != null)
+                    DevExpress.XtraSplashScreen.SplashScreenManager.CloseOverlayForm(overlay);
+
+                if (cancelButton != null)
+                    cancelButton.Enabled = false;
+            }
+        }
 
         public frmShotWeightScale(IDbContextFactory<DbContextDogeWH> dbFactory, IServiceProvider serviceProvider, ILogger<frmShotWeightScale> logger) : this()
         {
@@ -147,6 +257,8 @@ namespace SSSW
             btnClose.Padding = new Padding(0);                    // tránh lệch
             btnClose.TextImageRelation = TextImageRelation.Overlay; // chỉ icon
             btnClose.Click += BtnClose_Click;
+            btnClose.MouseEnter += (s, e) => btnClose.BackColor = Color.Green;
+            btnClose.MouseLeave += (s, e) => btnClose.BackColor = Color.Black;
             titleBar.Controls.Add(btnClose);
 
             // Nút Maximize
@@ -165,6 +277,8 @@ namespace SSSW
             btnMaximize.Padding = new Padding(0);                    // tránh lệch
             btnMaximize.TextImageRelation = TextImageRelation.Overlay; // chỉ icon
             btnMaximize.Click += BtnMaximize_Click;
+            btnMaximize.MouseEnter += (s, e) => btnMaximize.BackColor = Color.Green;
+            btnMaximize.MouseLeave += (s, e) => btnMaximize.BackColor = Color.Black;
             titleBar.Controls.Add(btnMaximize);
 
             // Nút Minimize
@@ -183,6 +297,8 @@ namespace SSSW
             btnMinimize.Padding = new Padding(0);                    // tránh lệch
             btnMinimize.TextImageRelation = TextImageRelation.Overlay; // chỉ icon
             btnMinimize.Click += BtnMinimize_Click;
+            btnMinimize.MouseEnter += (s, e) => btnMinimize.BackColor = Color.Green;
+            btnMinimize.MouseLeave += (s, e) => btnMinimize.BackColor = Color.Black;
             titleBar.Controls.Add(btnMinimize);
 
 
@@ -209,25 +325,62 @@ namespace SSSW
 
             // 2) Tooltip khi hover
             var tip = new ToolTip();
-            tip.AutoPopDelay = 5000;     // hiển thị tối đa 5 giây
+            tip.AutoPopDelay = 3000;     // hiển thị tối đa 5 giây
             tip.InitialDelay = 300;      // trễ 300ms
             tip.ReshowDelay = 100;       // xuất hiện lại nhanh
             tip.ShowAlways = true;       // luôn hiển thị tooltip
             tip.SetToolTip(btnUpdateVersion, "Click to update version");  // nội dung tooltip
 
             // Tùy chọn: hiệu ứng hover (đổi nền cho dễ nhìn)
-            btnUpdateVersion.MouseEnter += (s, e) => btnUpdateVersion.BackColor = Color.FromArgb(30, 30, 30);
+            //btnUpdateVersion.MouseEnter += (s, e) => btnUpdateVersion.BackColor = Color.FromArgb(30, 30, 30);
+            btnUpdateVersion.MouseEnter += (s, e) => btnUpdateVersion.BackColor = Color.Green;
             btnUpdateVersion.MouseLeave += (s, e) => btnUpdateVersion.BackColor = Color.Black;
 
             // Sự kiện Click (giữ nguyên như bạn đã có)
             btnUpdateVersion.Click += BtnUpdateVersion_Click; ; // hoặc sự kiện update version thực tế của bạn
             titleBar.Controls.Add(btnUpdateVersion);
 
+            // Nút update reload massterdata
+            btnReload = new Button();
+            btnReload.Text = "";                      // Không cần chữ, chỉ hiển thị icon
+            btnReload.ForeColor = Color.White;
+            btnReload.BackColor = Color.Black;
+            btnReload.FlatStyle = FlatStyle.Flat;
+            btnReload.FlatAppearance.BorderSize = 0;
+            btnReload.Size = new Size(40, 40);
+            btnReload.Location = new Point(this.Width - 200, 0);
+            btnReload.Anchor = AnchorStyles.Top | AnchorStyles.Right;
+            btnReload.Cursor = Cursors.Hand;
+
+            // 1) Gán icon từ Resources (đặt tên hình là "updateVersion" như trong Resource)
+            btnReload.Image = Properties.Resources.reload_white_30;  // PNG từ Resources
+            btnReload.ImageAlign = ContentAlignment.MiddleCenter;  // căn giữa
+            btnReload.Padding = new Padding(0);                    // tránh lệch
+            btnReload.TextImageRelation = TextImageRelation.Overlay; // chỉ icon
+
+            // Tùy chọn: scale icon nếu quá lớn/nhỏ (WinForms Button không có ImageLayout)
+            // => bạn có thể dùng phiên bản icon 24x24 hoặc 32x32 trong file PNG để vừa với nút 40x40.
+
+            // 2) Tooltip khi hover
+            tip = new ToolTip();
+            tip.AutoPopDelay = 3000;     // hiển thị tối đa 5 giây
+            tip.InitialDelay = 300;      // trễ 300ms
+            tip.ReshowDelay = 100;       // xuất hiện lại nhanh
+            tip.ShowAlways = true;       // luôn hiển thị tooltip
+            tip.SetToolTip(btnReload, "Click to reload master data");  // nội dung tooltip
+
+            // Tùy chọn: hiệu ứng hover (đổi nền cho dễ nhìn)
+            //btnUpdateVersion.MouseEnter += (s, e) => btnUpdateVersion.BackColor = Color.FromArgb(30, 30, 30);
+            btnReload.MouseEnter += (s, e) => btnReload.BackColor = Color.Green;
+            btnReload.MouseLeave += (s, e) => btnReload.BackColor = Color.Black;
+
+            // Sự kiện Click (giữ nguyên như bạn đã có)
+            btnReload.Click += async (s, args) => await btnReload_Click(s, args); // hoặc sự kiện update version thực tế của bạn
+            titleBar.Controls.Add(btnReload);
+
 
             // Đảm bảo tất cả có cùng Height = 30 và Y = 5
             btnClose.Size = btnMaximize.Size = btnMinimize.Size = btnUpdateVersion.Size = new Size(30, 30);
-
-
             // Anchor cho cả 3 nút
             btnClose.Anchor = btnMaximize.Anchor = btnMinimize.Anchor = btnUpdateVersion.Anchor = AnchorStyles.Top | AnchorStyles.Right;
 
@@ -261,7 +414,7 @@ namespace SSSW
             _mesoYear = dbContext.Database.SqlQueryRaw<int>($"sp_MaterialGetMesoyear").AsEnumerable().FirstOrDefault();
 
             //get config
-            var configDaTa = await dbContext.FT608s.FirstOrDefaultAsync(x => x.c001 == Environment.MachineName);
+            var configDaTa = await dbContext.FT608s.FirstOrDefaultAsync(x => x.c000 == Environment.MachineName);
             if (configDaTa != null)
             {
                 GlobalVariable.ConfigSystem = JsonConvert.DeserializeObject<ConfigModel>(configDaTa.c001);
@@ -282,16 +435,22 @@ namespace SSSW
                 await dbContext.SaveChangesAsync();
             }
 
+            //Call master data overlay
+            //// Có nút:
+            //await LoadDataAsync(this, TimeSpan.FromSeconds(30), btnCancel);
+            // Không có nút (truyền null hoặc bỏ hẳn tham số):
+            await LoadDataAsync(this, TimeSpan.FromSeconds(30));
 
-            //get all data master
-            _dataHydra = await dbContext.FT601s.ToListAsync();
-            _allStepCodeMaster = _dataHydra.Select(x => new StepSelectModel()
-            {
-                StepItemCode = x.C004,
-                StepItemName = x.C005,
-                Machine = x.C015,
-                HydraOrderNo = x.C018
-            }).Distinct().ToList();
+
+            ////get all data master
+            //_dataHydra = await dbContext.FT601s.ToListAsync();
+            //_allStepCodeMaster = _dataHydra.Select(x => new StepSelectModel()
+            //{
+            //    StepItemCode = x.C004,
+            //    StepItemName = x.C005,
+            //    Machine = x.C015,
+            //    HydraOrderNo = x.C018
+            //}).Distinct().ToList();
 
             #region Grid initialize
             _grvTotalStep.OptionsView.ShowAutoFilterRow = true;
@@ -466,6 +625,11 @@ namespace SSSW
             //{
             //    SplashScreenManager.CloseForm(false);
             //}
+        }
+
+        private async Task btnReload_Click(object sender, EventArgs e)
+        {
+            await LoadDataAsync(this, TimeSpan.FromSeconds(30));
         }
 
         private void BtnClose_Click(object sender, EventArgs e)

@@ -63,6 +63,16 @@ namespace SSSW.Properties {
         /// <summary>
         ///   Looks up a localized resource of type System.Drawing.Bitmap.
         /// </summary>
+        public static System.Drawing.Bitmap activity_history_30_White {
+            get {
+                object obj = ResourceManager.GetObject("activity_history_30_White", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.Drawing.Bitmap.
+        /// </summary>
         public static System.Drawing.Bitmap arrow_upward_white_30 {
             get {
                 object obj = ResourceManager.GetObject("arrow_upward_white_30", resourceCulture);
@@ -146,6 +156,16 @@ namespace SSSW.Properties {
         public static System.Drawing.Bitmap scale_30 {
             get {
                 object obj = ResourceManager.GetObject("scale_30", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.Drawing.Bitmap.
+        /// </summary>
+        public static System.Drawing.Bitmap Shotweight_Icon {
+            get {
+                object obj = ResourceManager.GetObject("Shotweight_Icon", resourceCulture);
                 return ((System.Drawing.Bitmap)(obj));
             }
         }

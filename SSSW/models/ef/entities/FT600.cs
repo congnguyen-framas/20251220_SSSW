@@ -4,7 +4,7 @@ using System.ComponentModel.DataAnnotations.Schema;
 
 namespace SSSW.models
 {
-    [Table("FT600")]
+    [Table("FT600_Test")]
     public partial class FT600 : EntityCommon
     {
         [Browsable(false)][Key] public Guid id { get; set; }
@@ -44,15 +44,18 @@ namespace SSSW.models
         /// <summary>
         /// Part Weight (g) of step.
         /// </summary>
+        [DisplayFormat(ApplyFormatInEditMode = true, DataFormatString = "{0:#,##0.##}")]
         [DisplayName("Part Weight (g/prs)")] public double? C021 { get; set; }
         /// <summary>
         /// Runner weight (g) of step.
         /// </summary>
+        [DisplayFormat(ApplyFormatInEditMode = true, DataFormatString = "{0:#,##0.##}")]
         [DisplayName("Runner Weight (g/prs)")] public double? C022 { get; set; }
 
         /// <summary>
         /// Total scale value of part weight (include these previous step), scale value.
         /// </summary>
+        [DisplayFormat(ApplyFormatInEditMode = true, DataFormatString = "{0:#,##0.##}")]
         [DisplayName("Total PW (g/prs)")] public double? C023 { get; set; }
 
         /// <summary>
@@ -60,6 +63,7 @@ namespace SSSW.models
         /// This is the weight of Non injection materials (Receptacle).
         /// EnumScaleType
         /// </summary>
+        [DisplayFormat(ApplyFormatInEditMode = true, DataFormatString = "{0:#,##0.##}")]
         [DisplayName("Total W_injection (g)")] public double? C024 { get; set; }
 
         /// <summary>
@@ -202,5 +206,11 @@ namespace SSSW.models
         /// </summary>
         [DisplayName("Return Qty (prs)")]
         public int? C031 { get; set; } = 0;
+
+        /// <summary>
+        /// FT600.Id
+        /// </summary>
+        [DisplayName("FT600.Id")]
+        public Guid? C032 { get; set; }
     }
 }

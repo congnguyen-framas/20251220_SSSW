@@ -69,8 +69,8 @@ namespace SSSW
                     services.AddDbContextFactory<DbContextDogeWH>(options =>
                         options.UseSqlServer(GlobalVariable.ConStringSSSW));
                     // Đăng ký các Form để DI resolve được
-                    services.AddScoped<frmShotWeightScale>();
-                    //services.AddScoped<Form1>();
+                    services.AddTransient<frmShotWeightScale>();
+                    services.AddTransient<frmMainView>();
                 })
                 .Build();
 

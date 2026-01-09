@@ -34,6 +34,7 @@ namespace SSSW
         private void InitializeComponent()
         {
             EditorButtonImageOptions editorButtonImageOptions1 = new EditorButtonImageOptions();
+            System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(frmShotWeightScale));
             SerializableAppearanceObject serializableAppearanceObject1 = new SerializableAppearanceObject();
             SerializableAppearanceObject serializableAppearanceObject2 = new SerializableAppearanceObject();
             SerializableAppearanceObject serializableAppearanceObject3 = new SerializableAppearanceObject();
@@ -251,7 +252,7 @@ namespace SSSW
             labelControl12.Appearance.Font = new Font("Tahoma", 15F);
             labelControl12.Appearance.Options.UseFont = true;
             labelControl12.AutoSizeMode = DevExpress.XtraEditors.LabelAutoSizeMode.None;
-            labelControl12.Location = new Point(13, 431);
+            labelControl12.Location = new Point(13, 421);
             labelControl12.Margin = new Padding(3, 1, 3, 1);
             labelControl12.Name = "labelControl12";
             labelControl12.Size = new Size(151, 27);
@@ -261,7 +262,7 @@ namespace SSSW
             // _txtFGName
             // 
             _txtFGName.EditValue = "";
-            _txtFGName.Location = new Point(204, 424);
+            _txtFGName.Location = new Point(204, 421);
             _txtFGName.Margin = new Padding(3, 1, 3, 1);
             _txtFGName.Name = "_txtFGName";
             _txtFGName.Properties.Appearance.Font = new Font("Tahoma", 15F);
@@ -278,10 +279,12 @@ namespace SSSW
             _lkStepCode.Location = new Point(204, 106);
             _lkStepCode.Name = "_lkStepCode";
             _lkStepCode.Properties.ActionButtonIndex = 1;
-            _lkStepCode.Properties.Appearance.Font = new Font("Tahoma", 20F);
+            _lkStepCode.Properties.Appearance.Font = new Font("Tahoma", 15F);
             _lkStepCode.Properties.Appearance.Options.UseFont = true;
             _lkStepCode.Properties.AutoHeight = false;
+            editorButtonImageOptions1.SvgImage = (DevExpress.Utils.Svg.SvgImage)resources.GetObject("editorButtonImageOptions1.SvgImage");
             editorButtonImageOptions1.SvgImageSize = new Size(30, 30);
+            editorButtonImageOptions2.SvgImage = (DevExpress.Utils.Svg.SvgImage)resources.GetObject("editorButtonImageOptions2.SvgImage");
             editorButtonImageOptions2.SvgImageSize = new Size(30, 30);
             _lkStepCode.Properties.Buttons.AddRange(new EditorButton[] { new EditorButton(ButtonPredefines.Glyph, "Delete", -1, true, true, false, editorButtonImageOptions1, new KeyShortcut(Keys.None), serializableAppearanceObject1, serializableAppearanceObject2, serializableAppearanceObject3, serializableAppearanceObject4, "", null, null, ToolTipAnchor.Default), new EditorButton(ButtonPredefines.Glyph, "Select", -1, true, true, false, editorButtonImageOptions2, new KeyShortcut(Keys.None), serializableAppearanceObject5, serializableAppearanceObject6, serializableAppearanceObject7, serializableAppearanceObject8, "", null, null, ToolTipAnchor.Default) });
             _lkStepCode.Properties.PopupFilterMode = DevExpress.XtraEditors.PopupFilterMode.Contains;
@@ -337,7 +340,7 @@ namespace SSSW
             _txtActiclePairShot.Properties.Appearance.Options.UseTextOptions = true;
             _txtActiclePairShot.Properties.Appearance.TextOptions.HAlignment = HorzAlignment.Far;
             _txtActiclePairShot.Size = new Size(285, 40);
-            _txtActiclePairShot.TabIndex = 78;
+            _txtActiclePairShot.TabIndex = 1;
             // 
             // labelControl3
             // 
@@ -873,9 +876,10 @@ namespace SSSW
         private BarcodeButtonEdit _scanBarcode;
         private DevExpress.XtraEditors.LookUpEdit _lkStepCode;
         private DevExpress.XtraEditors.LabelControl labelControl12;
-        private DevExpress.XtraEditors.TextEdit _txtFGName;
+        private DevExpress.XtraEditors.TextEdit _labFGName;
         private DevExpress.XtraEditors.LabelControl labelControl13;
         private DevExpress.XtraEditors.TextEdit _txtStepCode;
         private DevExpress.XtraEditors.PanelControl panelControl1;
+        private DevExpress.XtraEditors.TextEdit _txtFGName;
     }
 }

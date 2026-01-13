@@ -30,5 +30,17 @@ namespace SSSW.modelss
         /// Tỉ lệ sử dụng cho vật liệu Non Woven (Phần trăm).
         /// </summary>
         public double PercentOfUserNonWoven { get; set; } = 100;
+
+        /// <summary>
+        /// Lưu các category code của các vật liệu không phải là vật liệu tiêm (Non injection materials) mà có thể dùng hết hoặc dùng 1 phần (Non-Woven, MESH).
+        /// Json serialize from list<CategoryModel>.
+        /// </summary>
+        public List<CategoryModel>? CategoryOfNonInjectionUsagePartial { get; set; }
+    }
+
+    public class CategoryModel
+    {
+        public int CategoryCode { get; set; }
+        public string? CategoryName { get; set; }
     }
 }

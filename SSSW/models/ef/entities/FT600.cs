@@ -69,7 +69,7 @@ namespace SSSW.models
         /// <summary>
         /// Số lượng. Dùng cho cân Recetacle/outsoleboard/Stud/Logo để quy đinh số lượng sử dụng trong bước.
         /// </summary>
-        [DisplayName("Quantity")] public int? C025 { get; set; } = 0;
+        [DisplayName("Quantity")] public double? C025 { get; set; } = 0;
 
         /// <summary>
         /// Article pairs shot.
@@ -224,5 +224,11 @@ namespace SSSW.models
         /// </summary>
         [DisplayName("Category Name")]
         public string? C034 { get; set; }
+
+        /// <summary>
+        /// Percent of usage (%).
+        /// </summary>
+        [DisplayName("Percent of Usage (%)")]
+        public double? C035 { get; set; }
     }
 }

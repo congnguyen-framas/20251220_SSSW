@@ -100,6 +100,11 @@ namespace SSSW
         /// </summary>
         private int _articlePaisShotFinaly = 0;
 
+        /// <summary>
+        /// mặc định sẽ bằng 100%, nhưng với hàng vải là Non-wovwn và mesh thì tùy trường hợp, thì sẽ dùng hết hay dùng 1 phần.
+        /// </summary>
+        private double _percentOfUsage = 0;
+
         private List<StepSelectModel> _allStepCodeMaster = new List<StepSelectModel>();
         //private StepSelectModel _stepCodeMasterSelect = new StepSelectModel();
 
@@ -555,6 +560,15 @@ namespace SSSW
                 _scaleDataFinal.ForEach(x => x.C028 = _articlePaisShotFinaly);
             };
 
+            _txtPercentOFusageNonwoven.EditValue = GlobalVariable.ConfigSystem.PercentOfUserNonWoven;
+            _txtPercentOFusageNonwoven.EditValueChanged += (s, ev) =>
+            {
+                _percentOfUsage = double.TryParse(_txtPercentOFusageNonwoven.EditValue.ToString(), out double value) ? value : 0;
+
+                //cập nhật lại cho tất cả các item trong danh sách cân.
+                _scaleDataFinal?.ForEach(x => x.C035 = _percentOfUsage);
+            };
+
             // Đặt text khi bật/tắt
             _toggleSwitchRunner.Properties.OnText = "Yes";
             _toggleSwitchRunner.Properties.OffText = "No";
@@ -928,7 +942,7 @@ namespace SSSW
                         line.C022 = 0;
                         line.C023 = 0;
                         line.C024 = 0;
-                        line.C025 = (int)item.Quantity;
+                        line.C025 = item.Quantity;
                         line.C026 = ckHydra?.C020;
                         line.C027 = ckHydra?.C003;
                         line.C028 = ckHydra?.C013 != null ? (int)ckHydra.C013 : 0;
@@ -1109,7 +1123,7 @@ namespace SSSW
                                 item.C022 = stepPrevious?.C022 ?? 0; // Runner weight (g) of step.
                                 item.C023 = stepPrevious?.C023 ?? 0; // Total scale value of part weight (include these previous step), scale value.
                                 item.C024 = stepPrevious?.C024 ?? 0; // Total weight of step injection (include runner + part), Scale value.
-                                item.C025 = stepPrevious?.C025 ?? 0; // Số lượng. Dùng cho cân Recetacle/outsoleboard/Stud/Logo để quy đinh số lượng sử dụng trong bước.
+                                //item.C025 = stepPrevious?.C025 ?? 0; // Số lượng. Dùng cho cân Recetacle/outsoleboard/Stud/Logo để quy đinh số lượng sử dụng trong bước.
                                 //item.C026 = stepPrevious.C026;
                                 //item.C027 = stepPrevious.C027;
                                 //item.C028 = stepPrevious.C028;
@@ -1484,6 +1498,18 @@ namespace SSSW
                 _txtQty.Text = _rowSelected?.C025.ToString();
                 _txtFgItemCode.Text = _rowSelected?.C013;
                 _txtFGName.Text = _rowSelected?.C014;
+                _txtPercentOFusageNonwoven.EditValue = _rowSelected.C035 == 0 ? _rowSelected.C035 : GlobalVariable.ConfigSystem.PercentOfUserNonWoven;
+
+                //kiểm tra nếu bước cân non injection là non-woven và mesh thì enanle text nhập phần trăm sử dụng lên để tính toán
+                var catChceck = GlobalVariable.ConfigSystem.CategoryOfNonInjectionUsagePartial.Where(x => x.CategoryCode == _rowSelected.C033).FirstOrDefault();
+                if (_rowSelected.C002?.Substring(0, 3) == "REX" && catChceck != null)
+                {
+                    _txtPercentOFusageNonwoven.Enabled = true;
+                }
+                else
+                {
+                    _txtPercentOFusageNonwoven.Enabled = false;
+                }
 
                 if (refresh)
                 {

@@ -25,5 +25,10 @@ namespace SSSW.modelss
             CalibGain = 1.0,
             DecimalNum = 3,
         };
+
+        /// <summary>
+        /// Tỉ lệ sử dụng cho vật liệu Non Woven (Phần trăm).
+        /// </summary>
+        public double PercentOfUserNonWoven { get; set; } = 100;
     }
 }

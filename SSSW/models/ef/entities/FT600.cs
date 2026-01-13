@@ -212,5 +212,17 @@ namespace SSSW.models
         /// </summary>
         [DisplayName("FT600.Id")]
         public Guid? C032 { get; set; }
+
+        /// <summary>
+        /// Categorry Code.
+        /// </summary>
+        [DisplayName("Category Code")]
+        public int? C033 { get; set; }
+
+        /// <summary>
+        /// Category Name.
+        /// </summary>
+        [DisplayName("Category Name")]
+        public string? C034 { get; set; }
     }
 }

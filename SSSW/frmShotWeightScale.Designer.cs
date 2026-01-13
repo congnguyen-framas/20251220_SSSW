@@ -70,6 +70,8 @@ namespace SSSW
             _btnCancel = new DevExpress.XtraEditors.SimpleButton();
             _btnConfirm = new DevExpress.XtraEditors.SimpleButton();
             groupInfo = new DevExpress.XtraEditors.GroupControl();
+            _txtPercentOFusageNonwoven = new DevExpress.XtraEditors.TextEdit();
+            labelControl16 = new DevExpress.XtraEditors.LabelControl();
             labelControl13 = new DevExpress.XtraEditors.LabelControl();
             _txtStepCode = new DevExpress.XtraEditors.TextEdit();
             labelControl12 = new DevExpress.XtraEditors.LabelControl();
@@ -112,6 +114,7 @@ namespace SSSW
             panelControl1 = new DevExpress.XtraEditors.PanelControl();
             ((System.ComponentModel.ISupportInitialize)groupInfo).BeginInit();
             groupInfo.SuspendLayout();
+            ((System.ComponentModel.ISupportInitialize)_txtPercentOFusageNonwoven.Properties).BeginInit();
             ((System.ComponentModel.ISupportInitialize)_txtStepCode.Properties).BeginInit();
             ((System.ComponentModel.ISupportInitialize)_txtFGName.Properties).BeginInit();
             ((System.ComponentModel.ISupportInitialize)_lkStepCode.Properties).BeginInit();
@@ -190,6 +193,8 @@ namespace SSSW
             groupInfo.AppearanceCaption.Font = new Font("Segoe UI", 23F, FontStyle.Bold);
             groupInfo.AppearanceCaption.Options.UseBorderColor = true;
             groupInfo.AppearanceCaption.Options.UseFont = true;
+            groupInfo.Controls.Add(_txtPercentOFusageNonwoven);
+            groupInfo.Controls.Add(labelControl16);
             groupInfo.Controls.Add(labelControl13);
             groupInfo.Controls.Add(_txtStepCode);
             groupInfo.Controls.Add(labelControl12);
@@ -223,6 +228,31 @@ namespace SSSW
             groupInfo.Size = new Size(1425, 478);
             groupInfo.TabIndex = 31;
             groupInfo.Text = "Step information";
+            // 
+            // _txtPercentOFusageNonwoven
+            // 
+            _txtPercentOFusageNonwoven.EditValue = "0";
+            _txtPercentOFusageNonwoven.Location = new Point(1009, 370);
+            _txtPercentOFusageNonwoven.Margin = new Padding(3, 1, 3, 1);
+            _txtPercentOFusageNonwoven.Name = "_txtPercentOFusageNonwoven";
+            _txtPercentOFusageNonwoven.Properties.Appearance.Font = new Font("Tahoma", 20F);
+            _txtPercentOFusageNonwoven.Properties.Appearance.Options.UseFont = true;
+            _txtPercentOFusageNonwoven.Properties.Appearance.Options.UseTextOptions = true;
+            _txtPercentOFusageNonwoven.Properties.Appearance.TextOptions.HAlignment = HorzAlignment.Far;
+            _txtPercentOFusageNonwoven.Size = new Size(405, 40);
+            _txtPercentOFusageNonwoven.TabIndex = 93;
+            // 
+            // labelControl16
+            // 
+            labelControl16.Appearance.Font = new Font("Tahoma", 15F);
+            labelControl16.Appearance.Options.UseFont = true;
+            labelControl16.AutoSizeMode = DevExpress.XtraEditors.LabelAutoSizeMode.None;
+            labelControl16.Location = new Point(834, 377);
+            labelControl16.Margin = new Padding(3, 1, 3, 1);
+            labelControl16.Name = "labelControl16";
+            labelControl16.Size = new Size(138, 27);
+            labelControl16.TabIndex = 94;
+            labelControl16.Text = "% of usage";
             // 
             // labelControl13
             // 
@@ -374,7 +404,7 @@ namespace SSSW
             _txtFgItemCode.Properties.Appearance.Font = new Font("Tahoma", 20F);
             _txtFgItemCode.Properties.Appearance.Options.UseFont = true;
             _txtFgItemCode.Properties.ReadOnly = true;
-            _txtFgItemCode.Size = new Size(405, 40);
+            _txtFgItemCode.Size = new Size(601, 40);
             _txtFgItemCode.TabIndex = 77;
             // 
             // _txtQty
@@ -750,6 +780,7 @@ namespace SSSW
             WindowState = FormWindowState.Maximized;
             ((System.ComponentModel.ISupportInitialize)groupInfo).EndInit();
             groupInfo.ResumeLayout(false);
+            ((System.ComponentModel.ISupportInitialize)_txtPercentOFusageNonwoven.Properties).EndInit();
             ((System.ComponentModel.ISupportInitialize)_txtStepCode.Properties).EndInit();
             ((System.ComponentModel.ISupportInitialize)_txtFGName.Properties).EndInit();
             ((System.ComponentModel.ISupportInitialize)_lkStepCode.Properties).EndInit();
@@ -881,5 +912,7 @@ namespace SSSW
         private DevExpress.XtraEditors.TextEdit _txtStepCode;
         private DevExpress.XtraEditors.PanelControl panelControl1;
         private DevExpress.XtraEditors.TextEdit _txtFGName;
+        private DevExpress.XtraEditors.TextEdit _txtPercentOFusageNonwoven;
+        private DevExpress.XtraEditors.LabelControl labelControl16;
     }
 }

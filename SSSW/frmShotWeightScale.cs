@@ -46,9 +46,14 @@ namespace SSSW
         /// </summary>
         public List<FT601> _dataHydra { get; set; } = new();
 
-        //private List<FT601> _
+        /// <summary>
+        /// List chứa thông tin các size chạy chung 1 khuôn.
+        /// Để chứa các size liên quan để lưu chung 1 lần với khối lượng cân.
+        /// vì với trường hợp 1 khuôn nhiều size thì nó sản xuất hàng clear, rồi màu sau khi ép xong sẽ mang đi sơn, nên khi tạo đơn trên Hydra sẽ có thông số màu.
+        /// </summary>
+        private List<FT601> _dataHydraMultiSizeOfMold { get; set; } = new();
 
-       private bool _newScale = true;
+        private bool _newScale = true;
         /// <summary>
         /// Bước được chọn để vào cân, được truyền từ master vào, và ta dựa vào thông tin này để tạo ra bộ data cân tương ứng.
         /// </summary>
@@ -96,7 +101,7 @@ namespace SSSW
         private int _articlePaisShotFinaly = 0;
 
         private List<StepSelectModel> _allStepCodeMaster = new List<StepSelectModel>();
-        private StepSelectModel _stepCodeMasterSelect = new StepSelectModel();
+        //private StepSelectModel _stepCodeMasterSelect = new StepSelectModel();
 
         /// <summary>
         /// Bước được chọn ban đầu khi scan QR code hoặc chọn tay ở lookupedit step code.
@@ -588,6 +593,7 @@ namespace SSSW
 
             _lkStepCode.EditValueChanged += async (s, ev) => await _lkStepCode_EditValueChangedAsync(s, ev);
 
+            _txtPercentOFusageNonwoven.Enabled = false;
             //_lkStepCode.EditValue = !string.IsNullOrEmpty(_fgCode) ? _fgCode : null;
         }
 
@@ -739,6 +745,10 @@ namespace SSSW
                     throw new Exception("The step information was not found.");
                 }
 
+                //if (_stepSelected.C005)
+                //{
+
+                //}
                 _lkStepCode.EditValue = _stepSelected.C004;
             }
             catch (Exception ex)
@@ -766,33 +776,31 @@ namespace SSSW
         {
             try
             {
-                //kiểm tra nếu qr code null thì mới vào xử lý để lấy ra thông tin bước  trong master để vào lấy các bước, còn nếu có qrcode nghĩa là đã scan từ tem thì đã có thông tin rồi nên không cần làm bước này nữa.
-                if (string.IsNullOrEmpty(_qrCodeScan))
-                {
-                    var editor = sender as DevExpress.XtraEditors.LookUpEdit;
-                    if (editor == null) return;
+                var editor = sender as DevExpress.XtraEditors.LookUpEdit;
+                if (editor == null) return;
 
-                    // 1) Giá trị (ValueMember)
-                    var selectedValue = editor.EditValue; // kiểu object, thường là string/int tùy nguồn dữ liệu
+                // 1) Giá trị (ValueMember)
+                var selectedValue = editor.EditValue; // kiểu object, thường là string/int tùy nguồn dữ liệu
 
-                    // 2) Text hiển thị (DisplayMember)
-                    var selectedText = editor.Text;
+                // 2) Text hiển thị (DisplayMember)
+                var selectedText = editor.Text;
 
-                    // 3) (Tuỳ chọn) Lấy toàn bộ row dữ liệu đang chọn
-                    // Với LookUpEdit:
-                    _stepCodeMasterSelect = (StepSelectModel)editor.GetSelectedDataRow(); // DataRowView hoặc object (tuỳ DataSource)
+                // 3) (Tuỳ chọn) Lấy toàn bộ row dữ liệu đang chọn
+                // Với LookUpEdit:
+                var _stepCodeMasterSelect = (StepSelectModel)editor.GetSelectedDataRow(); // DataRowView hoặc object (tuỳ DataSource)
                                                                                           // Với GridLookUpEdit:
                                                                                           // var gridEditor = sender as GridLookUpEdit;
                                                                                           // var row = gridEditor.Properties.View.GetFocusedRow();
-                    if (_stepCodeMasterSelect == null)
-                    {
-                        _labelInfo = new FT606_Label();
-                        ResetNewLoop();
-                        return;
-                    }                                                                      //truy vấn master data để lấy thông tin FG code
+                if (_stepCodeMasterSelect == null)
+                {
+                    _labelInfo = new FT606_Label();
+                    ResetNewLoop();
+                    return;
+                }                                                                      //truy vấn master data để lấy thông tin FG code
 
-                    //ResetNewLoop();
-
+                //kiểm tra nếu qr code null thì mới vào xử lý để lấy ra thông tin bước  trong master để vào lấy các bước, còn nếu có qrcode nghĩa là đã scan từ tem thì đã có thông tin rồi nên không cần làm bước này nữa.
+                if (string.IsNullOrEmpty(_qrCodeScan))
+                {
                     _stepSelected = _dataHydra.FirstOrDefault(x => x.C004 == _stepCodeMasterSelect.StepItemCode &&
                         x.C015 == _stepCodeMasterSelect.Machine &&
                         x.C018 == _stepCodeMasterSelect.HydraOrderNo
@@ -822,15 +830,16 @@ namespace SSSW
             _stepItemCodeScale = new FT601();
             _scaleData = new List<FT600>();
             _scaleDataFinal = new List<FT600>();
-            _stepCodeMasterSelect = new StepSelectModel();
+            //_stepCodeMasterSelect = new StepSelectModel();
             _newScale = true;
+            _qrCodeScan = string.Empty;
 
             UpdateUI(false);
         }
 
         private void ResetAll()
         {
-            _stepCodeMasterSelect = new StepSelectModel();
+            //_stepCodeMasterSelect = new StepSelectModel();
 
         }
 
@@ -854,7 +863,8 @@ namespace SSSW
                     }
 
                     //get thông tin BOM từ Winline
-                    _allStepsFG = await dbContextDogeWH.Database.SqlQueryRaw<BomWinlineModel>("sp_getBomWinlineOfItemFG @itemFG = {0}", stepCode.C007).AsNoTracking().ToListAsync();
+                    _allStepsFG = await dbContextDogeWH.Database.SqlQueryRaw<BomWinlineModel>("sp_getBomWinlineOfItemFG @itemFG = {0}", stepCode.C007)
+                        .AsNoTracking().ToListAsync();
 
                     foreach (var item in _allStepsFG)
                     {
@@ -924,6 +934,8 @@ namespace SSSW
                         line.C028 = ckHydra?.C013 != null ? (int)ckHydra.C013 : 0;
                         line.C029 = _labelInfo != null ? _labelInfo.Id : null;
                         line.C032 = ckHydra?.Id;
+                        line.C033 = item.CategoryCode;
+                        line.C034 = item.CategoryName;
                         line.AllowScale = allowScale;
 
                         _scaleData.Add(line);
@@ -933,61 +945,86 @@ namespace SSSW
                     var dataSize = new List<FT600>();
                     foreach (var item in _scaleData)
                     {
-                        //lọc trong master data ra theo MoldId,machine và khác step với size hiện tại.
-                        var ft601Check = _dataHydra.FirstOrDefault(x => 
-                            x.C019 == item.C020 && //MoldId
-                            x.C015 == item.C004 &&//Machine
-                            x.C004 != item.C002 &&//Step khác với size hiện tại
-                            x.C002 != item.C008);
+                        // Tiền tố (2 cụm đầu) của item.C004
+                        var itemPrefix2 = GlobalVariable.PrefixUpToSecondHyphen(item.C002);
 
-                        if (ft601Check == null)
+                        //lọc trong master data ra theo MoldId,machine và khác step với size hiện tại.
+                        var ft601CheckMultiSize = _dataHydra.Where(x =>
+                                x.C019 == item.C020 && //MoldId
+                                x.C015 == item.C004 &&//Machine
+                                x.C004 != item.C002 &&//Step khác với size hiện tại
+                                x.C002 != item.C008 &&//size
+                                GlobalVariable.PrefixUpToSecondHyphen(x.C004) == itemPrefix2
+                            ).DistinctBy(x => x.C002).ToList();
+
+                        if (ft601CheckMultiSize == null || (ft601CheckMultiSize != null && ft601CheckMultiSize.Count == 0))
                             continue;
 
-                        dataSize.Add(new FT600()
+                        //get category từ bom winline
+                        var itemList = string.Join(",", ft601CheckMultiSize.Select(x => x.C004));
+                        var category = await dbContextDogeWH.Database.SqlQueryRaw<CategoryOfItemModel>("sp_GetCategorryOfItem @ItemCode = {0}",
+                            itemList)
+                            .AsNoTracking().ToListAsync();
+
+                        foreach (var itemNultiSize in ft601CheckMultiSize)
                         {
-                            id = Guid.NewGuid(),
-                            C000 = ft601Check?.C000,
-                            C001 = ft601Check?.C000 != "21" && _stepItemCodeScale.C000 != "22" ? EnumSampleLocation.Production : EnumSampleLocation.Sample,
-                            C004 = ft601Check?.C015,
-                            C005 = ft601Check?.C006,
-                            C006 = ft601Check?.C011,
-                            C007 = ft601Check?.C012,
-                            C009 = 1,
-                            C012 = _labelInfo != null ? _labelInfo.c001 : null,
-                            C013 = ft601Check?.C007,
-                            C014 = ft601Check?.C008,
-                            C016 = null,
-                            C017 = ft601Check?.C013,
-                            C018 = ft601Check?.C014,
-                            C019 = ft601Check?.C016,
-                            C020 = ft601Check?.C019,
+                            //get category gán vào
+                            var catItem = category.FirstOrDefault(x => x.ItemCode == itemNultiSize.C004);
 
-                            C002 = ft601Check?.C004,
-                            C003 = ft601Check?.C005,
-                            C008 = ft601Check?.C002,
-                            C015 = ft601Check?.C010,
-                            //                       
-                            C021 = 0, // Khối lượng sẽ được cập nhật sau khi cân
-                            C022 = 0,
-                            C023 = 0,
-                            C024 = 0,
-                            C025 = item.C025,
-                            C026 = ft601Check?.C020,
-                            C027 = ft601Check?.C003,
-                            C028 = ft601Check?.C013 != null ? (int)ft601Check.C013 : 0,
-                            C029 = _labelInfo != null ? _labelInfo.Id : null,
-                            C032 = ft601Check?.Id,
-                            AllowScale = true,
+                            dataSize.Add(new FT600()
+                            {
+                                id = Guid.NewGuid(),
+                                C000 = itemNultiSize?.C000,
+                                C001 = itemNultiSize?.C000 != "21" && itemNultiSize?.C000 != "22" ? EnumSampleLocation.Production : EnumSampleLocation.Sample,
+                                C004 = itemNultiSize?.C015,
+                                C005 = itemNultiSize?.C006,
+                                C006 = itemNultiSize?.C011,
+                                C007 = itemNultiSize?.C012,
+                                C009 = 1,
+                                C012 = _labelInfo != null ? _labelInfo.c001 : null,
+                                C013 = itemNultiSize?.C007,
+                                C014 = itemNultiSize?.C008,
+                                C016 = null,
+                                C017 = itemNultiSize?.C013,
+                                C018 = itemNultiSize?.C014,
+                                C019 = itemNultiSize?.C016,
+                                C020 = itemNultiSize?.C019,
 
-                        });
+                                C002 = itemNultiSize?.C004,
+                                C003 = itemNultiSize?.C005,
+                                C008 = itemNultiSize?.C002,
+                                C015 = itemNultiSize?.C010,
+                                //                       
+                                C021 = 0, // Khối lượng sẽ được cập nhật sau khi cân
+                                C022 = 0,
+                                C023 = 0,
+                                C024 = 0,
+                                C025 = item.C025,
+                                C026 = itemNultiSize?.C020,
+                                C027 = itemNultiSize?.C003,
+                                C028 = itemNultiSize?.C013 != null ? (int)itemNultiSize.C013 : 0,
+                                C029 = _labelInfo != null ? _labelInfo.Id : null,
+                                C032 = itemNultiSize?.Id,
+                                C033 = catItem.CategoryCode,
+                                C034 = catItem.CategoryName,
+                                AllowScale = true,
+
+                            });
+                        }
+
                     }
 
-                    #endregion
                     var itemsToAdd = dataSize.Where(ds => !_scaleData.Any(sd => sd.C002 == ds.C002 && sd.C015 == ds.C015)
-                                                   ).ToList();
+                                                  ).ToList();
 
                     _scaleData.AddRange(itemsToAdd);
-                    _scaleDataFinal = _scaleData.ToList();
+                    #endregion
+
+                    _scaleDataFinal = _scaleData.OrderBy(x => x.C027).ThenBy(x => x.C015).ToList();
+
+                    var firsrtNotNull = _scaleDataFinal.FirstOrDefault(x => !string.IsNullOrEmpty(x.C026));
+                    var mainItemCode = firsrtNotNull?.C026;
+                    var mainItemName = firsrtNotNull?.C027;
 
                     //doc thông tin các bước đã cân
                     var stepHasScale = await dbContextDogeWH.FT600s
@@ -996,6 +1033,12 @@ namespace SSSW
 
                     foreach (var item in _scaleDataFinal)
                     {
+                        if (item.C002.Substring(0, 3) == "REX")
+                        {
+                            item.C026 = mainItemCode;
+                            item.C027 = mainItemName;
+                        }
+
                         if (item.AllowScale)
                         {
                             //nếu bước này đã được cân nhiều lần rồi, thì lấy lần cân gần đây nhất.
@@ -1041,35 +1084,35 @@ namespace SSSW
 
                             if (stepPrevious != null)
                             {
-                                item.C000 = stepPrevious?.C000;
-                                item.C001 = stepPrevious?.C001;
-                                item.C004 = stepPrevious?.C004;
-                                item.C005 = stepPrevious?.C005;
-                                item.C006 = stepPrevious?.C006;
-                                item.C007 = stepPrevious?.C007;
+                                //item.C000 = stepPrevious?.C000;
+                                //item.C001 = stepPrevious?.C001;
+                                //item.C004 = stepPrevious?.C004;
+                                //item.C005 = stepPrevious?.C005;
+                                //item.C006 = stepPrevious?.C006;
+                                //item.C007 = stepPrevious?.C007;
                                 item.C009 = 1;
                                 item.C012 = stepPrevious?.C012;// $"{_stepItemCodeScale.StepItemCode}|{_stepItemCodeScale.Machine}|{Gui}";
-                                item.C013 = stepPrevious?.C013;
-                                item.C014 = stepPrevious?.C014;
-                                item.C016 = stepPrevious?.C016;
-                                item.C017 = stepPrevious?.C017;
-                                item.C018 = stepPrevious?.C018;
-                                item.C019 = stepPrevious?.C019;
-                                item.C020 = stepPrevious?.C020;
+                                //item.C013 = stepPrevious?.C013;
+                                //item.C014 = stepPrevious?.C014;
+                                //item.C016 = stepPrevious?.C016;
+                                //item.C017 = stepPrevious?.C017;
+                                //item.C018 = stepPrevious?.C018;
+                                //item.C019 = stepPrevious?.C019;
+                                //item.C020 = stepPrevious?.C020;
 
-                                item.C002 = stepPrevious?.C002;
-                                item.C003 = stepPrevious?.C003;
-                                item.C008 = stepPrevious?.C008;
-                                item.C015 = stepPrevious?.C015;
+                                //item.C002 = stepPrevious?.C002;
+                                //item.C003 = stepPrevious?.C003;
+                                //item.C008 = stepPrevious?.C008;
+                                //item.C015 = stepPrevious?.C015;
 
                                 item.C021 = stepPrevious?.C021 ?? 0; // Part Weight (g) of step.
                                 item.C022 = stepPrevious?.C022 ?? 0; // Runner weight (g) of step.
                                 item.C023 = stepPrevious?.C023 ?? 0; // Total scale value of part weight (include these previous step), scale value.
                                 item.C024 = stepPrevious?.C024 ?? 0; // Total weight of step injection (include runner + part), Scale value.
                                 item.C025 = stepPrevious?.C025 ?? 0; // Số lượng. Dùng cho cân Recetacle/outsoleboard/Stud/Logo để quy đinh số lượng sử dụng trong bước.
-                                item.C026 = stepPrevious.C026;
-                                item.C027 = stepPrevious.C027;
-                                item.C028 = stepPrevious.C028;
+                                //item.C026 = stepPrevious.C026;
+                                //item.C027 = stepPrevious.C027;
+                                //item.C028 = stepPrevious.C028;
                             }
                         }
                     }

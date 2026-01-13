@@ -1,4 +1,5 @@
-﻿using Microsoft.EntityFrameworkCore;
+﻿using DevExpress.XtraSpreadsheet.Model;
+using Microsoft.EntityFrameworkCore;
 
 namespace SSSW.models
 {
@@ -13,5 +14,9 @@ namespace SSSW.models
         public string? ItemFgName { get; set; }
         public string? SizeCode { get; set; }
         public string? Size { get; set; }
+
+        public int? CategoryCode { get; set; }
+
+        public string? CategoryName { get; set; } = string.Empty;
     }
 }

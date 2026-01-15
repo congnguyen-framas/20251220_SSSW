@@ -68,8 +68,23 @@ namespace SSSW.models
 
         /// <summary>
         /// Số lượng. Dùng cho cân Recetacle/outsoleboard/Stud/Logo để quy đinh số lượng sử dụng trong bước.
+        /// non-injection materials quantity. Receptacle/Nonwoven/Mesh/Stud/Logo quantity.
         /// </summary>
         [DisplayName("Quantity")] public double? C025 { get; set; } = 0;
+
+        /// <summary>
+        /// Khối lượng của 1 đơn vị vật liệu (g/unit).
+        /// ví dụ đinh sắt thì đây là khối lượng của 1 con đinh g/pcs.
+        /// = c023/c025.
+        /// </summary>
+        [DisplayName("Weight per Unit (g/unit)")]
+        public double? C036 { get; set; } = 0;
+
+        /// <summary>
+        /// Unit of item.
+        /// </summary>
+        [DisplayName("Unit")]
+        public string? C037 { get; set; }
 
         /// <summary>
         /// Article pairs shot.
@@ -179,7 +194,7 @@ namespace SSSW.models
         /// QR generate.
         /// format:ItemStepCode|Machine|Id.
         /// </summary>
-        [Browsable(false)]
+        [Browsable(true)]
         [DisplayName("QR Code")]
         public string? C012 { get; set; }
 

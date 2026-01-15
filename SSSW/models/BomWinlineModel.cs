@@ -18,5 +18,7 @@ namespace SSSW.models
         public int? CategoryCode { get; set; }
 
         public string? CategoryName { get; set; } = string.Empty;
+
+        public string? Unit { get; set; }
     }
 }

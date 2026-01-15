@@ -1,6 +1,6 @@
 ﻿namespace SSSW
 {
-    partial class frmMainView
+    partial class frmUpdateMasterData
     {
         /// <summary>
         /// Required designer variable.
@@ -28,7 +28,7 @@
         /// </summary>
         private void InitializeComponent()
         {
-            System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(frmMainView));
+            System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(frmUpdateMasterData));
             ribbonControl1 = new DevExpress.XtraBars.Ribbon.RibbonControl();
             _barButtonItemLoad = new DevExpress.XtraBars.BarButtonItem();
             ribbonPage1 = new DevExpress.XtraBars.Ribbon.RibbonPage();
@@ -45,7 +45,7 @@
             ribbonControl1.ExpandCollapseItem.Id = 0;
             ribbonControl1.Items.AddRange(new DevExpress.XtraBars.BarItem[] { ribbonControl1.ExpandCollapseItem, _barButtonItemLoad });
             ribbonControl1.Location = new Point(0, 0);
-            ribbonControl1.MaxItemId = 2;
+            ribbonControl1.MaxItemId = 3;
             ribbonControl1.Name = "ribbonControl1";
             ribbonControl1.Pages.AddRange(new DevExpress.XtraBars.Ribbon.RibbonPage[] { ribbonPage1 });
             ribbonControl1.Size = new Size(1904, 150);
@@ -91,15 +91,16 @@
             _grv.GridControl = _grc;
             _grv.Name = "_grv";
             // 
-            // frmMainView
+            // frmUpdateMasterData
             // 
             AutoScaleDimensions = new SizeF(7F, 15F);
             AutoScaleMode = AutoScaleMode.Font;
             ClientSize = new Size(1904, 961);
             Controls.Add(_grc);
             Controls.Add(ribbonControl1);
-            Name = "frmMainView";
-            Text = "SSSW - History Scale";
+            Name = "frmUpdateMasterData";
+            StartPosition = FormStartPosition.CenterScreen;
+            Text = "SSSW - Update master data";
             ((System.ComponentModel.ISupportInitialize)ribbonControl1).EndInit();
             ((System.ComponentModel.ISupportInitialize)_grc).EndInit();
             ((System.ComponentModel.ISupportInitialize)_grv).EndInit();

@@ -123,6 +123,26 @@ namespace SSSW.Properties {
         /// <summary>
         ///   Looks up a localized resource of type System.Drawing.Bitmap.
         /// </summary>
+        public static System.Drawing.Bitmap icons8_big_data_30_white {
+            get {
+                object obj = ResourceManager.GetObject("icons8_big_data_30_white", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.Drawing.Bitmap.
+        /// </summary>
+        public static System.Drawing.Bitmap icons8_installing_updates_30_white {
+            get {
+                object obj = ResourceManager.GetObject("icons8_installing_updates_30_white", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.Drawing.Bitmap.
+        /// </summary>
         public static System.Drawing.Bitmap maximize_white_30 {
             get {
                 object obj = ResourceManager.GetObject("maximize_white_30", resourceCulture);

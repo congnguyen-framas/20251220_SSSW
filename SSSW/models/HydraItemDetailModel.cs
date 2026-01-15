@@ -43,7 +43,9 @@ namespace SSSW.models
         /// Trang thái cân của step.
         /// Fasle-chưa cân; true-đã cân.
         /// </summary>
+        [NotMapped]
         public bool Status { get; set; } = false;
+
         /// <summary>
         /// Order Hydra number.
         /// </summary>

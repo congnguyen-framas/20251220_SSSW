@@ -71,6 +71,7 @@ namespace SSSW
                     // Đăng ký các Form để DI resolve được
                     services.AddTransient<frmShotWeightScale>();
                     services.AddTransient<frmMainView>();
+                    services.AddTransient<frmUpdateMasterData>();
                 })
                 .Build();
 

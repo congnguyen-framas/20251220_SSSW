@@ -113,5 +113,11 @@ namespace SSSW.models
         /// Main Code.
         /// </summary>
         [DisplayName("Main Code")] public string? C020 { get; set; }
+
+        /// <summary>
+        /// báo size này có còn dùng hay không.
+        /// mặc định là true.
+        /// </summary>
+        public bool? C021 { get; set; } = true;
     }
 }

@@ -1,4 +1,5 @@
-﻿using DevExpress.Charts.Native;
+﻿using AutoUpdaterDotNET;
+using DevExpress.Charts.Native;
 using DevExpress.CodeParser.Diagnostics;
 using DevExpress.Data.Controls.ExpressionEditor;
 using DevExpress.Mvvm;
@@ -11,6 +12,7 @@ using DevExpress.XtraGrid.Columns;
 using DevExpress.XtraPrinting.Native;
 using DevExpress.XtraSplashScreen;
 using DevExpress.XtraSpreadsheet.Model;
+using DevExpress.XtraWaitForm;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.ChangeTracking.Internal;
 using Microsoft.Extensions.DependencyInjection;
@@ -22,7 +24,9 @@ using ScanAndScale.Helper;
 using SSSW.models;
 using SSSW.modelss;
 using System;
+using System.Configuration;
 using System.DirectoryServices.ActiveDirectory;
+using System.Runtime.ConstrainedExecution;
 using System.Runtime.InteropServices;
 using System.Text.Json.Serialization;
 using System.Threading.Tasks;
@@ -104,12 +108,14 @@ namespace SSSW
         /// <summary>
         /// Số đôi thực tế trên khuôn, dùng để xác định để tính trọng lượng Runner.
         /// </summary>
-        private int _articlePaisShotFinaly = 0;
+        private double? _articlePaisShotFinaly = 0;
 
         /// <summary>
         /// mặc định sẽ bằng 100%, nhưng với hàng vải là Non-wovwn và mesh thì tùy trường hợp, thì sẽ dùng hết hay dùng 1 phần.
         /// </summary>
         private double _percentOfUsage = 0;
+
+        private string? _remarkFinal = string.Empty;
 
         private List<StepSelectModel> _allStepCodeMaster = new List<StepSelectModel>();
         //private StepSelectModel _stepCodeMasterSelect = new StepSelectModel();
@@ -542,7 +548,7 @@ namespace SSSW
 
             // Text
             titleText = new Label();
-            titleText.Text = $"Unknown - SSSW Station";
+            titleText.Text = $"Unknown - SSSW Station ver:{Application.ProductVersion}";
             titleText.ForeColor = Color.White;
             titleText.Font = new Font("Segoe UI", 12, FontStyle.Bold);
             titleText.AutoSize = true;
@@ -555,8 +561,67 @@ namespace SSSW
         }
 
         #region Events
+        private async void AutoUpdater_ApplicationExitEvent()
+        {
+            Text = @"Closing application...";
+            await System.Threading.Tasks.Task.Delay(3000);
+            Application.Exit();
+        }
+        private async void AutoUpdater_CheckForUpdateEvent(UpdateInfoEventArgs args)
+        {
+            if (args.IsUpdateAvailable)
+            {
+                DialogResult dialogResult;
+                dialogResult =
+                        MessageBox.Show(
+                            $@"SSSW has new version: {args.CurrentVersion}. Would you like upgrade it?", @"Information",
+                            MessageBoxButtons.YesNo,
+                            MessageBoxIcon.Information);
+
+                if (dialogResult.Equals(DialogResult.Yes) || dialogResult.Equals(DialogResult.OK))
+                {
+                    SplashScreenManager.ShowForm(typeof(WaitForm));
+                    await System.Threading.Tasks.Task.Delay(3000);
+                    //AutoZipFolder();
+
+                    try
+                    {
+                        if (AutoUpdater.DownloadUpdate(args))
+                        {
+                            SplashScreenManager.CloseForm(false);
+                            Application.Exit();
+                        }
+                        else
+                        {
+                            SplashScreenManager.ShowForm(typeof(WaitForm));
+                        }
+                    }
+                    catch (Exception exception)
+                    {
+                        SplashScreenManager.CloseForm(false);
+                        MessageBox.Show(exception.Message, exception.GetType().ToString(), MessageBoxButtons.OK,
+                            MessageBoxIcon.Error);
+                    }
+                }
+            }
+            else
+            {
+                if (isUpdateClicked)
+                {
+                    MessageBox.Show(@"SSSW up to date version.", @"Information",
+                   MessageBoxButtons.OK, MessageBoxIcon.Information);
+                }
+            }
+        }
+
         private async void FrmShotWeightScale_Load(object? sender, EventArgs e)
         {
+            AutoUpdater.RunUpdateAsAdmin = false;
+            AutoUpdater.DownloadPath = Environment.CurrentDirectory;
+
+            AutoUpdater.ApplicationExitEvent += AutoUpdater_ApplicationExitEvent;
+            AutoUpdater.CheckForUpdateEvent += AutoUpdater_CheckForUpdateEvent;
+
             _txtActiclePairShot.Focus();
 
             using var dbContext = _dbFactory.CreateDbContext();
@@ -571,8 +636,9 @@ namespace SSSW
 
             if (Enum.TryParse<EnumLocation>(location, ignoreCase: true, out var loc))
             {
-                titleText.Text = $"{loc} - SSSW Station";
+                titleText.Text = $"{loc} - SSSW Station 111";
             }
+            _labVer.Text = Application.ProductVersion.Split('+')[0];
             //else
             //{
             //    // dữ liệu không hợp lệ → fallback
@@ -638,45 +704,58 @@ namespace SSSW
             _btnConfirm.Click += async (s, agrs) => await _btnComfim_Click(s, agrs);
             _btnCancel.Click += _btnCancel_Click;
 
-            _txtActiclePairShot.EditValueChanged += (s, ev) =>
+            _txtActiclePairShot.KeyDown += (s, ev) =>
             {
-                _articlePaisShotFinaly = int.TryParse(_txtActiclePairShot.EditValue.ToString(), out int value) ? value : 0;
+                if (ev.KeyCode == Keys.Enter)
+                {
+                    _articlePaisShotFinaly = double.TryParse(_txtActiclePairShot.EditValue.ToString(), out double value) ? value : 0;
 
-                _scaleDataFinal.ForEach(x => x.C028 = _articlePaisShotFinaly);
+                    _scaleDataFinal.ForEach(x => x.C028 = _articlePaisShotFinaly);
+                }
             };
             _txtPercentOFusageNonwoven.EditValue = "0";
-            //nhập thông tin phần trăm sử dụng cho các item FG có sử dụng vải Nonwoven và Mesh.
-            _txtPercentOFusageNonwoven.EditValueChanged += (s, ev) =>
+
+            _txtRemark.EditValueChanged += (s, ev) =>
             {
-                //kiểm tra nếu item hiện tại không phải REX hoặc không phải hàng vải Nonwoven và Mesh thì không cần xử lý.
-                var catCheck = GlobalVariable.ConfigSystem.CategoryOfNonInjectionUsagePartial
-                                    .FirstOrDefault(x => x.CategoryCode == _rowSelected.C033);
-                if (!(_rowSelected?.C002?.StartsWith("REX") ?? false) ||
-                    ((_rowSelected?.C002?.StartsWith("REX") ?? false) && catCheck == null)
-                ) return;
-
-                _percentOfUsage = double.TryParse(_txtPercentOFusageNonwoven.EditValue?.ToString(), out double value) ? value : 0;
-
-                //cập nhật lại cho tất cả các item trong danh sách cân.
-                _scaleDataFinal?.Where(x=>x.C002.StartsWith("REX")).ForEach(x =>
+                _remarkFinal = _txtRemark.EditValue?.ToString() ?? string.Empty;
+                _scaleDataFinal?.ForEach(x => x.C038 = _remarkFinal);
+            };
+            //nhập thông tin phần trăm sử dụng cho các item FG có sử dụng vải Nonwoven và Mesh.
+            _txtPercentOFusageNonwoven.KeyDown += (s, ev) =>
+            {
+                if (ev.KeyCode == Keys.Enter)
                 {
-                    var usage = x.C035 == 100 ?
-                       (double)Math.Round((decimal)(_rowSelected.C024 * _percentOfUsage / 100), 3) :
-                       (double)Math.Round((decimal)((decimal)(_rowSelected.C024 * _percentOfUsage / 100) / x.C028), 3);
+                    //kiểm tra nếu item hiện tại không phải REX hoặc không phải hàng vải Nonwoven và Mesh thì không cần xử lý.
+                    var catCheck = GlobalVariable.ConfigSystem.CategoryOfNonInjectionUsagePartial
+                                        .FirstOrDefault(x => x.CategoryCode == _rowSelected.C033);
+                    if (!(_rowSelected?.C002?.StartsWith("REX") ?? false) ||
+                        ((_rowSelected?.C002?.StartsWith("REX") ?? false) && catCheck == null)
+                    ) return;
 
-                    var unusage = _rowSelected.C035 == 100 ?
-                        _rowSelected.C024 - usage :
-                        (_rowSelected.C024 - usage * x.C028) / x.C028;
+                    _percentOfUsage = double.TryParse(_txtPercentOFusageNonwoven.EditValue?.ToString(), out double value) ? value : 0;
 
-                    x.C035 = _percentOfUsage;
-                    x.C023 = usage;
-                    x.C021 = usage;
-                    x.C022 = unusage;
-                });
+                    //cập nhật lại cho tất cả các item trong danh sách cân.
+                    _scaleDataFinal?.Where(x => x.C002.StartsWith("REX")).ForEach(x =>
+                    {
+                        var usage = x.C035 == 100 ?
+                           (double)Math.Round((decimal)(_rowSelected.C024 * _percentOfUsage / 100), 3) :
+                           (double)Math.Round((decimal)((decimal)(_rowSelected.C024 * _percentOfUsage / 100) / (decimal)x.C028), 3);
 
-                UpdateUI(refresh: true);
+                        var unusage = _rowSelected.C035 == 100 ?
+                            _rowSelected.C024 - usage :
+                            (_rowSelected.C024 - usage * x.C028) / x.C028;
+
+                        x.C035 = _percentOfUsage;
+                        x.C023 = usage;
+                        x.C021 = usage;
+                        x.C022 = unusage;
+                    });
+
+                    UpdateUI(refresh: true);
+                }
             };
             _txtPercentOFusageNonwoven.EditValue = GlobalVariable.ConfigSystem.PercentOfUserNonWoven;
+            _percentOfUsage = GlobalVariable.ConfigSystem.PercentOfUserNonWoven;
 
             // Đặt text khi bật/tắt
             _toggleSwitchRunner.Properties.OnText = "Yes";
@@ -795,22 +874,22 @@ namespace SSSW
 
         private void BtnUpdateVersion_Click(object sender, EventArgs e)
         {
-            //try
-            //{
-            //    isUpdateClicked = true;
-            //    string UUrl = GlobalVariables.ConfigJson.UpdatePath;
-            //    SplashScreenManager.ShowForm(typeof(WaitForm1));
-            //    System.Threading.Thread.Sleep(3000);
-            //    AutoUpdater.Start(UUrl);
-            //}
-            //catch (Exception ex)
-            //{
-            //    XtraMessageBox.Show($"{ex.Message}", "Error");
-            //}
-            //finally
-            //{
-            //    SplashScreenManager.CloseForm(false);
-            //}
+            try
+            {
+                isUpdateClicked = true;
+                string UUrl = GlobalVariable.ConfigSystem.UpdatePath;
+                SplashScreenManager.ShowForm(typeof(WaitForm));
+                System.Threading.Thread.Sleep(3000);
+                AutoUpdater.Start(UUrl);
+            }
+            catch (Exception ex)
+            {
+                XtraMessageBox.Show($"{ex.Message}", "Error");
+            }
+            finally
+            {
+                SplashScreenManager.CloseForm(false);
+            }
         }
 
         private async Task btnReload_Click(object sender, EventArgs e)
@@ -975,6 +1054,9 @@ namespace SSSW
             _newScale = true;
             _qrCodeScan = string.Empty;
 
+            _percentOfUsage = GlobalVariable.ConfigSystem.PercentOfUserNonWoven;
+            _articlePaisShotFinaly = 0;
+
             UpdateUI(false);
         }
 
@@ -1095,24 +1177,25 @@ namespace SSSW
                         var itemPrefix2 = GlobalVariable.PrefixUpToSecondHyphen(item.C002);
 
                         //lọc trong master data ra theo MoldId,machine và khác step với size hiện tại.
-                        var ft601CheckMultiSize = _dataHydra.Where(x =>
+                        var sameMolds = _dataHydra.Where(x =>
                                 x.C019 == item.C020 && //MoldId
                                 x.C015 == item.C004 &&//Machine
                                 x.C004 != item.C002 &&//Step khác với size hiện tại
                                 x.C002 != item.C008 &&//size
-                                GlobalVariable.PrefixUpToSecondHyphen(x.C004) == itemPrefix2
+                                GlobalVariable.PrefixUpToSecondHyphen(x.C004) == itemPrefix2 &&
+                                x.C010 == item.C015 //Step index WL
                             ).DistinctBy(x => x.C002).ToList();
 
-                        if (ft601CheckMultiSize == null || (ft601CheckMultiSize != null && ft601CheckMultiSize.Count == 0))
+                        if (sameMolds == null || (sameMolds != null && sameMolds.Count == 0))
                             continue;
 
                         //get category từ bom winline
-                        var itemList = string.Join(",", ft601CheckMultiSize.Select(x => x.C004));
+                        var itemList = string.Join(",", sameMolds.Select(x => x.C004));
                         var category = await dbContextDogeWH.Database.SqlQueryRaw<CategoryOfItemModel>("sp_GetCategorryOfItem @ItemCode = {0}",
                             itemList)
                             .AsNoTracking().ToListAsync();
 
-                        foreach (var itemNultiSize in ft601CheckMultiSize)
+                        foreach (var itemNultiSize in sameMolds)
                         {
                             //get category gán vào
                             var catItem = category.FirstOrDefault(x => x.ItemCode == itemNultiSize.C004);
@@ -1154,6 +1237,7 @@ namespace SSSW
                                 C033 = catItem.CategoryCode,
                                 C034 = catItem.CategoryName,
                                 C035 = _percentOfUsage,
+                                C037 = catItem.Unit,
                                 AllowScale = true,
 
                             });
@@ -1239,6 +1323,7 @@ namespace SSSW
 
                             if (stepPrevious != null)
                             {
+                                _percentOfUsage = (double)stepPrevious.C035;
                                 var catCheck = GlobalVariable.ConfigSystem.CategoryOfNonInjectionUsagePartial.FirstOrDefault((x => x.CategoryCode == item.C033));
                                 var total = catCheck == null ? stepPrevious?.C036 * item.C025 : stepPrevious?.C036;
                                 var usage = (double)Math.Round((decimal)(total * _percentOfUsage / 100), 3);
@@ -1265,9 +1350,9 @@ namespace SSSW
                                 //item.C008 = stepPrevious?.C008;
                                 //item.C015 = stepPrevious?.C015;
 
-                                item.C021 = usage; // Part Weight (g) of step.
-                                item.C022 = unusage; // Runner weight (g) of step.
-                                item.C023 = usage; // Total scale value of part weight (include these previous step), scale value.
+                                item.C021 = catCheck == null ? usage : usage / item.C028; // Part Weight (g) of step.
+                                item.C022 = catCheck == null ? unusage : unusage / item.C028; // Runner weight (g) of step.
+                                item.C023 = catCheck == null ? usage : usage / item.C028; // Total scale value of part weight (include these previous step), scale value.
                                 item.C024 = total; // Total weight of step injection (include runner + part), Scale value.
                                 //item.C025 = stepPrevious?.C025 ?? 0; // Số lượng. Dùng cho cân Recetacle/outsoleboard/Stud/Logo để quy đinh số lượng sử dụng trong bước.
                                 //item.C026 = stepPrevious.C026;
@@ -1335,6 +1420,8 @@ namespace SSSW
                     _rowSelected = rowSelect;
                 }
 
+                _articlePaisShotFinaly = _articlePaisShotFinaly == 0 ? (int)_scaleDataFinal.FirstOrDefault().C028 : _articlePaisShotFinaly;
+
                 UpdateUI(false);
             }
             catch (Exception ex)
@@ -1368,6 +1455,7 @@ namespace SSSW
             }
 
             _rowSelected = rowSelect;
+            _articlePaisShotFinaly = _articlePaisShotFinaly == 0 ? _rowSelected.C017 : _articlePaisShotFinaly;
 
             //if (e.Button.Index == 0) // Nút "Cân"
             //{
@@ -1443,14 +1531,32 @@ namespace SSSW
 
             try
             {
-                foreach (var item in _scaleDataFinal)
+                #region get nhieu size treen khuon
+                // Tiền tố (2 cụm đầu) của item.C004
+                var itemPrefix2 = GlobalVariable.PrefixUpToSecondHyphen(_rowSelected.C002);
+                //lọc trong danh sách các item đang cân ra theo MoldId,machine và khác step với size hiện tại.
+                var sameMolds = _scaleDataFinal.Where(x =>
+                        x.C020 == _rowSelected.C020 && //MoldId
+                        x.C004 == _rowSelected.C004 &&//Machine
+                                                      x.C002 != _rowSelected.C002 &&//Step khác với size hiện tại
+                                                      x.C008 != _rowSelected.C008 &&//size
+                        GlobalVariable.PrefixUpToSecondHyphen(x.C002) == itemPrefix2 &&
+                        x.C015 == _rowSelected.C015
+                    ).ToList();
+                #endregion
+
+                if (sameMolds.Count == 0)
                 {
-                    if (item.AllowScale && item.C023 == 0 && (item.C024 == 0 && item.C002.Substring(3) != "REX"))
+                    foreach (var item in _scaleDataFinal)
                     {
-                        MessageBox.Show($"You do not complete scale for the step: {item.C002}.", "Warning", MessageBoxButtons.OK, MessageBoxIcon.Warning);
-                        return;
+                        if (item.AllowScale && item.C023 == 0 && (item.C024 == 0 && item.C002.Substring(3) != "REX"))
+                        {
+                            MessageBox.Show($"You do not complete scale for the step: {item.C002}.", "Warning", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                            return;
+                        }
                     }
                 }
+
                 if (_operatorInfo == null || _operatorInfo.Id == Guid.Empty)
                 {
                     MessageBox.Show($"RFID card not yet scanned.", "Warning", MessageBoxButtons.OK, MessageBoxIcon.Warning);
@@ -1460,7 +1566,7 @@ namespace SSSW
                 var createdAt = DateTime.Now;
                 var createdMachine = Environment.MachineName;
 
-                var dataInsert = _scaleDataFinal.Where(x => x.AllowScale == true).ToList();
+                var dataInsert = _scaleDataFinal.Where(x => x.AllowScale == true && x.C021 > 0).ToList();
                 dataInsert.ForEach(x =>
                 {
                     //x.id = Guid.NewGuid();
@@ -1511,7 +1617,25 @@ namespace SSSW
         {
             var _data = e.NewValue.Value.ToString();
 
-            _scaleValue = Math.Round(Convert.ToDouble(_data), 3);
+            _scaleValue = Convert.ToDouble(_data);
+
+            //var digits = _materialInformation == null ||
+            //        (_materialInformation != null &&
+            //            string.IsNullOrEmpty(_materialInformation.MaterialCode)
+            //        ) ||
+            //        (_materialInformation != null &&
+            //              !string.IsNullOrEmpty(_materialInformation.MaterialCode) &&
+            //            !_materialInformation.MaterialCode.Contains("REX")
+            //        )
+            //    ? GlobalVariables.ConfigCM.DecimalNum
+            //    : 4;
+
+            //_netWeight = Math.Round(((_scaleValue ?? 0) - (_bagWeight ?? 0)), digits);
+
+            //GlobalVariables.InvokeIfRequired(this, () =>
+            //{
+            //    _txtNetWeight.Text = _netWeight.ToString();
+            //});
         }
 
         private void _btnSaveWeight_Click(object sender, EventArgs e)
@@ -1535,8 +1659,11 @@ namespace SSSW
                     _rowSelected.C023 = _scaleValue;
 
                     //tính khối lượng runner
-                    //_rowSelected.C022 = _toggleSwitchRunner.IsOn == true ? Math.Round(((double)(_rowSelected.C024 - (_rowSelected.C023 * (double)_rowSelected.C017)) / (double)_rowSelected.C017), 3) : 0;
-                    _rowSelected.C022 = _toggleSwitchRunner.IsOn == true ? Math.Round(((double)(_rowSelected.C024 - (_rowSelected.C023 * (double)_articlePaisShotFinaly)) / (double)_articlePaisShotFinaly), 3) : 0;
+                    //_rowSelected.C022 = _toggleSwitchRunner.IsOn == true ? Math.Round(((double)(_rowSelected.C024 - (_rowSelected.C023 * (double)_rowSelected.C017)) / (double)_rowSelected.C017), 3) : 0
+                    var prsShot = _articlePaisShotFinaly % 2 == 0 ? _articlePaisShotFinaly : _rowSelected.C017;
+
+                    _rowSelected.C022 = _toggleSwitchRunner.IsOn == true ? Math.Round(
+                        ((double)(_rowSelected.C024 - (_rowSelected.C023 * (double)prsShot)) / (double)prsShot), 3) : 0;
 
                     //tính part weight
                     var previuosStep = _scaleDataFinal.Where(x => x.C015 == _rowSelected.C015 - 1).ToList();
@@ -1568,11 +1695,9 @@ namespace SSSW
                 {
                     var usage = _rowSelected.C035 == 100 ?
                         (double)Math.Round((decimal)(_scaleValue * _percentOfUsage / 100), 3) :
-                        (double)Math.Round((decimal)((decimal)(_scaleValue * _percentOfUsage / 100) / _rowSelected.C028), 3);
+                        (double)Math.Round((decimal)((decimal)(_scaleValue * _percentOfUsage / 100) / (decimal)_rowSelected.C028), 3);
 
-                    var unusage = _rowSelected.C035 == 100 ? 
-                        _scaleValue - usage : 
-                        (_scaleValue - usage * _rowSelected.C028) / _rowSelected.C028;
+                    var unusage = (_scaleValue - usage * _rowSelected.C028) / _rowSelected.C028;
 
                     _rowSelected.C024 = _scaleValue;
                     _rowSelected.C023 = usage;
@@ -1584,14 +1709,44 @@ namespace SSSW
                 }
             }
 
-            //cập nhật lại giá trị cân cho các bước sau bước hiện tại bị thay đổi khối lượng.
+            #region get nhieu size treen khuon
+            // Tiền tố (2 cụm đầu) của item.C004
+            var itemPrefix2 = GlobalVariable.PrefixUpToSecondHyphen(_rowSelected.C002);
+            //lọc trong danh sách các item đang cân ra theo MoldId,machine và khác step với size hiện tại.
+            var sameMolds = _scaleDataFinal.Where(x =>
+                    x.C020 == _rowSelected.C020 && //MoldId
+                    x.C004 == _rowSelected.C004 &&//Machine
+                                                  //x.C002 != _rowSelected.C002 &&//Step khác với size hiện tại
+                                                  //x.C008 != _rowSelected.C008 &&//size
+                    GlobalVariable.PrefixUpToSecondHyphen(x.C002) == itemPrefix2 &&
+                    x.C015 == _rowSelected.C015
+                ).ToList();
 
+            if (sameMolds.Count > 1)
+            {
+                var sumPartWeight = sameMolds.Sum(x => x.C023);
+                var pairShot = sameMolds.FirstOrDefault()?.C028 > 0 ?
+                        sameMolds.Count() :
+                        1 / sameMolds.FirstOrDefault()?.C028;
+
+                foreach (var item in sameMolds)
+                {
+                    item.C024 = _rowSelected.C024;
+                    item.C022 = item.C023 > 0 ?
+                       (_rowSelected.C024 - sumPartWeight) / pairShot :
+                        0;
+                }
+            }
+            #endregion
+
+            //cập nhật lại giá trị cân cho các bước sau bước hiện tại khi bước hiện tại bị thay đổi khối lượng.
             var stepNeedToUpdate = _scaleDataFinal.Where(x => x.C015 >= _rowSelected.C015 && x.C024 > 0 &&
                     !x.C003.StartsWith("Stud") &&
                     !x.C003.StartsWith("Inlay") &&
                     !x.C003.StartsWith("Ring") &&
                     !x.C002.StartsWith("REX") &&
-                    x.C002 != _rowSelected.C002
+                    x.C002 != _rowSelected.C002 &&
+                    GlobalVariable.PrefixUpToSecondHyphen(x.C002) != itemPrefix2
                 )
                 .OrderBy(x => x.C015)
                 .ToList();
@@ -1714,12 +1869,12 @@ namespace SSSW
                 _txtSize.Text = _rowSelected?.C008;
                 _txtStepIndex.Text = _rowSelected?.C015.ToString();
                 _txtMoldPairShot.Text = _rowSelected?.C018.ToString();
-                _txtActiclePairShot.Text = _rowSelected.C028 == 0 ? _rowSelected?.C017.ToString() : _rowSelected.C028.ToString();
+                _txtActiclePairShot.Text = _articlePaisShotFinaly.ToString();
                 _txtArticle.Text = _rowSelected?.C005;
                 _txtQty.Text = _rowSelected?.C025.ToString();
                 _txtFgItemCode.Text = _rowSelected?.C013;
                 _txtFGName.Text = _rowSelected?.C014;
-                _txtPercentOFusageNonwoven.EditValue = _rowSelected.C035 != 0 ? _rowSelected.C035 : GlobalVariable.ConfigSystem.PercentOfUserNonWoven;
+                _txtPercentOFusageNonwoven.EditValue = _rowSelected.C035 != 0 ? _rowSelected.C035 : _percentOfUsage;
 
                 //kiểm tra nếu bước cân non injection là non-woven và mesh thì enanle text nhập phần trăm sử dụng lên để tính toán
                 var catChceck = GlobalVariable.ConfigSystem.CategoryOfNonInjectionUsagePartial.Where(x => x.CategoryCode == _rowSelected.C033).FirstOrDefault();

@@ -109,7 +109,7 @@ namespace SSSW.models
         /// </summary>
         [Column("c028")]
         [DisplayName("Article Pairs Shot Final")]
-        public int? C028 { get; set; }
+        public double? C028 { get; set; }
 
         //------------------------------
         /// <summary>
@@ -245,5 +245,11 @@ namespace SSSW.models
         /// </summary>
         [DisplayName("Percent of Usage (%)")]
         public double? C035 { get; set; }
+
+        /// <summary>
+        /// Remarks.
+        /// </summary>
+        [DisplayName("Remarks")]
+        public string? C038 { get; set; }
     }
 }

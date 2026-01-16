@@ -36,6 +36,8 @@ namespace SSSW.modelss
         /// Json serialize from list<CategoryModel>.
         /// </summary>
         public List<CategoryModel>? CategoryOfNonInjectionUsagePartial { get; set; }
+
+        public string? UpdatePath { get; set; }
     }
 
     public class CategoryModel

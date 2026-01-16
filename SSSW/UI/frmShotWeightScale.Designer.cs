@@ -112,6 +112,9 @@ namespace SSSW
             _grvTotalStep = new DevExpress.XtraGrid.Views.Grid.GridView();
             _repositoryItemButtonEditScale = new DevExpress.XtraEditors.Repository.RepositoryItemButtonEdit();
             panelControl1 = new DevExpress.XtraEditors.PanelControl();
+            _labVer = new Label();
+            labelControl19 = new DevExpress.XtraEditors.LabelControl();
+            _txtRemark = new DevExpress.XtraEditors.TextEdit();
             ((System.ComponentModel.ISupportInitialize)groupInfo).BeginInit();
             groupInfo.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)_txtPercentOFusageNonwoven.Properties).BeginInit();
@@ -142,6 +145,7 @@ namespace SSSW
             ((System.ComponentModel.ISupportInitialize)_repositoryItemButtonEditScale).BeginInit();
             ((System.ComponentModel.ISupportInitialize)panelControl1).BeginInit();
             panelControl1.SuspendLayout();
+            ((System.ComponentModel.ISupportInitialize)_txtRemark.Properties).BeginInit();
             SuspendLayout();
             // 
             // ribbonPageGroup6
@@ -193,6 +197,8 @@ namespace SSSW
             groupInfo.AppearanceCaption.Font = new Font("Segoe UI", 23F, FontStyle.Bold);
             groupInfo.AppearanceCaption.Options.UseBorderColor = true;
             groupInfo.AppearanceCaption.Options.UseFont = true;
+            groupInfo.Controls.Add(labelControl19);
+            groupInfo.Controls.Add(_txtRemark);
             groupInfo.Controls.Add(_txtPercentOFusageNonwoven);
             groupInfo.Controls.Add(labelControl16);
             groupInfo.Controls.Add(labelControl13);
@@ -225,7 +231,7 @@ namespace SSSW
             groupInfo.Location = new Point(12, 55);
             groupInfo.Margin = new Padding(3, 1, 3, 1);
             groupInfo.Name = "groupInfo";
-            groupInfo.Size = new Size(1425, 478);
+            groupInfo.Size = new Size(1425, 537);
             groupInfo.TabIndex = 31;
             groupInfo.Text = "Step information";
             // 
@@ -595,10 +601,10 @@ namespace SSSW
             groupControl6.Controls.Add(_txtScaleValue);
             groupControl6.Controls.Add(labelControl8);
             groupControl6.GroupStyle = GroupStyle.Card;
-            groupControl6.Location = new Point(1453, 298);
+            groupControl6.Location = new Point(1453, 323);
             groupControl6.Margin = new Padding(3, 1, 3, 1);
             groupControl6.Name = "groupControl6";
-            groupControl6.Size = new Size(455, 235);
+            groupControl6.Size = new Size(455, 269);
             groupControl6.TabIndex = 34;
             groupControl6.Text = "Scale";
             // 
@@ -654,7 +660,7 @@ namespace SSSW
             groupControl4.Location = new Point(1453, 55);
             groupControl4.Margin = new Padding(3, 1, 3, 1);
             groupControl4.Name = "groupControl4";
-            groupControl4.Size = new Size(455, 235);
+            groupControl4.Size = new Size(455, 252);
             groupControl4.TabIndex = 33;
             groupControl4.Text = "Scan RFID";
             // 
@@ -714,10 +720,10 @@ namespace SSSW
             groupControl5.AppearanceCaption.Options.UseFont = true;
             groupControl5.Controls.Add(_grcTotalStep);
             groupControl5.GroupStyle = GroupStyle.Card;
-            groupControl5.Location = new Point(10, 549);
+            groupControl5.Location = new Point(10, 634);
             groupControl5.Margin = new Padding(3, 1, 3, 1);
             groupControl5.Name = "groupControl5";
-            groupControl5.Size = new Size(1898, 448);
+            groupControl5.Size = new Size(1898, 363);
             groupControl5.TabIndex = 34;
             groupControl5.Text = "Total Steps";
             // 
@@ -734,7 +740,7 @@ namespace SSSW
             _grcTotalStep.Margin = new Padding(3, 2, 3, 2);
             _grcTotalStep.Name = "_grcTotalStep";
             _grcTotalStep.RepositoryItems.AddRange(new DevExpress.XtraEditors.Repository.RepositoryItem[] { _repositoryItemButtonEditScale });
-            _grcTotalStep.Size = new Size(1894, 403);
+            _grcTotalStep.Size = new Size(1894, 318);
             _grcTotalStep.TabIndex = 36;
             _grcTotalStep.UseEmbeddedNavigator = true;
             _grcTotalStep.ViewCollection.AddRange(new DevExpress.XtraGrid.Views.Base.BaseView[] { _grvTotalStep });
@@ -754,6 +760,7 @@ namespace SSSW
             // 
             // panelControl1
             // 
+            panelControl1.Controls.Add(_labVer);
             panelControl1.Controls.Add(_btnCancel);
             panelControl1.Controls.Add(_btnConfirm);
             panelControl1.Dock = DockStyle.Bottom;
@@ -761,6 +768,44 @@ namespace SSSW
             panelControl1.Name = "panelControl1";
             panelControl1.Size = new Size(1920, 79);
             panelControl1.TabIndex = 35;
+            // 
+            // _labVer
+            // 
+            _labVer.Location = new Point(1706, 49);
+            _labVer.Name = "_labVer";
+            _labVer.Size = new Size(214, 20);
+            _labVer.TabIndex = 28;
+            _labVer.Text = "label1";
+            _labVer.TextAlign = ContentAlignment.MiddleRight;
+            // 
+            // labelControl19
+            // 
+            labelControl19.Appearance.Font = new Font("Tahoma", 15F);
+            labelControl19.Appearance.Options.UseFont = true;
+            labelControl19.AutoSizeMode = DevExpress.XtraEditors.LabelAutoSizeMode.None;
+            labelControl19.Location = new Point(13, 478);
+            labelControl19.Margin = new Padding(3, 1, 3, 1);
+            labelControl19.Name = "labelControl19";
+            labelControl19.Size = new Size(151, 27);
+            labelControl19.TabIndex = 95;
+            labelControl19.Text = "Remark";
+            // 
+            // _txtRemark
+            // 
+            _txtRemark.EditValue = "";
+            _txtRemark.Location = new Point(204, 478);
+            _txtRemark.Margin = new Padding(3, 1, 3, 1);
+            _txtRemark.Name = "_txtRemark";
+            _txtRemark.Properties.Appearance.BackColor = Color.White;
+            _txtRemark.Properties.Appearance.Font = new Font("Tahoma", 15F);
+            _txtRemark.Properties.Appearance.Options.UseBackColor = true;
+            _txtRemark.Properties.Appearance.Options.UseFont = true;
+            _txtRemark.Properties.Appearance.Options.UseTextOptions = true;
+            _txtRemark.Properties.Appearance.TextOptions.WordWrap = WordWrap.Wrap;
+            _txtRemark.Properties.AutoHeight = false;
+            _txtRemark.Properties.ReadOnly = true;
+            _txtRemark.Size = new Size(1210, 40);
+            _txtRemark.TabIndex = 96;
             // 
             // frmShotWeightScale
             // 
@@ -808,6 +853,7 @@ namespace SSSW
             ((System.ComponentModel.ISupportInitialize)_repositoryItemButtonEditScale).EndInit();
             ((System.ComponentModel.ISupportInitialize)panelControl1).EndInit();
             panelControl1.ResumeLayout(false);
+            ((System.ComponentModel.ISupportInitialize)_txtRemark.Properties).EndInit();
             ResumeLayout(false);
         }
 
@@ -914,5 +960,8 @@ namespace SSSW
         private DevExpress.XtraEditors.TextEdit _txtFGName;
         private DevExpress.XtraEditors.TextEdit _txtPercentOFusageNonwoven;
         private DevExpress.XtraEditors.LabelControl labelControl16;
+        private Label _labVer;
+        private DevExpress.XtraEditors.LabelControl labelControl19;
+        private DevExpress.XtraEditors.TextEdit _txtRemark;
     }
 }

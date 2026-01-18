@@ -8,7 +8,12 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <langVersion>latest</langVersion>
     <ApplicationIcon>Shotweight_Icon.ico</ApplicationIcon>
-    <Version>1.0.2</Version>
+    
+    <VersionPrefix>1.0</VersionPrefix>
+    <VersionSuffix>$([System.DateTime]::Now.ToString("MMdd.HHmm"))</VersionSuffix>
+    <AssemblyVersion>$(VersionPrefix).$(VersionSuffix)</AssemblyVersion>
+    <FileVersion>$(VersionPrefix).$(VersionSuffix)</FileVersion>
+    <Version>$(VersionPrefix).$(VersionSuffix)</Version>
   </PropertyGroup>
 
   <ItemGroup>
@@ -62,44 +67,95 @@
     </EmbeddedResource>
   </ItemGroup>
 
-  <Target Name="GetAssmeblyVersion" AfterTargets="Build">
-    <GetAssemblyIdentity AssemblyFiles="$(TargetPath)">
-      <Output TaskParameter="Assemblies" ItemName="Identity" />
-    </GetAssemblyIdentity>
+
+  <PropertyGroup>
+    <!-- Đưa file vào đúng thư mục bin\<Configuration>\<TFM>\ -->
+    <UpdateDir>$(TargetDir)Update</UpdateDir>
+    <ZipFilePath>$(TargetDir)Update.zip</ZipFilePath>
+    <XmlFilePath>$(TargetDir)update.xml</XmlFilePath>
+
+    <!-- URL tải về cho AutoUpdater.NET (không ảnh hưởng build) -->
+    <!--fFT-->
+    <DeployUrl>\\10.40.10.9\Public$\98_Public_Share\99_Shared\05_IT\01_Update\36_SSSW\Update.zip</DeployUrl>
+    <!--fVN-->
+    <!--<DeployDir>\\192.168.1.241\FramasPublic\PUBLIC_Able to deleted\22 IT\01-UpdateApp\11-SSFG_IDC\36_SSSW\Update.zip</DeployDir>-->
+  </PropertyGroup>
+
+  <!-- 1) Chỉ tạo update.xml khi build Release -->
+  <Target Name="GenerateUpdateXml"
+          AfterTargets="Build"
+          Condition="'$(Configuration)' == 'Release'">
+
+    <Delete Files="$(XmlFilePath)" />
+
     <ItemGroup>
-      <Line Include="line01">
-        <Text>&lt;?xml version="1.0" encoding="UTF-8"?&gt;</Text>
-      </Line>
-      <Line Include="line02">
+      <XmlLines Include="l1">
+        <Text>&lt;?xml version=&quot;1.0&quot; encoding=&quot;utf-8&quot;?&gt;</Text>
+      </XmlLines>
+      <XmlLines Include="l2">
         <Text>&lt;item&gt;</Text>
-      </Line>
-      <Line Include="line03">
-        <Text>&lt;version&gt;%(Identity.Version)&lt;/version&gt;</Text>
-      </Line>
-      <Line Include="line04">
-        <Text>&lt;url&gt;$(DeployDir)&lt;/url&gt;</Text>
-      </Line>
-      <Line Include="line05">
-        <Text>&lt;changelog&gt;&lt;/changelog&gt;</Text>
-      </Line>
-      <Line Include="line06">
-        <Text>&lt;mandatory&gt;false&lt;/mandatory&gt;</Text>
-      </Line>
-      <Line Include="line07">
+      </XmlLines>
+      <XmlLines Include="l3">
+        <Text>  &lt;version&gt;$(Version)&lt;/version&gt;</Text>
+      </XmlLines>
+      <XmlLines Include="l4">
+        <Text>  &lt;url&gt;$(DeployUrl)&lt;/url&gt;</Text>
+      </XmlLines>
+      <XmlLines Include="l5">
+        <Text>  &lt;changelog&gt;&lt;/changelog&gt;</Text>
+      </XmlLines>
+      <XmlLines Include="l6">
+        <Text>  &lt;mandatory&gt;false&lt;/mandatory&gt;</Text>
+      </XmlLines>
+      <XmlLines Include="l7">
         <Text>&lt;/item&gt;</Text>
-      </Line>
-      <LineText Include="%(Line.Text)" />
+      </XmlLines>
     </ItemGroup>
-    <WriteLinesToFile File="$(OutputPath)\..\update.xml" Lines="@(LineText)" Overwrite="true" Encoding="Unicode" />
+
+    <WriteLinesToFile
+      File="$(XmlFilePath)"
+      Lines="@(XmlLines->'%(Text)')"
+      Overwrite="true"
+      Encoding="UTF-8" />
   </Target>
-  <Target Name="CopyDLLs" AfterTargets="Build">
-    <Message Text="Executing CopyDLLs task" Importance="High" />
-    <Copy SourceFiles="$(TargetDir)$(AssemblyName).exe;$(TargetDir)$(AssemblyName).pdb" DestinationFolder="$(OutputPath)\..\Update" />
-    <!--<Copy SourceFiles="$(TargetDir)$(AssemblyName).exe;$(TargetDir)$(AssemblyName).exe.config;$(TargetDir)$(AssemblyName).pdb" DestinationFolder="$(OutputPath)\..\Update" />-->
-    <!--<Copy SourceFiles="$(TargetDir)\Reports\rptFormula.repx" DestinationFolder="$(OutputPath)\..\Update\Reports" />-->
-    <Message Text="Copied build files" Importance="High" />
-    <ZipDirectory SourceDirectory="$(OutputPath)\..\Update" DestinationFile="$(OutputPath)\..\Update.zip" Overwrite="true" />
-    <RemoveDir Directories="$(OutputPath)\..\Update" />
+
+  <!-- 2) Chỉ đóng gói Update.zip khi build Release -->
+  <Target Name="CreateUpdateZip"
+          AfterTargets="GenerateUpdateXml"
+          Condition="'$(Configuration)' == 'Release'">
+
+    <Message Text="Start packing version $(Version)..." Importance="High" />
+
+    <RemoveDir Directories="$(UpdateDir)" />
+    <MakeDir Directories="$(UpdateDir)" />
+
+    <ItemGroup>
+      <!-- Copy toàn bộ output đã build trong bin -->
+      <PublishFiles Include="$(TargetDir)**\*.*" />
+    </ItemGroup>
+
+    <Copy SourceFiles="@(PublishFiles)" DestinationFolder="$(UpdateDir)\%(RecursiveDir)" />
+
+    <ZipDirectory SourceDirectory="$(UpdateDir)"
+                  DestinationFile ="$(ZipFilePath)"
+                  Overwrite="true" />
+
+    <RemoveDir Directories="$(UpdateDir)" />
+
+    <Message Text="Update package created at: $(ZipFilePath)" Importance="High" />
   </Target>
-  
+
+  <!-- 3) (Tùy chọn) Chỉ khi Release: copy Update.zip lên share -->
+  <Target Name="CopyUpdateToShare"
+          AfterTargets="CreateUpdateZip"
+          Condition="'$(Configuration)' == 'Release' AND Exists('$(ZipFilePath)')">
+
+    <Copy SourceFiles="$(ZipFilePath)"
+          DestinationFiles="$(DeployUrl)"
+          OverwriteReadOnlyFiles="true" />
+
+    <Message Text="Copied $(ZipFilePath) to $(DeployUrl)" Importance="High" />
+  </Target>
+
+
 </Project>

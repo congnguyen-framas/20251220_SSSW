@@ -1725,9 +1725,9 @@ namespace SSSW
             if (sameMolds.Count > 1)
             {
                 var sumPartWeight = sameMolds.Sum(x => x.C023);
-                var pairShot = sameMolds.FirstOrDefault()?.C028 > 0 ?
+                var pairShot = sameMolds.FirstOrDefault()?.C028 > 1 ?
                         sameMolds.Count() :
-                        1 / sameMolds.FirstOrDefault()?.C028;
+                        1 ;
 
                 foreach (var item in sameMolds)
                 {

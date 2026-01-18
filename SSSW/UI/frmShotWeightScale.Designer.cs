@@ -70,6 +70,8 @@ namespace SSSW
             _btnCancel = new DevExpress.XtraEditors.SimpleButton();
             _btnConfirm = new DevExpress.XtraEditors.SimpleButton();
             groupInfo = new DevExpress.XtraEditors.GroupControl();
+            labelControl19 = new DevExpress.XtraEditors.LabelControl();
+            _txtRemark = new DevExpress.XtraEditors.TextEdit();
             _txtPercentOFusageNonwoven = new DevExpress.XtraEditors.TextEdit();
             labelControl16 = new DevExpress.XtraEditors.LabelControl();
             labelControl13 = new DevExpress.XtraEditors.LabelControl();
@@ -113,10 +115,9 @@ namespace SSSW
             _repositoryItemButtonEditScale = new DevExpress.XtraEditors.Repository.RepositoryItemButtonEdit();
             panelControl1 = new DevExpress.XtraEditors.PanelControl();
             _labVer = new Label();
-            labelControl19 = new DevExpress.XtraEditors.LabelControl();
-            _txtRemark = new DevExpress.XtraEditors.TextEdit();
             ((System.ComponentModel.ISupportInitialize)groupInfo).BeginInit();
             groupInfo.SuspendLayout();
+            ((System.ComponentModel.ISupportInitialize)_txtRemark.Properties).BeginInit();
             ((System.ComponentModel.ISupportInitialize)_txtPercentOFusageNonwoven.Properties).BeginInit();
             ((System.ComponentModel.ISupportInitialize)_txtStepCode.Properties).BeginInit();
             ((System.ComponentModel.ISupportInitialize)_txtFGName.Properties).BeginInit();
@@ -145,7 +146,6 @@ namespace SSSW
             ((System.ComponentModel.ISupportInitialize)_repositoryItemButtonEditScale).BeginInit();
             ((System.ComponentModel.ISupportInitialize)panelControl1).BeginInit();
             panelControl1.SuspendLayout();
-            ((System.ComponentModel.ISupportInitialize)_txtRemark.Properties).BeginInit();
             SuspendLayout();
             // 
             // ribbonPageGroup6
@@ -234,6 +234,35 @@ namespace SSSW
             groupInfo.Size = new Size(1425, 537);
             groupInfo.TabIndex = 31;
             groupInfo.Text = "Step information";
+            // 
+            // labelControl19
+            // 
+            labelControl19.Appearance.Font = new Font("Tahoma", 15F);
+            labelControl19.Appearance.Options.UseFont = true;
+            labelControl19.AutoSizeMode = DevExpress.XtraEditors.LabelAutoSizeMode.None;
+            labelControl19.Location = new Point(13, 478);
+            labelControl19.Margin = new Padding(3, 1, 3, 1);
+            labelControl19.Name = "labelControl19";
+            labelControl19.Size = new Size(151, 27);
+            labelControl19.TabIndex = 95;
+            labelControl19.Text = "Remark";
+            // 
+            // _txtRemark
+            // 
+            _txtRemark.EditValue = "";
+            _txtRemark.Location = new Point(204, 478);
+            _txtRemark.Margin = new Padding(3, 1, 3, 1);
+            _txtRemark.Name = "_txtRemark";
+            _txtRemark.Properties.Appearance.BackColor = Color.White;
+            _txtRemark.Properties.Appearance.Font = new Font("Tahoma", 15F);
+            _txtRemark.Properties.Appearance.Options.UseBackColor = true;
+            _txtRemark.Properties.Appearance.Options.UseFont = true;
+            _txtRemark.Properties.Appearance.Options.UseTextOptions = true;
+            _txtRemark.Properties.Appearance.TextOptions.WordWrap = WordWrap.Wrap;
+            _txtRemark.Properties.AutoHeight = false;
+            _txtRemark.Properties.ReadOnly = true;
+            _txtRemark.Size = new Size(1210, 40);
+            _txtRemark.TabIndex = 96;
             // 
             // _txtPercentOFusageNonwoven
             // 
@@ -778,35 +807,6 @@ namespace SSSW
             _labVer.Text = "label1";
             _labVer.TextAlign = ContentAlignment.MiddleRight;
             // 
-            // labelControl19
-            // 
-            labelControl19.Appearance.Font = new Font("Tahoma", 15F);
-            labelControl19.Appearance.Options.UseFont = true;
-            labelControl19.AutoSizeMode = DevExpress.XtraEditors.LabelAutoSizeMode.None;
-            labelControl19.Location = new Point(13, 478);
-            labelControl19.Margin = new Padding(3, 1, 3, 1);
-            labelControl19.Name = "labelControl19";
-            labelControl19.Size = new Size(151, 27);
-            labelControl19.TabIndex = 95;
-            labelControl19.Text = "Remark";
-            // 
-            // _txtRemark
-            // 
-            _txtRemark.EditValue = "";
-            _txtRemark.Location = new Point(204, 478);
-            _txtRemark.Margin = new Padding(3, 1, 3, 1);
-            _txtRemark.Name = "_txtRemark";
-            _txtRemark.Properties.Appearance.BackColor = Color.White;
-            _txtRemark.Properties.Appearance.Font = new Font("Tahoma", 15F);
-            _txtRemark.Properties.Appearance.Options.UseBackColor = true;
-            _txtRemark.Properties.Appearance.Options.UseFont = true;
-            _txtRemark.Properties.Appearance.Options.UseTextOptions = true;
-            _txtRemark.Properties.Appearance.TextOptions.WordWrap = WordWrap.Wrap;
-            _txtRemark.Properties.AutoHeight = false;
-            _txtRemark.Properties.ReadOnly = true;
-            _txtRemark.Size = new Size(1210, 40);
-            _txtRemark.TabIndex = 96;
-            // 
             // frmShotWeightScale
             // 
             AutoScaleDimensions = new SizeF(7F, 15F);
@@ -825,6 +825,7 @@ namespace SSSW
             WindowState = FormWindowState.Maximized;
             ((System.ComponentModel.ISupportInitialize)groupInfo).EndInit();
             groupInfo.ResumeLayout(false);
+            ((System.ComponentModel.ISupportInitialize)_txtRemark.Properties).EndInit();
             ((System.ComponentModel.ISupportInitialize)_txtPercentOFusageNonwoven.Properties).EndInit();
             ((System.ComponentModel.ISupportInitialize)_txtStepCode.Properties).EndInit();
             ((System.ComponentModel.ISupportInitialize)_txtFGName.Properties).EndInit();
@@ -853,7 +854,6 @@ namespace SSSW
             ((System.ComponentModel.ISupportInitialize)_repositoryItemButtonEditScale).EndInit();
             ((System.ComponentModel.ISupportInitialize)panelControl1).EndInit();
             panelControl1.ResumeLayout(false);
-            ((System.ComponentModel.ISupportInitialize)_txtRemark.Properties).EndInit();
             ResumeLayout(false);
         }
 

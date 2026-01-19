@@ -93,6 +93,26 @@ namespace SSSW.Properties {
         /// <summary>
         ///   Looks up a localized resource of type System.Drawing.Bitmap.
         /// </summary>
+        public static System.Drawing.Bitmap delete_30_black {
+            get {
+                object obj = ResourceManager.GetObject("delete_30_black", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.Drawing.Bitmap.
+        /// </summary>
+        public static System.Drawing.Bitmap delete_30_white {
+            get {
+                object obj = ResourceManager.GetObject("delete_30_white", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.Drawing.Bitmap.
+        /// </summary>
         public static System.Drawing.Bitmap eraser_30 {
             get {
                 object obj = ResourceManager.GetObject("eraser_30", resourceCulture);

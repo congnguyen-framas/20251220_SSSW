@@ -6,6 +6,8 @@
         public string StepItemName { get; set; }
 
         public string? Size { get; set; } = string.Empty;
+        public int? ArticlePairsShot { get; set; }
+        public int? MoldPairsShot { get; set; }
         public string? Machine { get; set; } = string.Empty;
 
         public string? HydraOrderNo { get; set; } = string.Empty;

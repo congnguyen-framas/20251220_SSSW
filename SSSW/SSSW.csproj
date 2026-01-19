@@ -75,10 +75,18 @@
     <XmlFilePath>$(TargetDir)update.xml</XmlFilePath>
 
     <!-- URL tải về cho AutoUpdater.NET (không ảnh hưởng build) -->
+    <!-- Thư mục share đích (không kèm tên file) -->
     <!--fFT-->
-    <DeployUrl>\\10.40.10.9\Public$\98_Public_Share\99_Shared\05_IT\01_Update\36_SSSW\Update.zip</DeployUrl>
+
+    <!-- Thư mục share đích (không kèm tên file) -->
+    <DeployDir>\\10.40.10.9\Public$\98_Public_Share\99_Shared\05_IT\01_Update\36_SSSW\</DeployDir>
     <!--fVN-->
-    <!--<DeployDir>\\192.168.1.241\FramasPublic\PUBLIC_Able to deleted\22 IT\01-UpdateApp\11-SSFG_IDC\36_SSSW\Update.zip</DeployDir>-->
+    <!--<DeployDir>\\192.168.1.241\FramasPublic\PUBLIC_Able to deleted\22 IT\01-UpdateApp\11-SSFG_IDC\36_SSSW\</DeployDir>-->
+
+    <!-- Đường dẫn đích đầy đủ cho từng file -->
+    <DeployZipPath>$(DeployDir)Update.zip</DeployZipPath>
+    <DeployXmlPath>$(DeployDir)update.xml</DeployXmlPath>
+
   </PropertyGroup>
 
   <!-- 1) Chỉ tạo update.xml khi build Release -->
@@ -99,7 +107,7 @@
         <Text>  &lt;version&gt;$(Version)&lt;/version&gt;</Text>
       </XmlLines>
       <XmlLines Include="l4">
-        <Text>  &lt;url&gt;$(DeployUrl)&lt;/url&gt;</Text>
+        <Text>  &lt;url&gt;$(DeployZipPath)&lt;/url&gt;</Text>
       </XmlLines>
       <XmlLines Include="l5">
         <Text>  &lt;changelog&gt;&lt;/changelog&gt;</Text>
@@ -146,15 +154,50 @@
   </Target>
 
   <!-- 3) (Tùy chọn) Chỉ khi Release: copy Update.zip lên share -->
-  <Target Name="CopyUpdateToShare"
+  <!--<Target Name="CopyUpdateToShare"
           AfterTargets="CreateUpdateZip"
           Condition="'$(Configuration)' == 'Release' AND Exists('$(ZipFilePath)')">
 
     <Copy SourceFiles="$(ZipFilePath)"
-          DestinationFiles="$(DeployUrl)"
+          DestinationFiles="$(DeployZipPath)"
+          OverwriteReadOnlyFiles="true" />
+    <Copy SourceFiles="$(XmlFilePath)"
+          DestinationFiles="$(DeployXmlPath)"
           OverwriteReadOnlyFiles="true" />
 
     <Message Text="Copied $(ZipFilePath) to $(DeployUrl)" Importance="High" />
+  </Target>-->
+
+  <Target Name="CopyUpdateToShare"
+          AfterTargets="CreateUpdateZip"
+          Condition="'$(Configuration)' == 'Release' AND Exists('$(ZipFilePath)') AND Exists('$(XmlFilePath)')">
+
+    <!-- Kiểm tra thư mục share có tồn tại không -->
+    <Message Text="Kiểm tra thư mục đích: $(DeployDir)" Importance="High" />
+    <Error Text="Thư mục đích không tồn tại: $(DeployDir)"
+           Condition="!Exists('$(DeployDir)')" />
+
+    <!-- Copy ZIP -->
+    <Message Text="Copy ZIP: $(ZipFilePath) -> $(DeployZipPath)" Importance="High" />
+    <Copy SourceFiles="$(ZipFilePath)"
+          DestinationFiles="$(DeployZipPath)"
+          OverwriteReadOnlyFiles="true">
+      <Output TaskParameter="CopiedFiles" ItemName="CopiedZip" />
+    </Copy>
+    <Error Text="Không thể copy Update.zip lên share: $(DeployZipPath)"
+           Condition="@(_CreatedZip->Count()) == 0 AND '@(CopiedZip)' == ''" />
+
+    <!-- Copy XML -->
+    <Message Text="Copy XML: $(XmlFilePath) -> $(DeployXmlPath)" Importance="High" />
+    <Copy SourceFiles="$(XmlFilePath)"
+          DestinationFiles="$(DeployXmlPath)"
+          OverwriteReadOnlyFiles="true">
+      <Output TaskParameter="CopiedFiles" ItemName="CopiedXml" />
+    </Copy>
+    <Error Text="Không thể copy update.xml lên share: $(DeployXmlPath)"
+           Condition="@(_CreatedXml->Count()) == 0 AND '@(CopiedXml)' == ''" />
+
+    <Message Text="Đã copy thành công: $(DeployZipPath) và $(DeployXmlPath)" Importance="High" />
   </Target>
 
 

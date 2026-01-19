@@ -23,8 +23,14 @@ namespace SSSW.modelss
             Port = 23,
             ModelName = "Scale_Vibra_HAW30",
             CalibGain = 1.0,
-            DecimalNum = 3,
+            DecimalNum = 6,
         };
+
+        /// <summary>
+        /// Biến dùng để cho phép đọc giá trị cân liên tục.
+        /// khi nào cần nhập tay thì tắt biến này đi thì mới nhập được giá trị bằng tay.
+        /// </summary>
+        public bool? EnableReadScale { get; set; } = true;
 
         /// <summary>
         /// Tỉ lệ sử dụng cho vật liệu Non Woven (Phần trăm).

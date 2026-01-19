@@ -1,7 +1,4 @@
 ﻿using AutoUpdaterDotNET;
-using DevExpress.Charts.Native;
-using DevExpress.CodeParser.Diagnostics;
-using DevExpress.Data.Controls.ExpressionEditor;
 using DevExpress.Mvvm;
 using DevExpress.Mvvm.Native;
 using DevExpress.Mvvm.POCO;
@@ -11,25 +8,15 @@ using DevExpress.XtraEditors.Repository;
 using DevExpress.XtraGrid.Columns;
 using DevExpress.XtraPrinting.Native;
 using DevExpress.XtraSplashScreen;
-using DevExpress.XtraSpreadsheet.Model;
-using DevExpress.XtraWaitForm;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.ChangeTracking.Internal;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
-using Microsoft.IdentityModel.Tokens;
 using Newtonsoft.Json;
-using ScanAndScale.Driver;
 using ScanAndScale.Helper;
 using SSSW.models;
 using SSSW.modelss;
-using System;
-using System.Configuration;
-using System.DirectoryServices.ActiveDirectory;
-using System.Runtime.ConstrainedExecution;
 using System.Runtime.InteropServices;
-using System.Text.Json.Serialization;
-using System.Threading.Tasks;
 
 namespace SSSW
 {
@@ -222,6 +209,8 @@ namespace SSSW
                     StepItemCode = x.C004,
                     StepItemName = x.C005,
                     Size = x.C002,
+                    ArticlePairsShot = x.C013,
+                    MoldPairsShot = x.C014,
                     Machine = x.C015,
                     HydraOrderNo = x.C018
                 }).Distinct().ToList();
@@ -233,6 +222,8 @@ namespace SSSW
                     _lkStepCode.Properties.DisplayMember = "StepItemCode";
                     _lkStepCode.Properties.ValueMember = "StepItemCode";
                     _lkStepCode.Properties.PopulateColumns();
+
+
                 });
             }
             catch (OperationCanceledException)
@@ -580,7 +571,7 @@ namespace SSSW
 
                 if (dialogResult.Equals(DialogResult.Yes) || dialogResult.Equals(DialogResult.OK))
                 {
-                    SplashScreenManager.ShowForm(typeof(WaitForm));
+                    SplashScreenManager.ShowForm(typeof(WaitForm1));
                     await System.Threading.Tasks.Task.Delay(3000);
                     //AutoZipFolder();
 
@@ -593,7 +584,7 @@ namespace SSSW
                         }
                         else
                         {
-                            SplashScreenManager.ShowForm(typeof(WaitForm));
+                            SplashScreenManager.ShowForm(typeof(WaitForm1));
                         }
                     }
                     catch (Exception exception)
@@ -636,7 +627,7 @@ namespace SSSW
 
             if (Enum.TryParse<EnumLocation>(location, ignoreCase: true, out var loc))
             {
-                titleText.Text = $"{loc} - SSSW Station 111";
+                titleText.Text = $"{loc} - SSSW Station";
             }
             _labVer.Text = Application.ProductVersion.Split('+')[0];
             //else
@@ -691,15 +682,15 @@ namespace SSSW
 
             _scanBarcode.Config = GlobalVariable.ConfigSystem.Scanner;
             _txtRFIDCode.Config = GlobalVariable.ConfigSystem.RFID;
-            _txtScaleValue.Config = GlobalVariable.ConfigSystem.Scale;
-            _txtScaleValue.EnableReadScale = true;
+            scaleButtonEdit1.Config = GlobalVariable.ConfigSystem.Scale;
+            scaleButtonEdit1.EnableReadScale = (bool)GlobalVariable.ConfigSystem.EnableReadScale;
 
             _scanBarcode.DataValueChanged += _scanBarcode_DataValueChanged;
 
             _txtRFIDCode.DataValueChanged += _txtRFIDCode_DataValueChanged;
             _txtRFIDName.KeyDown += async (s, args) => await _txtRFIDName_KeyDownAsync(s, args);
 
-            _txtScaleValue.DataValueChanged += _txtScaleValue_DataValueChanged;
+            scaleButtonEdit1.DataValueChanged += scaleButtonEdit1_DataValueChanged;
             _btnSaveWeight.Click += _btnSaveWeight_Click;
             _btnConfirm.Click += async (s, agrs) => await _btnComfim_Click(s, agrs);
             _btnCancel.Click += _btnCancel_Click;
@@ -758,10 +749,9 @@ namespace SSSW
             _percentOfUsage = GlobalVariable.ConfigSystem.PercentOfUserNonWoven;
 
             // Đặt text khi bật/tắt
-            _toggleSwitchRunner.Properties.OnText = "Yes";
-            _toggleSwitchRunner.Properties.OffText = "No";
-            // Đặt trạng thái mặc định
-            _toggleSwitchRunner.IsOn = true;
+            _comboBoxEditIsRunner.Properties.Items.AddRange(new[] { "YES", "NO" });
+            _comboBoxEditIsRunner.SelectedIndex = 0; // chọn mặc định
+
 
             //_toggleSwitchRunner.EditValueChanged += (s, ev) =>
             //{
@@ -859,7 +849,7 @@ namespace SSSW
         private void FrmShotWeightScale_FormClosing(object sender, FormClosingEventArgs e)
         {
             _txtRFIDCode.DataValueChanged -= _txtRFIDCode_DataValueChanged;
-            _txtScaleValue.DataValueChanged -= _txtScaleValue_DataValueChanged;
+            scaleButtonEdit1.DataValueChanged -= scaleButtonEdit1_DataValueChanged;
             _btnSaveWeight.Click -= _btnSaveWeight_Click;
             _btnConfirm.Click -= async (s, args) => await _btnComfim_Click(s, args);
             _btnCancel.Click -= _btnCancel_Click;
@@ -878,7 +868,7 @@ namespace SSSW
             {
                 isUpdateClicked = true;
                 string UUrl = GlobalVariable.ConfigSystem.UpdatePath;
-                SplashScreenManager.ShowForm(typeof(WaitForm));
+                SplashScreenManager.ShowForm(typeof(WaitForm1));
                 System.Threading.Thread.Sleep(3000);
                 AutoUpdater.Start(UUrl);
             }
@@ -1056,6 +1046,13 @@ namespace SSSW
 
             _percentOfUsage = GlobalVariable.ConfigSystem.PercentOfUserNonWoven;
             _articlePaisShotFinaly = 0;
+            _qrCodeScan = string.Empty;
+            _remarkFinal = string.Empty;
+
+            GlobalVariable.InvokeIfRequired(this, () =>
+            {
+                _comboBoxEditIsRunner.SelectedIndex = 0; // chọn mặc định
+            });
 
             UpdateUI(false);
         }
@@ -1437,32 +1434,29 @@ namespace SSSW
 
             var rowSelect = _grvTotalStep.GetRow(rowHandle) as FT600;
 
-            if (rowSelect != null && !rowSelect.AllowScale)
+            if (e.Button.Index == 0) // Nút "Cân"
             {
-                MessageBox.Show("Do not allow to scale this step.", "Warning", MessageBoxButtons.OK, MessageBoxIcon.Warning);
-                return;
-            }
-
-            //Kiểm tra xem các bước trước nó đã cân chưa
-            var previousSteps = _scaleDataFinal.Where(x => x.C015 < rowSelect.C015).ToList();
-            foreach (var step in previousSteps)
-            {
-                if (step.C021 == 0)
+                if (rowSelect != null && !rowSelect.AllowScale)
                 {
-                    MessageBox.Show("The previous step has not been weighed.", "Warning", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                    MessageBox.Show("Do not allow to scale this step.", "Warning", MessageBoxButtons.OK, MessageBoxIcon.Warning);
                     return;
                 }
+
+                //Kiểm tra xem các bước trước nó đã cân chưa
+                var previousSteps = _scaleDataFinal.Where(x => x.C015 < rowSelect.C015).ToList();
+                foreach (var step in previousSteps)
+                {
+                    if (step.C021 == 0)
+                    {
+                        MessageBox.Show("The previous step has not been weighed.", "Warning", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                        return;
+                    }
+                }
+
+                _rowSelected = rowSelect;
+                _articlePaisShotFinaly = _articlePaisShotFinaly == 0 ? _rowSelected.C017 : _articlePaisShotFinaly;
             }
-
-            _rowSelected = rowSelect;
-            _articlePaisShotFinaly = _articlePaisShotFinaly == 0 ? _rowSelected.C017 : _articlePaisShotFinaly;
-
-            //if (e.Button.Index == 0) // Nút "Cân"
-            //{
-            //    MessageBox.Show("Đã nhấn nút Cân cho dòng: " + rowHandle);
-            //    // Gọi hàm cân ở đây
-            //}
-            if (e.Button.Index == 1) // Nút "Reset"
+            else if (e.Button.Index == 1) // Nút "Reset"
             {
                 //MessageBox.Show("Đã nhấn nút Reset cho dòng: " + rowHandle);
                 // Gọi hàm reset ở đây
@@ -1478,6 +1472,13 @@ namespace SSSW
                 rowReset.C022 = 0;
                 rowReset.C023 = 0;
                 rowReset.C024 = 0;
+
+                _rowSelected = rowSelect;
+                _articlePaisShotFinaly = _articlePaisShotFinaly == 0 ? _rowSelected.C017 : _articlePaisShotFinaly;
+            }
+            else
+            {
+                _scaleDataFinal.Remove(rowSelect);
             }
 
             UpdateUI(true);
@@ -1516,9 +1517,13 @@ namespace SSSW
         {
             _labelInfo = new FT606_Label();
             _scanBarcode = null;
+            _qrCodeScan = string.Empty;
+            _remarkFinal = string.Empty;
+
             GlobalVariable.InvokeIfRequired(this, () =>
             {
                 _lkStepCode.EditValue = null;
+                _scanBarcode.Text = string.Empty;
             });
 
             ResetNewLoop();
@@ -1613,33 +1618,19 @@ namespace SSSW
             }
         }
 
-        private void _txtScaleValue_DataValueChanged(object sender, DataValueChangedEventArgs e)
+        private void scaleButtonEdit1_DataValueChanged(object sender, DataValueChangedEventArgs e)
         {
             var _data = e.NewValue.Value.ToString();
 
-            _scaleValue = Convert.ToDouble(_data);
+            _scaleValue = Math.Round(Convert.ToDouble(_data), 2);
 
-            //var digits = _materialInformation == null ||
-            //        (_materialInformation != null &&
-            //            string.IsNullOrEmpty(_materialInformation.MaterialCode)
-            //        ) ||
-            //        (_materialInformation != null &&
-            //              !string.IsNullOrEmpty(_materialInformation.MaterialCode) &&
-            //            !_materialInformation.MaterialCode.Contains("REX")
-            //        )
-            //    ? GlobalVariables.ConfigCM.DecimalNum
-            //    : 4;
 
-            //_netWeight = Math.Round(((_scaleValue ?? 0) - (_bagWeight ?? 0)), digits);
-
-            //GlobalVariables.InvokeIfRequired(this, () =>
-            //{
-            //    _txtNetWeight.Text = _netWeight.ToString();
-            //});
         }
 
         private void _btnSaveWeight_Click(object sender, EventArgs e)
         {
+            if (_rowSelected == null) return;
+
             if (!_rowSelected.AllowScale)
             {
                 MessageBox.Show("Can not scale this step.", "Warning", MessageBoxButtons.OK, MessageBoxIcon.Warning);
@@ -1662,7 +1653,7 @@ namespace SSSW
                     //_rowSelected.C022 = _toggleSwitchRunner.IsOn == true ? Math.Round(((double)(_rowSelected.C024 - (_rowSelected.C023 * (double)_rowSelected.C017)) / (double)_rowSelected.C017), 3) : 0
                     var prsShot = _articlePaisShotFinaly % 2 == 0 ? _articlePaisShotFinaly : _rowSelected.C017;
 
-                    _rowSelected.C022 = _toggleSwitchRunner.IsOn == true ? Math.Round(
+                    _rowSelected.C022 = _comboBoxEditIsRunner.Text == "YES" ? Math.Round(
                         ((double)(_rowSelected.C024 - (_rowSelected.C023 * (double)prsShot)) / (double)prsShot), 3) : 0;
 
                     //tính part weight
@@ -1689,7 +1680,7 @@ namespace SSSW
                     _rowSelected.C021 = _scaleValue;
 
                     //tính trọng lượng trên mỗi đôi
-                    _rowSelected.C036 = Math.Round(_scaleValue / (double)_rowSelected.C025, 3);
+                    _rowSelected.C036 = Math.Round(_scaleValue / (double)_rowSelected.C025, 2);
                 }
                 else//nonwoven/mesh
                 {
@@ -1705,7 +1696,7 @@ namespace SSSW
                     _rowSelected.C022 = unusage;
 
                     //tính trọng lượng trên mỗi đôi
-                    _rowSelected.C036 = _scaleValue;
+                    _rowSelected.C036 = Math.Round(usage / 2, 2);
                 }
             }
 
@@ -1724,10 +1715,8 @@ namespace SSSW
 
             if (sameMolds.Count > 1)
             {
-                var sumPartWeight = sameMolds.Sum(x => x.C023);
-                var pairShot = sameMolds.FirstOrDefault()?.C028 > 1 ?
-                        sameMolds.Count() :
-                        1 ;
+                var sumPartWeight = sameMolds.Sum(x => x.C023 * x.C028);
+                var pairShot = sameMolds.Sum(x => x.C028);
 
                 foreach (var item in sameMolds)
                 {
@@ -1875,6 +1864,7 @@ namespace SSSW
                 _txtFgItemCode.Text = _rowSelected?.C013;
                 _txtFGName.Text = _rowSelected?.C014;
                 _txtPercentOFusageNonwoven.EditValue = _rowSelected.C035 != 0 ? _rowSelected.C035 : _percentOfUsage;
+                _txtRemark.Text = _remarkFinal;
 
                 //kiểm tra nếu bước cân non injection là non-woven và mesh thì enanle text nhập phần trăm sử dụng lên để tính toán
                 var catChceck = GlobalVariable.ConfigSystem.CategoryOfNonInjectionUsagePartial.Where(x => x.CategoryCode == _rowSelected.C033).FirstOrDefault();
@@ -1960,6 +1950,13 @@ namespace SSSW
                 ToolTip = "Reset"
             };
             _buttonEdit.Buttons.Add(btnReset);
+
+            EditorButton btnDelete = new EditorButton(ButtonPredefines.Glyph)
+            {
+                ImageOptions = { Image = Properties.Resources.delete_30_black },
+                ToolTip = "Delete"
+            };
+            _buttonEdit.Buttons.Add(btnDelete);
 
             _buttonEdit.TextEditStyle = TextEditStyles.HideTextEditor;
 

@@ -4,10 +4,20 @@ using System.ComponentModel.DataAnnotations.Schema;
 
 namespace SSSW.models
 {
-    [Table("FT600_Test")]
+    [Table("FT600")]
     public partial class FT600 : EntityCommon
     {
         [Browsable(false)][Key] public Guid id { get; set; }
+
+
+        // Không map: chỉ dùng để đọc/hiển thị
+        [NotMapped]
+        [DisplayFormat(ApplyFormatInEditMode = true, DataFormatString = "{0:dd/MM/yyyy HH:mm:ss}")]
+        public DateTime? CreateDate
+        {
+            get => CreatedDate;
+            set { /* optional: bỏ trống hoặc gán ngược nếu muốn */ }
+        }
 
         /// <summary>
         /// Machine.

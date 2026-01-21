@@ -16,6 +16,7 @@ using Newtonsoft.Json;
 using ScanAndScale.Helper;
 using SSSW.models;
 using SSSW.modelss;
+using System.DirectoryServices.ActiveDirectory;
 using System.Runtime.InteropServices;
 
 namespace SSSW
@@ -1236,7 +1237,6 @@ namespace SSSW
                                 C035 = _percentOfUsage,
                                 C037 = catItem.Unit,
                                 AllowScale = true,
-
                             });
                         }
                     }
@@ -1247,11 +1247,9 @@ namespace SSSW
                     _scaleData.AddRange(itemsToAdd);
                     #endregion
 
-                    _scaleDataFinal = _scaleData.OrderBy(x => x.C027).ThenBy(x => x.C015).ToList();
+                    _scaleDataFinal = _scaleData.OrderBy(x => x.C015).ThenBy(x => x.C027).ToList();
 
-                    var firstNotNull = _scaleDataFinal.FirstOrDefault(x => !string.IsNullOrEmpty(x.C026));
-                    var mainItemCode = firstNotNull?.C026;
-                    var mainItemName = firstNotNull?.C027;
+
 
                     #region doc thông tin các bước đã cân
                     //var stepHasScale = await dbContextDogeWH.FT600s
@@ -1260,104 +1258,77 @@ namespace SSSW
 
                     foreach (var item in _scaleDataFinal)
                     {
+                        var catCheck = GlobalVariable.ConfigSystem.CategoryOfNonInjectionUsagePartial.FirstOrDefault(x => x.CategoryCode == item.C033);
+
                         if (item.C002.Substring(0, 3) == "REX")
                         {
+                            var firstNotNull = _scaleDataFinal.Where(x => x.C015 == item.C015 && !string.IsNullOrEmpty(x.C026));
+                            var mainItemCode = firstNotNull?.FirstOrDefault().C026;
+                            var mainItemName = firstNotNull?.FirstOrDefault().C027;
+
+                            var paisShotFinal = catCheck == null ?
+                                firstNotNull.FirstOrDefault().C028 :
+                                firstNotNull.Sum(x=>x.C028);
+
                             item.C026 = mainItemCode;
                             item.C027 = mainItemName;
-                            item.C028 = firstNotNull?.C028 ?? 0;
-                            item.C017 = firstNotNull?.C017 ?? 0;
-                            item.C018 = firstNotNull?.C018 ?? 0;
+                            item.C028 = paisShotFinal;
+                            item.C017 = firstNotNull?.FirstOrDefault().C017 ?? 0;
+                            item.C018 = firstNotNull?.FirstOrDefault().C018 ?? 0;
                         }
 
-                        //if (item.AllowScale)
-                        //{
-                        //    //nếu bước này đã được cân nhiều lần rồi, thì lấy lần cân gần đây nhất.
-                        //    var line = stepHasScale.Where(x => x.C002 == item.C002).OrderByDescending(x => x.CreatedDate).FirstOrDefault();
+                        //nếu ko có khối lượng cân, thì cần lấy thông tin cân theo group size
+                        string mainCode = string.Empty;
+                        string stepPrefix = string.Empty;
+                        FT600 stepPrevious = new();
 
-                        //    if (line != null)
-                        //    {
-                        //        item.C021 = line.C021; // Part Weight (g) of step.
-                        //        item.C022 = line.C022; // Runner weight (g) of step.
-                        //        item.C023 = line.C023; // Total scale value of part weight (include these previous step), scale value.
-                        //        item.C024 = line.C024; // Total weight of step injection (include runner + part), Scale value.
-                        //        item.C025 = line.C025; // Số lượng. Dùng cho cân Recetacle/outsoleboard/Stud/Logo để quy đinh số lượng sử dụng trong bước.
-                        //    }
-                        //}
-                        //else//nếu ko có khối lượng cân, thì cần lấy thông tin cân theo group size
+                        if (item.C002 != "Z-VHXXXXXX" && item.C002.Substring(0, 3) != "REX")
                         {
-                            string mainCode = string.Empty;
-                            string stepPrefix = string.Empty;
-                            FT600 stepPrevious = new();
+                            mainCode = item.C002.Split('-')[1];
+                            stepPrefix = item.C003.Substring(0, 3);
 
-                            if (item.C002 != "Z-VHXXXXXX" && item.C002.Substring(0, 3) != "REX")
-                            {
-                                mainCode = item.C002.Split('-')[1];
-                                stepPrefix = item.C003.Substring(0, 3);
+                            //var script = _dbContextDogeWH.Database.GenerateCreateScript();
 
-                                //var script = _dbContextDogeWH.Database.GenerateCreateScript();
+                            stepPrevious = await dbContextDogeWH.FT600s
+                               .Where(x => x.C015 == item.C015
+                                   && (x.C002 == item.C002 || (x.C002.Contains(mainCode) && x.C008 == item.C008))
+                                   )
+                               .OrderByDescending(x => x.CreatedDate).FirstOrDefaultAsync();
+                            //&& (x.C002 == item.C002));
+                        }
+                        else
+                        {
+                            stepPrevious = await dbContextDogeWH.FT600s
+                               .Where(x => x.C002 == item.C002 //&& x.C015 == item.C015
+                                   )
+                               .OrderByDescending(x => x.CreatedDate).FirstOrDefaultAsync();
 
-                                stepPrevious = await dbContextDogeWH.FT600s
-                                   .Where(x => x.C015 == item.C015
-                                       && (x.C002 == item.C002 || (x.C002.Contains(mainCode) && x.C008 == item.C008))
-                                       )
-                                   .OrderByDescending(x => x.CreatedDate).FirstOrDefaultAsync();
-                                //&& (x.C002 == item.C002));
-                            }
-                            else
-                            {
-                                stepPrevious = await dbContextDogeWH.FT600s
-                                   .Where(x => x.C002 == item.C002 //&& x.C015 == item.C015
-                                       )
-                                   .OrderByDescending(x => x.CreatedDate).FirstOrDefaultAsync();
+                            //không cho cân lại đối với non-injection đã có khối lượng
+                            //if (stepPrevious == null)
+                            //    item.AllowScale = true;
+                        }
 
-                                //không cho cân lại đối với non-injection đã có khối lượng
-                                //if (stepPrevious == null)
-                                //    item.AllowScale = true;
-                            }
+                        if (!stepPrefix.Contains("Stud") && !stepPrefix.Contains("Inlay") && !stepPrefix.Contains("Base") && item.C002.Substring(0, 3) != "REX")
+                            continue;
 
-                            if (!stepPrefix.Contains("Stud") && !stepPrefix.Contains("Inlay") && !stepPrefix.Contains("Base") && item.C002.Substring(0, 3) != "REX")
-                                continue;
+                        if (stepPrevious != null)
+                        {
+                            _percentOfUsage = (double)stepPrevious.C035;
 
-                            if (stepPrevious != null)
-                            {
-                                _percentOfUsage = (double)stepPrevious.C035;
-                                var catCheck = GlobalVariable.ConfigSystem.CategoryOfNonInjectionUsagePartial.FirstOrDefault((x => x.CategoryCode == item.C033));
-                                var total = catCheck == null ? stepPrevious?.C036 * item.C025 : stepPrevious?.C036;
-                                var usage = (double)Math.Round((decimal)(total * _percentOfUsage / 100), 3);
-                                var unusage = total - usage;
+                            var total = catCheck == null ? stepPrevious?.C036 * item.C025 : stepPrevious?.C036;
+                            var usage = (double)Math.Round((decimal)(total * _percentOfUsage / 100), 3);
+                            var unusage = total - usage;
 
-                                //item.C000 = stepPrevious?.C000;
-                                //item.C001 = stepPrevious?.C001;
-                                //item.C004 = stepPrevious?.C004;
-                                //item.C005 = stepPrevious?.C005;
-                                //item.C006 = stepPrevious?.C006;
-                                //item.C007 = stepPrevious?.C007;
-                                //item.C009 = 1;
-                                //item.C012 = stepPrevious?.C012;// $"{_stepItemCodeScale.StepItemCode}|{_stepItemCodeScale.Machine}|{Gui}";
-                                //item.C013 = stepPrevious?.C013;
-                                //item.C014 = stepPrevious?.C014;
-                                //item.C016 = stepPrevious?.C016;
-                                //item.C017 = stepPrevious?.C017;
-                                //item.C018 = stepPrevious?.C018;
-                                //item.C019 = stepPrevious?.C019;
-                                //item.C020 = stepPrevious?.C020;
-
-                                //item.C002 = stepPrevious?.C002;
-                                //item.C003 = stepPrevious?.C003;
-                                //item.C008 = stepPrevious?.C008;
-                                //item.C015 = stepPrevious?.C015;
-
-                                item.C021 = catCheck == null ? usage : usage / item.C028; // Part Weight (g) of step.
-                                item.C022 = catCheck == null ? unusage : unusage / item.C028; // Runner weight (g) of step.
-                                item.C023 = catCheck == null ? usage : usage / item.C028; // Total scale value of part weight (include these previous step), scale value.
-                                item.C024 = total; // Total weight of step injection (include runner + part), Scale value.
-                                //item.C025 = stepPrevious?.C025 ?? 0; // Số lượng. Dùng cho cân Recetacle/outsoleboard/Stud/Logo để quy đinh số lượng sử dụng trong bước.
-                                //item.C026 = stepPrevious.C026;
-                                //item.C027 = stepPrevious.C027;
-                                //item.C028 = stepPrevious.C028;
-                                item.C035 = stepPrevious.C035;
-                                item.C036 = stepPrevious?.C036;
-                            }
+                            item.C021 = catCheck == null ? usage : usage / item.C028; // Part Weight (g) of step.
+                            item.C022 = catCheck == null ? unusage : unusage / item.C028; // Runner weight (g) of step.
+                            item.C023 = catCheck == null ? usage : usage / item.C028; // Total scale value of part weight (include these previous step), scale value.
+                            item.C024 = total; // Total weight of step injection (include runner + part), Scale value.
+                                               //item.C025 = stepPrevious?.C025 ?? 0; // Số lượng. Dùng cho cân Recetacle/outsoleboard/Stud/Logo để quy đinh số lượng sử dụng trong bước.
+                                               //item.C026 = stepPrevious.C026;
+                                               //item.C027 = stepPrevious.C027;
+                                               //item.C028 = stepPrevious.C028;
+                            item.C035 = stepPrevious.C035;
+                            item.C036 = stepPrevious?.C036;
                         }
                     }
                     #endregion
@@ -1650,8 +1621,7 @@ namespace SSSW
                     _rowSelected.C023 = _scaleValue;
 
                     //tính khối lượng runner
-                    //_rowSelected.C022 = _toggleSwitchRunner.IsOn == true ? Math.Round(((double)(_rowSelected.C024 - (_rowSelected.C023 * (double)_rowSelected.C017)) / (double)_rowSelected.C017), 3) : 0
-                    var prsShot = _articlePaisShotFinaly % 2 == 0 ? _articlePaisShotFinaly : _rowSelected.C017;
+                    var prsShot = _articlePaisShotFinaly;
 
                     _rowSelected.C022 = _comboBoxEditIsRunner.Text == "YES" ? Math.Round(
                         ((double)(_rowSelected.C024 - (_rowSelected.C023 * (double)prsShot)) / (double)prsShot), 3) : 0;
@@ -1685,7 +1655,7 @@ namespace SSSW
                 else//nonwoven/mesh
                 {
                     var usage = _rowSelected.C035 == 100 ?
-                        (double)Math.Round((decimal)(_scaleValue * _percentOfUsage / 100), 3) :
+                        (double)Math.Round((decimal)(_scaleValue * _percentOfUsage / 100) / (decimal)_rowSelected.C028, 3) :
                         (double)Math.Round((decimal)((decimal)(_scaleValue * _percentOfUsage / 100) / (decimal)_rowSelected.C028), 3);
 
                     var unusage = (_scaleValue - usage * _rowSelected.C028) / _rowSelected.C028;

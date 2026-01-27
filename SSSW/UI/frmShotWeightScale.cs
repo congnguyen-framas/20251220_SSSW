@@ -6,6 +6,7 @@ using DevExpress.XtraEditors;
 using DevExpress.XtraEditors.Controls;
 using DevExpress.XtraEditors.Repository;
 using DevExpress.XtraGrid.Columns;
+using DevExpress.XtraGrid.Views.Grid;
 using DevExpress.XtraPrinting.Native;
 using DevExpress.XtraSplashScreen;
 using Microsoft.EntityFrameworkCore;
@@ -17,6 +18,7 @@ using ScanAndScale.Helper;
 using SSSW.models;
 using SSSW.modelss;
 using System.DirectoryServices.ActiveDirectory;
+using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 
 namespace SSSW
@@ -942,6 +944,7 @@ namespace SSSW
 
                 using var dbContext = _dbFactory.CreateDbContext();
 
+
                 _labelInfo = await dbContext.FT606s.FirstOrDefaultAsync(x => x.c001 == _qrCodeScan);
 
                 if (_labelInfo == null)
@@ -1035,7 +1038,6 @@ namespace SSSW
 
         private void ResetNewLoop()
         {
-            _stepSelected = new FT601();
             _rowSelected = new FT600();
             _allStepsFG = new List<BomWinlineModel>();
             _stepItemCodeScale = new FT601();
@@ -1121,8 +1123,6 @@ namespace SSSW
                                     C010 = item.ParallelSequence
                                 };
                             }
-
-
                         }
 
                         line.id = Guid.NewGuid();
@@ -1133,7 +1133,7 @@ namespace SSSW
                         line.C006 = ckHydra?.C011;
                         line.C007 = ckHydra?.C012;
                         line.C009 = 1;
-                        line.C012 = _labelInfo != null ? _labelInfo.c001 : null;
+                        line.C012 = ckHydra.Id == _labelInfo.c000 ? _labelInfo?.c001 : null;
                         line.C013 = ckHydra?.C007;
                         line.C014 = ckHydra?.C008;
                         line.C016 = null;
@@ -1155,7 +1155,7 @@ namespace SSSW
                         line.C026 = ckHydra?.C020;
                         line.C027 = ckHydra?.C003;
                         line.C028 = ckHydra?.C013 != null ? (int)ckHydra.C013 : 0;
-                        line.C029 = _labelInfo != null ? _labelInfo.Id : null;
+                        line.C029 = ckHydra.Id == _labelInfo.c000 ? _labelInfo.Id : null;
                         line.C032 = ckHydra?.Id;
                         line.C033 = item.CategoryCode;
                         line.C034 = item.CategoryName;
@@ -1249,8 +1249,6 @@ namespace SSSW
 
                     _scaleDataFinal = _scaleData.OrderBy(x => x.C015).ThenBy(x => x.C027).ToList();
 
-
-
                     #region doc thông tin các bước đã cân
                     //var stepHasScale = await dbContextDogeWH.FT600s
                     //    .Where(x => x.C013 == _stepItemCodeScale.C007)//.Where(x => x.C013 == _stepItemCodeScale.FGItemCode)
@@ -1268,7 +1266,7 @@ namespace SSSW
 
                             var paisShotFinal = catCheck == null ?
                                 firstNotNull.FirstOrDefault().C028 :
-                                firstNotNull.Sum(x=>x.C028);
+                                firstNotNull.Sum(x => x.C028);
 
                             item.C026 = mainItemCode;
                             item.C027 = mainItemName;
@@ -1279,15 +1277,11 @@ namespace SSSW
 
                         //nếu ko có khối lượng cân, thì cần lấy thông tin cân theo group size
                         string mainCode = string.Empty;
-                        string stepPrefix = string.Empty;
                         FT600 stepPrevious = new();
 
                         if (item.C002 != "Z-VHXXXXXX" && item.C002.Substring(0, 3) != "REX")
                         {
                             mainCode = item.C002.Split('-')[1];
-                            stepPrefix = item.C003.Substring(0, 3);
-
-                            //var script = _dbContextDogeWH.Database.GenerateCreateScript();
 
                             stepPrevious = await dbContextDogeWH.FT600s
                                .Where(x => x.C015 == item.C015
@@ -1308,52 +1302,54 @@ namespace SSSW
                             //    item.AllowScale = true;
                         }
 
-                        if (!stepPrefix.Contains("Stud") && !stepPrefix.Contains("Inlay") && !stepPrefix.Contains("Base") && item.C002.Substring(0, 3) != "REX")
+                        if (!item.C003.StartsWith("Stud") && !item.C003.StartsWith("Logo") && !item.C003.StartsWith("Cleat_Ring") && !item.C002.StartsWith("REX"))
                             continue;
 
                         if (stepPrevious != null)
                         {
                             _percentOfUsage = (double)stepPrevious.C035;
 
-                            var total = catCheck == null ? stepPrevious?.C036 * item.C025 : stepPrevious?.C036;
-                            var usage = (double)Math.Round((decimal)(total * _percentOfUsage / 100), 3);
-                            var unusage = total - usage;
+                            if (item.C002.StartsWith("REX"))
+                            {
+                                var total = catCheck == null ? stepPrevious?.C036 * item.C025 : stepPrevious?.C036;
+                                var usage = (double)Math.Round((decimal)(total * _percentOfUsage / 100), 3);
+                                var unusage = total - usage;
 
-                            item.C021 = catCheck == null ? usage : usage / item.C028; // Part Weight (g) of step.
-                            item.C022 = catCheck == null ? unusage : unusage / item.C028; // Runner weight (g) of step.
-                            item.C023 = catCheck == null ? usage : usage / item.C028; // Total scale value of part weight (include these previous step), scale value.
-                            item.C024 = total; // Total weight of step injection (include runner + part), Scale value.
-                                               //item.C025 = stepPrevious?.C025 ?? 0; // Số lượng. Dùng cho cân Recetacle/outsoleboard/Stud/Logo để quy đinh số lượng sử dụng trong bước.
-                                               //item.C026 = stepPrevious.C026;
-                                               //item.C027 = stepPrevious.C027;
-                                               //item.C028 = stepPrevious.C028;
-                            item.C035 = stepPrevious.C035;
-                            item.C036 = stepPrevious?.C036;
+                                item.C021 = catCheck == null ? usage : usage / item.C028; // Part Weight (g) of step.
+                                item.C022 = catCheck == null ? unusage : unusage / item.C028; // Runner weight (g) of step.
+                                item.C023 = catCheck == null ? usage : usage / item.C028; // Total scale value of part weight (include these previous step), scale value.
+                                item.C024 = total; // Total weight of step injection (include runner + part), Scale value.
+                                item.C035 = stepPrevious.C035;
+                                item.C036 = stepPrevious?.C036;
+                            }
+                            else
+                            {
+                                item.C021 = stepPrevious.C021; // Part Weight (g) of step.
+                                item.C022 = stepPrevious.C022; // Runner weight (g) of step.
+                                item.C023 = stepPrevious.C023; // Total scale value of part weight (include these previous step), scale value.
+                                item.C024 = stepPrevious.C024; // Total weight of step injection (include runner + part), Scale value.
+                                item.C028 = stepPrevious.C028;//Actual pái shot
+                                item.C035 = stepPrevious.C035;//Percent of usage
+                                item.C036 = stepPrevious?.C036;//
+                            }
                         }
                     }
                     #endregion
 
                     _scaleDataFinal = _scaleDataFinal.OrderBy(x => x.C015).ToList();
 
-                    _rowSelected = _scaleDataFinal.FirstOrDefault();
+                    //chọn bước để cân
+                    var stepSelected = _scaleDataFinal.FirstOrDefault(x => x.C002 == _stepSelected.C004);
 
-                    ////Kiểm tra nếu là đợt cân mới thì reset hết các giá trị cân đọc từ DB lên để vào cân lại và lưu mẻ mới
-                    //if (_newScale)
-                    //{
-                    //    var dataReset = _scaleDataFinal.Where(x => x.AllowScale).ToList();
-                    //    dataReset.ForEach(x =>
-                    //    {
-                    //        x.C021 = 0;
-                    //        x.C022 = 0;
-                    //        x.C023 = 0;
-                    //        x.C024 = 0;
-                    //    });
-                    //}
-                    //else
-                    //{
-                    //    _btnSaveWeight.Enabled = false;
-                    //    _btnConfirm.Enabled = false;
-                    //}
+                    //Kiểm tra xem các bước trước nó đã cân chưa
+                    var previousSteps = _scaleDataFinal.Where(x => x.C015 < stepSelected?.C015).ToList();
+
+                    if (previousSteps?.FirstOrDefault(x => x.C021 == 0) != null)
+                    {
+                        MessageBox.Show("The previous step has not been weighed.", "Warning", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                    }
+                    else
+                        _rowSelected = _scaleDataFinal.FirstOrDefault(x => x.C002 == _stepSelected.C004);
                     #endregion
                 }
                 else
@@ -1391,6 +1387,11 @@ namespace SSSW
                 _articlePaisShotFinaly = _articlePaisShotFinaly == 0 ? (int)_scaleDataFinal.FirstOrDefault().C028 : _articlePaisShotFinaly;
 
                 UpdateUI(false);
+
+                if (!string.IsNullOrEmpty(_rowSelected.C002))
+                    FocusRowByStepCode(_grvTotalStep, "C002", _rowSelected.C002);
+                // Tuỳ ý: clear text sau khi xử lý
+                // txtQRCode.EditValue = null;
             }
             catch (Exception ex)
             {
@@ -1507,6 +1508,12 @@ namespace SSSW
 
             try
             {
+                if (_operatorInfo == null || _operatorInfo.Id == Guid.Empty)
+                {
+                    MessageBox.Show($"RFID card not yet scanned.", "Warning", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                    return;
+                }
+
                 #region get nhieu size treen khuon
                 // Tiền tố (2 cụm đầu) của item.C004
                 var itemPrefix2 = GlobalVariable.PrefixUpToSecondHyphen(_rowSelected.C002);
@@ -1525,18 +1532,16 @@ namespace SSSW
                 {
                     foreach (var item in _scaleDataFinal)
                     {
-                        if (item.AllowScale && item.C023 == 0 && (item.C024 == 0 && item.C002.Substring(3) != "REX"))
+                        if (item.AllowScale && item.C023 == 0 && (item.C024 == 0 && item.C002.StartsWith("REX")))
                         {
                             MessageBox.Show($"You do not complete scale for the step: {item.C002}.", "Warning", MessageBoxButtons.OK, MessageBoxIcon.Warning);
                             return;
                         }
                     }
                 }
-
-                if (_operatorInfo == null || _operatorInfo.Id == Guid.Empty)
+                else
                 {
-                    MessageBox.Show($"RFID card not yet scanned.", "Warning", MessageBoxButtons.OK, MessageBoxIcon.Warning);
-                    return;
+
                 }
 
                 var createdAt = DateTime.Now;
@@ -1569,7 +1574,7 @@ namespace SSSW
                 // Commit the transaction
                 await transaction.CommitAsync();
 
-                MessageBox.Show("Lưu mẫu thành công.", "Thông báo", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                MessageBox.Show("Scale shot weight success.", "Information", MessageBoxButtons.OK, MessageBoxIcon.Information);
 
                 //reset để bắt đầu 1 chu trình mới.
                 _labelInfo = new FT606_Label();
@@ -1608,9 +1613,7 @@ namespace SSSW
                 return;
             }
 
-            var prefixItemName = _rowSelected.C003.Substring(0, 4);
-
-            if (_rowSelected.C002.Substring(0, 3) != "REX")
+            if (!_rowSelected.C002.StartsWith("REX"))
             {
                 if (_rowSelected.C024 == 0)//cân lần đầu tiên, ghi nhận khối lượng của cả runner và part
                 {
@@ -1629,13 +1632,13 @@ namespace SSSW
                     //tính part weight
                     var previuosStep = _scaleDataFinal.Where(x => x.C015 == _rowSelected.C015 - 1).ToList();
                     var nonInjection = _scaleDataFinal.Where(x => x.C015 == _rowSelected.C015
-                        && (x.C002 == "Z-VHXXXXXX" || x.C002.Substring(0, 3) == "REX")).ToList();
+                        && (x.C002 == "Z-VHXXXXXX" || x.C002.StartsWith( "REX"))).ToList();
 
-                    _rowSelected.C021 = _rowSelected.C023 - previuosStep?.Sum(x => x.C021) - nonInjection?.Sum(x => x.C023);
+                    _rowSelected.C021 = _rowSelected.C023 - previuosStep?.Sum(x => x.C023) - nonInjection?.Sum(x => x.C023);
 
                     //tính trọng lượng trên mỗi pieces
-                    _rowSelected.C036 = prefixItemName == "Studs" || prefixItemName == "Logo" || prefixItemName == "Ring" ?
-                        Math.Round(_scaleValue / (double)_rowSelected.C025, 3) :
+                    _rowSelected.C036 = _rowSelected.C003.StartsWith("Studs") || _rowSelected.C003.StartsWith("Logo") || _rowSelected.C003.StartsWith("Cleat_Ring") ?
+                        Math.Round(_scaleValue / (double)prsShot, 2) :
                         0;
                 }
             }
@@ -1729,8 +1732,7 @@ namespace SSSW
 
             UpdateUI(false);
 
-            //// render Add button                   
-            //RenderAddButtonForGrid();
+            FocusRowByStepCode(_grvTotalStep, "C002", _rowSelected.C002);
         }
 
         private void _txtRFIDCode_DataValueChanged(object sender, DataValueChangedEventArgs e)
@@ -1833,7 +1835,7 @@ namespace SSSW
                 _txtQty.Text = _rowSelected?.C025.ToString();
                 _txtFgItemCode.Text = _rowSelected?.C013;
                 _txtFGName.Text = _rowSelected?.C014;
-                _txtPercentOFusageNonwoven.EditValue = _rowSelected.C035 != 0 ? _rowSelected.C035 : _percentOfUsage;
+                _txtPercentOFusageNonwoven.EditValue = _rowSelected?.C035 != 0 ? _rowSelected?.C035 : _percentOfUsage;
                 _txtRemark.Text = _remarkFinal;
 
                 //kiểm tra nếu bước cân non injection là non-woven và mesh thì enanle text nhập phần trăm sử dụng lên để tính toán
@@ -1857,6 +1859,14 @@ namespace SSSW
                     _grcTotalStep.DataSource = _scaleDataFinal;
                     _grvTotalStep.PopulateColumns();
                     _grvTotalStep.BestFitColumns();
+
+                    _grvTotalStep.Columns[nameof(FT600.C010)].Visible = false;
+                    _grvTotalStep.Columns[nameof(FT600.C011)].Visible = false;
+                    _grvTotalStep.Columns[nameof(FT600.C029)].Visible = false;
+                    _grvTotalStep.Columns[nameof(FT600.C032)].Visible = false;
+                    _grvTotalStep.Columns[nameof(FT600.C012)].Visible = false;
+                    _grvTotalStep.Columns[nameof(FT600.C030)].Visible = false;
+                    _grvTotalStep.Columns[nameof(FT600.C031)].Visible = false;
                 }
 
                 if (_newScale)
@@ -2044,6 +2054,63 @@ namespace SSSW
             {
                 //SplashScreenManager.CloseOverlayForm(handle);
             }
+        }
+
+        private void FocusRowByStepCode(GridView view, string stepCodeField, string stepCode)
+        {
+            if (view == null) return;
+
+            view.BeginUpdate();
+            try
+            {
+                // Xoá chọn cũ
+                view.ClearSelection();
+
+                // Cách 1: LocateByValue – tìm theo FieldName khớp hoàn toàn value
+                int rowHandle = view.LocateByValue(stepCodeField, stepCode);
+
+                // Nếu không tìm thấy, có thể thử "contains" (không phân biệt hoa thường)
+                if (rowHandle < 0)
+                {
+                    rowHandle = FindRowContains(view, stepCodeField, stepCode);
+                }
+
+                if (rowHandle >= 0)
+                {
+                    view.FocusedRowHandle = rowHandle;
+                    view.SelectRow(rowHandle);
+                    view.MakeRowVisible(rowHandle, true);
+                }
+                else
+                {
+                    // Không thấy: có thể highlight bằng ApplyFindFilter
+                    view.ApplyFindFilter(stepCode);
+                    XtraMessageBox.Show($"The step '{stepCode}' was not found.", "Information", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                }
+            }
+            finally
+            {
+                view.EndUpdate();
+            }
+        }
+
+        private int FindRowContains(GridView view, string fieldName, string keyword)
+        {
+            keyword = (keyword ?? "").Trim();
+            if (string.IsNullOrEmpty(keyword)) return -1;
+
+            for (int i = 0; i < view.DataRowCount; i++)
+            {
+                int handle = view.GetVisibleRowHandle(i);
+                if (handle < 0) continue;
+
+                var val = view.GetRowCellValue(handle, fieldName)?.ToString();
+                if (!string.IsNullOrEmpty(val) && val.IndexOf(keyword, StringComparison.OrdinalIgnoreCase) >= 0)
+                {
+                    return handle;
+                }
+            }
+            return -1;
         }
         #endregion
     }

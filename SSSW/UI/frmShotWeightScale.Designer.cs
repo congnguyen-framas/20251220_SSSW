@@ -419,7 +419,7 @@ namespace SSSW
             labelControl3.Name = "labelControl3";
             labelControl3.Size = new Size(169, 27);
             labelControl3.TabIndex = 79;
-            labelControl3.Text = "Acticle's Pairs Shot";
+            labelControl3.Text = "Actual Pairs Shot";
             // 
             // labelControl2
             // 

@@ -97,9 +97,16 @@ namespace SSSW.models
         public string? C037 { get; set; }
 
         /// <summary>
-        /// Article pairs shot.
+        /// Actual pairs shot.
         /// </summary>
-        [DisplayName("Article Pairs Shot")]
+        [Column("c028")]
+        [DisplayName("Actual Pairs Shot Final")]
+        public double? C028 { get; set; }
+
+        /// <summary>
+        /// PPIC pairs shot.
+        /// </summary>
+        [DisplayName("Actual Pairs Shot")]
         public int? C017 { get; set; }
 
         /// <summary>
@@ -113,14 +120,7 @@ namespace SSSW.models
         /// </summary>
         [DisplayName("Step Name")]
         public string? C003 { get; set; }
-
-        /// <summary>
-        /// Article pairs shot finaly.
-        /// </summary>
-        [Column("c028")]
-        [DisplayName("Article Pairs Shot Final")]
-        public double? C028 { get; set; }
-
+        
         //------------------------------
         /// <summary>
         /// Main item code.

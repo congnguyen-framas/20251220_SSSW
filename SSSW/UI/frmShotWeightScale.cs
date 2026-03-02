@@ -7,6 +7,7 @@ using DevExpress.XtraEditors.Controls;
 using DevExpress.XtraEditors.Repository;
 using DevExpress.XtraGrid.Columns;
 using DevExpress.XtraGrid.Views.Grid;
+using DevExpress.XtraLayout;
 using DevExpress.XtraPrinting.Native;
 using DevExpress.XtraSplashScreen;
 using Microsoft.EntityFrameworkCore;
@@ -142,6 +143,8 @@ namespace SSSW
         // Field trong lớp form (ở trên cùng của class)
         private DevExpress.XtraEditors.SimpleButton btnCancel;
 
+        private bool _allowPartitionAdjustment = false; // Cờ để cho phép điều chỉnh partition khi cân nhiều size cùng khuôn
+
         // Gọi hàm này trong constructor, sau InitializeComponent()
         private void InitCancelButton()
         {
@@ -199,8 +202,8 @@ namespace SSSW
 
                     // TODO: thay bằng repo thực tế
                     using var dbContext = _dbFactory.CreateDbContext();
-                    var result = await dbContext.FT601s.Where(x => x.C021 == true).ToListAsync(); // truyền token vào repo nếu có
-                                                                                                  //get all data master
+                    var result = await dbContext.FT601s.Where(x => x.C021 == true && x.Mesoyear == _mesoYear).ToListAsync(); // truyền token vào repo nếu có
+                                                                                                                             //get all data master
                     return result;
 
                 }, token);
@@ -215,18 +218,19 @@ namespace SSSW
                     ArticlePairsShot = x.C013,
                     MoldPairsShot = x.C014,
                     Machine = x.C015,
-                    HydraOrderNo = x.C018
+                    HydraOrderNo = x.C018,
+                    FT601Id = x.Id
                 }).Distinct().ToList();
 
                 GlobalVariable.InvokeIfRequired(this, () =>
                 {
                     _lkStepCode.Properties.DataSource = null;
                     _lkStepCode.Properties.DataSource = _allStepCodeMaster;
-                    _lkStepCode.Properties.DisplayMember = "StepItemCode";
-                    _lkStepCode.Properties.ValueMember = "StepItemCode";
-                    _lkStepCode.Properties.PopulateColumns();
+                    //_lkStepCode.Properties.DisplayMember = "StepItemCode";
+                    //_lkStepCode.Properties.ValueMember = "StepItemCode";
+                    //_lkStepCode.Properties.PopulateColumns();
 
-
+                    InitGridLookUpEdit();
                 });
             }
             catch (OperationCanceledException)
@@ -780,16 +784,29 @@ namespace SSSW
             // CheckEnableScale();
 
             _lkStepCode.Properties.DataSource = _allStepCodeMaster;
-            _lkStepCode.Properties.DisplayMember = "StepItemName";
-            _lkStepCode.Properties.ValueMember = "StepItemCode";
-            _lkStepCode.Properties.PopulateColumns();
+            //_lkStepCode.Properties.DisplayMember = "StepItemName";
+            //_lkStepCode.Properties.ValueMember = "StepItemCode";
+            //_lkStepCode.Properties.PopulateColumns();
+            InitGridLookUpEdit();
 
             _lkStepCode.ButtonClick += Properties_ButtonClick;
 
-            _lkStepCode.EditValueChanged += async (s, ev) => await _lkStepCode_EditValueChangedAsync(s, ev);
+            //_lkStepCode.EditValueChanged += async (s, ev) => await _lkStepCode_EditValueChangedAsync(s, ev);
+
+
+            //       _lkStepCode.EditValueChanging += (s, ev) =>
+            //System.Diagnostics.Debug.WriteLine($"Changing: Old={_lkStepCode.EditValue}, New={ev.NewValue ?? "null"}");
+
 
             _txtPercentOFusageNonwoven.Enabled = false;
             //_lkStepCode.EditValue = !string.IsNullOrEmpty(_fgCode) ? _fgCode : null;
+
+            _toggleSwitchEnablePartition.EditValueChanged += (s, ev) =>
+            {
+                _allowPartitionAdjustment = (bool)_toggleSwitchEnablePartition.EditValue;
+                _txtActiclePairShot.Enabled = _allowPartitionAdjustment;
+                _txtActiclePairShot.BackColor = _allowPartitionAdjustment ? Color.FromArgb(255, 255, 255) : Color.FromArgb(240, 240, 240);
+            };
         }
 
         private async Task _txtRFIDName_KeyDownAsync(object? sender, KeyEventArgs e)
@@ -940,10 +957,13 @@ namespace SSSW
             try
             {
                 //get cac thong tin lien quan den nguye lieu
+
+
                 _qrCodeScan = e.NewValue.Value.ToString();
 
                 using var dbContext = _dbFactory.CreateDbContext();
 
+                _labelInfo = new FT606_Label();
 
                 _labelInfo = await dbContext.FT606s.FirstOrDefaultAsync(x => x.c001 == _qrCodeScan);
 
@@ -963,7 +983,10 @@ namespace SSSW
                 //{
 
                 //}
-                _lkStepCode.EditValue = _stepSelected.C004;
+
+                //gắn data cho lookupEdit
+                FilterLookup(_stepSelected.Id);
+                //_lkStepCode.EditValue = _stepSelected.C004;
             }
             catch (Exception ex)
             {
@@ -976,13 +999,224 @@ namespace SSSW
             }
         }
 
+        private void FilterLookup(Guid id)
+        {
+            var data = (List<StepSelectModel>)_lkStepCode.Properties.DataSource;
+
+            var item = data
+                .FirstOrDefault(x => x.FT601Id == id);
+
+            if (item != null)
+            {
+                _lkStepCode.EditValue = item.StepItemCode;  // hoặc item.StepItemCode tùy FieldName
+            }
+            else
+            {
+                MessageBox.Show("No matching data found!");
+            }
+        }
+
+
+        private void InitGridLookUpEdit()
+        {
+            // lookup là GridLookUpEdit đặt trên form
+            // lookup.Properties.DataSource = yourList;  // List<YourModel>
+            _lkStepCode.Properties.ValueMember = nameof(StepSelectModel.StepItemCode);   // ví dụ
+            _lkStepCode.Properties.DisplayMember = nameof(StepSelectModel.StepItemName); // ví dụ
+
+            // Hiển thị popup ngay khi focus nếu muốn
+            _lkStepCode.Properties.ImmediatePopup = true;
+            // Cho phép gõ text (để Search/Contains hoạt động)
+            _lkStepCode.Properties.TextEditStyle = TextEditStyles.Standard;
+            // Tìm chuỗi con thay vì bắt đầu bằng
+            _lkStepCode.Properties.PopupFilterMode = PopupFilterMode.Contains;
+
+            // Lấy GridView của popup
+            var view = _lkStepCode.Properties.PopupView as GridView;
+            if (view == null) return;
+
+
+
+            // Nhận chọn ngay khi click
+            view.RowCellClick += (s, e) =>
+            {
+                var v = (GridView)s;
+                var val = v.GetRowCellValue(e.RowHandle, _lkStepCode.Properties.ValueMember);
+                if (!Equals(_lkStepCode.EditValue, val))
+                    _lkStepCode.EditValue = val;
+            };
+
+            //// (tuỳ chọn) Nhận chọn khi di chuyển bằng phím
+            //view.FocusedRowChanged += (s, e) =>
+            //{
+            //    var v = (GridView)s;
+            //    var val = v.GetFocusedRowCellValue(_lkStepCode.Properties.ValueMember);
+            //    if (val != null && !Equals(_lkStepCode.EditValue, val))
+            //    {
+            //        _lkStepCode.EditValue = val;
+            //    }
+            //};
+
+            // BestFit khi popup mở
+            _lkStepCode.Popup -= Lk_Popup;
+            _lkStepCode.Popup += Lk_Popup;
+
+            //Tắt trigger khi CloseUp
+            _lkStepCode.CloseUp += (s, e) =>
+            {
+                e.AcceptValue = false; // không trigger EditValue lần nữa
+            };
+
+
+            // Event async có try/catch để nhìn lỗi
+            _lkStepCode.EditValueChanged -= Lk_EditValueChangedAsyncSafe;
+            _lkStepCode.EditValueChanged += Lk_EditValueChangedAsyncSafe;
+
+
+            // ===== Các tính năng lọc/tìm =====
+            // 1) Hàng lọc Auto Filter Row
+            view.OptionsView.ShowAutoFilterRow = true;
+
+            view.OptionsCustomization.AllowFilter = true;
+            view.OptionsView.ShowFilterPanelMode = DevExpress.XtraGrid.Views.Base.ShowFilterPanelMode.ShowAlways;
+            view.OptionsView.ColumnAutoWidth = false;
+            view.OptionsCustomization.AllowSort = true;
+            view.OptionsBehavior.ReadOnly = true;
+            view.OptionsView.ShowFooter = true;
+            view.OptionsView.ShowGroupPanel = false;
+            view.OptionsFind.AlwaysVisible = true;
+            view.OptionsFilter.ColumnFilterPopupMode = DevExpress.XtraGrid.Columns.ColumnFilterPopupMode.Excel;
+
+
+            // (Khuyến nghị) BestFit dựa trên nội dung ô
+            view.OptionsView.BestFitMode = DevExpress.XtraGrid.Views.Grid.GridBestFitMode.Default;
+
+            // Nếu dùng wrap
+            // view.OptionsView.RowAutoHeight = true;
+            // foreach (GridColumn c in view.Columns) {
+            //     c.AppearanceCell.TextOptions.WordWrap = DevExpress.Utils.WordWrap.Wrap;
+            // }
+
+
+            // 2) Search Panel trong popup
+            view.OptionsFind.AlwaysVisible = true;
+            view.OptionsFind.FindNullPrompt = "Nhập để tìm...";
+
+            // 3) Excel-style filter menu ở header
+            view.OptionsFilter.ColumnFilterPopupMode = DevExpress.XtraGrid.Columns.ColumnFilterPopupMode.Excel;
+            view.OptionsFilter.ShowAllTableValuesInFilterPopup = true;
+
+            // (tuỳ chọn) Nếu muốn bật Visual Filter Editor (Ctrl+Alt+F)
+            view.OptionsFilter.DefaultFilterEditorView = DevExpress.XtraEditors.FilterEditorViewMode.Visual;
+
+            // (tuỳ chọn) Sắp xếp/nhóm/resize
+            view.OptionsCustomization.AllowColumnMoving = true;
+            view.OptionsCustomization.AllowGroup = false;
+
+            // ===== Khai báo cột (nếu chưa có) =====
+            view.Columns.Clear();
+            view.Columns.AddVisible(nameof(StepSelectModel.StepItemCode), "Step Item Code");
+            view.Columns.AddVisible(nameof(StepSelectModel.StepItemName), "Step Item Name");
+            view.Columns.AddVisible(nameof(StepSelectModel.Size), "Size");
+            view.Columns.AddVisible(nameof(StepSelectModel.Machine), "Machine");
+            view.Columns.AddVisible(nameof(StepSelectModel.HydraOrderNo), "HydraOrderNo");
+            view.Columns.AddVisible(nameof(StepSelectModel.MoldPairsShot), "MoldPairsShot");
+            view.Columns.AddVisible(nameof(StepSelectModel.ArticlePairsShot), "ArticlePairsShot");
+            view.Columns.AddVisible(nameof(StepSelectModel.FT601Id), "FT601 Id");
+            // ... thêm cột khác nếu cần
+
+            // (khuyến nghị) Bật filter kiểu Contains cho từng cột text
+            foreach (GridColumn col in view.Columns)
+            {
+                if (col.ColumnType == typeof(string))
+                {
+                    col.OptionsFilter.AutoFilterCondition = AutoFilterCondition.Contains;
+                }
+            }
+
+            //// (tuỳ chọn) tự focus vào ô tìm kiếm khi popup mở
+            //_lkStepCode.Popup += (s, e) =>
+            //{
+            //    view.OptionsFind.FindFilterColumns = $"{nameof(StepSelectModel.StepItemCode)};{nameof(StepSelectModel.StepItemName)};{nameof(StepSelectModel.Machine)}";
+            //    view.ShowFindPanel();
+            //};
+        }
+
+        private void Lk_Popup(object sender, EventArgs e)
+        {
+            var edit = (DevExpress.XtraEditors.GridLookUpEdit)sender;
+            var view = edit.Properties.PopupView as DevExpress.XtraGrid.Views.Grid.GridView;
+            if (view == null) return;
+
+            // 1) Tắt dàn đều cột để BestFit có hiệu lực từng cột
+            view.OptionsView.ColumnAutoWidth = false;
+
+            // 2) Gọi BestFit khi popup đã có kích thước thực
+            view.BestFitColumns(); // hoặc view.BestFitColumns(true);
+
+            // 3) (tuỳ chọn) Nới popup nếu cần
+            // edit.Properties.PopupFormSize = new Size(Math.Max(800, edit.Width), 400);
+        }
+
+
+
         private void Properties_ButtonClick(object sender, DevExpress.XtraEditors.Controls.ButtonPressedEventArgs e)
         {
-            LookUpEdit edit = sender as LookUpEdit;
-            EditorButton Button = e.Button;
-            if (edit.Properties.Buttons.IndexOf(e.Button) == 0)
+            //LookUpEdit edit = sender as LookUpEdit;
+            //EditorButton button = e.Button;
+            //if (button.Caption == "Delete")
+            //{
+            //    edit?.EditValue = null;
+            //}
+
+            var edit = (DevExpress.XtraEditors.GridLookUpEdit)sender;
+
+            if (e.Button.Kind == DevExpress.XtraEditors.Controls.ButtonPredefines.Delete
+                || string.Equals(e.Button.Caption, "Delete", StringComparison.OrdinalIgnoreCase))
             {
-                edit.EditValue = null;
+                try
+                {
+                    edit.EditValueChanged -= Lk_EditValueChangedAsyncSafe;
+
+                    edit.ClosePopup();
+
+                    // Cho phép null và hiển thị rỗng
+                    edit.Properties.AllowNullInput = DevExpress.Utils.DefaultBoolean.True;
+                    edit.Properties.NullText = string.Empty;
+
+                    // Clear popup selection
+                    if (edit.Properties.PopupView is DevExpress.XtraGrid.Views.Grid.GridView view)
+                    {
+                        view.ClearSelection();
+                        view.FocusedRowHandle = DevExpress.XtraGrid.GridControl.InvalidRowHandle;
+                        // view.ClearColumnsFilter(); // nếu muốn
+                    }
+
+                    // Nếu có binding kiểu value non-nullable, cân nhắc dùng DBNull.Value
+                    edit.EditValue = null; // hoặc: edit.EditValue = DBNull.Value;
+
+                    // (tuỳ chọn) gọi handler logic sau khi xóa
+                    Lk_EditValueChangedAsyncSafe(edit, EventArgs.Empty);
+                }
+                finally
+                {
+                    edit.EditValueChanged += Lk_EditValueChangedAsyncSafe;
+                }
+            }
+
+        }
+
+
+        private async void Lk_EditValueChangedAsyncSafe(object sender, EventArgs e)
+        {
+            try
+            {
+                await _lkStepCode_EditValueChangedAsync(sender, e);
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine(ex);
+                MessageBox.Show(ex.Message);
             }
         }
 
@@ -990,7 +1224,7 @@ namespace SSSW
         {
             try
             {
-                var editor = sender as DevExpress.XtraEditors.LookUpEdit;
+                var editor = sender as DevExpress.XtraEditors.GridLookUpEdit;
                 if (editor == null) return;
 
                 // 1) Giá trị (ValueMember)
@@ -1096,7 +1330,9 @@ namespace SSSW
 
                         //kiểm tra các bước cân của itemFG đưuọc plan trên Hydra, chỉ cho phép cân các steps thuộc kế hoạch này.
                         FT601 ckHydra = new();
-                        ckHydra = _dataHydra.FirstOrDefault(x => x.C004 == item.ItemStepCode && x.C007 == item.ItemFgCode);
+                        ckHydra = item.ItemStepCode == _stepSelected.C004 ?
+                            _stepSelected :
+                            _dataHydra.FirstOrDefault(x => x.C004 == item.ItemStepCode && x.C007 == item.ItemFgCode);
 
                         if (ckHydra == null)
                         {
@@ -1632,7 +1868,7 @@ namespace SSSW
                     //tính part weight
                     var previuosStep = _scaleDataFinal.Where(x => x.C015 == _rowSelected.C015 - 1).ToList();
                     var nonInjection = _scaleDataFinal.Where(x => x.C015 == _rowSelected.C015
-                        && (x.C002 == "Z-VHXXXXXX" || x.C002.StartsWith( "REX"))).ToList();
+                        && (x.C002 == "Z-VHXXXXXX" || x.C002.StartsWith("REX"))).ToList();
 
                     _rowSelected.C021 = _rowSelected.C023 - previuosStep?.Sum(x => x.C023) - nonInjection?.Sum(x => x.C023);
 
@@ -1829,7 +2065,7 @@ namespace SSSW
                 _txtMachine.Text = _rowSelected?.C004;
                 _txtSize.Text = _rowSelected?.C008;
                 _txtStepIndex.Text = _rowSelected?.C015.ToString();
-                _txtMoldPairShot.Text = _rowSelected?.C018.ToString();
+                //_txtMoldPairShot.Text = _rowSelected?.C018.ToString();
                 _txtActiclePairShot.Text = _articlePaisShotFinaly.ToString();
                 _txtArticle.Text = _rowSelected?.C005;
                 _txtQty.Text = _rowSelected?.C025.ToString();
@@ -1862,8 +2098,8 @@ namespace SSSW
 
                     _grvTotalStep.Columns[nameof(FT600.C010)].Visible = false;
                     _grvTotalStep.Columns[nameof(FT600.C011)].Visible = false;
-                    _grvTotalStep.Columns[nameof(FT600.C029)].Visible = false;
-                    _grvTotalStep.Columns[nameof(FT600.C032)].Visible = false;
+                    //_grvTotalStep.Columns[nameof(FT600.C029)].Visible = false;
+                    //_grvTotalStep.Columns[nameof(FT600.C032)].Visible = false;
                     _grvTotalStep.Columns[nameof(FT600.C012)].Visible = false;
                     _grvTotalStep.Columns[nameof(FT600.C030)].Visible = false;
                     _grvTotalStep.Columns[nameof(FT600.C031)].Visible = false;

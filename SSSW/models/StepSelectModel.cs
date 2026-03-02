@@ -11,5 +11,8 @@
         public string? Machine { get; set; } = string.Empty;
 
         public string? HydraOrderNo { get; set; } = string.Empty;
+
+
+        public Guid FT601Id { get; set; }
     }
 }

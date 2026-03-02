@@ -100,19 +100,19 @@ namespace SSSW.models
         /// Actual pairs shot.
         /// </summary>
         [Column("c028")]
-        [DisplayName("Actual Pairs Shot Final")]
+        [DisplayName("Actual Partitioning (prs)")]
         public double? C028 { get; set; }
 
         /// <summary>
         /// PPIC pairs shot.
         /// </summary>
-        [DisplayName("Actual Pairs Shot")]
+        [DisplayName("Actual Pairs Shot (prs)")]
         public int? C017 { get; set; }
 
         /// <summary>
         /// Mold pairs shot.
         /// </summary>
-        [DisplayName("Mold Pairs Shot")]
+        [DisplayName("Mold Pairs Shot (prs)")]
         public int? C018 { get; set; }
 
         /// <summary>
@@ -133,6 +133,7 @@ namespace SSSW.models
         /// </summary>
         [DisplayName("FG Code")]
         public string? C013 { get; set; }
+
         /// <summary>
         /// FG item name.
         /// </summary>
@@ -195,11 +196,13 @@ namespace SSSW.models
         /// </summary>
         [DisplayName("Operator Code")]
         public string? C010 { get; set; }
+
         /// <summary>
         /// Employee name.
         /// </summary>
         [DisplayName("Operator Name")]
         public string? C011 { get; set; }
+
         /// <summary>
         /// QR generate.
         /// format:ItemStepCode|Machine|Id.

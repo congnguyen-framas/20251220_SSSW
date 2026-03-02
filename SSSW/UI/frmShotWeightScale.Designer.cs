@@ -75,6 +75,7 @@ namespace SSSW
             _btnCancel = new DevExpress.XtraEditors.SimpleButton();
             _btnConfirm = new DevExpress.XtraEditors.SimpleButton();
             groupInfo = new DevExpress.XtraEditors.GroupControl();
+            _toggleSwitchEnablePartition = new DevExpress.XtraEditors.ToggleSwitch();
             _comboBoxEditIsRunner = new DevExpress.XtraEditors.ComboBoxEdit();
             _txtRemark = new DevExpress.XtraEditors.TextEdit();
             labelControl19 = new DevExpress.XtraEditors.LabelControl();
@@ -84,7 +85,6 @@ namespace SSSW
             _txtStepCode = new DevExpress.XtraEditors.TextEdit();
             labelControl12 = new DevExpress.XtraEditors.LabelControl();
             _txtFGName = new DevExpress.XtraEditors.TextEdit();
-            _lkStepCode = new DevExpress.XtraEditors.LookUpEdit();
             _scanBarcode = new BarcodeButtonEdit();
             labelControl11 = new DevExpress.XtraEditors.LabelControl();
             _txtActiclePairShot = new DevExpress.XtraEditors.TextEdit();
@@ -97,14 +97,14 @@ namespace SSSW
             labelControl7 = new DevExpress.XtraEditors.LabelControl();
             labelControl4 = new DevExpress.XtraEditors.LabelControl();
             labelControl5 = new DevExpress.XtraEditors.LabelControl();
-            _txtMoldPairShot = new DevExpress.XtraEditors.TextEdit();
             _txtSize = new DevExpress.XtraEditors.TextEdit();
             labelControl6 = new DevExpress.XtraEditors.LabelControl();
             labelControl10 = new DevExpress.XtraEditors.LabelControl();
             _txtMachine = new DevExpress.XtraEditors.TextEdit();
-            labelControl9 = new DevExpress.XtraEditors.LabelControl();
             _txtArticle = new DevExpress.XtraEditors.TextEdit();
             labelControl23 = new DevExpress.XtraEditors.LabelControl();
+            _lkStepCode = new DevExpress.XtraEditors.GridLookUpEdit();
+            gridLookUpEdit1View = new DevExpress.XtraGrid.Views.Grid.GridView();
             scaleButtonEdit1 = new ScaleButtonEdit();
             _btnSaveWeight = new DevExpress.XtraEditors.SimpleButton();
             groupControl6 = new DevExpress.XtraEditors.GroupControl();
@@ -122,21 +122,22 @@ namespace SSSW
             _labVer = new Label();
             ((System.ComponentModel.ISupportInitialize)groupInfo).BeginInit();
             groupInfo.SuspendLayout();
+            ((System.ComponentModel.ISupportInitialize)_toggleSwitchEnablePartition.Properties).BeginInit();
             ((System.ComponentModel.ISupportInitialize)_comboBoxEditIsRunner.Properties).BeginInit();
             ((System.ComponentModel.ISupportInitialize)_txtRemark.Properties).BeginInit();
             ((System.ComponentModel.ISupportInitialize)_txtPercentOFusageNonwoven.Properties).BeginInit();
             ((System.ComponentModel.ISupportInitialize)_txtStepCode.Properties).BeginInit();
             ((System.ComponentModel.ISupportInitialize)_txtFGName.Properties).BeginInit();
-            ((System.ComponentModel.ISupportInitialize)_lkStepCode.Properties).BeginInit();
             ((System.ComponentModel.ISupportInitialize)_scanBarcode.Properties).BeginInit();
             ((System.ComponentModel.ISupportInitialize)_txtActiclePairShot.Properties).BeginInit();
             ((System.ComponentModel.ISupportInitialize)_txtFgItemCode.Properties).BeginInit();
             ((System.ComponentModel.ISupportInitialize)_txtQty.Properties).BeginInit();
             ((System.ComponentModel.ISupportInitialize)_txtStepIndex.Properties).BeginInit();
-            ((System.ComponentModel.ISupportInitialize)_txtMoldPairShot.Properties).BeginInit();
             ((System.ComponentModel.ISupportInitialize)_txtSize.Properties).BeginInit();
             ((System.ComponentModel.ISupportInitialize)_txtMachine.Properties).BeginInit();
             ((System.ComponentModel.ISupportInitialize)_txtArticle.Properties).BeginInit();
+            ((System.ComponentModel.ISupportInitialize)_lkStepCode.Properties).BeginInit();
+            ((System.ComponentModel.ISupportInitialize)gridLookUpEdit1View).BeginInit();
             ((System.ComponentModel.ISupportInitialize)scaleButtonEdit1.Properties).BeginInit();
             ((System.ComponentModel.ISupportInitialize)groupControl6).BeginInit();
             groupControl6.SuspendLayout();
@@ -202,6 +203,7 @@ namespace SSSW
             groupInfo.AppearanceCaption.Font = new Font("Segoe UI", 23F, FontStyle.Bold);
             groupInfo.AppearanceCaption.Options.UseBorderColor = true;
             groupInfo.AppearanceCaption.Options.UseFont = true;
+            groupInfo.Controls.Add(_toggleSwitchEnablePartition);
             groupInfo.Controls.Add(_comboBoxEditIsRunner);
             groupInfo.Controls.Add(_txtRemark);
             groupInfo.Controls.Add(labelControl19);
@@ -211,7 +213,6 @@ namespace SSSW
             groupInfo.Controls.Add(_txtStepCode);
             groupInfo.Controls.Add(labelControl12);
             groupInfo.Controls.Add(_txtFGName);
-            groupInfo.Controls.Add(_lkStepCode);
             groupInfo.Controls.Add(_scanBarcode);
             groupInfo.Controls.Add(labelControl11);
             groupInfo.Controls.Add(_txtActiclePairShot);
@@ -224,14 +225,13 @@ namespace SSSW
             groupInfo.Controls.Add(labelControl7);
             groupInfo.Controls.Add(labelControl4);
             groupInfo.Controls.Add(labelControl5);
-            groupInfo.Controls.Add(_txtMoldPairShot);
             groupInfo.Controls.Add(_txtSize);
             groupInfo.Controls.Add(labelControl6);
             groupInfo.Controls.Add(labelControl10);
             groupInfo.Controls.Add(_txtMachine);
-            groupInfo.Controls.Add(labelControl9);
             groupInfo.Controls.Add(_txtArticle);
             groupInfo.Controls.Add(labelControl23);
+            groupInfo.Controls.Add(_lkStepCode);
             groupInfo.GroupStyle = GroupStyle.Card;
             groupInfo.Location = new Point(12, 55);
             groupInfo.Margin = new Padding(3, 1, 3, 1);
@@ -239,6 +239,18 @@ namespace SSSW
             groupInfo.Size = new Size(1425, 537);
             groupInfo.TabIndex = 31;
             groupInfo.Text = "Step information";
+            // 
+            // _toggleSwitchEnablePartition
+            // 
+            _toggleSwitchEnablePartition.Location = new Point(204, 325);
+            _toggleSwitchEnablePartition.Name = "_toggleSwitchEnablePartition";
+            _toggleSwitchEnablePartition.Properties.Appearance.Font = new Font("Tahoma", 13F);
+            _toggleSwitchEnablePartition.Properties.Appearance.Options.UseFont = true;
+            _toggleSwitchEnablePartition.Properties.AutoHeight = false;
+            _toggleSwitchEnablePartition.Properties.OffText = "Partitioning Adjustment: OFF";
+            _toggleSwitchEnablePartition.Properties.OnText = "Partitioning Adjustment: ON";
+            _toggleSwitchEnablePartition.Size = new Size(298, 27);
+            _toggleSwitchEnablePartition.TabIndex = 98;
             // 
             // _comboBoxEditIsRunner
             // 
@@ -351,24 +363,6 @@ namespace SSSW
             _txtFGName.Size = new Size(1210, 40);
             _txtFGName.TabIndex = 90;
             // 
-            // _lkStepCode
-            // 
-            _lkStepCode.Location = new Point(204, 106);
-            _lkStepCode.Name = "_lkStepCode";
-            _lkStepCode.Properties.ActionButtonIndex = 1;
-            _lkStepCode.Properties.Appearance.Font = new Font("Tahoma", 15F);
-            _lkStepCode.Properties.Appearance.Options.UseFont = true;
-            _lkStepCode.Properties.AutoHeight = false;
-            editorButtonImageOptions2.SvgImage = (DevExpress.Utils.Svg.SvgImage)resources.GetObject("editorButtonImageOptions2.SvgImage");
-            editorButtonImageOptions2.SvgImageSize = new Size(30, 30);
-            editorButtonImageOptions3.SvgImage = (DevExpress.Utils.Svg.SvgImage)resources.GetObject("editorButtonImageOptions3.SvgImage");
-            editorButtonImageOptions3.SvgImageSize = new Size(30, 30);
-            _lkStepCode.Properties.Buttons.AddRange(new EditorButton[] { new EditorButton(ButtonPredefines.Glyph, "Delete", -1, true, true, false, editorButtonImageOptions2, new KeyShortcut(Keys.None), serializableAppearanceObject5, serializableAppearanceObject6, serializableAppearanceObject7, serializableAppearanceObject8, "", null, null, ToolTipAnchor.Default), new EditorButton(ButtonPredefines.Glyph, "Select", -1, true, true, false, editorButtonImageOptions3, new KeyShortcut(Keys.None), serializableAppearanceObject9, serializableAppearanceObject10, serializableAppearanceObject11, serializableAppearanceObject12, "", null, null, ToolTipAnchor.Default) });
-            _lkStepCode.Properties.PopupFilterMode = DevExpress.XtraEditors.PopupFilterMode.Contains;
-            _lkStepCode.Properties.SearchMode = SearchMode.AutoSuggest;
-            _lkStepCode.Size = new Size(1210, 40);
-            _lkStepCode.TabIndex = 88;
-            // 
             // _scanBarcode
             // 
             _scanBarcode.Config = null;
@@ -399,10 +393,13 @@ namespace SSSW
             // _txtActiclePairShot
             // 
             _txtActiclePairShot.EditValue = "0";
-            _txtActiclePairShot.Location = new Point(204, 318);
+            _txtActiclePairShot.Enabled = false;
+            _txtActiclePairShot.Location = new Point(204, 269);
             _txtActiclePairShot.Margin = new Padding(3, 1, 3, 1);
             _txtActiclePairShot.Name = "_txtActiclePairShot";
+            _txtActiclePairShot.Properties.Appearance.BackColor = SystemColors.ButtonFace;
             _txtActiclePairShot.Properties.Appearance.Font = new Font("Tahoma", 20F);
+            _txtActiclePairShot.Properties.Appearance.Options.UseBackColor = true;
             _txtActiclePairShot.Properties.Appearance.Options.UseFont = true;
             _txtActiclePairShot.Properties.Appearance.Options.UseTextOptions = true;
             _txtActiclePairShot.Properties.Appearance.TextOptions.HAlignment = HorzAlignment.Far;
@@ -413,13 +410,15 @@ namespace SSSW
             // 
             labelControl3.Appearance.Font = new Font("Tahoma", 15F);
             labelControl3.Appearance.Options.UseFont = true;
+            labelControl3.Appearance.Options.UseTextOptions = true;
+            labelControl3.Appearance.TextOptions.WordWrap = WordWrap.Wrap;
             labelControl3.AutoSizeMode = DevExpress.XtraEditors.LabelAutoSizeMode.None;
-            labelControl3.Location = new Point(13, 325);
+            labelControl3.Location = new Point(13, 262);
             labelControl3.Margin = new Padding(3, 1, 3, 1);
             labelControl3.Name = "labelControl3";
-            labelControl3.Size = new Size(169, 27);
+            labelControl3.Size = new Size(169, 54);
             labelControl3.TabIndex = 79;
-            labelControl3.Text = "Actual Pairs Shot";
+            labelControl3.Text = "Actual Partitioning (Prs)";
             // 
             // labelControl2
             // 
@@ -515,17 +514,6 @@ namespace SSSW
             labelControl5.TabIndex = 73;
             labelControl5.Text = "Sequence Index";
             // 
-            // _txtMoldPairShot
-            // 
-            _txtMoldPairShot.Location = new Point(204, 265);
-            _txtMoldPairShot.Margin = new Padding(3, 1, 3, 1);
-            _txtMoldPairShot.Name = "_txtMoldPairShot";
-            _txtMoldPairShot.Properties.Appearance.Font = new Font("Tahoma", 20F);
-            _txtMoldPairShot.Properties.Appearance.Options.UseFont = true;
-            _txtMoldPairShot.Properties.ReadOnly = true;
-            _txtMoldPairShot.Size = new Size(285, 40);
-            _txtMoldPairShot.TabIndex = 70;
-            // 
             // _txtSize
             // 
             _txtSize.Location = new Point(1009, 212);
@@ -573,18 +561,6 @@ namespace SSSW
             _txtMachine.Size = new Size(285, 40);
             _txtMachine.TabIndex = 61;
             // 
-            // labelControl9
-            // 
-            labelControl9.Appearance.Font = new Font("Tahoma", 15F);
-            labelControl9.Appearance.Options.UseFont = true;
-            labelControl9.AutoSizeMode = DevExpress.XtraEditors.LabelAutoSizeMode.None;
-            labelControl9.Location = new Point(13, 272);
-            labelControl9.Margin = new Padding(3, 1, 3, 1);
-            labelControl9.Name = "labelControl9";
-            labelControl9.Size = new Size(169, 27);
-            labelControl9.TabIndex = 71;
-            labelControl9.Text = "Mold's Pairs Shot";
-            // 
             // _txtArticle
             // 
             _txtArticle.Location = new Point(1009, 265);
@@ -607,6 +583,30 @@ namespace SSSW
             labelControl23.Size = new Size(53, 27);
             labelControl23.TabIndex = 65;
             labelControl23.Text = "Size";
+            // 
+            // _lkStepCode
+            // 
+            _lkStepCode.Location = new Point(204, 106);
+            _lkStepCode.Name = "_lkStepCode";
+            _lkStepCode.Properties.ActionButtonIndex = 1;
+            _lkStepCode.Properties.Appearance.Font = new Font("Tahoma", 15F);
+            _lkStepCode.Properties.Appearance.Options.UseFont = true;
+            _lkStepCode.Properties.AutoHeight = false;
+            editorButtonImageOptions2.SvgImage = (DevExpress.Utils.Svg.SvgImage)resources.GetObject("editorButtonImageOptions2.SvgImage");
+            editorButtonImageOptions2.SvgImageSize = new Size(30, 30);
+            editorButtonImageOptions3.SvgImage = (DevExpress.Utils.Svg.SvgImage)resources.GetObject("editorButtonImageOptions3.SvgImage");
+            editorButtonImageOptions3.SvgImageSize = new Size(30, 30);
+            _lkStepCode.Properties.Buttons.AddRange(new EditorButton[] { new EditorButton(ButtonPredefines.Glyph, "Delete", -1, true, true, false, editorButtonImageOptions2, new KeyShortcut(Keys.None), serializableAppearanceObject5, serializableAppearanceObject6, serializableAppearanceObject7, serializableAppearanceObject8, "", null, null, ToolTipAnchor.Default), new EditorButton(ButtonPredefines.Glyph, "Select", -1, true, true, false, editorButtonImageOptions3, new KeyShortcut(Keys.None), serializableAppearanceObject9, serializableAppearanceObject10, serializableAppearanceObject11, serializableAppearanceObject12, "", null, null, ToolTipAnchor.Default) });
+            _lkStepCode.Properties.PopupView = gridLookUpEdit1View;
+            _lkStepCode.Size = new Size(1210, 40);
+            _lkStepCode.TabIndex = 88;
+            // 
+            // gridLookUpEdit1View
+            // 
+            gridLookUpEdit1View.FocusRectStyle = DevExpress.XtraGrid.Views.Grid.DrawFocusRectStyle.RowFocus;
+            gridLookUpEdit1View.Name = "gridLookUpEdit1View";
+            gridLookUpEdit1View.OptionsSelection.EnableAppearanceFocusedCell = false;
+            gridLookUpEdit1View.OptionsView.ShowGroupPanel = false;
             // 
             // scaleButtonEdit1
             // 
@@ -826,21 +826,22 @@ namespace SSSW
             WindowState = FormWindowState.Maximized;
             ((System.ComponentModel.ISupportInitialize)groupInfo).EndInit();
             groupInfo.ResumeLayout(false);
+            ((System.ComponentModel.ISupportInitialize)_toggleSwitchEnablePartition.Properties).EndInit();
             ((System.ComponentModel.ISupportInitialize)_comboBoxEditIsRunner.Properties).EndInit();
             ((System.ComponentModel.ISupportInitialize)_txtRemark.Properties).EndInit();
             ((System.ComponentModel.ISupportInitialize)_txtPercentOFusageNonwoven.Properties).EndInit();
             ((System.ComponentModel.ISupportInitialize)_txtStepCode.Properties).EndInit();
             ((System.ComponentModel.ISupportInitialize)_txtFGName.Properties).EndInit();
-            ((System.ComponentModel.ISupportInitialize)_lkStepCode.Properties).EndInit();
             ((System.ComponentModel.ISupportInitialize)_scanBarcode.Properties).EndInit();
             ((System.ComponentModel.ISupportInitialize)_txtActiclePairShot.Properties).EndInit();
             ((System.ComponentModel.ISupportInitialize)_txtFgItemCode.Properties).EndInit();
             ((System.ComponentModel.ISupportInitialize)_txtQty.Properties).EndInit();
             ((System.ComponentModel.ISupportInitialize)_txtStepIndex.Properties).EndInit();
-            ((System.ComponentModel.ISupportInitialize)_txtMoldPairShot.Properties).EndInit();
             ((System.ComponentModel.ISupportInitialize)_txtSize.Properties).EndInit();
             ((System.ComponentModel.ISupportInitialize)_txtMachine.Properties).EndInit();
             ((System.ComponentModel.ISupportInitialize)_txtArticle.Properties).EndInit();
+            ((System.ComponentModel.ISupportInitialize)_lkStepCode.Properties).EndInit();
+            ((System.ComponentModel.ISupportInitialize)gridLookUpEdit1View).EndInit();
             ((System.ComponentModel.ISupportInitialize)scaleButtonEdit1.Properties).EndInit();
             ((System.ComponentModel.ISupportInitialize)groupControl6).EndInit();
             groupControl6.ResumeLayout(false);
@@ -919,7 +920,6 @@ namespace SSSW
         private DevExpress.XtraEditors.TextEdit teRatioRE;
         private DevExpress.XtraEditors.LabelControl labelControl21;
         private DevExpress.XtraEditors.LabelControl labelControl22;
-        private DevExpress.XtraEditors.TextEdit _txtMoldPairShot;
         private DevExpress.XtraEditors.TextEdit teWeightMixTarget;
         private DevExpress.XtraGrid.Columns.GridColumn colPercentOfRecycle;
         private DevExpress.XtraGrid.Columns.GridColumn colAllow;
@@ -935,7 +935,6 @@ namespace SSSW
         private DevExpress.XtraEditors.LabelControl labelControl4;
         private DevExpress.XtraEditors.LabelControl labelControl6;
         private DevExpress.XtraEditors.LabelControl labelControl5;
-        private DevExpress.XtraEditors.LabelControl labelControl9;
         private DevExpress.XtraEditors.TextEdit _txtArticle;
         private DevExpress.XtraEditors.Repository.RepositoryItemMemoEdit repositoryItemMemoEdit1;
         private DevExpress.XtraGrid.Columns.GridColumn gridColumn7;
@@ -950,7 +949,6 @@ namespace SSSW
         private DevExpress.XtraEditors.LabelControl labelControl3;
         private DevExpress.XtraEditors.LabelControl labelControl11;
         private BarcodeButtonEdit _scanBarcode;
-        private DevExpress.XtraEditors.LookUpEdit _lkStepCode;
         private DevExpress.XtraEditors.LabelControl labelControl12;
         private DevExpress.XtraEditors.TextEdit _labFGName;
         private DevExpress.XtraEditors.LabelControl labelControl13;
@@ -964,5 +962,8 @@ namespace SSSW
         private ScaleButtonEdit scaleButtonEdit1;
         private DevExpress.XtraEditors.TextEdit _txtRemark;
         private DevExpress.XtraEditors.ComboBoxEdit _comboBoxEditIsRunner;
+        private DevExpress.XtraEditors.GridLookUpEdit _lkStepCode;
+        private DevExpress.XtraGrid.Views.Grid.GridView gridLookUpEdit1View;
+        private DevExpress.XtraEditors.ToggleSwitch _toggleSwitchEnablePartition;
     }
 }

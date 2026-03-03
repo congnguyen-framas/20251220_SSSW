@@ -144,6 +144,7 @@ namespace SSSW
         private DevExpress.XtraEditors.SimpleButton btnCancel;
 
         private bool _allowPartitionAdjustment = false; // Cờ để cho phép điều chỉnh partition khi cân nhiều size cùng khuôn
+        private bool _suppress = true; // field
 
         // Gọi hàm này trong constructor, sau InitializeComponent()
         private void InitCancelButton()
@@ -706,9 +707,16 @@ namespace SSSW
             {
                 if (ev.KeyCode == Keys.Enter)
                 {
+
                     _articlePaisShotFinaly = double.TryParse(_txtActiclePairShot.EditValue.ToString(), out double value) ? value : 0;
 
-                    _scaleDataFinal.ForEach(x => x.C028 = _articlePaisShotFinaly);
+                    var rowUpdate = _scaleDataFinal.FirstOrDefault(x => x.C032 == _rowSelected.C032);
+                    if (rowUpdate != null) { rowUpdate.C028 = _articlePaisShotFinaly; }
+
+                    GlobalVariable.InvokeIfRequired(this, () =>
+                    {
+                        _grvTotalStep.RefreshData();
+                    });
                 }
             };
             _txtPercentOFusageNonwoven.EditValue = "0";
@@ -1035,16 +1043,14 @@ namespace SSSW
             var view = _lkStepCode.Properties.PopupView as GridView;
             if (view == null) return;
 
-
-
             // Nhận chọn ngay khi click
-            view.RowCellClick += (s, e) =>
-            {
-                var v = (GridView)s;
-                var val = v.GetRowCellValue(e.RowHandle, _lkStepCode.Properties.ValueMember);
-                if (!Equals(_lkStepCode.EditValue, val))
-                    _lkStepCode.EditValue = val;
-            };
+            //view.RowCellClick += (s, e) =>
+            //{
+            //    var v = (GridView)s;
+            //    var val = v.GetRowCellValue(e.RowHandle, _lkStepCode.Properties.ValueMember);
+            //    if (!Equals(_lkStepCode.EditValue, val))
+            //        _lkStepCode.EditValue = val;
+            //};
 
             //// (tuỳ chọn) Nhận chọn khi di chuyển bằng phím
             //view.FocusedRowChanged += (s, e) =>
@@ -1064,7 +1070,8 @@ namespace SSSW
             //Tắt trigger khi CloseUp
             _lkStepCode.CloseUp += (s, e) =>
             {
-                e.AcceptValue = false; // không trigger EditValue lần nữa
+                _suppress = false;
+                //e.AcceptValue = false; // không trigger EditValue lần nữa
             };
 
 
@@ -1144,6 +1151,8 @@ namespace SSSW
 
         private void Lk_Popup(object sender, EventArgs e)
         {
+            _suppress = true;
+
             var edit = (DevExpress.XtraEditors.GridLookUpEdit)sender;
             var view = edit.Properties.PopupView as DevExpress.XtraGrid.Views.Grid.GridView;
             if (view == null) return;
@@ -1211,6 +1220,7 @@ namespace SSSW
         {
             try
             {
+                if (_suppress) return; // đang gõ/lọc → bỏ qua
                 await _lkStepCode_EditValueChangedAsync(sender, e);
             }
             catch (Exception ex)
@@ -1625,7 +1635,8 @@ namespace SSSW
                     _rowSelected = rowSelect;
                 }
 
-                _articlePaisShotFinaly = _articlePaisShotFinaly == 0 ? (int)_scaleDataFinal.FirstOrDefault().C028 : _articlePaisShotFinaly;
+                //_articlePaisShotFinaly = _articlePaisShotFinaly == 0 ? (int)_scaleDataFinal.FirstOrDefault().C028 : _articlePaisShotFinaly;
+                _articlePaisShotFinaly = _rowSelected.C028;
 
                 UpdateUI(false);
 
@@ -1647,6 +1658,11 @@ namespace SSSW
 
             var rowSelect = _grvTotalStep.GetRow(rowHandle) as FT600;
 
+            GlobalVariable.InvokeIfRequired(this, () =>
+            {
+                _toggleSwitchEnablePartition.EditValue = false;
+            });
+
             if (e.Button.Index == 0) // Nút "Cân"
             {
                 if (rowSelect != null && !rowSelect.AllowScale)
@@ -1667,7 +1683,8 @@ namespace SSSW
                 }
 
                 _rowSelected = rowSelect;
-                _articlePaisShotFinaly = _articlePaisShotFinaly == 0 ? _rowSelected.C017 : _articlePaisShotFinaly;
+                //_articlePaisShotFinaly = _articlePaisShotFinaly == 0 ? _rowSelected.C017 : _articlePaisShotFinaly;
+                //_articlePaisShotFinaly = _rowSelected.C017 != 0 ? _rowSelected.C017 : _rowSelected.C028;
             }
             else if (e.Button.Index == 1) // Nút "Reset"
             {
@@ -1687,13 +1704,15 @@ namespace SSSW
                 rowReset.C024 = 0;
 
                 _rowSelected = rowSelect;
-                _articlePaisShotFinaly = _articlePaisShotFinaly == 0 ? _rowSelected.C017 : _articlePaisShotFinaly;
+                //_articlePaisShotFinaly = _articlePaisShotFinaly == 0 ? _rowSelected.C017 : _articlePaisShotFinaly;
+                //_articlePaisShotFinaly = _rowSelected.C017 != 0 ? _rowSelected.C017 : _rowSelected.C028;
             }
             else
             {
                 _scaleDataFinal.Remove(rowSelect);
             }
 
+            _articlePaisShotFinaly = _rowSelected.C017 != 0 && _rowSelected.C017 == _rowSelected.C028 ? _rowSelected.C017 : _rowSelected.C028;
             UpdateUI(true);
         }
 
@@ -2071,7 +2090,8 @@ namespace SSSW
                 _txtSize.Text = _rowSelected?.C008;
                 _txtStepIndex.Text = _rowSelected?.C015.ToString();
                 //_txtMoldPairShot.Text = _rowSelected?.C018.ToString();
-                _txtActiclePairShot.Text = _articlePaisShotFinaly.ToString();
+                //_txtActiclePairShot.Text = _articlePaisShotFinaly.ToString();
+                _txtActiclePairShot.Text = _rowSelected.C028.ToString();
                 _txtArticle.Text = _rowSelected?.C005;
                 _txtQty.Text = _rowSelected?.C025.ToString();
                 _txtFgItemCode.Text = _rowSelected?.C013;

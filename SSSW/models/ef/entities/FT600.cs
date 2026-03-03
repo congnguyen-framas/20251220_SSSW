@@ -236,9 +236,9 @@ namespace SSSW.models
         public int? C031 { get; set; } = 0;
 
         /// <summary>
-        /// FT600.Id
+        /// FT601.Id
         /// </summary>
-        [DisplayName("FT600.Id")]
+        [DisplayName("FT601.Id")]
         public Guid? C032 { get; set; }
 
         /// <summary>

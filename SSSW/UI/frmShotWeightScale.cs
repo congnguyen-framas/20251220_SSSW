@@ -1224,6 +1224,11 @@ namespace SSSW
         {
             try
             {
+                GlobalVariable.InvokeIfRequired(this, () =>
+                {
+                    _toggleSwitchEnablePartition.EditValue = false;
+                });
+
                 var editor = sender as DevExpress.XtraEditors.GridLookUpEdit;
                 if (editor == null) return;
 
@@ -1731,7 +1736,7 @@ namespace SSSW
             GlobalVariable.InvokeIfRequired(this, () =>
             {
                 _lkStepCode.EditValue = null;
-                _scanBarcode.Text = string.Empty;
+                _scanBarcode?.Text = string.Empty;
             });
 
             ResetNewLoop();

@@ -1032,7 +1032,6 @@ namespace SSSW
             }
         }
 
-
         private void InitGridLookUpEdit()
         {
             // lookup là GridLookUpEdit đặt trên form
@@ -1187,8 +1186,6 @@ namespace SSSW
             }
         }
 
-
-
         private void Properties_ButtonClick(object sender, DevExpress.XtraEditors.Controls.ButtonPressedEventArgs e)
         {
             //LookUpEdit edit = sender as LookUpEdit;
@@ -1234,7 +1231,6 @@ namespace SSSW
             }
 
         }
-
 
         private async void Lk_EditValueChangedAsyncSafe(object sender, EventArgs e)
         {
@@ -2336,7 +2332,6 @@ namespace SSSW
                 //SplashScreenManager.CloseOverlayForm(handle);
             }
         }
-
         private void FocusRowByStepCode(GridView view, string stepCodeField, string stepCode)
         {
             if (view == null) return;

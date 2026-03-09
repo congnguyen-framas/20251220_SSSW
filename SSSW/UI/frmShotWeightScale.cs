@@ -144,7 +144,7 @@ namespace SSSW
         private DevExpress.XtraEditors.SimpleButton btnCancel;
 
         private bool _allowPartitionAdjustment = false; // Cờ để cho phép điều chỉnh partition khi cân nhiều size cùng khuôn
-        private bool _suppress = true; // field
+        private bool _suppress = false; // field
 
         // Gọi hàm này trong constructor, sau InitializeComponent()
         private void InitCancelButton()
@@ -966,7 +966,6 @@ namespace SSSW
             {
                 //get cac thong tin lien quan den nguye lieu
 
-
                 _qrCodeScan = e.NewValue.Value.ToString();
 
                 using var dbContext = _dbFactory.CreateDbContext();
@@ -1016,7 +1015,16 @@ namespace SSSW
 
             if (item != null)
             {
-                _lkStepCode.EditValue = item.StepItemCode;  // hoặc item.StepItemCode tùy FieldName
+
+                var code = item.StepItemCode?.Trim();
+                if (Equals(_lkStepCode.EditValue, code))
+                {
+                    // ép thay đổi 1 nhịp, rồi set lại giá trị thật
+                    _lkStepCode.EditValue = null;
+                }
+                _lkStepCode.EditValue = code;
+
+                //_lkStepCode.EditValue = item.StepItemCode;  // hoặc item.StepItemCode tùy FieldName
             }
             else
             {
@@ -1153,18 +1161,30 @@ namespace SSSW
         {
             _suppress = true;
 
-            var edit = (DevExpress.XtraEditors.GridLookUpEdit)sender;
-            var view = edit.Properties.PopupView as DevExpress.XtraGrid.Views.Grid.GridView;
-            if (view == null) return;
+            try
+            {
+                var edit = (DevExpress.XtraEditors.GridLookUpEdit)sender;
+                var view = edit.Properties.PopupView as DevExpress.XtraGrid.Views.Grid.GridView;
+                if (view == null) return;
 
-            // 1) Tắt dàn đều cột để BestFit có hiệu lực từng cột
-            view.OptionsView.ColumnAutoWidth = false;
+                // 1) Tắt dàn đều cột để BestFit có hiệu lực từng cột
+                view.OptionsView.ColumnAutoWidth = false;
 
-            // 2) Gọi BestFit khi popup đã có kích thước thực
-            view.BestFitColumns(); // hoặc view.BestFitColumns(true);
+                // 2) Gọi BestFit khi popup đã có kích thước thực
+                view.BestFitColumns(); // hoặc view.BestFitColumns(true);
 
-            // 3) (tuỳ chọn) Nới popup nếu cần
-            // edit.Properties.PopupFormSize = new Size(Math.Max(800, edit.Width), 400);
+                // 3) (tuỳ chọn) Nới popup nếu cần
+                // edit.Properties.PopupFormSize = new Size(Math.Max(800, edit.Width), 400);
+            }
+            catch (Exception)
+            {
+
+                throw;
+            }
+            finally
+            {
+                _suppress = false;
+            }
         }
 
 

@@ -60,7 +60,7 @@ namespace SSSW.models
         /// Runner weight (g) of step.
         /// </summary>
         [DisplayFormat(ApplyFormatInEditMode = true, DataFormatString = "{0:#,##0.##}")]
-        [DisplayName("Runner Weight (g/prs)")] public double? C022 { get; set; }
+        [DisplayName("Runner/Excess Materials Weight (g/prs)")] public double? C022 { get; set; }
 
         /// <summary>
         /// Total scale value of part weight (include these previous step), scale value.

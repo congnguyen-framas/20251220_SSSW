@@ -5,6 +5,7 @@ namespace SSSW.models;
 
 public class EntityCommon
 {
+    [Browsable(false)]
     [DisplayFormat(ApplyFormatInEditMode = true, DataFormatString = "{0:dd/MM/yyyy HH:mm:ss}")]
     public DateTime? CreatedDate { get; set; } = null;
 

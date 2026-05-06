@@ -420,3 +420,21 @@ FodyWeavers.xsd
 update.xml
 Update.zip
 
+# Build output
+bin/
+obj/
+
+# .NET publish output
+**/net8.0-windows/
+
+# DLLs
+*.dll
+*.exe
+*.pdb
+
+# App settings (có secret)
+appsettings.json
+appsettings.*.json
+
+# Visual Studio
+.vs/

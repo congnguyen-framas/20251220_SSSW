@@ -12,7 +12,7 @@ namespace SSSW.models
 
         // Không map: chỉ dùng để đọc/hiển thị
         [NotMapped]
-        [DisplayFormat(ApplyFormatInEditMode = true, DataFormatString = "{0:dd/MM/yyyy HH:mm:ss}")]
+        [DisplayFormat(ApplyFormatInEditMode = true, DataFormatString = "{0:yyyy-MM-dd HH:mm:ss}")]
         public DateTime? CreateDate
         {
             get => CreatedDate;

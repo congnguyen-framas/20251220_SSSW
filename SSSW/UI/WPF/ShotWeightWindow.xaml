@@ -21,14 +21,14 @@
         <!-- Text styles -->
         <Style x:Key="LabelStyle" TargetType="TextBlock">
             <Setter Property="Foreground"  Value="#78909C"/>
-            <Setter Property="FontSize"    Value="12"/>
+            <Setter Property="FontSize"    Value="20"/>
             <Setter Property="FontFamily"  Value="Segoe UI"/>
             <Setter Property="Margin"      Value="0,0,0,2"/>
         </Style>
 
         <Style x:Key="FieldStyle" TargetType="TextBox">
             <Setter Property="FontFamily"       Value="Segoe UI"/>
-            <Setter Property="FontSize"         Value="12"/>
+            <Setter Property="FontSize"         Value="20"/>
             <Setter Property="Background"       Value="#FAFAFA"/>
             <Setter Property="BorderBrush"      Value="#CFD8DC"/>
             <Setter Property="BorderThickness"  Value="1"/>
@@ -171,7 +171,7 @@
             <Setter Property="HorizontalAlignment" Value="Right"/>
             <Setter Property="VerticalAlignment"   Value="Center"/>
             <Setter Property="FontWeight"          Value="Bold"/>
-            <Setter Property="FontSize"            Value="14"/>
+            <Setter Property="FontSize"            Value="18"/>
             <Setter Property="Margin"              Value="0,0,8,0"/>
         </Style>
     </Window.Resources>
@@ -316,7 +316,7 @@
                                 </Grid.ColumnDefinitions>
                                 <StackPanel Grid.Column="0">
                                     <TextBlock Text="Runner" Style="{StaticResource LabelStyle}"/>
-                                    <ComboBox x:Name="cbRunner" FontFamily="Segoe UI" FontSize="12" Height="28">
+                                    <ComboBox x:Name="cbRunner" FontFamily="Segoe UI" FontSize="20" Height="Auto">
                                         <ComboBoxItem Content="YES" IsSelected="True"/>
                                         <ComboBoxItem Content="NO"/>
                                     </ComboBox>
@@ -410,11 +410,23 @@
                                             </DataTemplate>
                                         </DataGridTemplateColumn.CellTemplate>
                                     </DataGridTemplateColumn>
-
-                                    <!-- # -->
-                                    <DataGridTextColumn Header="#" Binding="{Binding C015}"
-                                         Width="40" ElementStyle="{StaticResource CenterCell}"/>
-
+                                    
+                                    <!-- Action buttons -->
+                                    <DataGridTemplateColumn Header="Actions" Width="110" IsReadOnly="False">
+                                        <DataGridTemplateColumn.CellTemplate>
+                                            <DataTemplate>
+                                                <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                                    <Button Content="Scale" Tag="{Binding}"
+                                                             Margin="2,1" FontSize="10" Padding="4,2"
+                                                             Click="btnGridScale_Click"/>
+                                                    <Button Content="Reset" Tag="{Binding}"
+                                                             Margin="2,1" FontSize="10" Padding="4,2"
+                                                             Click="btnGridReset_Click"/>
+                                                </StackPanel>
+                                            </DataTemplate>
+                                        </DataGridTemplateColumn.CellTemplate>
+                                    </DataGridTemplateColumn>
+                                    
                                     <!-- STATUS -->
                                     <DataGridTemplateColumn Header="STATUS" Width="90">
                                         <DataGridTemplateColumn.CellTemplate>
@@ -436,6 +448,28 @@
                                     <!-- MACHINE -->
                                     <DataGridTextColumn Header="MACHINE" Binding="{Binding C004}" Width="80"/>
 
+                                    <!-- Main / STEP CODE (2-line) -->
+                                    <DataGridTemplateColumn Header="MAIN / MAIN CODE" Width="200">
+                                        <DataGridTemplateColumn.CellTemplate>
+                                            <DataTemplate>
+                                                <StackPanel Margin="4,2">
+                                                    <TextBlock Text="{Binding C027}"
+                                                                 FontWeight="Bold" FontSize="12"
+                                                                 TextTrimming="CharacterEllipsis"/>
+                                                    <TextBlock Text="{Binding c026}"
+                                                                 FontSize="10" Foreground="#78909C"
+                                                                 TextTrimming="CharacterEllipsis"/>
+                                                </StackPanel>
+                                            </DataTemplate>
+                                        </DataGridTemplateColumn.CellTemplate>
+                                    </DataGridTemplateColumn>
+
+                                    <!-- Sewuence step = C015 -->
+                                    <DataGridTextColumn Header="Sequence Step"
+                                                          Binding="{Binding C015}"
+                                                          Width="80"
+                                                          ElementStyle="{StaticResource RightCell}"/>
+                                    
                                     <!-- ITEM / STEP CODE (2-line) -->
                                     <DataGridTemplateColumn Header="ITEM / STEP CODE" Width="200">
                                         <DataGridTemplateColumn.CellTemplate>
@@ -455,40 +489,27 @@
                                     <!-- SIZE -->
                                     <DataGridTextColumn Header="SIZE" Binding="{Binding C008}" Width="60"/>
 
-                                    <!-- STD (g) = C023 -->
-                                    <DataGridTextColumn Header="STD (g)"
-                                         Binding="{Binding C023, StringFormat=F2}"
-                                         Width="80"
+                                    <DataGridTextColumn Header="TOTAL W (g)"
+                                         Binding="{Binding C024, StringFormat=F2}" Width="100"
                                          ElementStyle="{StaticResource RightCell}"/>
-
-                                    <!-- ACTUAL (g) = C021 -->
-                                    <DataGridTextColumn Header="ACTUAL (g)"
-                                         Binding="{Binding C021, StringFormat=F2}"
-                                         Width="90"
+                                    <DataGridTextColumn Header="TOTAL PW (g/prs)"
+                                         Binding="{Binding C023, StringFormat=F2}" Width="110"
                                          ElementStyle="{StaticResource RightCell}"/>
-
-                                    <!-- Action buttons -->
-                                    <DataGridTemplateColumn Header="Actions" Width="110" IsReadOnly="False">
-                                        <DataGridTemplateColumn.CellTemplate>
-                                            <DataTemplate>
-                                                <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
-                                                    <Button Content="Scale" Tag="{Binding}"
-                                             Margin="2,1" FontSize="10" Padding="4,2"
-                                             Click="btnGridScale_Click"/>
-                                                    <Button Content="Reset" Tag="{Binding}"
-                                             Margin="2,1" FontSize="10" Padding="4,2"
-                                             Click="btnGridReset_Click"/>
-                                                </StackPanel>
-                                            </DataTemplate>
-                                        </DataGridTemplateColumn.CellTemplate>
-                                    </DataGridTemplateColumn>
+                                    <DataGridTextColumn Header="PART WT. (g/prs)"
+                                        Binding="{Binding C021, StringFormat=F2}" Width="110"
+                                        ElementStyle="{StaticResource RightCell}"/>
+                                    <DataGridTextColumn Header="RUNNER (g/prs)"
+                                        Binding="{Binding C022, StringFormat=F2}" Width="110"
+                                        ElementStyle="{StaticResource RightCell}"/>
+                                    <DataGridTextColumn Header="OPERATOR"
+                                        Binding="{Binding C011}" Width="90"/>
                                 </DataGrid.Columns>
                             </DataGrid>
                         </Grid>
                     </Border>
 
                     <!-- HISTORY collapsible -->
-                    <Border Grid.Row="1" Style="{StaticResource CardStyle}" Margin="0,5,0,0">
+                    <Border Grid.Row="1" Style="{StaticResource CardStyle}" Margin="4,4,0,0">
                         <Grid>
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="*"/>
@@ -504,39 +525,39 @@
                                 </Grid.RowDefinitions>
                                 <TextBlock Grid.Row="1" Text="REFERENCE / HISTORY" Foreground="White"
                        FontWeight="Bold" FontSize="12" FontFamily="Segoe UI"/>
-                                    <Border Grid.Row="1"  Background="#37474F" CornerRadius="4,4,0,0"
+                                <Border Grid.Row="1"  Background="#1565C0" CornerRadius="4,4,0,0"
                 Cursor="Hand" MouseLeftButtonDown="HistoryHeader_Click" Padding="10,6">
-                                        <TextBlock x:Name="tbHistoryToggle"
+                                    <TextBlock x:Name="tbHistoryToggle"
                        Text="▶  REFERENCE / HISTORY"
                        Foreground="White" FontWeight="Bold"
                        FontSize="12" FontFamily="Segoe UI"/>
-                                    </Border>
-                                    <Border Grid.Row="2" x:Name="pnlHistory" Visibility="Collapsed" MaxHeight="200">
-                                        <DataGrid x:Name="dgHistory" Style="{StaticResource GridStyle}">
-                                            <DataGrid.Columns>
-                                                <DataGridTextColumn Header="DATE / TIME"
-Binding="{Binding CreateDate, StringFormat='yyyy-MM-dd HH:mm'}"
-Width="130"/>
-                                                <DataGridTextColumn Header="OPERATOR"
-Binding="{Binding C011}" Width="90"/>
-                                                <DataGridTextColumn Header="PART WT. (g/prs)"
-Binding="{Binding C021, StringFormat=F2}" Width="110"
-ElementStyle="{StaticResource RightCell}"/>
-                                                <DataGridTextColumn Header="RUNNER (g/prs)"
-Binding="{Binding C022, StringFormat=F2}" Width="110"
-ElementStyle="{StaticResource RightCell}"/>
-                                                <DataGridTextColumn Header="TOTAL PW (g/prs)"
-Binding="{Binding C023, StringFormat=F2}" Width="110"
-ElementStyle="{StaticResource RightCell}"/>
-                                                <DataGridTextColumn Header="TOTAL W (g)"
-Binding="{Binding C024, StringFormat=F2}" Width="100"
-ElementStyle="{StaticResource RightCell}"/>
-                                            </DataGrid.Columns>
-                                        </DataGrid>
-                                    </Border>
+                                </Border>
+                                <Border Grid.Row="2" x:Name="pnlHistory" Visibility="Collapsed" MaxHeight="200">
+                                    <DataGrid x:Name="dgHistory" Style="{StaticResource GridStyle}">
+                                        <DataGrid.Columns>
+                                            <DataGridTextColumn Header="DATE / TIME"
+                                                    Binding="{Binding CreateDate, StringFormat='yyyy-MM-dd HH:mm'}"
+                                                    Width="130"/>
+                                            <DataGridTextColumn Header="TOTAL W (g)"
+                                                     Binding="{Binding C024, StringFormat=F2}" Width="100"
+                                                     ElementStyle="{StaticResource RightCell}"/>
+                                            <DataGridTextColumn Header="TOTAL PW (g/prs)"
+                                                     Binding="{Binding C023, StringFormat=F2}" Width="110"
+                                                     ElementStyle="{StaticResource RightCell}"/>
+                                            <DataGridTextColumn Header="PART WT. (g/prs)"
+                                                    Binding="{Binding C021, StringFormat=F2}" Width="110"
+                                                    ElementStyle="{StaticResource RightCell}"/>
+                                            <DataGridTextColumn Header="RUNNER (g/prs)"
+                                                    Binding="{Binding C022, StringFormat=F2}" Width="110"
+                                                    ElementStyle="{StaticResource RightCell}"/>                                          
+                                            <DataGridTextColumn Header="OPERATOR"
+                                                    Binding="{Binding C011}" Width="90"/>
+                                        </DataGrid.Columns>
+                                    </DataGrid>
+                                </Border>
                             </Grid>
 
-                           
+
 
                             <!-- ────────────────── RIGHT PANEL – RFID + SCALE + REF ─────────────── -->
                             <Grid Grid.Column="1" Margin="3,6,6,6">
@@ -619,13 +640,13 @@ ElementStyle="{StaticResource RightCell}"/>
                                                     <DataGridTemplateColumn.CellTemplate>
                                                         <DataTemplate>
                                                             <Border Width="26" Height="26" CornerRadius="13"
-                             Background="#1565C0"
-                             HorizontalAlignment="Center">
+                                                                     Background="#1565C0"
+                                                                     HorizontalAlignment="Center">
                                                                 <TextBlock Text="{Binding No}"
-                                    Foreground="White"
-                                    FontWeight="Bold" FontSize="11"
-                                    HorizontalAlignment="Center"
-                                    VerticalAlignment="Center"/>
+                                                                            Foreground="White"
+                                                                            FontWeight="Bold" FontSize="11"
+                                                                            HorizontalAlignment="Center"
+                                                                            VerticalAlignment="Center"/>                    
                                                             </Border>
                                                         </DataTemplate>
                                                     </DataGridTemplateColumn.CellTemplate>
@@ -637,10 +658,10 @@ ElementStyle="{StaticResource RightCell}"/>
                                                         <DataTemplate>
                                                             <StackPanel Margin="6,2" VerticalAlignment="Center">
                                                                 <TextBlock Text="{Binding FieldName}"
-                                    FontWeight="SemiBold" FontSize="12"
-                                    TextWrapping="Wrap"/>
+                                                                            FontWeight="SemiBold" FontSize="12"
+                                                                            TextWrapping="Wrap"/>   
                                                                 <TextBlock Text="{Binding Unit}"
-                                    FontSize="10" Foreground="#78909C"/>
+                                                                            FontSize="10" Foreground="#78909C"/>
                                                             </StackPanel>
                                                         </DataTemplate>
                                                     </DataGridTemplateColumn.CellTemplate>
@@ -648,21 +669,21 @@ ElementStyle="{StaticResource RightCell}"/>
 
                                                 <!-- STD -->
                                                 <DataGridTextColumn Header="STD"
-                             Binding="{Binding StdDisplay}"
-                             Width="110"
-                             ElementStyle="{StaticResource RightCellBold}"/>
+                                                                 Binding="{Binding StdDisplay}"
+                                                                 Width="110"
+                                                                 ElementStyle="{StaticResource RightCellBold}"/>                
 
                                                 <!-- Delta -->
                                                 <DataGridTextColumn Header="Δ"
-                             Binding="{Binding DeltaDisplay}"
-                             Width="90"
-                             ElementStyle="{StaticResource RightCellBold}"/>
+                                                                     Binding="{Binding DeltaDisplay}"
+                                                                     Width="90"
+                                                                     ElementStyle="{StaticResource RightCellBold}"/>
 
                                                 <!-- ACTUAL -->
                                                 <DataGridTextColumn Header="ACTUAL"
-                             Binding="{Binding ActualDisplay}"
-                             Width="110"
-                             ElementStyle="{StaticResource RightCellBold}"/>
+                                                                     Binding="{Binding ActualDisplay}"
+                                                                     Width="110"
+                                                                     ElementStyle="{StaticResource RightCellBold}"/>
                                             </DataGrid.Columns>
                                         </DataGrid>
                                     </Grid>
@@ -672,8 +693,7 @@ ElementStyle="{StaticResource RightCell}"/>
                                 <Border Grid.Row="3" Style="{StaticResource CardStyle}" Margin="0,0,0,0">
                                     <StackPanel Margin="10,8">
                                         <TextBlock Text="Barcode / QR Scan" Style="{StaticResource LabelStyle}"/>
-                                        <Border x:Name="barcodeHost" Height="32" Background="#FAFAFA"
-         BorderBrush="#CFD8DC" BorderThickness="1"/>
+                                        <Border x:Name="barcodeHost" Height="32" Background="#FAFAFA"          BorderBrush="#CFD8DC" BorderThickness="1"/>
                                     </StackPanel>
                                 </Border>
                             </Grid>

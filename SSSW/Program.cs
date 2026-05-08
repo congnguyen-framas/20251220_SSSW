@@ -83,7 +83,6 @@ namespace SSSW
 
             //// Nếu Form chính là frmShotWeightScale:
             ////var mainForm = scope.ServiceProvider.GetRequiredService<frmShotWeightScale>();
-            //var mainForm = scope.ServiceProvider.GetRequiredService<frmShotWeightScaleV2>();
 
             //Application.Run(mainForm);
 

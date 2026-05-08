@@ -21,7 +21,7 @@
         <!-- Text styles -->
         <Style x:Key="LabelStyle" TargetType="TextBlock">
             <Setter Property="Foreground"  Value="#78909C"/>
-            <Setter Property="FontSize"    Value="10"/>
+            <Setter Property="FontSize"    Value="12"/>
             <Setter Property="FontFamily"  Value="Segoe UI"/>
             <Setter Property="Margin"      Value="0,0,0,2"/>
         </Style>
@@ -240,9 +240,8 @@
         <!-- ═══════════════════════════════ MAIN CONTENT ════════════════════════════ -->
         <Grid Grid.Row="1">
             <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="290"/>
                 <ColumnDefinition Width="*"/>
-                <ColumnDefinition Width="700"/>
+                <ColumnDefinition Width="4*"/>
             </Grid.ColumnDefinitions>
 
             <!-- ────────────────── LEFT PANEL – STEP INFORMATION ────────────────── -->
@@ -366,313 +365,329 @@
                                       DisplayMemberPath="StepItemName"
                                       SelectionChanged="cbStepName_SelectionChanged"
                                       Margin="0,0,0,8"/>
-                            
+
 
                         </StackPanel>
                     </ScrollViewer>
                 </Grid>
             </Border>
 
-            <!-- ────────────────── CENTER PANEL – STEPS + HISTORY ───────────────── -->
-            <Grid Grid.Column="1" Margin="3,6,3,6">
-                <Grid.RowDefinitions>
-                    <RowDefinition Height="*"/>
-                    <RowDefinition Height="Auto"/>
-                </Grid.RowDefinitions>
+            <Grid Grid.Column="1">
+                <!-- ────────────────── CENTER PANEL – STEPS + HISTORY ───────────────── -->
+                <Grid Grid.Row="1" Margin="3,6,3,6">
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="300"/>
+                        <RowDefinition Height="*"/>
+                    </Grid.RowDefinitions>
 
-                <!-- TOTAL STEPS -->
-                <Border Grid.Row="0" Style="{StaticResource CardStyle}" Margin="0">
-                    <Grid>
-                        <Grid.RowDefinitions>
-                            <RowDefinition Height="Auto"/>
-                            <RowDefinition Height="*"/>
-                        </Grid.RowDefinitions>
+                    <!-- TOTAL STEPS -->
+                    <Border Grid.Row="0" Style="{StaticResource CardStyle}" Margin="0">
+                        <Grid>
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="*"/>
+                            </Grid.RowDefinitions>
 
-                        <Border Grid.Row="0" Background="#1565C0" CornerRadius="4,4,0,0" Padding="10,6">
-                            <TextBlock Text="TOTAL STEPS" Foreground="White"
-                                       FontWeight="Bold" FontSize="12" FontFamily="Segoe UI"/>
-                        </Border>
+                            <Border Grid.Row="0" Background="#1565C0" CornerRadius="4,4,0,0" Padding="10,6">
+                                <TextBlock Text="TOTAL STEPS" Foreground="White"
+                            FontWeight="Bold" FontSize="12" FontFamily="Segoe UI"/>
+                            </Border>
 
-                        <DataGrid Grid.Row="1" x:Name="dgTotalSteps"
-                                  Style="{StaticResource GridStyle}"
-                                  SelectionChanged="dgTotalSteps_SelectionChanged">
-                            <DataGrid.Columns>
-
-                                <!-- StatusBar strip -->
-                                <DataGridTemplateColumn Width="6" Header="" CanUserResize="False">
-                                    <DataGridTemplateColumn.CellTemplate>
-                                        <DataTemplate>
-                                            <Rectangle Width="4" HorizontalAlignment="Left">
-                                                <Rectangle.Fill>
-                                                    <SolidColorBrush Color="{Binding StatusBarColor}"/>
-                                                </Rectangle.Fill>
-                                            </Rectangle>
-                                        </DataTemplate>
-                                    </DataGridTemplateColumn.CellTemplate>
-                                </DataGridTemplateColumn>
-
-                                <!-- # -->
-                                <DataGridTextColumn Header="#" Binding="{Binding C015}"
-                                                    Width="40" ElementStyle="{StaticResource CenterCell}"/>
-
-                                <!-- STATUS -->
-                                <DataGridTemplateColumn Header="STATUS" Width="90">
-                                    <DataGridTemplateColumn.CellTemplate>
-                                        <DataTemplate>
-                                            <StackPanel Orientation="Horizontal" VerticalAlignment="Center"
-                                                        Margin="4,0">
-                                                <Ellipse Width="8" Height="8" Margin="0,0,4,0">
-                                                    <Ellipse.Fill>
-                                                        <SolidColorBrush Color="{Binding StatusDotColor}"/>
-                                                    </Ellipse.Fill>
-                                                </Ellipse>
-                                                <TextBlock Text="{Binding StatusText}"
-                                                           FontSize="11" VerticalAlignment="Center"/>
-                                            </StackPanel>
-                                        </DataTemplate>
-                                    </DataGridTemplateColumn.CellTemplate>
-                                </DataGridTemplateColumn>
-
-                                <!-- MACHINE -->
-                                <DataGridTextColumn Header="MACHINE" Binding="{Binding C004}" Width="80"/>
-
-                                <!-- ITEM / STEP CODE (2-line) -->
-                                <DataGridTemplateColumn Header="ITEM / STEP CODE" Width="200">
-                                    <DataGridTemplateColumn.CellTemplate>
-                                        <DataTemplate>
-                                            <StackPanel Margin="4,2">
-                                                <TextBlock Text="{Binding C003}"
-                                                           FontWeight="Bold" FontSize="12"
-                                                           TextTrimming="CharacterEllipsis"/>
-                                                <TextBlock Text="{Binding C002}"
-                                                           FontSize="10" Foreground="#78909C"
-                                                           TextTrimming="CharacterEllipsis"/>
-                                            </StackPanel>
-                                        </DataTemplate>
-                                    </DataGridTemplateColumn.CellTemplate>
-                                </DataGridTemplateColumn>
-
-                                <!-- SIZE -->
-                                <DataGridTextColumn Header="SIZE" Binding="{Binding C008}" Width="60"/>
-
-                                <!-- STD (g) = C023 -->
-                                <DataGridTextColumn Header="STD (g)"
-                                                    Binding="{Binding C023, StringFormat=F2}"
-                                                    Width="80"
-                                                    ElementStyle="{StaticResource RightCell}"/>
-
-                                <!-- ACTUAL (g) = C021 -->
-                                <DataGridTextColumn Header="ACTUAL (g)"
-                                                    Binding="{Binding C021, StringFormat=F2}"
-                                                    Width="90"
-                                                    ElementStyle="{StaticResource RightCell}"/>
-
-                                <!-- Action buttons -->
-                                <DataGridTemplateColumn Header="Actions" Width="110" IsReadOnly="False">
-                                    <DataGridTemplateColumn.CellTemplate>
-                                        <DataTemplate>
-                                            <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
-                                                <Button Content="Scale" Tag="{Binding}"
-                                                        Margin="2,1" FontSize="10" Padding="4,2"
-                                                        Click="btnGridScale_Click"/>
-                                                <Button Content="Reset" Tag="{Binding}"
-                                                        Margin="2,1" FontSize="10" Padding="4,2"
-                                                        Click="btnGridReset_Click"/>
-                                            </StackPanel>
-                                        </DataTemplate>
-                                    </DataGridTemplateColumn.CellTemplate>
-                                </DataGridTemplateColumn>
-                            </DataGrid.Columns>
-                        </DataGrid>
-                    </Grid>
-                </Border>
-
-                <!-- HISTORY collapsible -->
-                <Border Grid.Row="1" Style="{StaticResource CardStyle}" Margin="0,4,0,0" MaxHeight="260">
-                    <Grid>
-                        <Grid.RowDefinitions>
-                            <RowDefinition Height="Auto"/>
-                            <RowDefinition Height="Auto"/>
-                        </Grid.RowDefinitions>
-
-                        <Border Grid.Row="0" Background="#37474F" CornerRadius="4,4,0,0"
-                                Cursor="Hand" MouseLeftButtonDown="HistoryHeader_Click" Padding="10,6">
-                            <TextBlock x:Name="tbHistoryToggle"
-                                       Text="▶  REFERENCE / HISTORY"
-                                       Foreground="White" FontWeight="Bold"
-                                       FontSize="12" FontFamily="Segoe UI"/>
-                        </Border>
-
-                        <Border Grid.Row="1" x:Name="pnlHistory" Visibility="Collapsed" MaxHeight="200">
-                            <DataGrid x:Name="dgHistory" Style="{StaticResource GridStyle}">
+                            <DataGrid Grid.Row="1" x:Name="dgTotalSteps"
+                       Style="{StaticResource GridStyle}"
+                       SelectionChanged="dgTotalSteps_SelectionChanged">
                                 <DataGrid.Columns>
-                                    <DataGridTextColumn Header="DATE / TIME"
-                                        Binding="{Binding CreateDate, StringFormat='yyyy-MM-dd HH:mm'}"
-                                        Width="130"/>
-                                    <DataGridTextColumn Header="OPERATOR"
-                                        Binding="{Binding C011}" Width="90"/>
-                                    <DataGridTextColumn Header="PART WT. (g/prs)"
-                                        Binding="{Binding C021, StringFormat=F2}" Width="110"
-                                        ElementStyle="{StaticResource RightCell}"/>
-                                    <DataGridTextColumn Header="RUNNER (g/prs)"
-                                        Binding="{Binding C022, StringFormat=F2}" Width="110"
-                                        ElementStyle="{StaticResource RightCell}"/>
-                                    <DataGridTextColumn Header="TOTAL PW (g/prs)"
-                                        Binding="{Binding C023, StringFormat=F2}" Width="110"
-                                        ElementStyle="{StaticResource RightCell}"/>
-                                    <DataGridTextColumn Header="TOTAL W (g)"
-                                        Binding="{Binding C024, StringFormat=F2}" Width="100"
-                                        ElementStyle="{StaticResource RightCell}"/>
+
+                                    <!-- StatusBar strip -->
+                                    <DataGridTemplateColumn Width="6" Header="" CanUserResize="False">
+                                        <DataGridTemplateColumn.CellTemplate>
+                                            <DataTemplate>
+                                                <Rectangle Width="4" HorizontalAlignment="Left">
+                                                    <Rectangle.Fill>
+                                                        <SolidColorBrush Color="{Binding StatusBarColor}"/>
+                                                    </Rectangle.Fill>
+                                                </Rectangle>
+                                            </DataTemplate>
+                                        </DataGridTemplateColumn.CellTemplate>
+                                    </DataGridTemplateColumn>
+
+                                    <!-- # -->
+                                    <DataGridTextColumn Header="#" Binding="{Binding C015}"
+                                         Width="40" ElementStyle="{StaticResource CenterCell}"/>
+
+                                    <!-- STATUS -->
+                                    <DataGridTemplateColumn Header="STATUS" Width="90">
+                                        <DataGridTemplateColumn.CellTemplate>
+                                            <DataTemplate>
+                                                <StackPanel Orientation="Horizontal" VerticalAlignment="Center"
+                                             Margin="4,0">
+                                                    <Ellipse Width="8" Height="8" Margin="0,0,4,0">
+                                                        <Ellipse.Fill>
+                                                            <SolidColorBrush Color="{Binding StatusDotColor}"/>
+                                                        </Ellipse.Fill>
+                                                    </Ellipse>
+                                                    <TextBlock Text="{Binding StatusText}"
+                                                FontSize="11" VerticalAlignment="Center"/>
+                                                </StackPanel>
+                                            </DataTemplate>
+                                        </DataGridTemplateColumn.CellTemplate>
+                                    </DataGridTemplateColumn>
+
+                                    <!-- MACHINE -->
+                                    <DataGridTextColumn Header="MACHINE" Binding="{Binding C004}" Width="80"/>
+
+                                    <!-- ITEM / STEP CODE (2-line) -->
+                                    <DataGridTemplateColumn Header="ITEM / STEP CODE" Width="200">
+                                        <DataGridTemplateColumn.CellTemplate>
+                                            <DataTemplate>
+                                                <StackPanel Margin="4,2">
+                                                    <TextBlock Text="{Binding C003}"
+                                                FontWeight="Bold" FontSize="12"
+                                                TextTrimming="CharacterEllipsis"/>
+                                                    <TextBlock Text="{Binding C002}"
+                                                FontSize="10" Foreground="#78909C"
+                                                TextTrimming="CharacterEllipsis"/>
+                                                </StackPanel>
+                                            </DataTemplate>
+                                        </DataGridTemplateColumn.CellTemplate>
+                                    </DataGridTemplateColumn>
+
+                                    <!-- SIZE -->
+                                    <DataGridTextColumn Header="SIZE" Binding="{Binding C008}" Width="60"/>
+
+                                    <!-- STD (g) = C023 -->
+                                    <DataGridTextColumn Header="STD (g)"
+                                         Binding="{Binding C023, StringFormat=F2}"
+                                         Width="80"
+                                         ElementStyle="{StaticResource RightCell}"/>
+
+                                    <!-- ACTUAL (g) = C021 -->
+                                    <DataGridTextColumn Header="ACTUAL (g)"
+                                         Binding="{Binding C021, StringFormat=F2}"
+                                         Width="90"
+                                         ElementStyle="{StaticResource RightCell}"/>
+
+                                    <!-- Action buttons -->
+                                    <DataGridTemplateColumn Header="Actions" Width="110" IsReadOnly="False">
+                                        <DataGridTemplateColumn.CellTemplate>
+                                            <DataTemplate>
+                                                <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                                    <Button Content="Scale" Tag="{Binding}"
+                                             Margin="2,1" FontSize="10" Padding="4,2"
+                                             Click="btnGridScale_Click"/>
+                                                    <Button Content="Reset" Tag="{Binding}"
+                                             Margin="2,1" FontSize="10" Padding="4,2"
+                                             Click="btnGridReset_Click"/>
+                                                </StackPanel>
+                                            </DataTemplate>
+                                        </DataGridTemplateColumn.CellTemplate>
+                                    </DataGridTemplateColumn>
                                 </DataGrid.Columns>
                             </DataGrid>
-                        </Border>
-                    </Grid>
-                </Border>
+                        </Grid>
+                    </Border>
+
+                    <!-- HISTORY collapsible -->
+                    <Border Grid.Row="1" Style="{StaticResource CardStyle}" Margin="0,5,0,0">
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="*"/>
+                            </Grid.ColumnDefinitions>
+
+                            <Grid Grid.Column="0" Margin="10,8,10,0">
+                                <Grid.RowDefinitions>
+                                    <RowDefinition Height="AUTO"/>
+                                    <RowDefinition Height="AUTO"/>
+                                    <RowDefinition Height="AUTO"/>
+                                    <RowDefinition Height="*"/>
+                                </Grid.RowDefinitions>
+                                <TextBlock Grid.Row="1" Text="REFERENCE / HISTORY" Foreground="White"
+                       FontWeight="Bold" FontSize="12" FontFamily="Segoe UI"/>
+                                    <Border Grid.Row="1"  Background="#37474F" CornerRadius="4,4,0,0"
+                Cursor="Hand" MouseLeftButtonDown="HistoryHeader_Click" Padding="10,6">
+                                        <TextBlock x:Name="tbHistoryToggle"
+                       Text="▶  REFERENCE / HISTORY"
+                       Foreground="White" FontWeight="Bold"
+                       FontSize="12" FontFamily="Segoe UI"/>
+                                    </Border>
+                                    <Border Grid.Row="2" x:Name="pnlHistory" Visibility="Collapsed" MaxHeight="200">
+                                        <DataGrid x:Name="dgHistory" Style="{StaticResource GridStyle}">
+                                            <DataGrid.Columns>
+                                                <DataGridTextColumn Header="DATE / TIME"
+Binding="{Binding CreateDate, StringFormat='yyyy-MM-dd HH:mm'}"
+Width="130"/>
+                                                <DataGridTextColumn Header="OPERATOR"
+Binding="{Binding C011}" Width="90"/>
+                                                <DataGridTextColumn Header="PART WT. (g/prs)"
+Binding="{Binding C021, StringFormat=F2}" Width="110"
+ElementStyle="{StaticResource RightCell}"/>
+                                                <DataGridTextColumn Header="RUNNER (g/prs)"
+Binding="{Binding C022, StringFormat=F2}" Width="110"
+ElementStyle="{StaticResource RightCell}"/>
+                                                <DataGridTextColumn Header="TOTAL PW (g/prs)"
+Binding="{Binding C023, StringFormat=F2}" Width="110"
+ElementStyle="{StaticResource RightCell}"/>
+                                                <DataGridTextColumn Header="TOTAL W (g)"
+Binding="{Binding C024, StringFormat=F2}" Width="100"
+ElementStyle="{StaticResource RightCell}"/>
+                                            </DataGrid.Columns>
+                                        </DataGrid>
+                                    </Border>
+                            </Grid>
+
+                           
+
+                            <!-- ────────────────── RIGHT PANEL – RFID + SCALE + REF ─────────────── -->
+                            <Grid Grid.Column="1" Margin="3,6,6,6">
+                                <Grid.RowDefinitions>
+                                    <RowDefinition Height="Auto"/>
+                                    <RowDefinition Height="Auto"/>
+                                    <RowDefinition Height="*"/>
+                                    <RowDefinition Height="Auto"/>
+                                </Grid.RowDefinitions>
+
+                                <!-- RFID Row -->
+                                <Border Grid.Row="0" Style="{StaticResource CardStyle}" Margin="0,0,0,4">
+                                    <Grid Margin="10,8">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="200"/>
+                                            <ColumnDefinition Width="8"/>
+                                            <ColumnDefinition Width="*"/>
+                                        </Grid.ColumnDefinitions>
+
+                                        <StackPanel Grid.Column="0">
+                                            <TextBlock Text="RFID / Employee ID" Style="{StaticResource LabelStyle}"/>
+                                            <!-- WFH host for RFIDButtonEdit – filled from code-behind -->
+                                            <Border x:Name="rfidHost" Height="32" Background="#FAFAFA"
+             BorderBrush="#CFD8DC" BorderThickness="1"/>
+                                        </StackPanel>
+
+                                        <StackPanel Grid.Column="2">
+                                            <TextBlock Text="Employee Name" Style="{StaticResource LabelStyle}"/>
+                                            <TextBox x:Name="tbRFIDName" Style="{StaticResource EditableFieldStyle}"
+              Height="32" KeyDown="tbRFIDName_KeyDown"/>
+                                        </StackPanel>
+                                    </Grid>
+                                </Border>
+
+                                <!-- SCALE VALUE Card -->
+                                <Border Grid.Row="1" x:Name="pnlScaleCard"
+ Margin="0,0,0,4" CornerRadius="6"
+ BorderBrush="#CFD8DC" BorderThickness="2"
+ Background="White" Padding="12,8">
+                                    <StackPanel>
+                                        <StackPanel Orientation="Horizontal" Margin="0,0,0,4">
+                                            <TextBlock Text="SCALE VALUE" Foreground="#546E7A"
+                FontWeight="Bold" FontSize="11"
+                FontFamily="Segoe UI" VerticalAlignment="Center"/>
+                                            <TextBlock Text=" · gram (g)" Foreground="#90A4AE"
+                FontSize="10" VerticalAlignment="Center" Margin="4,0,0,0"/>
+                                        </StackPanel>
+
+                                        <TextBlock x:Name="tbScaleDisplay"
+            Text="0.00"
+            FontFamily="Consolas" FontSize="42" FontWeight="Bold"
+            Foreground="#212121"
+            HorizontalAlignment="Center" Margin="0,4,0,4"/>
+
+                                        <!-- Scale hardware host -->
+                                        <Border x:Name="scaleHost" Height="32" Background="#FAFAFA"
+         BorderBrush="#CFD8DC" BorderThickness="1"/>
+                                    </StackPanel>
+                                </Border>
+
+                                <!-- REFERENCE VALUES DataGrid -->
+                                <Border Grid.Row="2" Style="{StaticResource CardStyle}" Margin="0,0,0,4">
+                                    <Grid>
+                                        <Grid.RowDefinitions>
+                                            <RowDefinition Height="Auto"/>
+                                            <RowDefinition Height="*"/>
+                                        </Grid.RowDefinitions>
+
+                                        <Border Grid.Row="0" Background="#1565C0" CornerRadius="4,4,0,0" Padding="10,6">
+                                            <TextBlock Text="REFERENCE VALUES" Foreground="White"
+                FontWeight="Bold" FontSize="12" FontFamily="Segoe UI"/>
+                                        </Border>
+
+                                        <DataGrid Grid.Row="1" x:Name="dgRefValues"
+           Style="{StaticResource GridStyle}"
+           RowStyle="{StaticResource RefRowStyle}">
+                                            <DataGrid.Columns>
+                                                <!-- No -->
+                                                <DataGridTemplateColumn Header="#" Width="44">
+                                                    <DataGridTemplateColumn.CellTemplate>
+                                                        <DataTemplate>
+                                                            <Border Width="26" Height="26" CornerRadius="13"
+                             Background="#1565C0"
+                             HorizontalAlignment="Center">
+                                                                <TextBlock Text="{Binding No}"
+                                    Foreground="White"
+                                    FontWeight="Bold" FontSize="11"
+                                    HorizontalAlignment="Center"
+                                    VerticalAlignment="Center"/>
+                                                            </Border>
+                                                        </DataTemplate>
+                                                    </DataGridTemplateColumn.CellTemplate>
+                                                </DataGridTemplateColumn>
+
+                                                <!-- FieldName + Unit -->
+                                                <DataGridTemplateColumn Header="FIELD (Unit)" Width="220">
+                                                    <DataGridTemplateColumn.CellTemplate>
+                                                        <DataTemplate>
+                                                            <StackPanel Margin="6,2" VerticalAlignment="Center">
+                                                                <TextBlock Text="{Binding FieldName}"
+                                    FontWeight="SemiBold" FontSize="12"
+                                    TextWrapping="Wrap"/>
+                                                                <TextBlock Text="{Binding Unit}"
+                                    FontSize="10" Foreground="#78909C"/>
+                                                            </StackPanel>
+                                                        </DataTemplate>
+                                                    </DataGridTemplateColumn.CellTemplate>
+                                                </DataGridTemplateColumn>
+
+                                                <!-- STD -->
+                                                <DataGridTextColumn Header="STD"
+                             Binding="{Binding StdDisplay}"
+                             Width="110"
+                             ElementStyle="{StaticResource RightCellBold}"/>
+
+                                                <!-- Delta -->
+                                                <DataGridTextColumn Header="Δ"
+                             Binding="{Binding DeltaDisplay}"
+                             Width="90"
+                             ElementStyle="{StaticResource RightCellBold}"/>
+
+                                                <!-- ACTUAL -->
+                                                <DataGridTextColumn Header="ACTUAL"
+                             Binding="{Binding ActualDisplay}"
+                             Width="110"
+                             ElementStyle="{StaticResource RightCellBold}"/>
+                                            </DataGrid.Columns>
+                                        </DataGrid>
+                                    </Grid>
+                                </Border>
+
+                                <!-- Barcode host -->
+                                <Border Grid.Row="3" Style="{StaticResource CardStyle}" Margin="0,0,0,0">
+                                    <StackPanel Margin="10,8">
+                                        <TextBlock Text="Barcode / QR Scan" Style="{StaticResource LabelStyle}"/>
+                                        <Border x:Name="barcodeHost" Height="32" Background="#FAFAFA"
+         BorderBrush="#CFD8DC" BorderThickness="1"/>
+                                    </StackPanel>
+                                </Border>
+                            </Grid>
+
+                        </Grid>
+                    </Border>
+                </Grid>
             </Grid>
 
-            <!-- ────────────────── RIGHT PANEL – RFID + SCALE + REF ─────────────── -->
-            <Grid Grid.Column="2" Margin="3,6,6,6">
-                <Grid.RowDefinitions>
-                    <RowDefinition Height="Auto"/>
-                    <RowDefinition Height="Auto"/>
-                    <RowDefinition Height="*"/>
-                    <RowDefinition Height="Auto"/>
-                </Grid.RowDefinitions>
 
-                <!-- RFID Row -->
-                <Border Grid.Row="0" Style="{StaticResource CardStyle}" Margin="0,0,0,4">
-                    <Grid Margin="10,8">
-                        <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="200"/>
-                            <ColumnDefinition Width="8"/>
-                            <ColumnDefinition Width="*"/>
-                        </Grid.ColumnDefinitions>
-
-                        <StackPanel Grid.Column="0">
-                            <TextBlock Text="RFID / Employee ID" Style="{StaticResource LabelStyle}"/>
-                            <!-- WFH host for RFIDButtonEdit – filled from code-behind -->
-                            <Border x:Name="rfidHost" Height="32" Background="#FAFAFA"
-                                    BorderBrush="#CFD8DC" BorderThickness="1"/>
-                        </StackPanel>
-
-                        <StackPanel Grid.Column="2">
-                            <TextBlock Text="Employee Name" Style="{StaticResource LabelStyle}"/>
-                            <TextBox x:Name="tbRFIDName" Style="{StaticResource EditableFieldStyle}"
-                                     Height="32" KeyDown="tbRFIDName_KeyDown"/>
-                        </StackPanel>
-                    </Grid>
-                </Border>
-
-                <!-- SCALE VALUE Card -->
-                <Border Grid.Row="1" x:Name="pnlScaleCard"
-                        Margin="0,0,0,4" CornerRadius="6"
-                        BorderBrush="#CFD8DC" BorderThickness="2"
-                        Background="White" Padding="12,8">
-                    <StackPanel>
-                        <StackPanel Orientation="Horizontal" Margin="0,0,0,4">
-                            <TextBlock Text="SCALE VALUE" Foreground="#546E7A"
-                                       FontWeight="Bold" FontSize="11"
-                                       FontFamily="Segoe UI" VerticalAlignment="Center"/>
-                            <TextBlock Text=" · gram (g)" Foreground="#90A4AE"
-                                       FontSize="10" VerticalAlignment="Center" Margin="4,0,0,0"/>
-                        </StackPanel>
-
-                        <TextBlock x:Name="tbScaleDisplay"
-                                   Text="0.00"
-                                   FontFamily="Consolas" FontSize="42" FontWeight="Bold"
-                                   Foreground="#212121"
-                                   HorizontalAlignment="Center" Margin="0,4,0,4"/>
-
-                        <!-- Scale hardware host -->
-                        <Border x:Name="scaleHost" Height="32" Background="#FAFAFA"
-                                BorderBrush="#CFD8DC" BorderThickness="1"/>
-                    </StackPanel>
-                </Border>
-
-                <!-- REFERENCE VALUES DataGrid -->
-                <Border Grid.Row="2" Style="{StaticResource CardStyle}" Margin="0,0,0,4">
-                    <Grid>
-                        <Grid.RowDefinitions>
-                            <RowDefinition Height="Auto"/>
-                            <RowDefinition Height="*"/>
-                        </Grid.RowDefinitions>
-
-                        <Border Grid.Row="0" Background="#1565C0" CornerRadius="4,4,0,0" Padding="10,6">
-                            <TextBlock Text="REFERENCE VALUES" Foreground="White"
-                                       FontWeight="Bold" FontSize="12" FontFamily="Segoe UI"/>
-                        </Border>
-
-                        <DataGrid Grid.Row="1" x:Name="dgRefValues"
-                                  Style="{StaticResource GridStyle}"
-                                  RowStyle="{StaticResource RefRowStyle}">
-                            <DataGrid.Columns>
-                                <!-- No -->
-                                <DataGridTemplateColumn Header="#" Width="44">
-                                    <DataGridTemplateColumn.CellTemplate>
-                                        <DataTemplate>
-                                            <Border Width="26" Height="26" CornerRadius="13"
-                                                    Background="#1565C0"
-                                                    HorizontalAlignment="Center">
-                                                <TextBlock Text="{Binding No}"
-                                                           Foreground="White"
-                                                           FontWeight="Bold" FontSize="11"
-                                                           HorizontalAlignment="Center"
-                                                           VerticalAlignment="Center"/>
-                                            </Border>
-                                        </DataTemplate>
-                                    </DataGridTemplateColumn.CellTemplate>
-                                </DataGridTemplateColumn>
-
-                                <!-- FieldName + Unit -->
-                                <DataGridTemplateColumn Header="FIELD (Unit)" Width="220">
-                                    <DataGridTemplateColumn.CellTemplate>
-                                        <DataTemplate>
-                                            <StackPanel Margin="6,2" VerticalAlignment="Center">
-                                                <TextBlock Text="{Binding FieldName}"
-                                                           FontWeight="SemiBold" FontSize="12"
-                                                           TextWrapping="Wrap"/>
-                                                <TextBlock Text="{Binding Unit}"
-                                                           FontSize="10" Foreground="#78909C"/>
-                                            </StackPanel>
-                                        </DataTemplate>
-                                    </DataGridTemplateColumn.CellTemplate>
-                                </DataGridTemplateColumn>
-
-                                <!-- STD -->
-                                <DataGridTextColumn Header="STD"
-                                                    Binding="{Binding StdDisplay}"
-                                                    Width="110"
-                                                    ElementStyle="{StaticResource RightCellBold}"/>
-
-                                <!-- Delta -->
-                                <DataGridTextColumn Header="Δ"
-                                                    Binding="{Binding DeltaDisplay}"
-                                                    Width="90"
-                                                    ElementStyle="{StaticResource RightCellBold}"/>
-
-                                <!-- ACTUAL -->
-                                <DataGridTextColumn Header="ACTUAL"
-                                                    Binding="{Binding ActualDisplay}"
-                                                    Width="110"
-                                                    ElementStyle="{StaticResource RightCellBold}"/>
-                            </DataGrid.Columns>
-                        </DataGrid>
-                    </Grid>
-                </Border>
-
-                <!-- Barcode host -->
-                <Border Grid.Row="3" Style="{StaticResource CardStyle}" Margin="0,0,0,0">
-                    <StackPanel Margin="10,8">
-                        <TextBlock Text="Barcode / QR Scan" Style="{StaticResource LabelStyle}"/>
-                        <Border x:Name="barcodeHost" Height="32" Background="#FAFAFA"
-                                BorderBrush="#CFD8DC" BorderThickness="1"/>
-                    </StackPanel>
-                </Border>
-            </Grid>
         </Grid>
 
         <!-- ═══════════════════════════════ BOTTOM BAR ══════════════════════════════ -->
-        <Border Grid.Row="2" Background="#1A237E">
+        <Border Grid.Row="2">
             <StackPanel Orientation="Horizontal" HorizontalAlignment="Right"
                         VerticalAlignment="Center" Margin="0,0,16,0">
                 <Button x:Name="btnSave"

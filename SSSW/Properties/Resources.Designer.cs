@@ -123,6 +123,16 @@ namespace SSSW.Properties {
         /// <summary>
         ///   Looks up a localized resource of type System.Drawing.Bitmap.
         /// </summary>
+        public static System.Drawing.Bitmap framas_mini_white {
+            get {
+                object obj = ResourceManager.GetObject("framas_mini_white", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.Drawing.Bitmap.
+        /// </summary>
         public static System.Drawing.Bitmap framas_white {
             get {
                 object obj = ResourceManager.GetObject("framas_white", resourceCulture);
@@ -131,12 +141,12 @@ namespace SSSW.Properties {
         }
         
         /// <summary>
-        ///   Looks up a localized resource of type System.Drawing.Bitmap.
+        ///   Looks up a localized resource of type System.Byte[].
         /// </summary>
-        public static System.Drawing.Bitmap framas_white_mini {
+        public static byte[] framas_white_wpf {
             get {
-                object obj = ResourceManager.GetObject("framas_white_mini", resourceCulture);
-                return ((System.Drawing.Bitmap)(obj));
+                object obj = ResourceManager.GetObject("framas_white_wpf", resourceCulture);
+                return ((byte[])(obj));
             }
         }
         

@@ -6,6 +6,7 @@ using ScanAndScale.Helper;
 using Serilog;
 using Serilog.Events;
 using SSSW.modelss;
+using SSSW.UI.WPF;
 using System.IO;
 using System.Reflection;
 
@@ -72,20 +73,28 @@ namespace SSSW
                     services.AddTransient<frmShotWeightScale>();
                     services.AddTransient<frmMainView>();
                     services.AddTransient<frmUpdateMasterData>();
+                    services.AddTransient<frmShotWeightScaleV2>();
+                    services.AddTransient<ShotWeightWindow>();   // WPF Option-A window
                 })
                 .Build();
 
             // Lấy Form chính từ DI và chạy
             using var scope = host.Services.CreateScope();
 
-            // Nếu Form chính là frmShotWeightScale:
-            var mainForm = scope.ServiceProvider.GetRequiredService<frmShotWeightScale>();
+            //// Nếu Form chính là frmShotWeightScale:
+            ////var mainForm = scope.ServiceProvider.GetRequiredService<frmShotWeightScale>();
+            //var mainForm = scope.ServiceProvider.GetRequiredService<frmShotWeightScaleV2>();
 
-            // Nếu muốn chạy Form1 làm form chính, thay dòng trên bằng:
-            // var mainForm = scope.ServiceProvider.GetRequiredService<Form1>();
+            //Application.Run(mainForm);
 
-            Application.Run(mainForm);
-
+            // ── WPF alternative startup (ShotWeightWindow Option A) ────────────────
+            // To switch to the WPF window, comment the two lines above and
+            // uncomment the block below.  The WPF Application pump replaces
+            // Application.Run(winFormsForm).
+            //
+            var wpfApp = new System.Windows.Application();
+            var wpfWin = scope.ServiceProvider.GetRequiredService<ShotWeightWindow>();
+            wpfApp.Run(wpfWin);
         }
     }
 }

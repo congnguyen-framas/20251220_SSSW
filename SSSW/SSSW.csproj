@@ -5,10 +5,11 @@
     <TargetFramework>net8.0-windows</TargetFramework>
     <Nullable>enable</Nullable>
     <UseWindowsForms>true</UseWindowsForms>
+    <UseWPF>true</UseWPF>
     <ImplicitUsings>enable</ImplicitUsings>
     <langVersion>latest</langVersion>
     <ApplicationIcon>Shotweight_Icon.ico</ApplicationIcon>
-    
+
     <VersionPrefix>1.0</VersionPrefix>
     <VersionSuffix>$([System.DateTime]::Now.ToString("MMdd.HHmm"))</VersionSuffix>
     <AssemblyVersion>$(VersionPrefix).$(VersionSuffix)</AssemblyVersion>
@@ -31,6 +32,7 @@
     <PackageReference Include="Autoupdater.NET.Official" Version="1.9.2" />
     <PackageReference Include="DevExpress.Win.Design" Version="24.2.3" />
     <PackageReference Include="DevExpress.Win.Reporting" Version="24.2.3" />
+    <PackageReference Include="devexpress.wpf.grid.core" Version="24.2.3" />
     <PackageReference Include="Microsoft.EntityFrameworkCore" Version="9.0.11" />
     <PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" Version="9.0.11" />
     <PackageReference Include="Microsoft.EntityFrameworkCore.Tools" Version="9.0.11">
@@ -90,15 +92,13 @@
   </PropertyGroup>
 
   <!-- 1) Chỉ tạo update.xml khi build Release -->
-  <Target Name="GenerateUpdateXml"
-          AfterTargets="Build"
-          Condition="'$(Configuration)' == 'Release'">
+  <Target Name="GenerateUpdateXml" AfterTargets="Build" Condition="'$(Configuration)' == 'Release'">
 
     <Delete Files="$(XmlFilePath)" />
 
     <ItemGroup>
       <XmlLines Include="l1">
-        <Text>&lt;?xml version=&quot;1.0&quot; encoding=&quot;utf-8&quot;?&gt;</Text>
+        <Text>&lt;?xml version="1.0" encoding="utf-8"?&gt;</Text>
       </XmlLines>
       <XmlLines Include="l2">
         <Text>&lt;item&gt;</Text>
@@ -120,17 +120,11 @@
       </XmlLines>
     </ItemGroup>
 
-    <WriteLinesToFile
-      File="$(XmlFilePath)"
-      Lines="@(XmlLines->'%(Text)')"
-      Overwrite="true"
-      Encoding="UTF-8" />
+    <WriteLinesToFile File="$(XmlFilePath)" Lines="@(XmlLines->'%(Text)')" Overwrite="true" Encoding="UTF-8" />
   </Target>
 
   <!-- 2) Chỉ đóng gói Update.zip khi build Release -->
-  <Target Name="CreateUpdateZip"
-          AfterTargets="GenerateUpdateXml"
-          Condition="'$(Configuration)' == 'Release'">
+  <Target Name="CreateUpdateZip" AfterTargets="GenerateUpdateXml" Condition="'$(Configuration)' == 'Release'">
 
     <Message Text="Start packing version $(Version)..." Importance="High" />
 
@@ -144,9 +138,7 @@
 
     <Copy SourceFiles="@(PublishFiles)" DestinationFolder="$(UpdateDir)\%(RecursiveDir)" />
 
-    <ZipDirectory SourceDirectory="$(UpdateDir)"
-                  DestinationFile ="$(ZipFilePath)"
-                  Overwrite="true" />
+    <ZipDirectory SourceDirectory="$(UpdateDir)" DestinationFile="$(ZipFilePath)" Overwrite="true" />
 
     <RemoveDir Directories="$(UpdateDir)" />
 
@@ -168,34 +160,25 @@
     <Message Text="Copied $(ZipFilePath) to $(DeployUrl)" Importance="High" />
   </Target>-->
 
-  <Target Name="CopyUpdateToShare"
-          AfterTargets="CreateUpdateZip"
-          Condition="'$(Configuration)' == 'Release' AND Exists('$(ZipFilePath)') AND Exists('$(XmlFilePath)')">
+  <Target Name="CopyUpdateToShare" AfterTargets="CreateUpdateZip" Condition="'$(Configuration)' == 'Release' AND Exists('$(ZipFilePath)') AND Exists('$(XmlFilePath)')">
 
     <!-- Kiểm tra thư mục share có tồn tại không -->
     <Message Text="Kiểm tra thư mục đích: $(DeployDir)" Importance="High" />
-    <Error Text="Thư mục đích không tồn tại: $(DeployDir)"
-           Condition="!Exists('$(DeployDir)')" />
+    <Error Text="Thư mục đích không tồn tại: $(DeployDir)" Condition="!Exists('$(DeployDir)')" />
 
     <!-- Copy ZIP -->
-    <Message Text="Copy ZIP: $(ZipFilePath) -> $(DeployZipPath)" Importance="High" />
-    <Copy SourceFiles="$(ZipFilePath)"
-          DestinationFiles="$(DeployZipPath)"
-          OverwriteReadOnlyFiles="true">
+    <Message Text="Copy ZIP: $(ZipFilePath) -&gt; $(DeployZipPath)" Importance="High" />
+    <Copy SourceFiles="$(ZipFilePath)" DestinationFiles="$(DeployZipPath)" OverwriteReadOnlyFiles="true">
       <Output TaskParameter="CopiedFiles" ItemName="CopiedZip" />
     </Copy>
-    <Error Text="Không thể copy Update.zip lên share: $(DeployZipPath)"
-           Condition="@(_CreatedZip->Count()) == 0 AND '@(CopiedZip)' == ''" />
+    <Error Text="Không thể copy Update.zip lên share: $(DeployZipPath)" Condition="@(_CreatedZip-&gt;Count()) == 0 AND '@(CopiedZip)' == ''" />
 
     <!-- Copy XML -->
-    <Message Text="Copy XML: $(XmlFilePath) -> $(DeployXmlPath)" Importance="High" />
-    <Copy SourceFiles="$(XmlFilePath)"
-          DestinationFiles="$(DeployXmlPath)"
-          OverwriteReadOnlyFiles="true">
+    <Message Text="Copy XML: $(XmlFilePath) -&gt; $(DeployXmlPath)" Importance="High" />
+    <Copy SourceFiles="$(XmlFilePath)" DestinationFiles="$(DeployXmlPath)" OverwriteReadOnlyFiles="true">
       <Output TaskParameter="CopiedFiles" ItemName="CopiedXml" />
     </Copy>
-    <Error Text="Không thể copy update.xml lên share: $(DeployXmlPath)"
-           Condition="@(_CreatedXml->Count()) == 0 AND '@(CopiedXml)' == ''" />
+    <Error Text="Không thể copy update.xml lên share: $(DeployXmlPath)" Condition="@(_CreatedXml-&gt;Count()) == 0 AND '@(CopiedXml)' == ''" />
 
     <Message Text="Đã copy thành công: $(DeployZipPath) và $(DeployXmlPath)" Importance="High" />
   </Target>

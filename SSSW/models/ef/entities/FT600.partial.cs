@@ -8,5 +8,12 @@ namespace SSSW.models
         [NotMapped]
         [Browsable(false)]
         public bool AllowScale { get; set; } = false;
+
+        [NotMapped]
+        public string? StatusText { get; set; } =string.Empty;
+        [NotMapped]
+        public string? StatusDotColor { get; set; } = string.Empty;
+        [NotMapped]
+        public string? StatusBarColor { get; set; } = string.Empty;
     }
 }

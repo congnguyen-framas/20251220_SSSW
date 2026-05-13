@@ -1,4 +1,5 @@
 ﻿using AutoUpdaterDotNET;
+using DevExpress.Data.Extensions;
 using DevExpress.Mvvm;
 using DevExpress.Mvvm.Native;
 using DevExpress.Mvvm.POCO;
@@ -1513,6 +1514,30 @@ namespace SSSW
 
                     _scaleData.AddRange(itemsToAdd);
                     #endregion
+
+                    //var stepAll = _allStepsFG.Select(x => x.ItemStepCode).ToList();
+                    var stepAll = _allStepsFG
+    .Select(x => x.ItemStepCode)
+    .ToHashSet();
+                    var checkMultiSize = _scaleData
+    .GroupBy(x => (x.C004, x.C020))
+    .Where(g => g.Count() > 1)
+    .ToDictionary(g => g.Key, g => g.ToList());
+
+                    _scaleData.RemoveAll(x =>
+                    {
+                        bool isLogo = x.C003.StartsWith("Logo");
+                        bool isStuds = x.C003.StartsWith("Studs");
+
+                        bool hasC002 = stepAll.Contains(x.C002);
+
+                        bool duplicatedSize = checkMultiSize.ContainsKey((x.C004, x.C020));
+
+                        return
+                            (isLogo && !hasC002)
+                            || (isStuds && !hasC002)
+                            || duplicatedSize;
+                    });
 
                     _scaleDataFinal = _scaleData.OrderBy(x => x.C015).ThenBy(x => x.C027).ToList();
 

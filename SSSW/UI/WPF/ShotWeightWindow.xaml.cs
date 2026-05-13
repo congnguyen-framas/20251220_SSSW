@@ -4,6 +4,8 @@
 //  Namespace : SSSW.UI.WPF
 // ============================================================================
 using AutoUpdaterDotNET;
+using DevExpress.DataProcessing.InMemoryDataProcessor;
+using DevExpress.Xpf.Grid.LookUp;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
@@ -26,6 +28,7 @@ using Color = System.Windows.Media.Color;
 
 namespace SSSW.UI.WPF
 {
+  
     // ─── Value converters ────────────────────────────────────────────────────────
 
     /// <summary>Maps ToleranceCategory to a background Brush.</summary>
@@ -134,6 +137,7 @@ namespace SSSW.UI.WPF
         private double                 _percentOfUsage           = 0;
         private string?                _remarkFinal              = string.Empty;
         private List<StepSelectModel>  _allStepCodeMaster        = new();
+        private StepSelectModel _selectedStepItem;
 
         public  FT601                  _stepSelected             = new();
         private string                 _qrCodeScan               = string.Empty;
@@ -1303,6 +1307,7 @@ namespace SSSW.UI.WPF
                 foreach (var row in _referenceRows)
                     _refRowsCollection.Add(row);
 
+            
                 // Tint scale card border
                 var worst = _referenceRows
                     .OrderByDescending(r => (int)r.Tolerance)
@@ -1338,6 +1343,8 @@ namespace SSSW.UI.WPF
                     _historyCollection.Clear();
                     foreach (var h in _refHistory)
                         _historyCollection.Add(h);
+
+                    dgHistory.ItemsSource = _historyCollection;
 
                     tbHistoryToggle.Text =
                         (_historyExpanded ? "▼" : "▶") +
@@ -1480,5 +1487,48 @@ namespace SSSW.UI.WPF
                 dgTotalSteps.ScrollIntoView(item);
             }
         }
+
+      
+        private async void cbStepName_EditValueChangedAsync(object sender, DevExpress.Xpf.Editors.EditValueChangedEventArgs e)
+        {
+            var editor = sender as LookUpEdit;
+            // Value hiện tại (theo ValueMember)
+            var selectedId = editor.EditValue;
+           
+            // Lấy object đầy đủ
+            var selectedItem = editor.SelectedItem;
+            if (selectedItem != null)
+            {
+                // Nếu Data là class Product
+                var step = selectedItem as StepSelectModel;
+                if (step != null)
+                {
+                    try
+                    {
+                        var selected = cbStepName.SelectedItem as StepSelectModel;
+                        if (selected == null) { _labelInfo = new FT606_Label(); ResetNewLoop(); return; }
+
+                        if (string.IsNullOrEmpty(_qrCodeScan))
+                        {
+                            _stepSelected = _dataHydra.FirstOrDefault(x =>
+                                x.C004 == selected.StepItemCode &&
+                                x.C015 == selected.Machine &&
+                                x.C018 == selected.HydraOrderNo)
+                                ?? throw new Exception("Step not found in master data.");
+                        }
+
+                        await TriggerStepSelectionAsync(selected);
+                    }
+                    catch (Exception ex)
+                    {
+                        _logger.LogError(ex, "cbStepName_SelectionChanged");
+                        System.Windows.MessageBox.Show(ex.Message, "WARNING",
+                            MessageBoxButton.OK, MessageBoxImage.Warning);
+                    }
+                }
+            }
+        }
+
+      
     }
 }

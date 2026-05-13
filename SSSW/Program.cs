@@ -7,6 +7,7 @@ using Serilog;
 using Serilog.Events;
 using SSSW.modelss;
 using SSSW.UI.WPF;
+using SSSW.UI.WPF.ViewModels;
 using System.IO;
 using System.Reflection;
 
@@ -74,6 +75,7 @@ namespace SSSW
                     services.AddTransient<frmMainView>();
                     services.AddTransient<frmUpdateMasterData>();
                     services.AddTransient<frmShotWeightScaleV2>();
+                    services.AddTransient<ShotWeightViewModel>(); // MVVM ViewModel
                     services.AddTransient<ShotWeightWindow>();   // WPF Option-A window
                 })
                 .Build();

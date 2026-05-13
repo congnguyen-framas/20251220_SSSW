@@ -3,8 +3,8 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-        xmlns:local="clr-namespace:SSSW.UI.WPF"
         xmlns:dxg="http://schemas.devexpress.com/winfx/2008/xaml/grid"
+        xmlns:vm="clr-namespace:SSSW.UI.WPF.ViewModels"
         mc:Ignorable="d"
         Title="IT – Shotweight Station"
         Height="1080" Width="1920"
@@ -14,167 +14,13 @@
         Background="#F0F2F5"
         WindowStartupLocation="CenterScreen">
 
+    <!-- Merge style dictionary -->
     <Window.Resources>
-        <!-- Converters -->
-        <local:ToleranceToBrushConverter x:Key="ToleranceToBrush"/>
-        <local:ToleranceToForeConverter  x:Key="ToleranceToFore"/>
-
-        <!-- Text styles -->
-        <Style x:Key="LabelStyle" TargetType="TextBlock">
-            <Setter Property="Foreground"  Value="#78909C"/>
-            <Setter Property="FontSize"    Value="20"/>
-            <Setter Property="FontFamily"  Value="Segoe UI"/>
-            <Setter Property="Margin"      Value="0,0,0,2"/>
-        </Style>
-
-        <Style x:Key="FieldStyle" TargetType="TextBox">
-            <Setter Property="FontFamily"       Value="Segoe UI"/>
-            <Setter Property="FontSize"         Value="20"/>
-            <Setter Property="Background"       Value="#FAFAFA"/>
-            <Setter Property="BorderBrush"      Value="#CFD8DC"/>
-            <Setter Property="BorderThickness"  Value="1"/>
-            <Setter Property="Padding"          Value="6,4"/>
-            <Setter Property="IsReadOnly"       Value="True"/>
-        </Style>
-
-        <Style x:Key="EditableFieldStyle" TargetType="TextBox" BasedOn="{StaticResource FieldStyle}">
-            <Setter Property="IsReadOnly"  Value="False"/>
-            <Setter Property="Background"  Value="White"/>
-        </Style>
-
-        <!-- Card -->
-        <Style x:Key="CardStyle" TargetType="Border">
-            <Setter Property="Background"      Value="White"/>
-            <Setter Property="BorderBrush"     Value="#CFD8DC"/>
-            <Setter Property="BorderThickness" Value="1"/>
-            <Setter Property="CornerRadius"    Value="6"/>
-            <Setter Property="Margin"          Value="4"/>
-        </Style>
-
-        <!-- Bottom button -->
-        <Style x:Key="BottomBtn" TargetType="Button">
-            <Setter Property="FontFamily"      Value="Segoe UI"/>
-            <Setter Property="FontSize"        Value="15"/>
-            <Setter Property="FontWeight"      Value="Bold"/>
-            <Setter Property="Foreground"      Value="White"/>
-            <Setter Property="BorderThickness" Value="0"/>
-            <Setter Property="Cursor"          Value="Hand"/>
-            <Setter Property="Height"          Value="48"/>
-            <Setter Property="MinWidth"        Value="140"/>
-            <Setter Property="Margin"          Value="6,0"/>
-            <Setter Property="Template">
-                <Setter.Value>
-                    <ControlTemplate TargetType="Button">
-                        <Border x:Name="bd" Background="{TemplateBinding Background}"
-                                CornerRadius="6" Padding="{TemplateBinding Padding}">
-                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
-                        </Border>
-                        <ControlTemplate.Triggers>
-                            <Trigger Property="IsMouseOver" Value="True">
-                                <Setter TargetName="bd" Property="Opacity" Value="0.85"/>
-                            </Trigger>
-                            <Trigger Property="IsPressed" Value="True">
-                                <Setter TargetName="bd" Property="Opacity" Value="0.7"/>
-                            </Trigger>
-                        </ControlTemplate.Triggers>
-                    </ControlTemplate>
-                </Setter.Value>
-            </Setter>
-        </Style>
-
-        <!-- Title bar icon button -->
-        <Style x:Key="TitleIconBtn" TargetType="Button">
-            <Setter Property="Background"      Value="Transparent"/>
-            <Setter Property="Foreground"      Value="White"/>
-            <Setter Property="BorderThickness" Value="0"/>
-            <Setter Property="Width"           Value="32"/>
-            <Setter Property="Height"          Value="32"/>
-            <Setter Property="FontFamily"      Value="Segoe MDL2 Assets"/>
-            <Setter Property="FontSize"        Value="13"/>
-            <Setter Property="Cursor"          Value="Hand"/>
-            <Setter Property="Template">
-                <Setter.Value>
-                    <ControlTemplate TargetType="Button">
-                        <Border x:Name="bd" Background="{TemplateBinding Background}" CornerRadius="4">
-                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
-                        </Border>
-                        <ControlTemplate.Triggers>
-                            <Trigger Property="IsMouseOver" Value="True">
-                                <Setter TargetName="bd" Property="Background" Value="#3A4A7A"/>
-                            </Trigger>
-                        </ControlTemplate.Triggers>
-                    </ControlTemplate>
-                </Setter.Value>
-            </Setter>
-        </Style>
-
-        <!-- DataGrid -->
-        <Style x:Key="GridStyle" TargetType="DataGrid">
-            <Setter Property="AutoGenerateColumns"      Value="False"/>
-            <Setter Property="IsReadOnly"               Value="True"/>
-            <Setter Property="CanUserAddRows"           Value="False"/>
-            <Setter Property="CanUserDeleteRows"        Value="False"/>
-            <Setter Property="SelectionMode"            Value="Single"/>
-            <Setter Property="SelectionUnit"            Value="FullRow"/>
-            <Setter Property="GridLinesVisibility"      Value="Horizontal"/>
-            <Setter Property="HorizontalGridLinesBrush" Value="#ECEFF1"/>
-            <Setter Property="Background"               Value="White"/>
-            <Setter Property="RowBackground"            Value="White"/>
-            <Setter Property="AlternatingRowBackground" Value="#F8FAFB"/>
-            <Setter Property="FontFamily"               Value="Segoe UI"/>
-            <Setter Property="FontSize"                 Value="12"/>
-            <Setter Property="BorderThickness"          Value="0"/>
-            <Setter Property="HeadersVisibility"        Value="Column"/>
-        </Style>
-
-        <Style TargetType="DataGridColumnHeader">
-            <Setter Property="Background"      Value="#ECEFF1"/>
-            <Setter Property="Foreground"      Value="#37474F"/>
-            <Setter Property="FontWeight"      Value="SemiBold"/>
-            <Setter Property="FontSize"        Value="11"/>
-            <Setter Property="Padding"         Value="8,6"/>
-            <Setter Property="BorderBrush"     Value="#CFD8DC"/>
-            <Setter Property="BorderThickness" Value="0,0,1,1"/>
-        </Style>
-
-        <Style TargetType="DataGridCell">
-            <Setter Property="BorderThickness"   Value="0"/>
-            <Setter Property="Padding"           Value="8,4"/>
-            <Setter Property="VerticalAlignment" Value="Center"/>
-            <Style.Triggers>
-                <Trigger Property="IsSelected" Value="True">
-                    <Setter Property="Background" Value="#E3F2FD"/>
-                    <Setter Property="Foreground" Value="#0D1117"/>
-                </Trigger>
-            </Style.Triggers>
-        </Style>
-
-        <!-- Reference row style -->
-        <Style x:Key="RefRowStyle" TargetType="DataGridRow">
-            <Setter Property="Background" Value="{Binding Tolerance, Converter={StaticResource ToleranceToBrush}}"/>
-            <Setter Property="Foreground" Value="{Binding Tolerance, Converter={StaticResource ToleranceToFore}, ConverterParameter={x:Static Brushes.Black}}"/>
-            <Setter Property="Height"     Value="56"/>
-        </Style>
-
-        <!-- Cell element styles -->
-        <Style x:Key="CenterCell" TargetType="TextBlock">
-            <Setter Property="HorizontalAlignment" Value="Center"/>
-            <Setter Property="VerticalAlignment"   Value="Center"/>
-        </Style>
-
-        <Style x:Key="RightCell" TargetType="TextBlock">
-            <Setter Property="HorizontalAlignment" Value="Right"/>
-            <Setter Property="VerticalAlignment"   Value="Center"/>
-            <Setter Property="Margin"              Value="0,0,8,0"/>
-        </Style>
-
-        <Style x:Key="RightCellBold" TargetType="TextBlock">
-            <Setter Property="HorizontalAlignment" Value="Right"/>
-            <Setter Property="VerticalAlignment"   Value="Center"/>
-            <Setter Property="FontWeight"          Value="Bold"/>
-            <Setter Property="FontSize"            Value="18"/>
-            <Setter Property="Margin"              Value="0,0,8,0"/>
-        </Style>
+        <ResourceDictionary>
+            <ResourceDictionary.MergedDictionaries>
+                <ResourceDictionary Source="/UI/WPF/Styles/ShotWeightStyles.xaml"/>
+            </ResourceDictionary.MergedDictionaries>
+        </ResourceDictionary>
     </Window.Resources>
 
     <Grid>
@@ -185,7 +31,8 @@
         </Grid.RowDefinitions>
 
         <!-- ═══════════════════════════════ TITLE BAR ═══════════════════════════════ -->
-        <Border Grid.Row="0" Background="#0D1117" MouseLeftButtonDown="TitleBar_MouseLeftButtonDown">
+        <Border Grid.Row="0" Background="#0D1117"
+                MouseLeftButtonDown="TitleBar_MouseLeftButtonDown">
             <Grid>
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="Auto"/>
@@ -196,41 +43,50 @@
                     <ColumnDefinition Width="Auto"/>
                 </Grid.ColumnDefinitions>
 
-                <!--<Image Grid.Column="0" Source="/" Height="44" Margin="12,0,4,0" VerticalAlignment="Center"/>-->
                 <TextBlock Grid.Column="1" Text="framas"
                            Foreground="White" FontWeight="Bold" FontSize="16"
                            FontFamily="Segoe UI" VerticalAlignment="Center"
                            Margin="14,0,10,0"/>
 
-                <TextBlock Grid.Column="2" x:Name="tbWindowTitle"
-                           Text="IT – Shotweight Station"
+                <!-- Binding WindowTitle từ ViewModel -->
+                <TextBlock Grid.Column="2"
+                           Text="{Binding WindowTitle}"
                            Foreground="#90A4AE" FontSize="13"
                            FontFamily="Segoe UI" VerticalAlignment="Center"
                            Margin="0,0,10,0"/>
 
                 <StackPanel Grid.Column="3"/>
 
-                <TextBlock Grid.Column="4" x:Name="tbUserName"
+                <!-- Binding UserName từ ViewModel -->
+                <TextBlock Grid.Column="4"
+                           Text="{Binding UserName}"
                            Foreground="#90A4AE" FontSize="12"
                            FontFamily="Segoe UI" VerticalAlignment="Center"
                            Margin="0,0,12,0"/>
 
                 <StackPanel Grid.Column="5" Orientation="Horizontal"
                             VerticalAlignment="Center" Margin="0,0,4,0">
-                    <Button x:Name="btnReload"   Style="{StaticResource TitleIconBtn}"
-                            Content="&#xE72C;" ToolTip="Reload"   Click="btnReload_Click"/>
-                    <Button x:Name="btnHistory"  Style="{StaticResource TitleIconBtn}"
-                            Content="&#xE81C;" ToolTip="History"  Click="btnHistory_Click"/>
-                    <Button x:Name="btnHydra"    Style="{StaticResource TitleIconBtn}"
-                            Content="&#xE895;" ToolTip="Hydra"    Click="btnHydra_Click"/>
-                    <Button x:Name="btnSettings" Style="{StaticResource TitleIconBtn}"
-                            Content="&#xE713;" ToolTip="Settings" Click="btnSettings_Click"/>
-                    <Button x:Name="btnUpdate"   Style="{StaticResource TitleIconBtn}"
-                            Content="&#xE777;" ToolTip="Update"   Click="btnUpdate_Click"/>
                     <Button Style="{StaticResource TitleIconBtn}"
-                            Content="&#xE921;" ToolTip="Minimize" Click="btnMinimize_Click"/>
+                            Command="{Binding ReloadCommand}"
+                            Content="&#xE72C;" ToolTip="Reload"/>
                     <Button Style="{StaticResource TitleIconBtn}"
-                            Content="&#xE922;" ToolTip="Maximize" Click="btnMaximize_Click"/>
+                            Command="{Binding HistoryViewCommand}"
+                            Content="&#xE81C;" ToolTip="History"/>
+                    <Button Style="{StaticResource TitleIconBtn}"
+                            Command="{Binding HydraCommand}"
+                            Content="&#xE895;" ToolTip="Hydra"/>
+                    <Button Style="{StaticResource TitleIconBtn}"
+                            Command="{Binding SettingsCommand}"
+                            Content="&#xE713;" ToolTip="Settings"/>
+                    <Button Style="{StaticResource TitleIconBtn}"
+                            Command="{Binding UpdateCommand}"
+                            Content="&#xE777;" ToolTip="Update"/>
+                    <Button Style="{StaticResource TitleIconBtn}"
+                            Content="&#xE921;" ToolTip="Minimize"
+                            Click="btnMinimize_Click"/>
+                    <Button Style="{StaticResource TitleIconBtn}"
+                            Content="&#xE922;" ToolTip="Maximize"
+                            Click="btnMaximize_Click"/>
                     <Button Style="{StaticResource TitleIconBtn}"
                             Background="#C62828" Content="&#xE8BB;" ToolTip="Close"
                             Click="btnClose_Click"/>
@@ -246,7 +102,7 @@
             </Grid.ColumnDefinitions>
 
             <!-- ────────────────── LEFT PANEL – STEP INFORMATION ────────────────── -->
-            <Border Grid.Column="0" Style="{StaticResource CardStyle}" >
+            <Border Grid.Column="0" Style="{StaticResource CardStyle}">
                 <Grid>
                     <Grid.RowDefinitions>
                         <RowDefinition Height="Auto"/>
@@ -262,11 +118,13 @@
                         <StackPanel Margin="10,8,10,8">
 
                             <TextBlock Text="Name" Style="{StaticResource LabelStyle}"/>
-                            <TextBox x:Name="tbStepName" Style="{StaticResource FieldStyle}"
+                            <TextBox Text="{Binding StepName, Mode=OneWay}"
+                                     Style="{StaticResource FieldStyle}"
                                      TextWrapping="Wrap" MinLines="2" MaxLines="3" Margin="0,0,0,8"/>
 
                             <TextBlock Text="Code" Style="{StaticResource LabelStyle}"/>
-                            <TextBox x:Name="tbStepCode" Style="{StaticResource FieldStyle}"
+                            <TextBox Text="{Binding StepCode, Mode=OneWay}"
+                                     Style="{StaticResource FieldStyle}"
                                      Margin="0,0,0,8"/>
 
                             <!-- Machine + Quantity -->
@@ -278,11 +136,13 @@
                                 </Grid.ColumnDefinitions>
                                 <StackPanel Grid.Column="0">
                                     <TextBlock Text="Machine" Style="{StaticResource LabelStyle}"/>
-                                    <TextBox x:Name="tbMachine" Style="{StaticResource FieldStyle}"/>
+                                    <TextBox Text="{Binding Machine, Mode=OneWay}"
+                                             Style="{StaticResource FieldStyle}"/>
                                 </StackPanel>
                                 <StackPanel Grid.Column="2">
                                     <TextBlock Text="Quantity" Style="{StaticResource LabelStyle}"/>
-                                    <TextBox x:Name="tbQty" Style="{StaticResource FieldStyle}"/>
+                                    <TextBox Text="{Binding Qty, Mode=OneWay}"
+                                             Style="{StaticResource FieldStyle}"/>
                                 </StackPanel>
                             </Grid>
 
@@ -295,16 +155,18 @@
                                 </Grid.ColumnDefinitions>
                                 <StackPanel Grid.Column="0">
                                     <TextBlock Text="Partitioning (prs)" Style="{StaticResource LabelStyle}"/>
-                                    <TextBox x:Name="tbActualPairs" Style="{StaticResource EditableFieldStyle}"
+                                    <TextBox x:Name="tbActualPairs"
+                                             Text="{Binding ActualPairs, Mode=OneWay}"
+                                             IsReadOnly="{Binding IsActualPairsReadOnly}"
+                                             Style="{StaticResource EditableFieldStyle}"
                                              KeyDown="tbActualPairs_KeyDown"/>
                                 </StackPanel>
                                 <StackPanel Grid.Column="2" VerticalAlignment="Bottom">
                                     <TextBlock Text="Adj." Style="{StaticResource LabelStyle}"
                                                HorizontalAlignment="Center"/>
-                                    <CheckBox x:Name="tgPartitionAdj" IsChecked="False"
-                                              HorizontalAlignment="Center"
-                                              Checked="tgPartitionAdj_Changed"
-                                              Unchecked="tgPartitionAdj_Changed"/>
+                                    <!-- Binding AllowPartitionAdj two-way -->
+                                    <CheckBox IsChecked="{Binding AllowPartitionAdj, Mode=TwoWay}"
+                                              HorizontalAlignment="Center"/>
                                 </StackPanel>
                             </Grid>
 
@@ -317,14 +179,20 @@
                                 </Grid.ColumnDefinitions>
                                 <StackPanel Grid.Column="0">
                                     <TextBlock Text="Runner" Style="{StaticResource LabelStyle}"/>
-                                    <ComboBox x:Name="cbRunner" FontFamily="Segoe UI" FontSize="20" Height="Auto">
-                                        <ComboBoxItem Content="YES" IsSelected="True"/>
+                                    <!-- Binding RunnerText two-way -->
+                                    <ComboBox x:Name="cbRunner"
+                                              SelectedValue="{Binding RunnerText, Mode=TwoWay}"
+                                              FontFamily="Segoe UI" FontSize="20" Height="Auto">
+                                        <ComboBoxItem Content="YES"/>
                                         <ComboBoxItem Content="NO"/>
                                     </ComboBox>
                                 </StackPanel>
                                 <StackPanel Grid.Column="2">
                                     <TextBlock Text="Usage %" Style="{StaticResource LabelStyle}"/>
-                                    <TextBox x:Name="tbUsagePct" Style="{StaticResource EditableFieldStyle}"
+                                    <TextBox x:Name="tbUsagePct"
+                                             Text="{Binding UsagePct, Mode=OneWay}"
+                                             IsReadOnly="{Binding IsUsagePctReadOnly}"
+                                             Style="{StaticResource EditableFieldStyle}"
                                              KeyDown="tbUsagePct_KeyDown"/>
                                 </StackPanel>
                             </Grid>
@@ -338,85 +206,80 @@
                                 </Grid.ColumnDefinitions>
                                 <StackPanel Grid.Column="0">
                                     <TextBlock Text="Size" Style="{StaticResource LabelStyle}"/>
-                                    <TextBox x:Name="tbSize" Style="{StaticResource FieldStyle}"/>
+                                    <TextBox Text="{Binding Size, Mode=OneWay}"
+                                             Style="{StaticResource FieldStyle}"/>
                                 </StackPanel>
                                 <StackPanel Grid.Column="2">
                                     <TextBlock Text="Seq. Index" Style="{StaticResource LabelStyle}"/>
-                                    <TextBox x:Name="tbStepIndex" Style="{StaticResource FieldStyle}"/>
+                                    <TextBox Text="{Binding StepIndex, Mode=OneWay}"
+                                             Style="{StaticResource FieldStyle}"/>
                                 </StackPanel>
                             </Grid>
 
                             <TextBlock Text="FG Description" Style="{StaticResource LabelStyle}"/>
-                            <TextBox x:Name="tbFgName" Style="{StaticResource FieldStyle}"
+                            <TextBox Text="{Binding FgName, Mode=OneWay}"
+                                     Style="{StaticResource FieldStyle}"
                                      TextWrapping="Wrap" MinLines="2" MaxLines="3" Margin="0,0,0,8"/>
 
                             <TextBlock Text="FG Item Code" Style="{StaticResource LabelStyle}"/>
-                            <TextBox x:Name="tbFgItemCode" Style="{StaticResource FieldStyle}"
+                            <TextBox Text="{Binding FgItemCode, Mode=OneWay}"
+                                     Style="{StaticResource FieldStyle}"
                                      Margin="0,0,0,8"/>
 
                             <TextBlock Text="Remark" Style="{StaticResource LabelStyle}"/>
-                            <TextBox x:Name="tbRemark" Style="{StaticResource EditableFieldStyle}"
-                                     TextWrapping="Wrap" MinLines="2" Margin="0,0,0,8"
-                                     TextChanged="tbRemark_TextChanged"/>
+                            <!-- Binding Remark two-way, setter trong VM sync _remarkFinal -->
+                            <TextBox Text="{Binding Remark, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                     Style="{StaticResource EditableFieldStyle}"
+                                     TextWrapping="Wrap" MinLines="2" Margin="0,0,0,8"/>
 
                             <TextBlock Text="Select Step" Style="{StaticResource LabelStyle}"/>
 
-                            <dxg:LookUpEdit  x:Name="cbStepName" DisplayMember="StepItemName" ValueMember="StepItemCode" AutoPopulateColumns="False" AutoComplete="True"
-                                             PopupWidth="1000"
-                                             PopupHeight="500"
-                                             EditValueChanged="cbStepName_EditValueChangedAsync"
-                                             FontSize="20"
-                                             >
+                            <!-- DevExpress LookUpEdit: ItemsSource từ ViewModel, event bridge ở code-behind -->
+                            <dxg:LookUpEdit x:Name="cbStepName"
+                                            ItemsSource="{Binding StepCodeMaster}"
+                                            DisplayMember="StepItemName"
+                                            ValueMember="StepItemCode"
+                                            AutoPopulateColumns="False"
+                                            AutoComplete="True"
+                                            PopupWidth="1000"
+                                            PopupHeight="500"
+                                            EditValueChanged="cbStepName_EditValueChangedAsync"
+                                            FontSize="20">
                                 <dxg:LookUpEdit.StyleSettings>
-                                    <dxg:LookUpEditStyleSettings AllowColumnFiltering="True"></dxg:LookUpEditStyleSettings>
+                                    <dxg:LookUpEditStyleSettings AllowColumnFiltering="True"/>
                                 </dxg:LookUpEdit.StyleSettings>
                                 <dxg:LookUpEdit.PopupContentTemplate>
                                     <ControlTemplate>
-                                        <!-- Name MUST be PART_GridControl -->
                                         <dxg:GridControl Name="PART_GridControl" IsFilterEnabled="True">
                                             <dxg:GridControl.Columns>
-                                                <dxg:GridColumn FieldName="Machine" Header="Machine" FilterPopupMode="Excel" ColumnFilterMode="DisplayText"/>
+                                                <dxg:GridColumn FieldName="Machine"      Header="Machine"
+                                                                FilterPopupMode="Excel" ColumnFilterMode="DisplayText"/>
                                                 <dxg:GridColumn FieldName="StepItemCode" Header="Step Code"/>
                                                 <dxg:GridColumn FieldName="StepItemName" Header="Step Name"/>
-                                                <dxg:GridColumn FieldName="Size" Header="Size"/>
+                                                <dxg:GridColumn FieldName="Size"         Header="Size"/>
                                                 <dxg:GridColumn FieldName="HydraOrderNo" Header="Hydra Order No"/>
-                                                <dxg:GridColumn FieldName="FT601Id" Header="FT601 Id"/>
+                                                <dxg:GridColumn FieldName="FT601Id"      Header="FT601 Id"/>
                                             </dxg:GridControl.Columns>
                                             <dxg:GridControl.View>
-                                                <dxg:TableView AutoWidth="True" ShowFilterPanelMode="ShowAlways" ShowAutoFilterRow="True"/>
+                                                <dxg:TableView AutoWidth="True"
+                                                               ShowFilterPanelMode="ShowAlways"
+                                                               ShowAutoFilterRow="True"/>
                                             </dxg:GridControl.View>
                                         </dxg:GridControl>
                                     </ControlTemplate>
                                 </dxg:LookUpEdit.PopupContentTemplate>
                             </dxg:LookUpEdit>
 
-                            <!--<ComboBox x:Name="cbStepName1"
-                                      FontFamily="Segoe UI" FontSize="12" Height="28"
-                                      IsEditable="True" IsTextSearchEnabled="True"
-                                   
-                                      SelectionChanged="cbStepName_SelectionChanged"
-                                      Margin="0,0,0,8">
-                                <ComboBox.ItemTemplate>
-                                    <DataTemplate>
-                                        <StackPanel Orientation="Horizontal">
-                                            <Label Content="{Binding StepItemName}" FontSize="12" FontWeight="SemiBold"/>
-                                            <Label Content="{Binding Machine}" FontSize="12" FontWeight="SemiBold"/>
-                                        </StackPanel>
-                                    </DataTemplate>
-                                </ComboBox.ItemTemplate>
-                            </ComboBox>-->
-
-
                         </StackPanel>
                     </ScrollViewer>
                 </Grid>
             </Border>
 
+            <!-- ────────────────── RIGHT AREA ────────────────── -->
             <Grid Grid.Column="1">
-                <!-- ────────────────── CENTER PANEL – STEPS + HISTORY ───────────────── -->
                 <Grid.RowDefinitions>
                     <RowDefinition Height="350"/>
-                    <RowDefinition Height="auto"/>
+                    <RowDefinition Height="Auto"/>
                     <RowDefinition Height="*"/>
                 </Grid.RowDefinitions>
 
@@ -430,15 +293,17 @@
 
                         <Border Grid.Row="0" Background="#1565C0" CornerRadius="4,4,0,0" Padding="10,6">
                             <TextBlock Text="TOTAL STEPS" Foreground="White"
-                            FontWeight="Bold" FontSize="12" FontFamily="Segoe UI"/>
+                                       FontWeight="Bold" FontSize="12" FontFamily="Segoe UI"/>
                         </Border>
 
+                        <!-- ItemsSource binding từ ViewModel -->
                         <DataGrid Grid.Row="1" x:Name="dgTotalSteps"
-                       Style="{StaticResource GridStyle}"
-                       SelectionChanged="dgTotalSteps_SelectionChanged">
+                                  ItemsSource="{Binding StepsCollection}"
+                                  Style="{StaticResource GridStyle}"
+                                  SelectionChanged="dgTotalSteps_SelectionChanged">
                             <DataGrid.Columns>
 
-                                <!-- StatusBar strip -->
+                                <!-- Status strip -->
                                 <DataGridTemplateColumn Width="6" Header="" CanUserResize="False">
                                     <DataGridTemplateColumn.CellTemplate>
                                         <DataTemplate>
@@ -451,17 +316,21 @@
                                     </DataGridTemplateColumn.CellTemplate>
                                 </DataGridTemplateColumn>
 
-                                <!-- Action buttons -->
+                                <!-- Action buttons – Command binding lên Window DataContext -->
                                 <DataGridTemplateColumn Header="Actions" Width="110" IsReadOnly="False">
                                     <DataGridTemplateColumn.CellTemplate>
                                         <DataTemplate>
                                             <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
                                                 <Button Content="Scale" Tag="{Binding}"
-                                                             Margin="2,1" FontSize="10" Padding="4,2"
-                                                             Click="btnGridScale_Click"/>
+                                                        Margin="2,1" FontSize="10" Padding="4,2"
+                                                        Command="{Binding DataContext.GridScaleCommand,
+                                                                  RelativeSource={RelativeSource AncestorType=DataGrid}}"
+                                                        CommandParameter="{Binding}"/>
                                                 <Button Content="Reset" Tag="{Binding}"
-                                                             Margin="2,1" FontSize="10" Padding="4,2"
-                                                             Click="btnGridReset_Click"/>
+                                                        Margin="2,1" FontSize="10" Padding="4,2"
+                                                        Command="{Binding DataContext.GridResetCommand,
+                                                                  RelativeSource={RelativeSource AncestorType=DataGrid}}"
+                                                        CommandParameter="{Binding}"/>
                                             </StackPanel>
                                         </DataTemplate>
                                     </DataGridTemplateColumn.CellTemplate>
@@ -472,90 +341,86 @@
                                     <DataGridTemplateColumn.CellTemplate>
                                         <DataTemplate>
                                             <StackPanel Orientation="Horizontal" VerticalAlignment="Center"
-                                             Margin="4,0">
+                                                        Margin="4,0">
                                                 <Ellipse Width="8" Height="8" Margin="0,0,4,0">
                                                     <Ellipse.Fill>
                                                         <SolidColorBrush Color="{Binding StatusDotColor}"/>
                                                     </Ellipse.Fill>
                                                 </Ellipse>
                                                 <TextBlock Text="{Binding StatusText}"
-                                                FontSize="11" VerticalAlignment="Center"/>
+                                                           FontSize="11" VerticalAlignment="Center"/>
                                             </StackPanel>
                                         </DataTemplate>
                                     </DataGridTemplateColumn.CellTemplate>
                                 </DataGridTemplateColumn>
 
-                                <!-- MACHINE -->
                                 <DataGridTextColumn Header="MACHINE" Binding="{Binding C004}" Width="80"/>
 
-                                <!-- Main / STEP CODE (2-line) -->
                                 <DataGridTemplateColumn Header="MAIN / MAIN CODE" Width="200">
                                     <DataGridTemplateColumn.CellTemplate>
                                         <DataTemplate>
                                             <StackPanel Margin="4,2">
-                                                <TextBlock Text="{Binding C027}"
-                                                                 FontWeight="Bold" FontSize="12"
-                                                                 TextTrimming="CharacterEllipsis"/>
-                                                <TextBlock Text="{Binding c026}"
-                                                                 FontSize="10" Foreground="#78909C"
-                                                                 TextTrimming="CharacterEllipsis"/>
+                                                <TextBlock Text="{Binding C027}" FontWeight="Bold"
+                                                           FontSize="12" TextTrimming="CharacterEllipsis"/>
+                                                <TextBlock Text="{Binding c026}" FontSize="10"
+                                                           Foreground="#78909C"
+                                                           TextTrimming="CharacterEllipsis"/>
                                             </StackPanel>
                                         </DataTemplate>
                                     </DataGridTemplateColumn.CellTemplate>
                                 </DataGridTemplateColumn>
 
-                                <!-- Sewuence step = C015 -->
                                 <DataGridTextColumn Header="Sequence Step"
-                                                          Binding="{Binding C015}"
-                                                          Width="80"
-                                                          ElementStyle="{StaticResource RightCell}"/>
+                                                    Binding="{Binding C015}" Width="80"
+                                                    ElementStyle="{StaticResource RightCell}"/>
 
-                                <!-- ITEM / STEP CODE (2-line) -->
                                 <DataGridTemplateColumn Header="ITEM / STEP CODE" Width="200">
                                     <DataGridTemplateColumn.CellTemplate>
                                         <DataTemplate>
                                             <StackPanel Margin="4,2">
-                                                <TextBlock Text="{Binding C003}"
-                                                FontWeight="Bold" FontSize="12"
-                                                TextTrimming="CharacterEllipsis"/>
-                                                <TextBlock Text="{Binding C002}"
-                                                FontSize="10" Foreground="#78909C"
-                                                TextTrimming="CharacterEllipsis"/>
+                                                <TextBlock Text="{Binding C003}" FontWeight="Bold"
+                                                           FontSize="12" TextTrimming="CharacterEllipsis"/>
+                                                <TextBlock Text="{Binding C002}" FontSize="10"
+                                                           Foreground="#78909C"
+                                                           TextTrimming="CharacterEllipsis"/>
                                             </StackPanel>
                                         </DataTemplate>
                                     </DataGridTemplateColumn.CellTemplate>
                                 </DataGridTemplateColumn>
 
-                                <!-- SIZE -->
                                 <DataGridTextColumn Header="SIZE" Binding="{Binding C008}" Width="60"/>
-
                                 <DataGridTextColumn Header="TOTAL W (g)"
-                                         Binding="{Binding C024, StringFormat=F2}" Width="100"
-                                         ElementStyle="{StaticResource RightCell}"/>
+                                                    Binding="{Binding C024, StringFormat=F2}"
+                                                    Width="100"
+                                                    ElementStyle="{StaticResource RightCell}"/>
                                 <DataGridTextColumn Header="TOTAL PW (g/prs)"
-                                         Binding="{Binding C023, StringFormat=F2}" Width="110"
-                                         ElementStyle="{StaticResource RightCell}"/>
+                                                    Binding="{Binding C023, StringFormat=F2}"
+                                                    Width="110"
+                                                    ElementStyle="{StaticResource RightCell}"/>
                                 <DataGridTextColumn Header="PART WT. (g/prs)"
-                                        Binding="{Binding C021, StringFormat=F2}" Width="110"
-                                        ElementStyle="{StaticResource RightCell}"/>
+                                                    Binding="{Binding C021, StringFormat=F2}"
+                                                    Width="110"
+                                                    ElementStyle="{StaticResource RightCell}"/>
                                 <DataGridTextColumn Header="RUNNER (g/prs)"
-                                        Binding="{Binding C022, StringFormat=F2}" Width="110"
-                                        ElementStyle="{StaticResource RightCell}"/>
+                                                    Binding="{Binding C022, StringFormat=F2}"
+                                                    Width="110"
+                                                    ElementStyle="{StaticResource RightCell}"/>
                                 <DataGridTextColumn Header="OPERATOR"
-                                        Binding="{Binding C011}" Width="90"/>
+                                                    Binding="{Binding C011}" Width="90"/>
                             </DataGrid.Columns>
                         </DataGrid>
                     </Grid>
                 </Border>
 
-                <!-- RFIR, Scanner QR code -->
+                <!-- RFID + Barcode row -->
                 <Border Grid.Row="1" Background="Transparent" Padding="6,3,6,0">
                     <Grid>
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition Width="*"/>
-                            <ColumnDefinition Width="auto"/>
+                            <ColumnDefinition Width="Auto"/>
                         </Grid.ColumnDefinitions>
-                        <!-- RFID Row -->
+
+                        <!-- RFID -->
                         <Border Grid.Column="0" Style="{StaticResource CardStyle}" Margin="0,0,6,0">
                             <Grid Margin="10,8">
                                 <Grid.ColumnDefinitions>
@@ -565,31 +430,40 @@
                                 </Grid.ColumnDefinitions>
 
                                 <StackPanel Grid.Column="0">
-                                    <TextBlock Text="RFID / Employee ID" Style="{StaticResource LabelStyle}"/>
-                                    <!-- WFH host for RFIDButtonEdit – filled from code-behind -->
+                                    <TextBlock Text="RFID / Employee ID"
+                                               Style="{StaticResource LabelStyle}"/>
+                                    <!-- WinForms host: gán từ code-behind -->
                                     <Border x:Name="rfidHost" Height="35" Background="#FAFAFA"
-BorderBrush="#CFD8DC" BorderThickness="1" Padding="6"/>
+                                            BorderBrush="#CFD8DC" BorderThickness="1" Padding="6"/>
                                 </StackPanel>
 
                                 <StackPanel Grid.Column="2">
-                                    <TextBlock Text="Employee Name" Style="{StaticResource LabelStyle}"/>
-                                    <TextBox x:Name="tbRFIDName" Style="{StaticResource EditableFieldStyle}"
- Height="32" KeyDown="tbRFIDName_KeyDown"/>
+                                    <TextBlock Text="Employee Name"
+                                               Style="{StaticResource LabelStyle}"/>
+                                    <!-- Binding RfidName từ ViewModel -->
+                                    <TextBox x:Name="tbRFIDName"
+                                             Text="{Binding RfidName, Mode=TwoWay}"
+                                             Style="{StaticResource EditableFieldStyle}"
+                                             Height="32"
+                                             KeyDown="tbRFIDName_KeyDown"/>
                                 </StackPanel>
                             </Grid>
                         </Border>
 
-                        <!-- Barcode host -->
-                        <Border Grid.Column="1" Style="{StaticResource CardStyle}" Margin="0,0,0,0">
+                        <!-- Barcode -->
+                        <Border Grid.Column="1" Style="{StaticResource CardStyle}">
                             <StackPanel Margin="10,8">
-                                <TextBlock Text="Barcode / QR Scan" Style="{StaticResource LabelStyle}"/>
-                                <Border x:Name="barcodeHost" Height="35" Background="#FAFAFA" BorderBrush="#CFD8DC" BorderThickness="1" Padding="6"/>
+                                <TextBlock Text="Barcode / QR Scan"
+                                           Style="{StaticResource LabelStyle}"/>
+                                <!-- WinForms host: gán từ code-behind -->
+                                <Border x:Name="barcodeHost" Height="35" Background="#FAFAFA"
+                                        BorderBrush="#CFD8DC" BorderThickness="1" Padding="6"/>
                             </StackPanel>
                         </Border>
                     </Grid>
                 </Border>
 
-                <!-- HISTORY collapsible -->
+                <!-- HISTORY + SCALE CARD + REF VALUES -->
                 <Border Grid.Row="2" Padding="6">
                     <Grid>
                         <Grid.ColumnDefinitions>
@@ -597,81 +471,98 @@ BorderBrush="#CFD8DC" BorderThickness="1" Padding="6"/>
                             <ColumnDefinition Width="*"/>
                         </Grid.ColumnDefinitions>
 
+                        <!-- History panel -->
                         <Border Grid.Column="0" Margin="0,0,6,0" Background="White">
                             <Grid>
                                 <Grid.RowDefinitions>
-                                    <RowDefinition Height="AUTO"/>
-                                    <RowDefinition Height="AUTO"/>
-                                    <RowDefinition Height="AUTO"/>
+                                    <RowDefinition Height="Auto"/>
+                                    <RowDefinition Height="Auto"/>
                                     <RowDefinition Height="*"/>
                                 </Grid.RowDefinitions>
-                                <TextBlock Grid.Row="1" Text="REFERENCE / HISTORY" Foreground="White"
-       FontWeight="Bold" FontSize="12" FontFamily="Segoe UI"/>
-                                <Border Grid.Row="1"  Background="#1565C0" CornerRadius="4,4,0,0"
-Cursor="Hand" MouseLeftButtonDown="HistoryHeader_Click" Padding="10,6">
-                                    <TextBlock x:Name="tbHistoryToggle"
-       Text="▶  REFERENCE / HISTORY"
-       Foreground="White" FontWeight="Bold"
-       FontSize="12" FontFamily="Segoe UI"/>
+
+                                <!-- History header (click to toggle) -->
+                                <Border Grid.Row="0" Background="#1565C0" CornerRadius="4,4,0,0"
+                                        Cursor="Hand"
+                                        MouseLeftButtonDown="HistoryHeader_Click"
+                                        Padding="10,6">
+                                    <TextBlock Text="{Binding HistoryToggleText}"
+                                               Foreground="White" FontWeight="Bold"
+                                               FontSize="12" FontFamily="Segoe UI"/>
                                 </Border>
-                                <Border Grid.Row="2" x:Name="pnlHistory" Visibility="Collapsed" MaxHeight="200">
-                                    <DataGrid x:Name="dgHistory" Style="{StaticResource GridStyle}">
+
+                                <!-- History grid – Visibility binding -->
+                                <Border Grid.Row="1"
+                                        Visibility="{Binding IsHistoryExpanded,
+                                                     Converter={StaticResource BoolToVisibility}}"
+                                        MaxHeight="200">
+                                    <DataGrid x:Name="dgHistory"
+                                              ItemsSource="{Binding HistoryCollection}"
+                                              Style="{StaticResource GridStyle}">
                                         <DataGrid.Columns>
                                             <DataGridTextColumn Header="DATE / TIME"
-                                    Binding="{Binding CreateDate, StringFormat='yyyy-MM-dd HH:mm'}"
-                                    Width="130"/>
+                                                                Binding="{Binding CreateDate, StringFormat='yyyy-MM-dd HH:mm'}"
+                                                                Width="130"/>
                                             <DataGridTextColumn Header="TOTAL W (g)"
-                                     Binding="{Binding C024, StringFormat=F2}" Width="100"
-                                     ElementStyle="{StaticResource RightCell}"/>
+                                                                Binding="{Binding C024, StringFormat=F2}"
+                                                                Width="100"
+                                                                ElementStyle="{StaticResource RightCell}"/>
                                             <DataGridTextColumn Header="TOTAL PW (g/prs)"
-                                     Binding="{Binding C023, StringFormat=F2}" Width="110"
-                                     ElementStyle="{StaticResource RightCell}"/>
+                                                                Binding="{Binding C023, StringFormat=F2}"
+                                                                Width="110"
+                                                                ElementStyle="{StaticResource RightCell}"/>
                                             <DataGridTextColumn Header="PART WT. (g/prs)"
-                                    Binding="{Binding C021, StringFormat=F2}" Width="110"
-                                    ElementStyle="{StaticResource RightCell}"/>
+                                                                Binding="{Binding C021, StringFormat=F2}"
+                                                                Width="110"
+                                                                ElementStyle="{StaticResource RightCell}"/>
                                             <DataGridTextColumn Header="RUNNER (g/prs)"
-                                    Binding="{Binding C022, StringFormat=F2}" Width="110"
-                                    ElementStyle="{StaticResource RightCell}"/>
+                                                                Binding="{Binding C022, StringFormat=F2}"
+                                                                Width="110"
+                                                                ElementStyle="{StaticResource RightCell}"/>
                                             <DataGridTextColumn Header="OPERATOR"
-                                    Binding="{Binding C011}" Width="90"/>
+                                                                Binding="{Binding C011}" Width="90"/>
                                         </DataGrid.Columns>
                                     </DataGrid>
                                 </Border>
                             </Grid>
                         </Border>
 
-                        <!-- ────────────────── RIGHT PANEL – RFID + SCALE + REF ─────────────── -->
-                        <Border Grid.Column="1" Padding="0,0,0,0">
-                            <Grid >
+                        <!-- Scale Card + Reference Values -->
+                        <Border Grid.Column="1" Padding="0">
+                            <Grid>
                                 <Grid.RowDefinitions>
                                     <RowDefinition Height="Auto"/>
                                     <RowDefinition Height="*"/>
                                 </Grid.RowDefinitions>
 
                                 <!-- SCALE VALUE Card -->
-                                <Border Grid.Row="0" x:Name="pnlScaleCard"  Style="{StaticResource CardStyle}"
- Margin="0,0,0,0" CornerRadius="6"
-BorderBrush="#CFD8DC" BorderThickness="2"
-Background="White">
+                                <Border Grid.Row="0" x:Name="pnlScaleCard"
+                                        Style="{StaticResource CardStyle}"
+                                        BorderThickness="2"
+                                        BorderBrush="{Binding ScaleCardBorderBrush}"
+                                        Background="White">
                                     <StackPanel>
-                                        <Border Grid.Row="0" Background="#1565C0" CornerRadius="4,4,0,0">
+                                        <Border Background="#1565C0" CornerRadius="4,4,0,0">
                                             <StackPanel Orientation="Horizontal" Margin="8,4,0,4">
                                                 <TextBlock Text="SCALE VALUES" Foreground="White"
-FontWeight="Bold" FontSize="12" FontFamily="Segoe UI"/>
+                                                           FontWeight="Bold" FontSize="12"
+                                                           FontFamily="Segoe UI"/>
                                                 <TextBlock Text=" · gram (g)" Foreground="White"
-FontSize="10" VerticalAlignment="Center" Padding="4,0,0,0"/>
+                                                           FontSize="10" VerticalAlignment="Center"
+                                                           Padding="4,0,0,0"/>
                                             </StackPanel>
                                         </Border>
 
-                                        <TextBlock x:Name="tbScaleDisplay"
-           Text="0.00"
-           FontFamily="Consolas" FontSize="42" FontWeight="Bold"
-           Foreground="#212121"
-           HorizontalAlignment="Center" Margin="0,4,0,4"/>
+                                        <!-- Binding ScaleDisplay từ ViewModel -->
+                                        <TextBlock Text="{Binding ScaleDisplay}"
+                                                   FontFamily="Consolas" FontSize="42"
+                                                   FontWeight="Bold" Foreground="#212121"
+                                                   HorizontalAlignment="Center"
+                                                   Margin="0,4,0,4"/>
 
-                                        <!-- Scale hardware host -->
-                                        <Border x:Name="scaleHost" Height="32" Background="#FAFAFA"
-        BorderBrush="#CFD8DC" BorderThickness="1"/>
+                                        <!-- WinForms scale hardware host -->
+                                        <Border x:Name="scaleHost" Height="32"
+                                                Background="#FAFAFA"
+                                                BorderBrush="#CFD8DC" BorderThickness="1"/>
                                     </StackPanel>
                                 </Border>
 
@@ -683,16 +574,19 @@ FontSize="10" VerticalAlignment="Center" Padding="4,0,0,0"/>
                                             <RowDefinition Height="*"/>
                                         </Grid.RowDefinitions>
 
-                                        <Border Grid.Row="0" Background="#1565C0" CornerRadius="4,4,0,0" Padding="10,6">
+                                        <Border Grid.Row="0" Background="#1565C0"
+                                                CornerRadius="4,4,0,0" Padding="10,6">
                                             <TextBlock Text="REFERENCE VALUES" Foreground="White"
-               FontWeight="Bold" FontSize="12" FontFamily="Segoe UI"/>
+                                                       FontWeight="Bold" FontSize="12"
+                                                       FontFamily="Segoe UI"/>
                                         </Border>
 
+                                        <!-- ItemsSource binding từ ViewModel -->
                                         <DataGrid Grid.Row="1" x:Name="dgRefValues"
-          Style="{StaticResource GridStyle}"
-          RowStyle="{StaticResource RefRowStyle}">
+                                                  ItemsSource="{Binding RefRowsCollection}"
+                                                  Style="{StaticResource GridStyle}"
+                                                  RowStyle="{StaticResource RefRowStyle}">
                                             <DataGrid.Columns>
-                                                <!-- No -->
                                                 <DataGridTemplateColumn Header="#" Width="44">
                                                     <DataGridTemplateColumn.CellTemplate>
                                                         <DataTemplate>
@@ -709,34 +603,30 @@ FontSize="10" VerticalAlignment="Center" Padding="4,0,0,0"/>
                                                     </DataGridTemplateColumn.CellTemplate>
                                                 </DataGridTemplateColumn>
 
-                                                <!-- FieldName + Unit -->
                                                 <DataGridTemplateColumn Header="FIELD (Unit)" Width="220">
                                                     <DataGridTemplateColumn.CellTemplate>
                                                         <DataTemplate>
                                                             <StackPanel Margin="6,2" VerticalAlignment="Center">
                                                                 <TextBlock Text="{Binding FieldName}"
-                                                                           FontWeight="SemiBold" FontSize="12"
+                                                                           FontWeight="SemiBold"
+                                                                           FontSize="12"
                                                                            TextWrapping="Wrap"/>
                                                                 <TextBlock Text="{Binding Unit}"
-                                                                           FontSize="10" Foreground="#78909C"/>
+                                                                           FontSize="10"
+                                                                           Foreground="#78909C"/>
                                                             </StackPanel>
                                                         </DataTemplate>
                                                     </DataGridTemplateColumn.CellTemplate>
                                                 </DataGridTemplateColumn>
 
-                                                <!-- STD -->
                                                 <DataGridTextColumn Header="STD"
-                                                                Binding="{Binding StdDisplay}"
-                                                                Width="110"
-                                                                ElementStyle="{StaticResource RightCellBold}"/>
-
-                                                <!-- Delta -->
+                                                                    Binding="{Binding StdDisplay}"
+                                                                    Width="110"
+                                                                    ElementStyle="{StaticResource RightCellBold}"/>
                                                 <DataGridTextColumn Header="Δ"
                                                                     Binding="{Binding DeltaDisplay}"
                                                                     Width="90"
                                                                     ElementStyle="{StaticResource RightCellBold}"/>
-
-                                                <!-- ACTUAL -->
                                                 <DataGridTextColumn Header="ACTUAL"
                                                                     Binding="{Binding ActualDisplay}"
                                                                     Width="110"
@@ -756,27 +646,25 @@ FontSize="10" VerticalAlignment="Center" Padding="4,0,0,0"/>
         <Border Grid.Row="2" Margin="3,6,3,6">
             <StackPanel Orientation="Horizontal" HorizontalAlignment="Right"
                         VerticalAlignment="Center" Margin="0,0,16,0">
-                <Button x:Name="btnSave"
-                        Content="↓  Save"
+                <Button Content="↓  Save"
                         Style="{StaticResource BottomBtn}"
-                        Background="#1A237E" Padding="20,0"
-                        Click="btnSave_Click"/>
-                <Button x:Name="btnCancel"
-                        Content="Cancel"
+                        Command="{Binding SaveCommand}"
+                        Background="#1A237E" Padding="20,0"/>
+                <Button Content="Cancel"
                         Style="{StaticResource BottomBtn}"
-                        Background="#E65100" Padding="20,0"
-                        Click="btnCancel_Click"/>
-                <Button x:Name="btnConfirm"
-                        Content="Confirm"
+                        Command="{Binding CancelCommand}"
+                        Background="#E65100" Padding="20,0"/>
+                <Button Content="Confirm"
                         Style="{StaticResource BottomBtn}"
-                        Background="#2E7D32" Padding="20,0"
-                        Click="btnConfirm_Click"/>
+                        Command="{Binding ConfirmCommand}"
+                        Background="#2E7D32" Padding="20,0"/>
             </StackPanel>
         </Border>
 
         <!-- ═══════════════════════════════ LOADING OVERLAY ═════════════════════════ -->
-        <Grid x:Name="overlayPanel" Grid.RowSpan="3"
-              Visibility="Collapsed" Background="#80000000">
+        <Grid Grid.RowSpan="3"
+              Visibility="{Binding IsOverlayVisible, Converter={StaticResource BoolToVisibility}}"
+              Background="#80000000">
             <Border Background="White" CornerRadius="8"
                     Padding="40,28"
                     HorizontalAlignment="Center" VerticalAlignment="Center"
@@ -787,9 +675,11 @@ FontSize="10" VerticalAlignment="Center" Padding="4,0,0,0"/>
                                FontFamily="Segoe UI" Margin="0,0,0,8"/>
                     <TextBlock Text="Please wait" FontSize="12" Foreground="#78909C"
                                HorizontalAlignment="Center" FontFamily="Segoe UI"/>
-                    <Button x:Name="btnCancelLoad" Content="Cancel"
+                    <Button Content="Cancel"
+                            Command="{Binding CancelLoadCommand}"
+                            IsEnabled="{Binding IsCancelLoadEnabled}"
                             Margin="0,16,0,0" HorizontalAlignment="Center"
-                            Padding="20,6" Click="btnCancelLoad_Click"/>
+                            Padding="20,6"/>
                 </StackPanel>
             </Border>
         </Grid>

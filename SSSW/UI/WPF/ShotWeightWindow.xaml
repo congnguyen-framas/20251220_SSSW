@@ -4,6 +4,7 @@
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:SSSW.UI.WPF"
+        xmlns:dxg="http://schemas.devexpress.com/winfx/2008/xaml/grid"
         mc:Ignorable="d"
         Title="IT – Shotweight Station"
         Height="1080" Width="1920"
@@ -359,12 +360,43 @@
                                      TextChanged="tbRemark_TextChanged"/>
 
                             <TextBlock Text="Select Step" Style="{StaticResource LabelStyle}"/>
+
+                            <dxg:LookUpEdit Name="lookUpEdit" ItemsSource="{Binding _allStepCodeMaster}" DisplayMember="StepItemName" ValueMember="StepItemCode" AutoPopulateColumns="False">
+                                <dxg:LookUpEdit.PopupContentTemplate>
+                                    <ControlTemplate>
+                                        <!-- Name MUST be PART_GridControl -->
+                                        <dxg:GridControl Name="PART_GridControl">
+                                            <dxg:GridControl.Columns>
+                                                <dxg:GridColumn FieldName="Machine" Header="Machine" Width="50"/>
+                                                <dxg:GridColumn FieldName="StepItemCode" Header="Step Code" Width="50"/>
+                                                <dxg:GridColumn FieldName="StepItemName" Header="Step Name"/>
+                                                <dxg:GridColumn FieldName="Size" Header="Size"/>
+                                                <dxg:GridColumn FieldName="HydraOrderNo" Header="Hydra Order No"/>
+                                                <dxg:GridColumn FieldName="FT601Id" Header="FT601 Id"/>
+                                            </dxg:GridControl.Columns>
+                                            <dxg:GridControl.View>
+                                                <dxg:TableView AutoWidth="True"/>
+                                            </dxg:GridControl.View>
+                                        </dxg:GridControl>
+                                    </ControlTemplate>
+                                </dxg:LookUpEdit.PopupContentTemplate>
+                            </dxg:LookUpEdit>
+
                             <ComboBox x:Name="cbStepName"
                                       FontFamily="Segoe UI" FontSize="12" Height="28"
                                       IsEditable="True" IsTextSearchEnabled="True"
-                                      DisplayMemberPath="StepItemName"
+                                   
                                       SelectionChanged="cbStepName_SelectionChanged"
-                                      Margin="0,0,0,8"/>
+                                      Margin="0,0,0,8">
+                                <ComboBox.ItemTemplate>
+                                    <DataTemplate>
+                                        <StackPanel Orientation="Horizontal">
+                                            <Label Content="{Binding StepItemName}" FontSize="12" FontWeight="SemiBold"/>
+                                            <Label Content="{Binding Machine}" FontSize="12" FontWeight="SemiBold"/>
+                                        </StackPanel>
+                                    </DataTemplate>
+                                </ComboBox.ItemTemplate>
+                            </ComboBox>
 
 
                         </StackPanel>
@@ -410,7 +442,7 @@
                                             </DataTemplate>
                                         </DataGridTemplateColumn.CellTemplate>
                                     </DataGridTemplateColumn>
-                                    
+
                                     <!-- Action buttons -->
                                     <DataGridTemplateColumn Header="Actions" Width="110" IsReadOnly="False">
                                         <DataGridTemplateColumn.CellTemplate>
@@ -426,7 +458,7 @@
                                             </DataTemplate>
                                         </DataGridTemplateColumn.CellTemplate>
                                     </DataGridTemplateColumn>
-                                    
+
                                     <!-- STATUS -->
                                     <DataGridTemplateColumn Header="STATUS" Width="90">
                                         <DataGridTemplateColumn.CellTemplate>
@@ -469,7 +501,7 @@
                                                           Binding="{Binding C015}"
                                                           Width="80"
                                                           ElementStyle="{StaticResource RightCell}"/>
-                                    
+
                                     <!-- ITEM / STEP CODE (2-line) -->
                                     <DataGridTemplateColumn Header="ITEM / STEP CODE" Width="200">
                                         <DataGridTemplateColumn.CellTemplate>
@@ -549,7 +581,7 @@
                                                     ElementStyle="{StaticResource RightCell}"/>
                                             <DataGridTextColumn Header="RUNNER (g/prs)"
                                                     Binding="{Binding C022, StringFormat=F2}" Width="110"
-                                                    ElementStyle="{StaticResource RightCell}"/>                                          
+                                                    ElementStyle="{StaticResource RightCell}"/>
                                             <DataGridTextColumn Header="OPERATOR"
                                                     Binding="{Binding C011}" Width="90"/>
                                         </DataGrid.Columns>
@@ -646,7 +678,7 @@
                                                                             Foreground="White"
                                                                             FontWeight="Bold" FontSize="11"
                                                                             HorizontalAlignment="Center"
-                                                                            VerticalAlignment="Center"/>                    
+                                                                            VerticalAlignment="Center"/>
                                                             </Border>
                                                         </DataTemplate>
                                                     </DataGridTemplateColumn.CellTemplate>
@@ -659,7 +691,7 @@
                                                             <StackPanel Margin="6,2" VerticalAlignment="Center">
                                                                 <TextBlock Text="{Binding FieldName}"
                                                                             FontWeight="SemiBold" FontSize="12"
-                                                                            TextWrapping="Wrap"/>   
+                                                                            TextWrapping="Wrap"/>
                                                                 <TextBlock Text="{Binding Unit}"
                                                                             FontSize="10" Foreground="#78909C"/>
                                                             </StackPanel>
@@ -671,7 +703,7 @@
                                                 <DataGridTextColumn Header="STD"
                                                                  Binding="{Binding StdDisplay}"
                                                                  Width="110"
-                                                                 ElementStyle="{StaticResource RightCellBold}"/>                
+                                                                 ElementStyle="{StaticResource RightCellBold}"/>
 
                                                 <!-- Delta -->
                                                 <DataGridTextColumn Header="Δ"

@@ -252,7 +252,7 @@ namespace SSSW.UI.WPF
 
             // Bind step selector
             cbStepName.ItemsSource    = _allStepCodeMaster;
-            cbStepName.DisplayMemberPath = nameof(StepSelectModel.StepItemName);
+            //cbStepName.DisplayMemberPath = nameof(StepSelectModel.StepItemName);
 
             await LoadDataAsync();
         }

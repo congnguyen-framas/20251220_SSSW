@@ -9,7 +9,8 @@
     ════════════════════════════════════════════════════════════════ -->
     <conv:ToleranceToBrushConverter x:Key="ToleranceToBrush"/>
     <conv:ToleranceToForeConverter  x:Key="ToleranceToFore"/>
-    <conv:BoolToVisibilityConverter x:Key="BoolToVisibility"/>
+    <!-- WPF built-in: tránh XDG-000 "incompatible type" trong XAML designer -->
+    <BooleanToVisibilityConverter   x:Key="BoolToVisibility"/>
 
     <!-- ════════════════════════════════════════════════════════════════
          TEXT – LABEL / FIELD
@@ -159,8 +160,7 @@
         <Setter Property="Background"
                 Value="{Binding Tolerance, Converter={StaticResource ToleranceToBrush}}"/>
         <Setter Property="Foreground"
-                Value="{Binding Tolerance, Converter={StaticResource ToleranceToFore},
-                        ConverterParameter={x:Static Brushes.Black}}"/>
+                Value="{Binding Tolerance, Converter={StaticResource ToleranceToFore}}"/>
         <Setter Property="Height" Value="56"/>
     </Style>
 

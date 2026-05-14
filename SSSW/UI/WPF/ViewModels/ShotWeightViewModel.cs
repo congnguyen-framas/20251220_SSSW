@@ -17,6 +17,10 @@ using System.ComponentModel;
 using System.Runtime.CompilerServices;
 using System.Windows;
 using System.Windows.Media;
+// ── Disambiguate WPF vs WinForms/Drawing types (project uses UseWPF + UseWindowsForms) ──
+using Brush   = System.Windows.Media.Brush;
+using Color   = System.Windows.Media.Color;
+using Brushes = System.Windows.Media.Brushes;
 
 namespace SSSW.UI.WPF.ViewModels
 {

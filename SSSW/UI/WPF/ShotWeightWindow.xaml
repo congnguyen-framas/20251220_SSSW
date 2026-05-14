@@ -362,7 +362,7 @@
                                             <StackPanel Margin="4,2">
                                                 <TextBlock Text="{Binding C027}" FontWeight="Bold"
                                                            FontSize="12" TextTrimming="CharacterEllipsis"/>
-                                                <TextBlock Text="{Binding c026}" FontSize="10"
+                                                <TextBlock Text="{Binding C026}" FontSize="10"
                                                            Foreground="#78909C"
                                                            TextTrimming="CharacterEllipsis"/>
                                             </StackPanel>

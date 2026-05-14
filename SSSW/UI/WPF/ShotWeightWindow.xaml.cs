@@ -17,12 +17,18 @@ using DevExpress.Xpf.Editors;
 using ScanAndScale.Driver;
 using ScanAndScale.Helper;
 using SSSW.models;
+using SSSW.modelss;
 using SSSW.UI.WPF.ViewModels;
 using System.Runtime.InteropServices;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Forms.Integration;
 using System.Windows.Input;
+// ── Disambiguate WPF vs WinForms types (UseWPF + UseWindowsForms + ImplicitUsings) ──
+// Aliases take precedence over namespace lookups → no more CS0104
+using KeyEventArgs              = System.Windows.Input.KeyEventArgs;
+using TextBox                   = System.Windows.Controls.TextBox;
+using SelectionChangedEventArgs = System.Windows.Controls.SelectionChangedEventArgs;
 
 namespace SSSW.UI.WPF
 {

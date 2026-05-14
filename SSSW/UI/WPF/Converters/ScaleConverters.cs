@@ -29,7 +29,7 @@ namespace SSSW.UI.WPF.Converters
         }
 
         public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
-            => Binding.DoNothing;
+            => System.Windows.Data.Binding.DoNothing;
     }
 
     /// <summary>Maps ToleranceCategory → foreground Brush cho DataGridRow.</summary>
@@ -49,7 +49,7 @@ namespace SSSW.UI.WPF.Converters
         }
 
         public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
-            => Binding.DoNothing;
+            => System.Windows.Data.Binding.DoNothing;
     }
 
     /// <summary>bool → Visibility (True = Visible, False = Collapsed).</summary>

@@ -9,7 +9,6 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\..\framasDevicesDriver\DriverSS\ScanAndScale.Driver\ScanAndScale.Driver.csproj" />
     <ProjectReference Include="..\SSSW\SSSW.csproj" />
   </ItemGroup>
 

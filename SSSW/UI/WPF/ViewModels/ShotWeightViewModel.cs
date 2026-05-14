@@ -343,9 +343,9 @@ namespace SSSW.UI.WPF.ViewModels
             HydraCommand         = new AsyncRelayCommand(GetDataHydraAsync);
             SettingsCommand      = new RelayCommand(OpenSettings);
             UpdateCommand        = new RelayCommand(CheckUpdate);
-            MinimizeCommand      = new RelayCommand(() => Application.Current.MainWindow.WindowState = System.Windows.WindowState.Minimized);
+            MinimizeCommand      = new RelayCommand(() => System.Windows.Application.Current.MainWindow.WindowState = System.Windows.WindowState.Minimized);
             MaximizeCommand      = new RelayCommand(ToggleMaximize);
-            CloseCommand         = new RelayCommand(() => Application.Current.MainWindow.Close());
+            CloseCommand         = new RelayCommand(() => System.Windows.Application.Current.MainWindow.Close());
             CancelLoadCommand    = new RelayCommand(() => _loadCts?.Cancel());
             SaveCommand          = new RelayCommand(ExecuteSave);
             ConfirmCommand       = new AsyncRelayCommand(ExecuteConfirmAsync);
@@ -455,14 +455,14 @@ namespace SSSW.UI.WPF.ViewModels
                     FT601Id          = x.Id
                 }).Distinct().ToList();
 
-                Application.Current.Dispatcher.Invoke(() =>
+                System.Windows.Application.Current.Dispatcher.Invoke(() =>
                     StepCodeMaster = _allStepCodeMaster);
             }
             catch (OperationCanceledException) { }
             catch (Exception ex)
             {
-                MessageBox.Show($"Load data failure:\n{ex.Message}", "Load data",
-                    MessageBoxButton.OK, MessageBoxImage.Error);
+                System.Windows.Forms.MessageBox.Show($"Load data failure:\n{ex.Message}", "Load data",
+                    (MessageBoxButtons)MessageBoxButton.OK, (MessageBoxIcon)MessageBoxImage.Error);
             }
             finally
             {
@@ -521,8 +521,8 @@ namespace SSSW.UI.WPF.ViewModels
             catch (Exception ex)
             {
                 _logger.LogError(ex, "RFID error");
-                MessageBox.Show(ex.Message, "ERROR",
-                    MessageBoxButton.OK, MessageBoxImage.Error);
+                System.Windows.Forms.MessageBox.Show(ex.Message, "ERROR",
+                    (MessageBoxButtons)(MessageBoxButtons)MessageBoxButton.OK, (MessageBoxIcon)MessageBoxImage.Error);
             }
         }
 
@@ -534,10 +534,10 @@ namespace SSSW.UI.WPF.ViewModels
                 if (string.IsNullOrEmpty(_employeeCode) || string.IsNullOrEmpty(name))
                     throw new Exception("ID or name cannot be null.");
 
-                var res = MessageBox.Show(
+                var res = System.Windows.Forms.MessageBox.Show(
                     $"Register operator {name} with ID {_employeeCode}?",
-                    "Confirm", MessageBoxButton.YesNo, MessageBoxImage.Question);
-                if (res != MessageBoxResult.Yes) return;
+                    "Confirm", (MessageBoxButtons)MessageBoxButton.YesNo, (MessageBoxIcon)MessageBoxImage.Question);
+                if (res != DialogResult.Yes) return;
 
                 using var db = _dbFactory.CreateDbContext();
                 var dept = db.FT031s.FirstOrDefault(x => x.C000 == "QC")
@@ -558,15 +558,15 @@ namespace SSSW.UI.WPF.ViewModels
                     Actived        = true
                 });
                 await db.SaveChangesAsync();
-                MessageBox.Show(
+                System.Windows.Forms.MessageBox.Show(
                     $"Operator '{_employeeCode}-{name}' registered successfully.", "OK",
-                    MessageBoxButton.OK, MessageBoxImage.Information);
+                    (MessageBoxButtons)MessageBoxButton.OK, (MessageBoxIcon)(MessageBoxIcon)MessageBoxImage.Information);
             }
             catch (Exception ex)
             {
                 _logger.LogError(ex, "RFID name enter error");
-                MessageBox.Show(ex.Message, "WARNING",
-                    MessageBoxButton.OK, MessageBoxImage.Warning);
+                System.Windows.Forms.MessageBox.Show(ex.Message, "WARNING",
+                    (MessageBoxButtons)MessageBoxButton.OK, (MessageBoxIcon)(MessageBoxIcon)MessageBoxImage.Warning);
             }
         }
 
@@ -590,8 +590,8 @@ namespace SSSW.UI.WPF.ViewModels
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Barcode scan error");
-                MessageBox.Show(ex.Message, "WARNING",
-                    MessageBoxButton.OK, MessageBoxImage.Warning);
+                System.Windows.Forms.MessageBox.Show(ex.Message, "WARNING",
+                    (MessageBoxButtons)MessageBoxButton.OK, (MessageBoxIcon)(MessageBoxIcon)MessageBoxImage.Warning);
             }
         }
 
@@ -609,8 +609,8 @@ namespace SSSW.UI.WPF.ViewModels
                 _ = TriggerStepSelectionAsync(item);
             }
             else
-                MessageBox.Show("No matching data found!", "WARNING",
-                    MessageBoxButton.OK, MessageBoxImage.Warning);
+                System.Windows.Forms.MessageBox.Show("No matching data found!", "WARNING",
+                    (MessageBoxButtons)MessageBoxButton.OK, (MessageBoxIcon)(MessageBoxIcon)MessageBoxImage.Warning);
         }
 
         /// <summary>Gọi từ code-behind khi DevExpress LookUpEdit thay đổi selection.</summary>
@@ -635,8 +635,8 @@ namespace SSSW.UI.WPF.ViewModels
             catch (Exception ex)
             {
                 _logger.LogError(ex, "OnStepSelectedAsync");
-                MessageBox.Show(ex.Message, "WARNING",
-                    MessageBoxButton.OK, MessageBoxImage.Warning);
+                System.Windows.Forms.MessageBox.Show(ex.Message, "WARNING",
+                    (MessageBoxButtons)MessageBoxButton.OK, (MessageBoxIcon)(MessageBoxIcon)MessageBoxImage.Warning);
             }
         }
 
@@ -873,8 +873,8 @@ namespace SSSW.UI.WPF.ViewModels
                     var stepSel   = _scaleDataFinal.FirstOrDefault(x => x.C002 == _stepSelected.C004);
                     var prevSteps = _scaleDataFinal.Where(x => x.C015 < stepSel?.C015).ToList();
                     if (prevSteps.Any(x => x.C021 == 0))
-                        MessageBox.Show("The previous step has not been weighed.", "Warning",
-                            MessageBoxButton.OK, MessageBoxImage.Warning);
+                        System.Windows.Forms.MessageBox.Show("The previous step has not been weighed.", "Warning",
+                            (MessageBoxButtons)MessageBoxButton.OK, (MessageBoxIcon)(MessageBoxIcon)MessageBoxImage.Warning);
                     else
                         _rowSelected = _scaleDataFinal
                             .FirstOrDefault(x => x.C002 == _stepSelected.C004) ?? new FT600();
@@ -888,23 +888,23 @@ namespace SSSW.UI.WPF.ViewModels
 
                     if (rowSelect == null)
                     {
-                        MessageBox.Show(
+                        System.Windows.Forms.MessageBox.Show(
                             $"Label does not match the item being weighed.\n{_stepSelected.C004}|{_stepSelected.C005}",
-                            "WARNING", MessageBoxButton.OK, MessageBoxImage.Warning);
+                            "WARNING", (MessageBoxButtons)MessageBoxButton.OK, (MessageBoxIcon)MessageBoxImage.Warning);
                         return;
                     }
                     if (!rowSelect.AllowScale)
                     {
-                        MessageBox.Show("Do not allow to scale this step.", "Warning",
-                            MessageBoxButton.OK, MessageBoxImage.Information);
+                        System.Windows.Forms.MessageBox.Show("Do not allow to scale this step.", "Warning",
+                            (MessageBoxButtons)MessageBoxButton.OK, (MessageBoxIcon)(MessageBoxIcon)MessageBoxImage.Information);
                         return;
                     }
                     foreach (var step in _scaleDataFinal.Where(x => x.C015 < rowSelect.C015))
                     {
                         if (step.C021 == 0)
                         {
-                            MessageBox.Show("The previous step has not been weighed.", "Warning",
-                                MessageBoxButton.OK, MessageBoxImage.Warning);
+                            System.Windows.Forms.MessageBox.Show("The previous step has not been weighed.", "Warning",
+                                (MessageBoxButtons)MessageBoxButton.OK, (MessageBoxIcon)MessageBoxImage.Warning);
                             return;
                         }
                     }
@@ -921,8 +921,8 @@ namespace SSSW.UI.WPF.ViewModels
             catch (Exception ex)
             {
                 _logger.LogError(ex, "GetDataAsync error");
-                MessageBox.Show(ex.Message, "WARNING",
-                    MessageBoxButton.OK, MessageBoxImage.Warning);
+                System.Windows.Forms.MessageBox.Show(ex.Message, "WARNING",
+                    (MessageBoxButtons)MessageBoxButton.OK, (MessageBoxIcon)MessageBoxImage.Warning);
             }
         }
 
@@ -934,8 +934,8 @@ namespace SSSW.UI.WPF.ViewModels
             if (_rowSelected == null) return;
             if (!_rowSelected.AllowScale)
             {
-                MessageBox.Show("Cannot scale this step.", "Warning",
-                    MessageBoxButton.OK, MessageBoxImage.Warning);
+                System.Windows.Forms.MessageBox.Show("Cannot scale this step.", "Warning",
+                    (MessageBoxButtons)MessageBoxButton.OK, (MessageBoxIcon)MessageBoxImage.Warning);
                 return;
             }
 
@@ -1075,8 +1075,8 @@ namespace SSSW.UI.WPF.ViewModels
             {
                 if (_operatorInfo == null || _operatorInfo.Id == Guid.Empty)
                 {
-                    MessageBox.Show("RFID card not yet scanned.", "Warning",
-                        MessageBoxButton.OK, MessageBoxImage.Warning);
+                    System.Windows.Forms.MessageBox.Show("RFID card not yet scanned.", "Warning",
+                        (MessageBoxButtons)MessageBoxButton.OK, (MessageBoxIcon)MessageBoxImage.Warning);
                     return;
                 }
 
@@ -1094,9 +1094,9 @@ namespace SSSW.UI.WPF.ViewModels
                         if (item.AllowScale && item.C023 == 0 &&
                             (item.C024 == 0 && (item.C002?.StartsWith("REX") ?? false)))
                         {
-                            MessageBox.Show(
+                            System.Windows.Forms.MessageBox.Show(
                                 $"Scale not completed for step: {item.C002}.", "Warning",
-                                MessageBoxButton.OK, MessageBoxImage.Warning);
+                                (MessageBoxButtons)MessageBoxButton.OK, (MessageBoxIcon)MessageBoxImage.Warning);
                             return;
                         }
                     }
@@ -1129,8 +1129,8 @@ namespace SSSW.UI.WPF.ViewModels
                 await db.SaveChangesAsync();
                 await transaction.CommitAsync();
 
-                MessageBox.Show("Scale shot weight saved successfully.", "Information",
-                    MessageBoxButton.OK, MessageBoxImage.Information);
+                System.Windows.Forms.MessageBox.Show("Scale shot weight saved successfully.", "Information",
+                    (MessageBoxButtons)MessageBoxButton.OK, (MessageBoxIcon)MessageBoxImage.Information);
 
                 _labelInfo = new FT606_Label();
                 ClearStepComboAction?.Invoke();
@@ -1140,9 +1140,9 @@ namespace SSSW.UI.WPF.ViewModels
             {
                 await transaction.RollbackAsync();
                 _logger.LogError(ex, "Confirm error");
-                MessageBox.Show(
+                System.Windows.Forms.MessageBox.Show(
                     $"Transaction error: {ex.Message}\n{ex.InnerException?.Message}",
-                    "ERROR", MessageBoxButton.OK, MessageBoxImage.Error);
+                    "ERROR", (MessageBoxButtons)MessageBoxButton.OK, (MessageBoxIcon)MessageBoxImage.Error);
             }
         }
 
@@ -1169,16 +1169,16 @@ namespace SSSW.UI.WPF.ViewModels
 
             if (!rowSelect.AllowScale)
             {
-                MessageBox.Show("Do not allow to scale this step.", "Warning",
-                    MessageBoxButton.OK, MessageBoxImage.Warning);
+                System.Windows.Forms.MessageBox.Show("Do not allow to scale this step.", "Warning",
+                    (MessageBoxButtons)MessageBoxButton.OK, (MessageBoxIcon)MessageBoxImage.Warning);
                 return;
             }
             foreach (var step in _scaleDataFinal.Where(x => x.C015 < rowSelect.C015))
             {
                 if (step.C021 == 0)
                 {
-                    MessageBox.Show("The previous step has not been weighed.", "Warning",
-                        MessageBoxButton.OK, MessageBoxImage.Warning);
+                    System.Windows.Forms.MessageBox.Show("The previous step has not been weighed.", "Warning",
+                        (MessageBoxButtons)MessageBoxButton.OK, (MessageBoxIcon)MessageBoxImage.Warning);
                     return;
                 }
             }
@@ -1198,8 +1198,8 @@ namespace SSSW.UI.WPF.ViewModels
                 x.AllowScale && x.C002 == rowSelect.C002);
             if (rowReset == null)
             {
-                MessageBox.Show("Cannot reset this line.", "Warning",
-                    MessageBoxButton.OK, MessageBoxImage.Information);
+                System.Windows.Forms.MessageBox.Show("Cannot reset this line.", "Warning",
+                    (MessageBoxButtons)MessageBoxButton.OK, (MessageBoxIcon)MessageBoxImage.Information);
                 return;
             }
             rowReset.C021 = rowReset.C022 = rowReset.C023 = rowReset.C024 = 0;
@@ -1338,7 +1338,7 @@ namespace SSSW.UI.WPF.ViewModels
                 _stdRow = _refHistory.FirstOrDefault() ?? new FT600();
                 UpdateReferencePanel();
 
-                Application.Current.Dispatcher.Invoke(() =>
+                System.Windows.Application.Current.Dispatcher.Invoke(() =>
                 {
                     HistoryCollection.Clear();
                     foreach (var h in _refHistory)
@@ -1375,7 +1375,7 @@ namespace SSSW.UI.WPF.ViewModels
                         Actual = _rowSelected?.C022 > 0 ? _rowSelected.C022 : null }
             };
 
-            Application.Current.Dispatcher.Invoke(() =>
+            System.Windows.Application.Current.Dispatcher.Invoke(() =>
             {
                 RefRowsCollection.Clear();
                 foreach (var row in _referenceRows)
@@ -1401,7 +1401,7 @@ namespace SSSW.UI.WPF.ViewModels
         // ─────────────────────────────────────────────────────────────────────
         private void RefreshUI(bool refreshInPlace = true)
         {
-            Application.Current.Dispatcher.Invoke(() =>
+            System.Windows.Application.Current.Dispatcher.Invoke(() =>
             {
                 // Step info panel
                 StepCode    = _rowSelected?.C002;
@@ -1504,13 +1504,13 @@ namespace SSSW.UI.WPF.ViewModels
             }
             catch (Exception ex)
             {
-                MessageBox.Show(ex.Message, "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                System.Windows.Forms.MessageBox.Show(ex.Message, "Error", (MessageBoxButtons)MessageBoxButton.OK, (MessageBoxIcon)MessageBoxImage.Error);
             }
         }
 
         private void ToggleMaximize()
         {
-            var win = Application.Current.MainWindow;
+            var win = System.Windows.Application.Current.MainWindow;
             win.WindowState = win.WindowState == System.Windows.WindowState.Normal
                 ? System.Windows.WindowState.Maximized
                 : System.Windows.WindowState.Normal;
@@ -1521,37 +1521,37 @@ namespace SSSW.UI.WPF.ViewModels
         // ─────────────────────────────────────────────────────────────────────
         private async void AutoUpdater_ApplicationExitEvent()
         {
-            Application.Current.MainWindow.Title = "Closing…";
+            System.Windows.Application.Current.MainWindow.Title = "Closing…";
             await Task.Delay(3000);
-            Application.Current.Shutdown();
+            System.Windows.Application.Current.Shutdown();
         }
 
         private async void AutoUpdater_CheckForUpdateEvent(UpdateInfoEventArgs args)
         {
             if (args.IsUpdateAvailable)
             {
-                var res = MessageBox.Show(
+                var res = System.Windows.Forms.MessageBox.Show(
                     $"New version available: {args.CurrentVersion}. Update now?",
-                    "Update", MessageBoxButton.YesNo, MessageBoxImage.Information);
-                if (res == MessageBoxResult.Yes)
+                    "Update", (MessageBoxButtons)MessageBoxButton.YesNo, (MessageBoxIcon)MessageBoxImage.Information);
+                if (res == DialogResult.Yes)
                 {
                     await Task.Delay(3000);
                     try
                     {
                         if (AutoUpdater.DownloadUpdate(args))
-                            Application.Current.Shutdown();
+                            System.Windows.Application.Current.Shutdown();
                     }
                     catch (Exception ex)
                     {
-                        MessageBox.Show(ex.Message, ex.GetType().ToString(),
-                            MessageBoxButton.OK, MessageBoxImage.Error);
+                        System.Windows.Forms.MessageBox.Show(ex.Message, ex.GetType().ToString(),
+                            (MessageBoxButtons)MessageBoxButton.OK, (MessageBoxIcon)MessageBoxImage.Error);
                     }
                 }
             }
             else if (_isUpdateClicked)
             {
-                MessageBox.Show("Already up to date.", "Information",
-                    MessageBoxButton.OK, MessageBoxImage.Information);
+                System.Windows.Forms.MessageBox.Show("Already up to date.", "Information",
+                    (MessageBoxButtons)MessageBoxButton.OK, (MessageBoxIcon)MessageBoxImage.Information);
             }
         }
 

@@ -616,18 +616,45 @@
                                         <Border Background="{Binding ScaleTare,
                                                             Converter={StaticResource TareToBackground}}"
                                                 Padding="0,6,0,6">
-                                            <TextBlock Text="{Binding ScaleDisplay}"
+                                            <!--<TextBlock Text="{Binding ScaleDisplay}"
                                                        FontFamily="Consolas" FontSize="48"
                                                        FontWeight="Bold"
                                                        Foreground="{Binding ScaleStable,
                                                                     Converter={StaticResource StableToForeground}}"
-                                                       HorizontalAlignment="Center"/>
+                                                       HorizontalAlignment="Center"/>-->
+                                            <TextBox Name="_txtScale" Text="{Binding ScaleDisplay, UpdateSourceTrigger=PropertyChanged}" 
+                                                     IsReadOnly="{Binding EnableReadScale}"
+                                                       BorderThickness="0"
+                                                       FontFamily="Consolas" FontSize="48"
+                                                       FontWeight="Bold"
+                                                       Foreground="{Binding ScaleStable,
+                                                       Converter={StaticResource StableToForeground}}"
+                                                       HorizontalAlignment="Center"
+                                                     KeyDown="_txtScale_KeyDown">
+
+                                                <TextBox.Style>
+                                                    <Style TargetType="TextBox">
+                                                        <!-- mặc định (EnableReadScale = false) -->
+                                                        <Setter Property="Foreground" Value="Black"/>
+
+                                                        <Style.Triggers>
+                                                            <!-- ✅ Khi EnableReadScale = true -->
+                                                            <DataTrigger Binding="{Binding EnableReadScale}" Value="True">
+                                                                <Setter Property="Foreground"
+                                                                        Value="{Binding ScaleStable,
+                                                                        Converter={StaticResource StableToForeground}}"/>
+                                                            </DataTrigger>
+                                                        </Style.Triggers>
+                                                    </Style>
+                                                </TextBox.Style>
+                                            </TextBox>
                                         </Border>
 
                                         <!-- Stable / Tare badges -->
                                         <StackPanel Orientation="Horizontal"
                                                     HorizontalAlignment="Center"
-                                                    Margin="0,2,0,6">
+                                                    Margin="0,2,0,6"
+                                                    Visibility="{Binding EnableReadScale}">
 
                                             <!-- Stable badge -->
                                             <Border CornerRadius="4" Padding="10,3" Margin="4,0"

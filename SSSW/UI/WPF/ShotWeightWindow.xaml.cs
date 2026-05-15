@@ -24,8 +24,8 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
 // ── Disambiguate WPF vs WinForms types ──────────────────────────────────────
-using KeyEventArgs              = System.Windows.Input.KeyEventArgs;
-using TextBox                   = System.Windows.Controls.TextBox;
+using KeyEventArgs = System.Windows.Input.KeyEventArgs;
+using TextBox = System.Windows.Controls.TextBox;
 using SelectionChangedEventArgs = System.Windows.Controls.SelectionChangedEventArgs;
 
 namespace SSSW.UI.WPF
@@ -34,15 +34,15 @@ namespace SSSW.UI.WPF
     {
         // ── Win32 – borderless drag ──────────────────────────────────────────
         [DllImport("user32.dll")] private static extern bool ReleaseCapture();
-        [DllImport("user32.dll")] private static extern int  SendMessage(IntPtr hWnd, int Msg, int wParam, int lParam);
+        [DllImport("user32.dll")] private static extern int SendMessage(IntPtr hWnd, int Msg, int wParam, int lParam);
 
         // ── ViewModel ────────────────────────────────────────────────────────
         private ShotWeightViewModel _vm = null!;
 
         // ── ScanAndScale.Core drivers (thay thế BarcodeButtonEdit / RFIDButtonEdit / ScaleButtonEdit) ──
         private readonly BarcodeDriver _barcodeDriver = BarcodeDriver.Instance;
-        private readonly RfidDriver    _rfidDriver    = RfidDriver.Instance;
-        private ScaleDriver?           _scaleDriver;
+        private readonly RfidDriver _rfidDriver = RfidDriver.Instance;
+        private ScaleDriver? _scaleDriver;
 
         // ════════════════════════════════════════════════════════════════════
         //  CONSTRUCTORS
@@ -51,7 +51,7 @@ namespace SSSW.UI.WPF
         /// <summary>DI constructor – nhận ViewModel từ DI container.</summary>
         public ShotWeightWindow(ShotWeightViewModel viewModel) : this()
         {
-            _vm         = viewModel;
+            _vm = viewModel;
             DataContext = viewModel;
         }
 
@@ -59,7 +59,7 @@ namespace SSSW.UI.WPF
         public ShotWeightWindow()
         {
             InitializeComponent();
-            Loaded  += OnLoaded;
+            Loaded += OnLoaded;
             Closing += OnClosing;
         }
 
@@ -72,16 +72,16 @@ namespace SSSW.UI.WPF
 
             // 1. Đăng ký events TRƯỚC khi Initialize để không bỏ sót status thay đổi
             _barcodeDriver.DataValueChanged += BarcodeDriver_DataValueChanged;
-            _rfidDriver.DataValueChanged    += RfidDriver_DataValueChanged;
+            _rfidDriver.DataValueChanged += RfidDriver_DataValueChanged;
 
             // 2. Cấu hình View callbacks để ViewModel gọi lại View khi cần
             //    Ghi chú: ClearBarcodeAction / ClearRfidAction đã được VM khởi tạo
             //    trong constructor → tự xóa BarcodeScannedValue / RfidCardCode.
             //    Ở đây chỉ gán những callback liên quan đến WPF controls cụ thể.
-            _vm.FocusRfidNameAction     = () => tbRFIDName.Focus();
-            _vm.ClearStepComboAction    = () => { cbStepName.EditValue = null; };
-            _vm.SetStepComboAction      = item => { cbStepName.EditValue = item?.StepItemCode; };
-            _vm.FocusGridRowAction      = code => FocusStepInGrid(code);
+            _vm.FocusRfidNameAction = () => tbRFIDName.Focus();
+            _vm.ClearStepComboAction = () => { cbStepName.EditValue = null; };
+            _vm.SetStepComboAction = item => { cbStepName.EditValue = item?.StepItemCode; };
+            _vm.FocusGridRowAction = code => FocusStepInGrid(code);
             _vm.ApplyHardwareConfigAction = ApplyHardwareConfig;
 
             // 3. Khởi tạo ViewModel (load config DB + master data)
@@ -95,7 +95,7 @@ namespace SSSW.UI.WPF
         {
             // Hủy đăng ký events → tránh memory leak
             _barcodeDriver.DataValueChanged -= BarcodeDriver_DataValueChanged;
-            _rfidDriver.DataValueChanged    -= RfidDriver_DataValueChanged;
+            _rfidDriver.DataValueChanged -= RfidDriver_DataValueChanged;
             if (_scaleDriver != null)
                 _scaleDriver.DataValueChanged -= ScaleDriver_DataValueChanged;
 
@@ -118,7 +118,7 @@ namespace SSSW.UI.WPF
             // ── Barcode (Zebra CoreScanner SDK) ──────────────────────────────
             var barcodeCfg = new BarcodeConfig
             {
-                Enable   = cfg.Scanner.Enable,
+                Enable = cfg.Scanner.Enable,
                 ReadOnly = cfg.Scanner.ReadOnly
             };
 
@@ -135,10 +135,10 @@ namespace SSSW.UI.WPF
             //       Rfid_Caption → DeviceCaption, Rfid_Manufact → DeviceManufacturer
             var rfidCfg = new RfidConfig
             {
-                Enable             = cfg.RFID.Enable,
-                AutoFindCom        = cfg.RFID.Rfid_AutoFindCom,
-                ComPort            = cfg.RFID.Rfid_Com,
-                DeviceCaption      = cfg.RFID.Rfid_Caption,
+                Enable = cfg.RFID.Enable,
+                AutoFindCom = cfg.RFID.Rfid_AutoFindCom,
+                ComPort = cfg.RFID.Rfid_Com,
+                DeviceCaption = cfg.RFID.Rfid_Caption,
                 DeviceManufacturer = cfg.RFID.Rfid_Manufact
             };
 
@@ -154,19 +154,20 @@ namespace SSSW.UI.WPF
             //  Map: TimeScan → TimeScanMs (tên property khác nhau giữa hai thư viện)
             var scaleCfg = new ScaleConfig
             {
-                Enable      = cfg.Scale.Enable == true,
-                ReadOnly    = cfg.Scale.ReadOnly == true,
-                IP          = cfg.Scale.IP,
-                Port        = cfg.Scale.Port,
-                TimeScanMs  = cfg.Scale.TimeScan,
-                CalibZero   = cfg.Scale.CalibZero,
-                CalibGain   = cfg.Scale.CalibGain,
-                DecimalNum  = cfg.Scale.DecimalNum,
-                ModelName   = cfg.Scale.ModelName,
+                Enable = cfg.Scale.Enable == true,
+                ReadOnly = cfg.Scale.ReadOnly == true,
+                IP = cfg.Scale.IP,
+                Port = cfg.Scale.Port,
+                TimeScanMs = cfg.Scale.TimeScan,
+                CalibZero = cfg.Scale.CalibZero,
+                CalibGain = cfg.Scale.CalibGain,
+                DecimalNum = cfg.Scale.DecimalNum,
+                ModelName = cfg.Scale.ModelName,
                 CheckStable = cfg.Scale.CheckStable == true,
-                CheckTare   = cfg.Scale.CheckTare == true
+                CheckTare = cfg.Scale.CheckTare == true
             };
 
+            _vm.EnableReadScale = cfg.EnableReadScale ?? false;
             bool enableScale = scaleCfg.Enable && (cfg.EnableReadScale ?? false);
             if (enableScale)
             {
@@ -240,10 +241,10 @@ namespace SSSW.UI.WPF
                 if (data.DriverStatus == DriverStatus.Connected && sender is ScaleDriver sd)
                 {
                     _vm.OnScaleValueChanged(
-                        value:  Convert.ToDouble(data.Value ?? 0.0),
+                        value: Convert.ToDouble(data.Value ?? 0.0),
                         stable: sd.IsStable,
-                        tare:   sd.IsTare,
-                        unit:   sd.Unit
+                        tare: sd.IsTare,
+                        unit: sd.Unit
                     );
                 }
                 else if (data.DriverStatus == DriverStatus.Disconnected)
@@ -265,7 +266,7 @@ namespace SSSW.UI.WPF
         {
             if (_vm == null) return;
 
-            var editVal  = cbStepName.EditValue?.ToString();
+            var editVal = cbStepName.EditValue?.ToString();
             var selected = string.IsNullOrEmpty(editVal)
                 ? null
                 : _vm.StepCodeMaster.FirstOrDefault(x => x.StepItemCode == editVal);
@@ -358,6 +359,18 @@ namespace SSSW.UI.WPF
 
             dgTotalSteps.ScrollIntoView(item);
             dgTotalSteps.SelectedItem = item;
+        }
+
+        private void _txtScale_KeyDown(object sender, KeyEventArgs e)
+        {
+            if (e.Key == Key.Enter)
+            {
+                var oldValue = new DataValue(DriverStatus.Reconnecting,_vm.ScaleValue);
+
+                _vm.ScaleValue = Convert.ToDouble(_vm.ScaleDisplay);
+                var newValue = new DataValue(DriverStatus.Reconnecting, _vm.ScaleValue);
+                ScaleDriver_DataValueChanged(null, new DataValueChangedEventArgs(newValue, oldValue));
+            }
         }
     }
 }

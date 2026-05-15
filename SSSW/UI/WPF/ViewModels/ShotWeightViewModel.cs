@@ -20,6 +20,7 @@ using System.Windows.Media;
 using Brush = System.Windows.Media.Brush;
 using Color = System.Windows.Media.Color;
 using Brushes = System.Windows.Media.Brushes;
+using DevExpress.XtraSpreadsheet.Import.Xls;
 
 namespace SSSW.UI.WPF.ViewModels
 {
@@ -253,6 +254,24 @@ namespace SSSW.UI.WPF.ViewModels
             get => _scaleCardBorderBrush;
             set { _scaleCardBorderBrush = value; OnPropertyChanged(); }
         }
+
+        private bool _enableReadScale = true;
+        public bool EnableReadScale
+        {
+            get => _enableReadScale;
+            set { _enableReadScale = value; OnPropertyChanged(); }
+        }
+
+        public double ScaleValue
+        {
+            get => _scaleValue;
+            set
+            {
+                _scaleValue = value;
+                ScaleDisplay = _scaleValue.ToString("F2");
+                OnPropertyChanged();
+            }
+        }
         #endregion
 
         #region Device Connection Status  (ScanAndScale.Core)
@@ -417,7 +436,7 @@ namespace SSSW.UI.WPF.ViewModels
 
             // Default: xóa các giá trị hiển thị trong VM thay vì xóa WinForms TextBox
             ClearBarcodeAction = () => BarcodeScannedValue = string.Empty;
-            ClearRfidAction    = () => RfidCardCode = string.Empty;
+            ClearRfidAction = () => RfidCardCode = string.Empty;
         }
 
         // ─────────────────────────────────────────────────────────────────────
@@ -547,11 +566,11 @@ namespace SSSW.UI.WPF.ViewModels
         /// <summary>Scale hardware trả về giá trị cân mới (từ ScanAndScale.Core driver).</summary>
         public void OnScaleValueChanged(double value, bool stable = false, bool tare = false, string unit = "KG")
         {
-            _scaleValue   = Math.Round(value, 2);
-            ScaleDisplay  = _scaleValue.ToString("F2");
-            ScaleStable   = stable;
-            ScaleTare     = tare;
-            ScaleUnit     = unit;
+            _scaleValue = Math.Round(value, 2);
+            ScaleDisplay = _scaleValue.ToString("F2");
+            ScaleStable = stable;
+            ScaleTare = tare;
+            ScaleUnit = unit;
         }
 
         /// <summary>RFID đọc được employee code.</summary>
@@ -1277,7 +1296,7 @@ namespace SSSW.UI.WPF.ViewModels
                 ? _rowSelected.C017 : _rowSelected.C028;
 
             IsHistoryExpanded = true;
-           _historyExpanded = true;
+            _historyExpanded = true;
 
             RefreshUI(true);
             UpdateReferencePanel();

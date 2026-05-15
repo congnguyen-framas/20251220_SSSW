@@ -367,7 +367,7 @@ namespace SSSW.UI.WPF
             {
                 var oldValue = new DataValue(DriverStatus.Reconnecting,_vm.ScaleValue);
 
-                _vm.ScaleValue = Convert.ToDouble(_vm.ScaleDisplay);
+                //_vm.ScaleValue = Convert.ToDouble(_vm.ScaleDisplay);
                 var newValue = new DataValue(DriverStatus.Reconnecting, _vm.ScaleValue);
                 ScaleDriver_DataValueChanged(null, new DataValueChangedEventArgs(newValue, oldValue));
             }

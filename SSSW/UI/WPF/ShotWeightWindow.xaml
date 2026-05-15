@@ -622,7 +622,7 @@
                                                        Foreground="{Binding ScaleStable,
                                                                     Converter={StaticResource StableToForeground}}"
                                                        HorizontalAlignment="Center"/>-->
-                                            <TextBox Name="_txtScale" Text="{Binding ScaleDisplay, UpdateSourceTrigger=PropertyChanged}" 
+                                            <TextBox Name="_txtScale" Text="{Binding ScaleValue, UpdateSourceTrigger=PropertyChanged}" 
                                                      IsReadOnly="{Binding EnableReadScale}"
                                                        BorderThickness="0"
                                                        FontFamily="Consolas" FontSize="48"
@@ -630,20 +630,27 @@
                                                        Foreground="{Binding ScaleStable,
                                                        Converter={StaticResource StableToForeground}}"
                                                        HorizontalAlignment="Center"
-                                                     KeyDown="_txtScale_KeyDown">
+                                                     
+                                                     >
 
                                                 <TextBox.Style>
                                                     <Style TargetType="TextBox">
-                                                        <!-- mặc định (EnableReadScale = false) -->
+
+                                                        <!-- default -->
                                                         <Setter Property="Foreground" Value="Black"/>
 
                                                         <Style.Triggers>
-                                                            <!-- ✅ Khi EnableReadScale = true -->
+
                                                             <DataTrigger Binding="{Binding EnableReadScale}" Value="True">
-                                                                <Setter Property="Foreground"
-                                                                        Value="{Binding ScaleStable,
-                                                                        Converter={StaticResource StableToForeground}}"/>
+                                                                <Setter Property="Foreground">
+                                                                    <Setter.Value>
+                                                                        <Binding Path="DataContext.ScaleStable"
+                                                                             RelativeSource="{RelativeSource Self}"
+                                                                             Converter="{StaticResource StableToForeground}"/>
+                                                                    </Setter.Value>
+                                                                </Setter>
                                                             </DataTrigger>
+
                                                         </Style.Triggers>
                                                     </Style>
                                                 </TextBox.Style>

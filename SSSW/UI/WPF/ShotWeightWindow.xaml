@@ -420,44 +420,73 @@
                             <ColumnDefinition Width="Auto"/>
                         </Grid.ColumnDefinitions>
 
-                        <!-- RFID -->
+                        <!-- ── RFID Card ── -->
                         <Border Grid.Column="0" Style="{StaticResource CardStyle}" Margin="0,0,6,0">
                             <Grid Margin="10,8">
                                 <Grid.ColumnDefinitions>
-                                    <ColumnDefinition Width="200"/>
+                                    <ColumnDefinition Width="*"/>
                                     <ColumnDefinition Width="8"/>
                                     <ColumnDefinition Width="*"/>
                                 </Grid.ColumnDefinitions>
 
+                                <!-- Cột trái: status dot + RFID card code -->
                                 <StackPanel Grid.Column="0">
-                                    <TextBlock Text="RFID / Employee ID"
-                                               Style="{StaticResource LabelStyle}"/>
-                                    <!-- WinForms host: gán từ code-behind -->
-                                    <Border x:Name="rfidHost" Height="35" Background="#FAFAFA"
-                                            BorderBrush="#CFD8DC" BorderThickness="1" Padding="6"/>
+                                    <StackPanel Orientation="Horizontal" Margin="0,0,0,3">
+                                        <Ellipse Width="10" Height="10"
+                                                 VerticalAlignment="Center" Margin="0,0,6,0"
+                                                 Fill="{Binding RfidStatus,
+                                                        Converter={StaticResource DriverStatusToColor}}"/>
+                                        <TextBlock Text="RFID / Employee ID"
+                                                   Style="{StaticResource LabelStyle}"
+                                                   VerticalAlignment="Center"/>
+                                    </StackPanel>
+                                    <!--
+                                        TextBox WPF native — thay thế WinForms RFIDButtonEdit.
+                                        Binding RfidCardCode (mã thẻ vừa quét, từ ScanAndScale.Core RfidDriver).
+                                    -->
+                                    <TextBox Text="{Binding RfidCardCode, Mode=OneWay}"
+                                             Style="{StaticResource FieldStyle}"
+                                             Height="36" FontSize="16"
+                                             Foreground="#1565C0"
+                                             Background="#F0F7FF"/>
                                 </StackPanel>
 
+                                <!-- Cột phải: Employee Name (có thể nhập tay) -->
                                 <StackPanel Grid.Column="2">
                                     <TextBlock Text="Employee Name"
-                                               Style="{StaticResource LabelStyle}"/>
-                                    <!-- Binding RfidName từ ViewModel -->
+                                               Style="{StaticResource LabelStyle}"
+                                               Margin="0,0,0,3"/>
                                     <TextBox x:Name="tbRFIDName"
                                              Text="{Binding RfidName, Mode=TwoWay}"
                                              Style="{StaticResource EditableFieldStyle}"
-                                             Height="32"
+                                             Height="36"
                                              KeyDown="tbRFIDName_KeyDown"/>
                                 </StackPanel>
                             </Grid>
                         </Border>
 
-                        <!-- Barcode -->
+                        <!-- ── Barcode Card ── -->
                         <Border Grid.Column="1" Style="{StaticResource CardStyle}">
                             <StackPanel Margin="10,8">
-                                <TextBlock Text="Barcode / QR Scan"
-                                           Style="{StaticResource LabelStyle}"/>
-                                <!-- WinForms host: gán từ code-behind -->
-                                <Border x:Name="barcodeHost" Height="35" Background="#FAFAFA"
-                                        BorderBrush="#CFD8DC" BorderThickness="1" Padding="6"/>
+                                <StackPanel Orientation="Horizontal" Margin="0,0,0,3">
+                                    <Ellipse Width="10" Height="10"
+                                             VerticalAlignment="Center" Margin="0,0,6,0"
+                                             Fill="{Binding BarcodeStatus,
+                                                    Converter={StaticResource DriverStatusToColor}}"/>
+                                    <TextBlock Text="Barcode / QR Scan"
+                                               Style="{StaticResource LabelStyle}"
+                                               VerticalAlignment="Center"/>
+                                </StackPanel>
+                                <!--
+                                    TextBox WPF native — thay thế WinForms BarcodeButtonEdit.
+                                    Binding BarcodeScannedValue (từ ScanAndScale.Core BarcodeDriver).
+                                -->
+                                <TextBox Text="{Binding BarcodeScannedValue, Mode=OneWay}"
+                                         Style="{StaticResource FieldStyle}"
+                                         Height="36" FontSize="16"
+                                         Foreground="#1565C0"
+                                         Background="#F0F7FF"
+                                         MinWidth="260"/>
                             </StackPanel>
                         </Border>
                     </Grid>
@@ -541,28 +570,84 @@
                                         BorderBrush="{Binding ScaleCardBorderBrush}"
                                         Background="White">
                                     <StackPanel>
+
+                                        <!-- Header: status dot + tiêu đề -->
                                         <Border Background="#1565C0" CornerRadius="4,4,0,0">
-                                            <StackPanel Orientation="Horizontal" Margin="8,4,0,4">
-                                                <TextBlock Text="SCALE VALUES" Foreground="White"
-                                                           FontWeight="Bold" FontSize="12"
-                                                           FontFamily="Segoe UI"/>
-                                                <TextBlock Text=" · gram (g)" Foreground="White"
-                                                           FontSize="10" VerticalAlignment="Center"
-                                                           Padding="4,0,0,0"/>
-                                            </StackPanel>
+                                            <Grid Margin="8,4">
+                                                <Grid.ColumnDefinitions>
+                                                    <ColumnDefinition Width="Auto"/>
+                                                    <ColumnDefinition Width="*"/>
+                                                    <ColumnDefinition Width="Auto"/>
+                                                </Grid.ColumnDefinitions>
+
+                                                <!-- Status dot -->
+                                                <Ellipse Grid.Column="0"
+                                                         Width="10" Height="10"
+                                                         VerticalAlignment="Center"
+                                                         Margin="0,0,7,0"
+                                                         Fill="{Binding ScaleStatus,
+                                                                Converter={StaticResource DriverStatusToColor}}"/>
+
+                                                <!-- Tiêu đề -->
+                                                <StackPanel Grid.Column="1" Orientation="Horizontal">
+                                                    <TextBlock Text="SCALE VALUES"
+                                                               Foreground="White" FontWeight="Bold"
+                                                               FontSize="12" FontFamily="Segoe UI"
+                                                               VerticalAlignment="Center"/>
+                                                    <TextBlock Text=" · gram (g)"
+                                                               Foreground="White" FontSize="10"
+                                                               VerticalAlignment="Center"
+                                                               Padding="4,0,0,0"/>
+                                                </StackPanel>
+
+                                                <!-- Đơn vị cân (KG / G / TON) -->
+                                                <TextBlock Grid.Column="2"
+                                                           Text="{Binding ScaleUnit}"
+                                                           Foreground="#B0BEC5" FontSize="10"
+                                                           VerticalAlignment="Center"
+                                                           Margin="0,0,4,0"/>
+                                            </Grid>
                                         </Border>
 
-                                        <!-- Binding ScaleDisplay từ ViewModel -->
-                                        <TextBlock Text="{Binding ScaleDisplay}"
-                                                   FontFamily="Consolas" FontSize="42"
-                                                   FontWeight="Bold" Foreground="#212121"
-                                                   HorizontalAlignment="Center"
-                                                   Margin="0,4,0,4"/>
+                                        <!--
+                                            Giá trị cân lớn — màu chữ thay đổi theo Stable.
+                                            Nền thay đổi theo Tare.
+                                        -->
+                                        <Border Background="{Binding ScaleTare,
+                                                            Converter={StaticResource TareToBackground}}"
+                                                Padding="0,6,0,6">
+                                            <TextBlock Text="{Binding ScaleDisplay}"
+                                                       FontFamily="Consolas" FontSize="48"
+                                                       FontWeight="Bold"
+                                                       Foreground="{Binding ScaleStable,
+                                                                    Converter={StaticResource StableToForeground}}"
+                                                       HorizontalAlignment="Center"/>
+                                        </Border>
 
-                                        <!-- WinForms scale hardware host -->
-                                        <Border x:Name="scaleHost" Height="32"
-                                                Background="#FAFAFA"
-                                                BorderBrush="#CFD8DC" BorderThickness="1"/>
+                                        <!-- Stable / Tare badges -->
+                                        <StackPanel Orientation="Horizontal"
+                                                    HorizontalAlignment="Center"
+                                                    Margin="0,2,0,6">
+
+                                            <!-- Stable badge -->
+                                            <Border CornerRadius="4" Padding="10,3" Margin="4,0"
+                                                    Background="{Binding ScaleStable,
+                                                                 Converter={StaticResource StableToForeground}}">
+                                                <TextBlock Foreground="White" FontSize="11"
+                                                           FontWeight="Bold"
+                                                           Text="{Binding ScaleStable,
+                                                                  StringFormat={}{0} (Stable)}"/>
+                                            </Border>
+
+                                            <!-- Tare badge — chỉ hiện khi đang Tare -->
+                                            <Border CornerRadius="4" Padding="10,3" Margin="4,0"
+                                                    Background="#E53935"
+                                                    Visibility="{Binding ScaleTare,
+                                                                 Converter={StaticResource BoolToVisibility}}">
+                                                <TextBlock Foreground="White" FontSize="11"
+                                                           FontWeight="Bold" Text="TARE"/>
+                                            </Border>
+                                        </StackPanel>
                                     </StackPanel>
                                 </Border>
 

@@ -9,12 +9,11 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
+using ScanAndScale.Core.Models;
 using SSSW.models;
 using SSSW.modelss;
 using SSSW.UI.WPF.Models;
 using System.Collections.ObjectModel;
-using System.ComponentModel;
-using System.Runtime.CompilerServices;
 using System.Windows;
 using System.Windows.Media;
 // ── Disambiguate WPF vs WinForms/Drawing types (project uses UseWPF + UseWindowsForms) ──
@@ -24,7 +23,7 @@ using Brushes = System.Windows.Media.Brushes;
 
 namespace SSSW.UI.WPF.ViewModels
 {
-    public class ShotWeightViewModel : INotifyPropertyChanged
+    public class ShotWeightViewModel : BaseViewModel
     {
         // ── DI ──────────────────────────────────────────────────────────────
         private readonly IDbContextFactory<DbContextDogeWH> _dbFactory;
@@ -256,6 +255,68 @@ namespace SSSW.UI.WPF.ViewModels
         }
         #endregion
 
+        #region Device Connection Status  (ScanAndScale.Core)
+        // ── Barcode ──────────────────────────────────────────────────────────
+        private DriverStatus _barcodeStatus = DriverStatus.Unknown;
+        public DriverStatus BarcodeStatus
+        {
+            get => _barcodeStatus;
+            set { SetProperty(ref _barcodeStatus, value); }
+        }
+
+        private string _barcodeScannedValue = string.Empty;
+        public string BarcodeScannedValue
+        {
+            get => _barcodeScannedValue;
+            set { SetProperty(ref _barcodeScannedValue, value); }
+        }
+
+        // ── RFID ─────────────────────────────────────────────────────────────
+        private DriverStatus _rfidStatus = DriverStatus.Unknown;
+        public DriverStatus RfidStatus
+        {
+            get => _rfidStatus;
+            set { SetProperty(ref _rfidStatus, value); }
+        }
+
+        private string _rfidCardCode = string.Empty;
+        /// <summary>Mã thẻ RFID vừa quét (hiển thị trên UI, khác với RfidName = tên nhân viên).</summary>
+        public string RfidCardCode
+        {
+            get => _rfidCardCode;
+            set { SetProperty(ref _rfidCardCode, value); }
+        }
+
+        // ── Scale ─────────────────────────────────────────────────────────────
+        private DriverStatus _scaleStatus = DriverStatus.Unknown;
+        public DriverStatus ScaleStatus
+        {
+            get => _scaleStatus;
+            set { SetProperty(ref _scaleStatus, value); }
+        }
+
+        private bool _scaleStable = false;
+        public bool ScaleStable
+        {
+            get => _scaleStable;
+            set { SetProperty(ref _scaleStable, value); }
+        }
+
+        private bool _scaleTare = false;
+        public bool ScaleTare
+        {
+            get => _scaleTare;
+            set { SetProperty(ref _scaleTare, value); }
+        }
+
+        private string _scaleUnit = "KG";
+        public string ScaleUnit
+        {
+            get => _scaleUnit;
+            set { SetProperty(ref _scaleUnit, value); }
+        }
+        #endregion
+
         #region History
         private bool _isHistoryExpanded = false;
         public bool IsHistoryExpanded
@@ -353,6 +414,10 @@ namespace SSSW.UI.WPF.ViewModels
             HistoryToggleCommand = new RelayCommand(ToggleHistory);
             GridScaleCommand = new RelayCommand(p => OnGridScale(p as FT600));
             GridResetCommand = new RelayCommand(p => OnGridReset(p as FT600));
+
+            // Default: xóa các giá trị hiển thị trong VM thay vì xóa WinForms TextBox
+            ClearBarcodeAction = () => BarcodeScannedValue = string.Empty;
+            ClearRfidAction    = () => RfidCardCode = string.Empty;
         }
 
         // ─────────────────────────────────────────────────────────────────────
@@ -479,11 +544,14 @@ namespace SSSW.UI.WPF.ViewModels
         //  HARDWARE CALLBACKS (gọi từ code-behind, luôn trên UI thread)
         // ─────────────────────────────────────────────────────────────────────
 
-        /// <summary>Scale hardware trả về giá trị cân mới.</summary>
-        public void OnScaleValueChanged(double value)
+        /// <summary>Scale hardware trả về giá trị cân mới (từ ScanAndScale.Core driver).</summary>
+        public void OnScaleValueChanged(double value, bool stable = false, bool tare = false, string unit = "KG")
         {
-            _scaleValue = Math.Round(value, 2);
-            ScaleDisplay = _scaleValue.ToString("F2");
+            _scaleValue   = Math.Round(value, 2);
+            ScaleDisplay  = _scaleValue.ToString("F2");
+            ScaleStable   = stable;
+            ScaleTare     = tare;
+            ScaleUnit     = unit;
         }
 
         /// <summary>RFID đọc được employee code.</summary>
@@ -1594,11 +1662,5 @@ namespace SSSW.UI.WPF.ViewModels
             }
         }
 
-        // ─────────────────────────────────────────────────────────────────────
-        //  INotifyPropertyChanged
-        // ─────────────────────────────────────────────────────────────────────
-        public event PropertyChangedEventHandler? PropertyChanged;
-        protected void OnPropertyChanged([CallerMemberName] string? name = null)
-            => PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(name));
     }
 }

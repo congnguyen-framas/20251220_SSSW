@@ -3,6 +3,7 @@
 //  Value converters dùng trong ShotWeightWindow (MVVM)
 //  Namespace : SSSW.UI.WPF.Converters
 // ============================================================================
+using ScanAndScale.Core.Models;
 using SSSW.UI.WPF.Models;
 using System.Globalization;
 using System.Windows.Data;
@@ -62,5 +63,71 @@ namespace SSSW.UI.WPF.Converters
 
         public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
             => value is System.Windows.Visibility v && v == System.Windows.Visibility.Visible;
+    }
+
+    // ── ScanAndScale.Core – Device Status Converters ──────────────────────────
+
+    /// <summary>
+    /// DriverStatus → mau LED trang thai ket noi thiet bi.
+    /// Connected = xanh la  Disconnected = do  Reconnecting = vang  Unknown = xam
+    /// </summary>
+    [ValueConversion(typeof(DriverStatus), typeof(Brush))]
+    public class DriverStatusToColorConverter : IValueConverter
+    {
+        public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
+        {
+            if (value is DriverStatus status)
+                return status switch
+                {
+                    DriverStatus.Connected    => new SolidColorBrush(Color.FromRgb(0x28, 0xA7, 0x45)),
+                    DriverStatus.Disconnected => new SolidColorBrush(Color.FromRgb(0xDC, 0x35, 0x45)),
+                    DriverStatus.Reconnecting => new SolidColorBrush(Color.FromRgb(0xFF, 0xC1, 0x07)),
+                    _                         => new SolidColorBrush(Color.FromRgb(0x6C, 0x75, 0x7D))
+                };
+            return Brushes.Gray;
+        }
+
+        public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
+            => System.Windows.Data.Binding.DoNothing;
+    }
+
+    /// <summary>
+    /// bool (ScaleStable) → mau chu so can.
+    /// Stable = xanh dam  Unstable = do dam
+    /// </summary>
+    [ValueConversion(typeof(bool), typeof(Brush))]
+    public class StableToForegroundConverter : IValueConverter
+    {
+        public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
+        {
+            if (value is bool stable)
+                return stable
+                    ? new SolidColorBrush(Color.FromRgb(0x1B, 0x5E, 0x20))
+                    : new SolidColorBrush(Color.FromRgb(0xC6, 0x28, 0x28));
+            return Brushes.Black;
+        }
+
+        public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
+            => System.Windows.Data.Binding.DoNothing;
+    }
+
+    /// <summary>
+    /// bool (ScaleTare) → mau nen vung hien thi can.
+    /// Tare = nen hong nhat  Normal = trang
+    /// </summary>
+    [ValueConversion(typeof(bool), typeof(Brush))]
+    public class TareToBackgroundConverter : IValueConverter
+    {
+        public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
+        {
+            if (value is bool tare)
+                return tare
+                    ? new SolidColorBrush(Color.FromRgb(0xFF, 0xD0, 0xD0))
+                    : Brushes.White;
+            return Brushes.White;
+        }
+
+        public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
+            => System.Windows.Data.Binding.DoNothing;
     }
 }

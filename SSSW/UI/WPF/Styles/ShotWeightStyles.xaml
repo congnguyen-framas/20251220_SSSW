@@ -7,10 +7,14 @@
     <!-- ════════════════════════════════════════════════════════════════
          CONVERTERS
     ════════════════════════════════════════════════════════════════ -->
-    <conv:ToleranceToBrushConverter x:Key="ToleranceToBrush"/>
-    <conv:ToleranceToForeConverter  x:Key="ToleranceToFore"/>
+    <conv:ToleranceToBrushConverter    x:Key="ToleranceToBrush"/>
+    <conv:ToleranceToForeConverter     x:Key="ToleranceToFore"/>
     <!-- WPF built-in: tránh XDG-000 "incompatible type" trong XAML designer -->
-    <BooleanToVisibilityConverter   x:Key="BoolToVisibility"/>
+    <BooleanToVisibilityConverter      x:Key="BoolToVisibility"/>
+    <!-- ScanAndScale.Core – trạng thái kết nối thiết bị -->
+    <conv:DriverStatusToColorConverter x:Key="DriverStatusToColor"/>
+    <conv:StableToForegroundConverter  x:Key="StableToForeground"/>
+    <conv:TareToBackgroundConverter    x:Key="TareToBackground"/>
 
     <!-- ════════════════════════════════════════════════════════════════
          TEXT – LABEL / FIELD

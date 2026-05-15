@@ -664,6 +664,7 @@
         <!-- ═══════════════════════════════ LOADING OVERLAY ═════════════════════════ -->
         <Grid Grid.RowSpan="3"
               Visibility="{Binding IsOverlayVisible, Converter={StaticResource BoolToVisibility}}"
+             d:Visibility="Collapsed"
               Background="#80000000">
             <Border Background="White" CornerRadius="8"
                     Padding="40,28"

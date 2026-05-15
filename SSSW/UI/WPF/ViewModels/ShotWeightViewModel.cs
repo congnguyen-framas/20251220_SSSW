@@ -253,25 +253,6 @@ namespace SSSW.UI.WPF.ViewModels
             get => _scaleCardBorderBrush;
             set { _scaleCardBorderBrush = value; OnPropertyChanged(); }
         }
-
-        // ── Nhập tay giá trị cân ─────────────────────────────────────────
-        /// <summary>
-        /// true khi EnableReadScale = true trong config.
-        /// TextBox hiển thị cân sẽ cho phép nhập tay và đi qua cùng logic cân.
-        /// </summary>
-        private bool _enableManualScaleInput = false;
-        public bool EnableManualScaleInput
-        {
-            get => _enableManualScaleInput;
-            set
-            {
-                SetProperty(ref _enableManualScaleInput, value);
-                OnPropertyChanged(nameof(IsScaleReadOnly));
-            }
-        }
-
-        /// <summary>Dùng để bind IsReadOnly của TextBox cân (ngược lại EnableManualScaleInput).</summary>
-        public bool IsScaleReadOnly => !_enableManualScaleInput;
         #endregion
 
         #region Device Connection Status  (ScanAndScale.Core)
@@ -571,24 +552,6 @@ namespace SSSW.UI.WPF.ViewModels
             ScaleStable   = stable;
             ScaleTare     = tare;
             ScaleUnit     = unit;
-        }
-
-        /// <summary>
-        /// User nhập tay giá trị cân rồi nhấn Enter.
-        /// Parse chuỗi → double, gọi OnScaleValueChanged (cùng logic như cân thật gửi về).
-        /// stable = true vì người dùng đã xác nhận giá trị.
-        /// </summary>
-        public void OnManualScaleEnter(string text)
-        {
-            if (!double.TryParse(
-                    text?.Replace(',', '.').Trim(),
-                    System.Globalization.NumberStyles.Any,
-                    System.Globalization.CultureInfo.InvariantCulture,
-                    out double val))
-                return;
-
-            // stable=true vì user confirm, tare giữ nguyên trạng thái hiện tại
-            OnScaleValueChanged(val, stable: true, tare: ScaleTare, unit: ScaleUnit);
         }
 
         /// <summary>RFID đọc được employee code.</summary>
@@ -1656,4 +1619,48 @@ namespace SSSW.UI.WPF.ViewModels
         {
             var win = System.Windows.Application.Current.MainWindow;
             win.WindowState = win.WindowState == System.Windows.WindowState.Normal
-   
+                ? System.Windows.WindowState.Maximized
+                : System.Windows.WindowState.Normal;
+        }
+
+        // ─────────────────────────────────────────────────────────────────────
+        //  AUTO-UPDATER
+        // ─────────────────────────────────────────────────────────────────────
+        private async void AutoUpdater_ApplicationExitEvent()
+        {
+            System.Windows.Application.Current.MainWindow.Title = "Closing…";
+            await Task.Delay(3000);
+            System.Windows.Application.Current.Shutdown();
+        }
+
+        private async void AutoUpdater_CheckForUpdateEvent(UpdateInfoEventArgs args)
+        {
+            if (args.IsUpdateAvailable)
+            {
+                var res = System.Windows.Forms.MessageBox.Show(
+                    $"New version available: {args.CurrentVersion}. Update now?",
+                    "Update", (MessageBoxButtons)MessageBoxButton.YesNo, (MessageBoxIcon)MessageBoxImage.Information);
+                if (res == DialogResult.Yes)
+                {
+                    await Task.Delay(3000);
+                    try
+                    {
+                        if (AutoUpdater.DownloadUpdate(args))
+                            System.Windows.Application.Current.Shutdown();
+                    }
+                    catch (Exception ex)
+                    {
+                        System.Windows.Forms.MessageBox.Show(ex.Message, ex.GetType().ToString(),
+                            (MessageBoxButtons)MessageBoxButton.OK, (MessageBoxIcon)MessageBoxImage.Error);
+                    }
+                }
+            }
+            else if (_isUpdateClicked)
+            {
+                System.Windows.Forms.MessageBox.Show("Already up to date.", "Information",
+                    (MessageBoxButtons)MessageBoxButton.OK, (MessageBoxIcon)MessageBoxImage.Information);
+            }
+        }
+
+    }
+}

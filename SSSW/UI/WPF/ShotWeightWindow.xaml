@@ -610,71 +610,18 @@
                                         </Border>
 
                                         <!--
-                                            Giá trị cân lớn.
-                                            Đọc-only khi EnableManualScaleInput=false (trông như TextBlock).
-                                            Editable khi EnableManualScaleInput=true (EnableReadScale=true).
+                                            Giá trị cân lớn — màu chữ thay đổi theo Stable.
+                                            Nền thay đổi theo Tare.
                                         -->
                                         <Border Background="{Binding ScaleTare,
                                                             Converter={StaticResource TareToBackground}}"
-                                                Padding="0,6,0,2">
-                                            <StackPanel>
-                                                <TextBox x:Name="tbScaleManual"
-                                                         Text="{Binding ScaleDisplay, Mode=OneWay}"
-                                                         FontFamily="Consolas" FontSize="48"
-                                                         FontWeight="Bold"
-                                                         Foreground="{Binding ScaleStable,
-                                                                      Converter={StaticResource StableToForeground}}"
-                                                         HorizontalContentAlignment="Center"
-                                                         VerticalContentAlignment="Center"
-                                                         IsReadOnly="{Binding IsScaleReadOnly}"
-                                                         KeyDown="tbScaleManual_KeyDown"
-                                                         CaretBrush="#1565C0">
-                                                    <TextBox.Style>
-                                                        <Style TargetType="TextBox">
-                                                            <!-- Mặc định: trong suốt như TextBlock -->
-                                                            <Setter Property="Background"       Value="Transparent"/>
-                                                            <Setter Property="BorderThickness"  Value="0"/>
-                                                            <Setter Property="Cursor"           Value="Arrow"/>
-                                                            <Setter Property="Focusable"        Value="False"/>
-                                                            <Setter Property="Template">
-                                                                <Setter.Value>
-                                                                    <ControlTemplate TargetType="TextBox">
-                                                                        <Border x:Name="bd"
-                                                                                Background="{TemplateBinding Background}"
-                                                                                BorderBrush="{TemplateBinding BorderBrush}"
-                                                                                BorderThickness="{TemplateBinding BorderThickness}"
-                                                                                CornerRadius="4"
-                                                                                Padding="6,4">
-                                                                            <ScrollViewer x:Name="PART_ContentHost"
-                                                                                          HorizontalAlignment="Center"
-                                                                                          VerticalAlignment="Center"/>
-                                                                        </Border>
-                                                                    </ControlTemplate>
-                                                                </Setter.Value>
-                                                            </Setter>
-                                                            <!-- Khi EnableManualScaleInput=true: nổi bật để user biết có thể nhập -->
-                                                            <Style.Triggers>
-                                                                <DataTrigger Binding="{Binding EnableManualScaleInput}" Value="True">
-                                                                    <Setter Property="Focusable"       Value="True"/>
-                                                                    <Setter Property="Cursor"          Value="IBeam"/>
-                                                                    <Setter Property="Background"      Value="#F0F7FF"/>
-                                                                    <Setter Property="BorderBrush"     Value="#90CAF9"/>
-                                                                    <Setter Property="BorderThickness" Value="1"/>
-                                                                </DataTrigger>
-                                                            </Style.Triggers>
-                                                        </Style>
-                                                    </TextBox.Style>
-                                                </TextBox>
-
-                                                <!-- Hint chỉ hiện khi đang ở chế độ nhập tay -->
-                                                <TextBlock Text="✎  Nhập giá trị rồi nhấn Enter"
-                                                           HorizontalAlignment="Center"
-                                                           FontSize="10" FontFamily="Segoe UI"
-                                                           Foreground="#64B5F6"
-                                                           Margin="0,1,0,4"
-                                                           Visibility="{Binding EnableManualScaleInput,
-                                                                        Converter={StaticResource BoolToVisibility}}"/>
-                                            </StackPanel>
+                                                Padding="0,6,0,6">
+                                            <TextBlock Text="{Binding ScaleDisplay}"
+                                                       FontFamily="Consolas" FontSize="48"
+                                                       FontWeight="Bold"
+                                                       Foreground="{Binding ScaleStable,
+                                                                    Converter={StaticResource StableToForeground}}"
+                                                       HorizontalAlignment="Center"/>
                                         </Border>
 
                                         <!-- Stable / Tare badges -->
@@ -731,4 +678,96 @@
                                                             <Border Width="26" Height="26" CornerRadius="13"
                                                                     Background="#1565C0"
                                                                     HorizontalAlignment="Center">
-                                            
+                                                                <TextBlock Text="{Binding No}"
+                                                                           Foreground="White"
+                                                                           FontWeight="Bold" FontSize="11"
+                                                                           HorizontalAlignment="Center"
+                                                                           VerticalAlignment="Center"/>
+                                                            </Border>
+                                                        </DataTemplate>
+                                                    </DataGridTemplateColumn.CellTemplate>
+                                                </DataGridTemplateColumn>
+
+                                                <DataGridTemplateColumn Header="FIELD (Unit)" Width="220">
+                                                    <DataGridTemplateColumn.CellTemplate>
+                                                        <DataTemplate>
+                                                            <StackPanel Margin="6,2" VerticalAlignment="Center">
+                                                                <TextBlock Text="{Binding FieldName}"
+                                                                           FontWeight="SemiBold"
+                                                                           FontSize="12"
+                                                                           TextWrapping="Wrap"/>
+                                                                <TextBlock Text="{Binding Unit}"
+                                                                           FontSize="10"
+                                                                           Foreground="#78909C"/>
+                                                            </StackPanel>
+                                                        </DataTemplate>
+                                                    </DataGridTemplateColumn.CellTemplate>
+                                                </DataGridTemplateColumn>
+
+                                                <DataGridTextColumn Header="STD"
+                                                                    Binding="{Binding StdDisplay}"
+                                                                    Width="110"
+                                                                    ElementStyle="{StaticResource RightCellBold}"/>
+                                                <DataGridTextColumn Header="Δ"
+                                                                    Binding="{Binding DeltaDisplay}"
+                                                                    Width="90"
+                                                                    ElementStyle="{StaticResource RightCellBold}"/>
+                                                <DataGridTextColumn Header="ACTUAL"
+                                                                    Binding="{Binding ActualDisplay}"
+                                                                    Width="110"
+                                                                    ElementStyle="{StaticResource RightCellBold}"/>
+                                            </DataGrid.Columns>
+                                        </DataGrid>
+                                    </Grid>
+                                </Border>
+                            </Grid>
+                        </Border>
+                    </Grid>
+                </Border>
+            </Grid>
+        </Grid>
+
+        <!-- ═══════════════════════════════ BOTTOM BAR ══════════════════════════════ -->
+        <Border Grid.Row="2" Margin="3,6,3,6">
+            <StackPanel Orientation="Horizontal" HorizontalAlignment="Right"
+                        VerticalAlignment="Center" Margin="0,0,16,0">
+                <Button Content="↓  Save"
+                        Style="{StaticResource BottomBtn}"
+                        Command="{Binding SaveCommand}"
+                        Background="#1A237E" Padding="20,0"/>
+                <Button Content="Cancel"
+                        Style="{StaticResource BottomBtn}"
+                        Command="{Binding CancelCommand}"
+                        Background="#E65100" Padding="20,0"/>
+                <Button Content="Confirm"
+                        Style="{StaticResource BottomBtn}"
+                        Command="{Binding ConfirmCommand}"
+                        Background="#2E7D32" Padding="20,0"/>
+            </StackPanel>
+        </Border>
+
+        <!-- ═══════════════════════════════ LOADING OVERLAY ═════════════════════════ -->
+        <Grid Grid.RowSpan="3"
+              Visibility="{Binding IsOverlayVisible, Converter={StaticResource BoolToVisibility}}"
+             d:Visibility="Collapsed"
+              Background="#80000000">
+            <Border Background="White" CornerRadius="8"
+                    Padding="40,28"
+                    HorizontalAlignment="Center" VerticalAlignment="Center"
+                    MinWidth="240">
+                <StackPanel HorizontalAlignment="Center">
+                    <TextBlock Text="Loading…" FontSize="18" FontWeight="Bold"
+                               Foreground="#1565C0" HorizontalAlignment="Center"
+                               FontFamily="Segoe UI" Margin="0,0,0,8"/>
+                    <TextBlock Text="Please wait" FontSize="12" Foreground="#78909C"
+                               HorizontalAlignment="Center" FontFamily="Segoe UI"/>
+                    <Button Content="Cancel"
+                            Command="{Binding CancelLoadCommand}"
+                            IsEnabled="{Binding IsCancelLoadEnabled}"
+                            Margin="0,16,0,0" HorizontalAlignment="Center"
+                            Padding="20,6"/>
+                </StackPanel>
+            </Border>
+        </Grid>
+    </Grid>
+</Window>

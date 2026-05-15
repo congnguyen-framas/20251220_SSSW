@@ -52,6 +52,12 @@
   </ItemGroup>
 
   <ItemGroup>
+    <Reference Include="ScanAndScale.Core">
+      <HintPath>..\Dll\net8.0-windows\ScanAndScale.Core.dll</HintPath>
+    </Reference>
+  </ItemGroup>
+
+  <ItemGroup>
     <Compile Update="Properties\Resources.Designer.cs">
       <DesignTime>True</DesignTime>
       <AutoGen>True</AutoGen>

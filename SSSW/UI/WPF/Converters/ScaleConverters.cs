@@ -71,7 +71,7 @@ namespace SSSW.UI.WPF.Converters
     /// DriverStatus → mau LED trang thai ket noi thiet bi.
     /// Connected = xanh la  Disconnected = do  Reconnecting = vang  Unknown = xam
     /// </summary>
-    [ValueConversion(typeof(DriverStatus), typeof(Brush))]
+    [ValueConversion(typeof(DriverStatus), typeof(System.Drawing.Brush))]
     public class DriverStatusToColorConverter : IValueConverter
     {
         public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
@@ -95,7 +95,7 @@ namespace SSSW.UI.WPF.Converters
     /// bool (ScaleStable) → mau chu so can.
     /// Stable = xanh dam  Unstable = do dam
     /// </summary>
-    [ValueConversion(typeof(bool), typeof(Brush))]
+    [ValueConversion(typeof(bool), typeof(System.Drawing.Brush))]
     public class StableToForegroundConverter : IValueConverter
     {
         public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
@@ -115,7 +115,7 @@ namespace SSSW.UI.WPF.Converters
     /// bool (ScaleTare) → mau nen vung hien thi can.
     /// Tare = nen hong nhat  Normal = trang
     /// </summary>
-    [ValueConversion(typeof(bool), typeof(Brush))]
+    [ValueConversion(typeof(bool), typeof(System.Drawing.Brush))]
     public class TareToBackgroundConverter : IValueConverter
     {
         public object Convert(object value, Type targetType, object parameter, CultureInfo culture)

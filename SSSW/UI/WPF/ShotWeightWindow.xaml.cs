@@ -177,6 +177,9 @@ namespace SSSW.UI.WPF
             }
             else
                 _vm.ScaleStatus = DriverStatus.Disconnected;
+
+            // Khi EnableReadScale=true → TextBox cân cho phép nhập tay
+            _vm.EnableManualScaleInput = cfg.EnableReadScale ?? false;
         }
 
         // ════════════════════════════════════════════════════════════════════
@@ -295,69 +298,19 @@ namespace SSSW.UI.WPF
                 await _vm.OnRfidNameEnterAsync(tb.Text);
         }
 
-        // ════════════════════════════════════════════════════════════════════
-        //  DATAGRID EVENTS
-        // ════════════════════════════════════════════════════════════════════
-
         /// <summary>
-        /// SelectionChanged trên dgTotalSteps – không cần xử lý vì các hành động
-        /// (Scale / Reset) đã qua Command binding trong XAML.
+        /// Nhập tay giá trị cân → nhấn Enter → đi qua cùng logic như đọc cân thật.
+        /// Chỉ kích hoạt khi EnableReadScale = true trong config.
         /// </summary>
-        private void dgTotalSteps_SelectionChanged(object sender, SelectionChangedEventArgs e)
+        private void tbScaleManual_KeyDown(object sender, KeyEventArgs e)
         {
-            // No-op: hành động qua GridScaleCommand / GridResetCommand (XAML)
-        }
-
-        // ════════════════════════════════════════════════════════════════════
-        //  HISTORY HEADER CLICK (toggle expand/collapse)
-        // ════════════════════════════════════════════════════════════════════
-
-        private void HistoryHeader_Click(object sender, MouseButtonEventArgs e)
-            => _vm?.ToggleHistory();
-
-        // ════════════════════════════════════════════════════════════════════
-        //  TITLE BAR
-        // ════════════════════════════════════════════════════════════════════
-
-        private void TitleBar_MouseLeftButtonDown(object sender, MouseButtonEventArgs e)
-        {
-            if (e.ChangedButton == MouseButton.Left)
+            if (e.Key == Key.Enter && sender is TextBox tb && _vm != null)
             {
-                ReleaseCapture();
-                SendMessage(
-                    new System.Windows.Interop.WindowInteropHelper(this).Handle,
-                    0x0112,   // WM_SYSCOMMAND
-                    0xF012,   // SC_DRAGMOVE
-                    0);
+                _vm.OnManualScaleEnter(tb.Text);
+                e.Handled = true;
+                // Chọn toàn bộ text để user nhập giá trị mới ngay lập tức
+                tb.SelectAll();
             }
         }
 
-        private void btnMinimize_Click(object sender, RoutedEventArgs e)
-            => WindowState = WindowState.Minimized;
-
-        private void btnMaximize_Click(object sender, RoutedEventArgs e)
-            => WindowState = WindowState == WindowState.Normal
-               ? WindowState.Maximized
-               : WindowState.Normal;
-
-        private void btnClose_Click(object sender, RoutedEventArgs e)
-            => Close();
-
-        // ════════════════════════════════════════════════════════════════════
-        //  HELPER – Focus + scroll dgTotalSteps tới row có step code tương ứng
-        // ════════════════════════════════════════════════════════════════════
-        private void FocusStepInGrid(string? stepCode)
-        {
-            if (string.IsNullOrEmpty(stepCode)) return;
-
-            var item = dgTotalSteps.Items
-                .OfType<FT600>()
-                .FirstOrDefault(x => x.C002 == stepCode);
-
-            if (item == null) return;
-
-            dgTotalSteps.ScrollIntoView(item);
-            dgTotalSteps.SelectedItem = item;
-        }
-    }
-}
+        // ═══════════════════════════

@@ -138,23 +138,24 @@
     </Style>
 
     <Style TargetType="DataGridColumnHeader">
-        <Setter Property="Background"      Value="#ECEFF1"/>
-        <Setter Property="Foreground"      Value="#37474F"/>
-        <Setter Property="FontWeight"      Value="SemiBold"/>
-        <Setter Property="FontSize"        Value="11"/>
-        <Setter Property="Padding"         Value="8,6"/>
-        <Setter Property="BorderBrush"     Value="#CFD8DC"/>
-        <Setter Property="BorderThickness" Value="0,0,1,1"/>
+        <Setter Property="Background"                  Value="#F5F7FA"/>
+        <Setter Property="Foreground"                  Value="#37474F"/>
+        <Setter Property="FontWeight"                  Value="Bold"/>
+        <Setter Property="FontSize"                    Value="12"/>
+        <Setter Property="Padding"                     Value="10,8"/>
+        <Setter Property="BorderBrush"                 Value="#DDE3EA"/>
+        <Setter Property="BorderThickness"             Value="0,0,0,2"/>
+        <Setter Property="HorizontalContentAlignment"  Value="Center"/>
     </Style>
 
     <Style TargetType="DataGridCell">
         <Setter Property="BorderThickness"   Value="0"/>
-        <Setter Property="Padding"           Value="8,4"/>
+        <Setter Property="Padding"           Value="0"/>
         <Setter Property="VerticalAlignment" Value="Center"/>
         <Style.Triggers>
             <Trigger Property="IsSelected" Value="True">
-                <Setter Property="Background" Value="#E3F2FD"/>
-                <Setter Property="Foreground" Value="#0D1117"/>
+                <Setter Property="Background" Value="Transparent"/>
+                <Setter Property="Foreground" Value="Inherit"/>
             </Trigger>
         </Style.Triggers>
     </Style>
@@ -165,7 +166,7 @@
                 Value="{Binding Tolerance, Converter={StaticResource ToleranceToBrush}}"/>
         <Setter Property="Foreground"
                 Value="{Binding Tolerance, Converter={StaticResource ToleranceToFore}}"/>
-        <Setter Property="Height" Value="56"/>
+        <Setter Property="MinHeight" Value="60"/>
     </Style>
 
     <!-- ════════════════════════════════════════════════════════════════

@@ -446,11 +446,12 @@
                                         TextBox WPF native — thay thế WinForms RFIDButtonEdit.
                                         Binding RfidCardCode (mã thẻ vừa quét, từ ScanAndScale.Core RfidDriver).
                                     -->
-                                    <TextBox Text="{Binding RfidCardCode, Mode=OneWay}"
+                                    <TextBox Name="_txtRFID" Text="{Binding RfidCardCode, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
                                              Style="{StaticResource FieldStyle}"
                                              Height="36" FontSize="16"
                                              Foreground="#1565C0"
-                                             Background="#F0F7FF"/>
+                                             Background="#F0F7FF"
+                                             KeyDown="_txtRFID_KeyDown"/>
                                 </StackPanel>
 
                                 <!-- Cột phải: Employee Name (có thể nhập tay) -->

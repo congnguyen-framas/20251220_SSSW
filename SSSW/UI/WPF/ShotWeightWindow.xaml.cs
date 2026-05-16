@@ -365,6 +365,11 @@ namespace SSSW.UI.WPF
         {
             if (e.Key == Key.Enter)
             {
+                var tb = sender as TextBox;
+
+                //force cập nhật binding
+                tb.GetBindingExpression(TextBox.TextProperty)?.UpdateSource();
+
                 var oldValue = new DataValue(DriverStatus.Reconnecting, _vm.ScaleValue);
 
                 //_vm.ScaleValue = Convert.ToDouble(_vm.ScaleDisplay);
@@ -392,6 +397,31 @@ namespace SSSW.UI.WPF
                         ));
                 }
 
+            }
+            catch (Exception ex)
+            {
+                System.Windows.MessageBox.Show(ex.Message, "EROR", MessageBoxButton.OK, (MessageBoxImage)MessageBoxIcon.Error);
+                Log.Error(ex.Message);
+            }
+        }
+
+        private void _txtRFID_KeyDown(object sender, KeyEventArgs e)
+        {
+            try
+            {
+                if (e.Key == Key.Enter)
+                {
+                    var tb = sender as TextBox;
+
+                    //force cập nhật binding
+                    tb.GetBindingExpression(TextBox.TextProperty)?.UpdateSource();
+
+                    RfidDriver_DataValueChanged(null,
+                        new DataValueChangedEventArgs(
+                            new DataValue(DriverStatus.Connected, _vm.RfidCardCode),
+                            new DataValue(DriverStatus.Connected, _vm.RfidCardCode)
+                        ));
+                }
             }
             catch (Exception ex)
             {

@@ -255,6 +255,13 @@ namespace SSSW.UI.WPF.ViewModels
             set { _scaleCardBorderBrush = value; OnPropertyChanged(); }
         }
 
+        private Brush _scaleCardBackground = new SolidColorBrush(Color.FromRgb(245, 245, 245));
+        public Brush ScaleCardBackground
+        {
+            get => _scaleCardBackground;
+            set { _scaleCardBackground = value; OnPropertyChanged(); }
+        }
+
         private bool _enableReadScale = true;
         public bool EnableReadScale
         {
@@ -1514,10 +1521,18 @@ namespace SSSW.UI.WPF.ViewModels
 
                 ScaleCardBorderBrush = worst switch
                 {
-                    ToleranceCategory.Ok => new SolidColorBrush(Color.FromRgb(76, 175, 80)),
-                    ToleranceCategory.Warn => new SolidColorBrush(Color.FromRgb(255, 152, 0)),
-                    ToleranceCategory.Err => new SolidColorBrush(Color.FromRgb(244, 67, 54)),
-                    _ => new SolidColorBrush(Color.FromRgb(207, 216, 220))
+                    ToleranceCategory.Ok   => new SolidColorBrush(Color.FromRgb(76,  175,  80)),
+                    ToleranceCategory.Warn => new SolidColorBrush(Color.FromRgb(255, 152,   0)),
+                    ToleranceCategory.Err  => new SolidColorBrush(Color.FromRgb(244,  67,  54)),
+                    _                      => new SolidColorBrush(Color.FromRgb(207, 216, 220))
+                };
+
+                ScaleCardBackground = worst switch
+                {
+                    ToleranceCategory.Ok   => new SolidColorBrush(Color.FromRgb(212, 247, 220)), // xanh nhạt
+                    ToleranceCategory.Warn => new SolidColorBrush(Color.FromRgb(255, 243, 205)), // vàng nhạt
+                    ToleranceCategory.Err  => new SolidColorBrush(Color.FromRgb(253, 232, 232)), // đỏ nhạt
+                    _                      => new SolidColorBrush(Color.FromRgb(245, 245, 245))  // xám nhạt
                 };
             });
         }

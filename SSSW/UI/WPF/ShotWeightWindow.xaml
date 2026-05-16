@@ -631,11 +631,12 @@
                                             </Border>
                                         </StackPanel>
 
-                                        <!-- Right: Large scale number in green-bordered box -->
+                                        <!-- Right: Large scale number — đổi màu theo tolerance -->
                                         <Border Grid.Column="1"
-                                                BorderBrush="#43A047" BorderThickness="2"
+                                                BorderBrush="{Binding ScaleCardBorderBrush}"
+                                                BorderThickness="2"
                                                 CornerRadius="8" Padding="20,6"
-                                                Background="#F1F8F1">
+                                                Background="{Binding ScaleCardBackground}">
                                             <TextBox Name="_txtScale"
                                                      Text="{Binding ScaleValue,
                                                             UpdateSourceTrigger=PropertyChanged}"

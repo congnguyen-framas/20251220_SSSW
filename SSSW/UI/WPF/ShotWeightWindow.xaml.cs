@@ -20,9 +20,12 @@ using SSSW.models;
 using SSSW.modelss;
 using SSSW.UI.WPF.ViewModels;
 using System.Runtime.InteropServices;
+using System.Text.RegularExpressions;
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Controls.Primitives;
 using System.Windows.Input;
+using System.Windows.Media;
 // ── Disambiguate WPF vs WinForms types ──────────────────────────────────────
 using KeyEventArgs = System.Windows.Input.KeyEventArgs;
 using TextBox = System.Windows.Controls.TextBox;
@@ -376,6 +379,84 @@ namespace SSSW.UI.WPF
                 var newValue = new DataValue(DriverStatus.Reconnecting, _vm.ScaleValue);
                 ScaleDriver_DataValueChanged(null, new DataValueChangedEventArgs(newValue, oldValue));
             }
+        }
+
+        // ════════════════════════════════════════════════════════════════════
+        //  SCALE TEXTBOX – NUMERIC VALIDATION
+        // ════════════════════════════════════════════════════════════════════
+
+        /// Regex: số nguyên hoặc số thực, có thể âm, chưa hoàn chỉnh (ví dụ "36." hợp lệ khi đang gõ)
+        private static readonly Regex _numericRegex =
+            new(@"^-?\d*\.?\d*$", RegexOptions.Compiled);
+
+        private ToolTip? _scaleWarningTip;
+        private System.Windows.Threading.DispatcherTimer? _tipTimer;
+
+        /// <summary>Chặn ký tự không phải số; hiện tooltip cảnh báo nếu sai.</summary>
+        private void TxtScale_PreviewTextInput(object sender, TextCompositionEventArgs e)
+        {
+            if (sender is not TextBox tb || tb.IsReadOnly) return;
+
+            // Tính chuỗi kết quả nếu ký tự được chèn vào
+            var current = tb.Text;
+            var result  = current
+                .Remove(tb.SelectionStart, tb.SelectionLength)
+                .Insert(tb.SelectionStart, e.Text);
+
+            if (!_numericRegex.IsMatch(result))
+            {
+                e.Handled = true;                    // chặn ký tự
+                ShowScaleWarning(tb, e.Text);
+            }
+        }
+
+        /// <summary>Chặn paste nếu nội dung không phải số.</summary>
+        private void TxtScale_Pasting(object sender, DataObjectPastingEventArgs e)
+        {
+            if (sender is not TextBox tb || tb.IsReadOnly) return;
+
+            var pasted = e.DataObject.GetData(typeof(string)) as string ?? "";
+            if (!_numericRegex.IsMatch(pasted))
+            {
+                e.CancelCommand();
+                ShowScaleWarning(tb, pasted);
+            }
+        }
+
+        /// <summary>Hiện tooltip cảnh báo bên dưới ô cân, tự đóng sau 2 giây.</summary>
+        private void ShowScaleWarning(TextBox tb, string badInput)
+        {
+            // Khởi tạo tooltip một lần
+            if (_scaleWarningTip is null)
+            {
+                _scaleWarningTip = new ToolTip
+                {
+                    Placement        = PlacementMode.Bottom,
+                    PlacementTarget  = tb,
+                    StaysOpen        = false,
+                    Background       = new SolidColorBrush(Color.FromRgb(255, 243, 205)),
+                    BorderBrush      = new SolidColorBrush(Color.FromRgb(251, 140,   0)),
+                    Foreground       = new SolidColorBrush(Color.FromRgb(100,  60,   0)),
+                    FontSize         = 12,
+                    FontWeight       = FontWeights.SemiBold,
+                    Padding          = new Thickness(10, 6, 10, 6),
+                };
+                tb.ToolTip = _scaleWarningTip;
+            }
+
+            _scaleWarningTip.Content = $"⚠  \"{badInput}\" không hợp lệ — chỉ nhập số (vd: 36.5)";
+            _scaleWarningTip.IsOpen  = true;
+
+            // Reset bộ đếm tự đóng
+            _tipTimer?.Stop();
+            _tipTimer = new System.Windows.Threading.DispatcherTimer
+                { Interval = TimeSpan.FromSeconds(2) };
+            _tipTimer.Tick += (_, _) =>
+            {
+                _scaleWarningTip.IsOpen = false;
+                _tipTimer?.Stop();
+            };
+            _tipTimer.Start();
         }
 
         private void _txtBarcode_KeyDown(object sender, KeyEventArgs e)

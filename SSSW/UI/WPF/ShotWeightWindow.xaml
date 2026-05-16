@@ -650,7 +650,10 @@
                                                      FontFamily="Consolas" FontSize="44"
                                                      FontWeight="Bold"
                                                      HorizontalAlignment="Center"
-                                                     MinWidth="120" Padding="0">
+                                                     MinWidth="120" Padding="0"
+                                                     KeyDown="_txtScale_KeyDown"
+                                                     PreviewTextInput="TxtScale_PreviewTextInput"
+                                                     DataObject.Pasting="TxtScale_Pasting">
                                                 <TextBox.Style>
                                                     <Style TargetType="TextBox">
                                                         <Setter Property="Foreground" Value="#1B5E20"/>

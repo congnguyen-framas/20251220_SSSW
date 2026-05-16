@@ -33,6 +33,26 @@ namespace SSSW.UI.WPF.Converters
             => System.Windows.Data.Binding.DoNothing;
     }
 
+    /// <summary>Maps ToleranceCategory → border Brush cho value cells (STD / Δ / ACTUAL).</summary>
+    public class ToleranceToBorderBrushConverter : IValueConverter
+    {
+        public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
+        {
+            if (value is ToleranceCategory t)
+                return t switch
+                {
+                    ToleranceCategory.Ok   => new SolidColorBrush(Color.FromRgb(0x43, 0xA0, 0x47)), // green
+                    ToleranceCategory.Warn => new SolidColorBrush(Color.FromRgb(0xFB, 0x8C, 0x00)), // amber
+                    ToleranceCategory.Err  => new SolidColorBrush(Color.FromRgb(0xE5, 0x39, 0x35)), // red
+                    _                      => new SolidColorBrush(Color.FromRgb(0xB0, 0xBE, 0xC5))  // gray
+                };
+            return Brushes.LightGray;
+        }
+
+        public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
+            => System.Windows.Data.Binding.DoNothing;
+    }
+
     /// <summary>Maps ToleranceCategory → foreground Brush cho DataGridRow.</summary>
     public class ToleranceToForeConverter : IValueConverter
     {

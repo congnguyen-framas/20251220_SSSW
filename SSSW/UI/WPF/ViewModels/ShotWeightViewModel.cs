@@ -76,6 +76,8 @@ namespace SSSW.UI.WPF.ViewModels
         private FT600 _stdRow = new();
         private List<FT600> _refHistory = new();
 
+
+
         // ─────────────────────────────────────────────────────────────────────
         //  OBSERVABLE COLLECTIONS (ItemsSource cho DataGrid)
         // ─────────────────────────────────────────────────────────────────────
@@ -93,6 +95,13 @@ namespace SSSW.UI.WPF.ViewModels
         // ─────────────────────────────────────────────────────────────────────
         //  BINDABLE DISPLAY PROPERTIES
         // ─────────────────────────────────────────────────────────────────────
+
+        private bool _readOnly = false;
+        public bool ReadOnly
+        {
+            get => _readOnly;
+            set { _readOnly = value; OnPropertyChanged(); }
+        }
 
         #region Title / Header
         private string _windowTitle = "IT – Shotweight Station";
@@ -294,7 +303,7 @@ namespace SSSW.UI.WPF.ViewModels
         public string BarcodeScannedValue
         {
             get => _barcodeScannedValue;
-            set { SetProperty(ref _barcodeScannedValue, value); }
+            set => SetProperty(ref _barcodeScannedValue, value);
         }
 
         // ── RFID ─────────────────────────────────────────────────────────────
@@ -474,7 +483,7 @@ namespace SSSW.UI.WPF.ViewModels
                 _ => "Unknown"
             };
             if (Enum.TryParse<EnumLocation>(location, true, out var loc))
-                WindowTitle = $"{loc} – IT Shotweight Station";
+                WindowTitle = $"{loc} – Shotweight Station";
 
             // Config
             var configData = await db.FT608s
@@ -505,6 +514,9 @@ namespace SSSW.UI.WPF.ViewModels
             // Default values
             UsagePct = GlobalVariable.ConfigSystem.PercentOfUserNonWoven.ToString();
             _percentOfUsage = GlobalVariable.ConfigSystem.PercentOfUserNonWoven;
+
+            EnableReadScale = GlobalVariable.ConfigSystem.EnableReadScale ?? true;
+            ReadOnly = EnableReadScale;
 
             await LoadDataAsync();
         }
@@ -1032,6 +1044,10 @@ namespace SSSW.UI.WPF.ViewModels
                 _articlePaisShotFinaly = _rowSelected.C028;
                 RefreshUI(false);
                 FocusGridRowAction?.Invoke(_rowSelected.C002);
+
+                IsHistoryExpanded = true;
+                _historyExpanded = true;
+
                 await LoadRefHistoryAsync(_rowSelected.C002);
             }
             catch (Exception ex)
@@ -1466,7 +1482,7 @@ namespace SSSW.UI.WPF.ViewModels
                 _refHistory = await db.FT600s
                     .Where(x => x.C002 == stepCode)
                     .OrderByDescending(x => x.CreatedDate)
-                    .Take(5).ToListAsync();
+                    .Take(15).ToListAsync();
 
                 _stdRow = _refHistory.FirstOrDefault() ?? new FT600();
                 UpdateReferencePanel();
@@ -1521,18 +1537,18 @@ namespace SSSW.UI.WPF.ViewModels
 
                 ScaleCardBorderBrush = worst switch
                 {
-                    ToleranceCategory.Ok   => new SolidColorBrush(Color.FromRgb(76,  175,  80)),
-                    ToleranceCategory.Warn => new SolidColorBrush(Color.FromRgb(255, 152,   0)),
-                    ToleranceCategory.Err  => new SolidColorBrush(Color.FromRgb(244,  67,  54)),
-                    _                      => new SolidColorBrush(Color.FromRgb(207, 216, 220))
+                    ToleranceCategory.Ok => new SolidColorBrush(Color.FromRgb(76, 175, 80)),
+                    ToleranceCategory.Warn => new SolidColorBrush(Color.FromRgb(255, 152, 0)),
+                    ToleranceCategory.Err => new SolidColorBrush(Color.FromRgb(244, 67, 54)),
+                    _ => new SolidColorBrush(Color.FromRgb(207, 216, 220))
                 };
 
                 ScaleCardBackground = worst switch
                 {
-                    ToleranceCategory.Ok   => new SolidColorBrush(Color.FromRgb(212, 247, 220)), // xanh nhạt
+                    ToleranceCategory.Ok => new SolidColorBrush(Color.FromRgb(212, 247, 220)), // xanh nhạt
                     ToleranceCategory.Warn => new SolidColorBrush(Color.FromRgb(255, 243, 205)), // vàng nhạt
-                    ToleranceCategory.Err  => new SolidColorBrush(Color.FromRgb(253, 232, 232)), // đỏ nhạt
-                    _                      => new SolidColorBrush(Color.FromRgb(245, 245, 245))  // xám nhạt
+                    ToleranceCategory.Err => new SolidColorBrush(Color.FromRgb(253, 232, 232)), // đỏ nhạt
+                    _ => new SolidColorBrush(Color.FromRgb(245, 245, 245))  // xám nhạt
                 };
             });
         }

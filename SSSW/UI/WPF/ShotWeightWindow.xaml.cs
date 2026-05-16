@@ -27,6 +27,7 @@ using System.Windows.Input;
 using KeyEventArgs = System.Windows.Input.KeyEventArgs;
 using TextBox = System.Windows.Controls.TextBox;
 using SelectionChangedEventArgs = System.Windows.Controls.SelectionChangedEventArgs;
+using Serilog;
 
 namespace SSSW.UI.WPF
 {
@@ -167,7 +168,6 @@ namespace SSSW.UI.WPF
                 CheckTare = cfg.Scale.CheckTare == true
             };
 
-            _vm.EnableReadScale = cfg.EnableReadScale ?? false;
             bool enableScale = scaleCfg.Enable && (cfg.EnableReadScale ?? false);
             if (enableScale)
             {
@@ -365,11 +365,38 @@ namespace SSSW.UI.WPF
         {
             if (e.Key == Key.Enter)
             {
-                var oldValue = new DataValue(DriverStatus.Reconnecting,_vm.ScaleValue);
+                var oldValue = new DataValue(DriverStatus.Reconnecting, _vm.ScaleValue);
 
                 //_vm.ScaleValue = Convert.ToDouble(_vm.ScaleDisplay);
                 var newValue = new DataValue(DriverStatus.Reconnecting, _vm.ScaleValue);
                 ScaleDriver_DataValueChanged(null, new DataValueChangedEventArgs(newValue, oldValue));
+            }
+        }
+
+        private void _txtBarcode_KeyDown(object sender, KeyEventArgs e)
+        {
+            try
+            {
+
+                if (e.Key == Key.Enter)
+                {
+                    var tb = sender as TextBox;
+
+                    //force cập nhật binding
+                    tb.GetBindingExpression(TextBox.TextProperty)?.UpdateSource();
+
+                    BarcodeDriver_DataValueChanged(null,
+                        new DataValueChangedEventArgs(
+                            new DataValue(DriverStatus.Connected, _vm.BarcodeScannedValue),
+                            new DataValue(DriverStatus.Connected, _vm.BarcodeScannedValue)
+                        ));
+                }
+
+            }
+            catch (Exception ex)
+            {
+                System.Windows.MessageBox.Show(ex.Message, "EROR", MessageBoxButton.OK, (MessageBoxImage)MessageBoxIcon.Error);
+                Log.Error(ex.Message);
             }
         }
     }

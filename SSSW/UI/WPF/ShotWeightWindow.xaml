@@ -244,7 +244,9 @@
                                             PopupWidth="1000"
                                             PopupHeight="500"
                                             EditValueChanged="cbStepName_EditValueChangedAsync"
-                                            FontSize="20">
+                                            FontSize="20"
+                                            TextWrapping="Wrap"
+                                            >
                                 <dxg:LookUpEdit.StyleSettings>
                                     <dxg:LookUpEditStyleSettings AllowColumnFiltering="True"/>
                                 </dxg:LookUpEdit.StyleSettings>
@@ -481,12 +483,13 @@
                                     TextBox WPF native — thay thế WinForms BarcodeButtonEdit.
                                     Binding BarcodeScannedValue (từ ScanAndScale.Core BarcodeDriver).
                                 -->
-                                <TextBox Text="{Binding BarcodeScannedValue, Mode=OneWay}"
+                                <TextBox Name="_txtBarcode" Text="{Binding BarcodeScannedValue, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
                                          Style="{StaticResource FieldStyle}"
                                          Height="36" FontSize="16"
                                          Foreground="#1565C0"
                                          Background="#F0F7FF"
-                                         MinWidth="260"/>
+                                         MinWidth="260"
+                                         KeyDown="_txtBarcode_KeyDown"/>
                             </StackPanel>
                         </Border>
                     </Grid>

@@ -833,7 +833,8 @@
                                                 BorderBrush="{Binding ScaleCardBorderBrush}"
                                                 BorderThickness="2"
                                                 CornerRadius="8" 
-                                                Background="{Binding ScaleCardBackground}">
+                                                Background="{Binding ScaleCardBackground}"
+                                                Padding="5">
                                             <TextBox Name="_txtScale"
                                                      Text="{Binding ScaleValue,
                                                             UpdateSourceTrigger=LostFocus}"
@@ -916,7 +917,7 @@
                                         </DataGridTemplateColumn>
 
                                         <!-- STD -->
-                                        <DataGridTemplateColumn  Width="130">
+                                        <DataGridTemplateColumn  Width="140">
                                             <DataGridTemplateColumn.HeaderTemplate>
                                                 <DataTemplate>
                                                     <TextBlock Text="STD"
@@ -955,7 +956,7 @@
                                         </DataGridTemplateColumn>
 
                                         <!-- Δ -->
-                                        <DataGridTemplateColumn Width="130">
+                                        <DataGridTemplateColumn Width="140">
                                             <DataGridTemplateColumn.HeaderTemplate>
                                                 <DataTemplate>
                                                     <TextBlock Text="Δ"
@@ -995,7 +996,7 @@
                                         </DataGridTemplateColumn>
 
                                         <!-- ACTUAL -->
-                                        <DataGridTemplateColumn Width="130">
+                                        <DataGridTemplateColumn Width="140">
                                             <DataGridTemplateColumn.HeaderTemplate>
                                                 <DataTemplate>
                                                     <TextBlock Text="ACTUAL"

@@ -389,7 +389,7 @@ namespace SSSW.UI.WPF
         private static readonly Regex _numericRegex =
             new(@"^-?\d*\.?\d*$", RegexOptions.Compiled);
 
-        private ToolTip? _scaleWarningTip;
+        private System.Windows.Controls.ToolTip? _scaleWarningTip;
         private System.Windows.Threading.DispatcherTimer? _tipTimer;
 
         /// <summary>Chặn ký tự không phải số; hiện tooltip cảnh báo nếu sai.</summary>
@@ -429,14 +429,14 @@ namespace SSSW.UI.WPF
             // Khởi tạo tooltip một lần
             if (_scaleWarningTip is null)
             {
-                _scaleWarningTip = new ToolTip
+                _scaleWarningTip = new System.Windows.Controls.ToolTip
                 {
                     Placement        = PlacementMode.Bottom,
                     PlacementTarget  = tb,
                     StaysOpen        = false,
-                    Background       = new SolidColorBrush(Color.FromRgb(255, 243, 205)),
-                    BorderBrush      = new SolidColorBrush(Color.FromRgb(251, 140,   0)),
-                    Foreground       = new SolidColorBrush(Color.FromRgb(100,  60,   0)),
+                    Background       = new SolidColorBrush(System.Windows.Media.Color.FromRgb(255, 243, 205)),
+                    BorderBrush      = new SolidColorBrush(System.Windows.Media.Color.FromRgb(251, 140,   0)),
+                    Foreground       = new SolidColorBrush(System.Windows.Media.Color.FromRgb(100,  60,   0)),
                     FontSize         = 12,
                     FontWeight       = FontWeights.SemiBold,
                     Padding          = new Thickness(10, 6, 10, 6),

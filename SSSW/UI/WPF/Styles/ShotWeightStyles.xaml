@@ -156,15 +156,17 @@
         <Style.Triggers>
             <Trigger Property="IsSelected" Value="True">
                 <Setter Property="Background" Value="Transparent"/>
+                <Setter Property="Foreground" Value="#1976D2"/>
             </Trigger>
         </Style.Triggers>
     </Style>
 
-    <!-- ── Reference row style — rows luôn trắng, màu tolerance hiện trên từng ô ── -->
+     <!--── Reference row style — rows luôn trắng, màu tolerance hiện trên từng ô ──--> 
     <Style x:Key="RefRowStyle" TargetType="DataGridRow">
         <Setter Property="Background" Value="White"/>
         <Setter Property="MinHeight"  Value="60"/>
     </Style>
+    
 
     <!-- ════════════════════════════════════════════════════════════════
          CELL TEXT STYLES
@@ -186,6 +188,10 @@
         <Setter Property="FontWeight"          Value="Bold"/>
         <Setter Property="FontSize"            Value="18"/>
         <Setter Property="Margin"              Value="0,0,8,0"/>
+    </Style>
+
+    <Style x:Key="cellWrap" TargetType="TextBlock">
+        <Setter Property="TextWrapping" Value="WrapWithOverflow"/>
     </Style>
 
 </ResourceDictionary>

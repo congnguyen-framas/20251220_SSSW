@@ -366,6 +366,17 @@ namespace SSSW.UI.WPF.ViewModels
             get => _historyToggleText;
             set { _historyToggleText = value; OnPropertyChanged(); }
         }
+
+        private string _historyToggleTextSecond = string.Empty;
+        public string HistoryToggleTextSecond
+        {
+            get => _historyToggleTextSecond;
+            set
+            {
+                _historyToggleTextSecond = value;
+                OnPropertyChanged();
+            }
+        }
         #endregion
 
         #region Overlay
@@ -1048,7 +1059,7 @@ namespace SSSW.UI.WPF.ViewModels
                 IsHistoryExpanded = true;
                 _historyExpanded = true;
 
-                await LoadRefHistoryAsync(_rowSelected.C002);
+                await LoadRefHistoryAsync(_rowSelected);
             }
             catch (Exception ex)
             {
@@ -1323,7 +1334,7 @@ namespace SSSW.UI.WPF.ViewModels
 
             RefreshUI(true);
             UpdateReferencePanel();
-            _ = LoadRefHistoryAsync(_rowSelected.C002);
+            _ = LoadRefHistoryAsync(_rowSelected);
         }
 
         public void OnGridReset(FT600? rowSelect)
@@ -1472,15 +1483,15 @@ namespace SSSW.UI.WPF.ViewModels
         // ─────────────────────────────────────────────────────────────────────
         //  HISTORY REFERENCE
         // ─────────────────────────────────────────────────────────────────────
-        private async Task LoadRefHistoryAsync(string? stepCode)
+        private async Task LoadRefHistoryAsync(FT600 StepInfo)
         {
             try
             {
-                if (string.IsNullOrEmpty(stepCode)) return;
+                if (StepInfo == null) return;
 
                 using var db = _dbFactory.CreateDbContext();
                 _refHistory = await db.FT600s
-                    .Where(x => x.C002 == stepCode)
+                    .Where(x => x.C002 == StepInfo.C002)
                     .OrderByDescending(x => x.CreatedDate)
                     .Take(15).ToListAsync();
 
@@ -1494,7 +1505,9 @@ namespace SSSW.UI.WPF.ViewModels
                         HistoryCollection.Add(h);
 
                     var toggle = (_historyExpanded ? "▼" : "▶");
-                    HistoryToggleText = $"{toggle}  REFERENCE / HISTORY  ·  last {_refHistory.Count} weighings  ·  {stepCode}";
+                    HistoryToggleText = $"{toggle}  REFERENCE / HISTORY  ·  last {_refHistory.Count} weighings  ·  {StepInfo.C002}  ·  {StepInfo.C008}  ·  {StepInfo.C007}";
+                    HistoryToggleTextSecond = $"{StepInfo.C003}";
+
                 });
             }
             catch (Exception ex)

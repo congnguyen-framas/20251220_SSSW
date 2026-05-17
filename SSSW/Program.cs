@@ -8,6 +8,7 @@ using Serilog.Events;
 using SSSW.modelss;
 using SSSW.UI.WPF;
 using SSSW.UI.WPF.ViewModels;
+using System.Globalization;
 using System.IO;
 using System.Reflection;
 
@@ -24,6 +25,10 @@ namespace SSSW
             // To customize application configuration such as set high DPI settings or default font,
             // see https://aka.ms/applicationconfiguration.
             ApplicationConfiguration.Initialize();
+
+
+            Thread.CurrentThread.CurrentCulture = CultureInfo.InvariantCulture;
+            Thread.CurrentThread.CurrentUICulture = CultureInfo.InvariantCulture;
 
 
             // Base path: cùng thư mục với file .exe

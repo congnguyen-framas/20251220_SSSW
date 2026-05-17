@@ -302,7 +302,8 @@
                         <DataGrid Grid.Row="1" x:Name="dgTotalSteps"
                                   ItemsSource="{Binding StepsCollection}"
                                   Style="{StaticResource GridStyle}"
-                                  SelectionChanged="dgTotalSteps_SelectionChanged">
+                                  SelectionChanged="dgTotalSteps_SelectionChanged"
+                                  Padding="10">
                             <DataGrid.Columns>
 
                                 <!-- Status strip -->
@@ -513,44 +514,78 @@
                                 </Grid.RowDefinitions>
 
                                 <!-- History header (click to toggle) -->
-                                <Border Grid.Row="0" Background="#1565C0" CornerRadius="4,4,0,0"
+                                <Border Grid.Row="0" Background="#1565C0"
                                         Cursor="Hand"
                                         MouseLeftButtonDown="HistoryHeader_Click"
-                                        Padding="12,8">
-                                    <TextBlock Text="{Binding HistoryToggleText}"
-                                               Foreground="White" FontWeight="Bold"
-                                               FontSize="12" FontFamily="Segoe UI"/>
+                                        CornerRadius="4,4,0,0" Padding="12,8">
+                                    <StackPanel Orientation="Vertical" VerticalAlignment="Center">
+                                        <TextBlock Text="{Binding HistoryToggleText}"
+                                                   Foreground="White" FontWeight="Bold"
+                                                   FontSize="12" FontFamily="Segoe UI"
+                                                   TextWrapping="WrapWithOverflow"/>
+                                        <TextBlock Text="{Binding HistoryToggleTextSecond}"
+                                                   Foreground="#B0BEC5" FontSize="10"
+                                                   FontFamily="Segoe UI" Margin="0,3,0,0"
+                                                   TextWrapping="WrapWithOverflow"/>
+                                    </StackPanel>
+                                    
                                 </Border>
 
                                 <!-- History grid – Visibility binding -->
                                 <Border Grid.Row="1"
                                         Visibility="{Binding IsHistoryExpanded,
-                                                     Converter={StaticResource BoolToVisibility}}">
+                                                     Converter={StaticResource BoolToVisibility}}"
+                                        Padding="10">
                                     <DataGrid x:Name="dgHistory"
                                               ItemsSource="{Binding HistoryCollection}"
                                               Style="{StaticResource GridStyle}">
                                         <DataGrid.Columns>
-                                            <DataGridTextColumn Header="DATE / TIME"
-                                                                Binding="{Binding CreateDate, StringFormat='yyyy-MM-dd HH:mm'}"
-                                                                Width="130"/>
-                                            <DataGridTextColumn Header="TOTAL W (g)"
-                                                                Binding="{Binding C024, StringFormat=F2}"
+                                            <DataGridTextColumn  Binding="{Binding CreateDate, StringFormat='yyyy-MM-dd HH:mm'}"
+                                                                Width="130"
+                                                                 ElementStyle="{StaticResource cellWrap}">
+                                                <DataGridTextColumn.Header>
+                                                    <TextBlock Text="DATE / TIME" TextWrapping="WrapWithOverflow" TextAlignment="Center"/>
+                                                </DataGridTextColumn.Header>
+                                            </DataGridTextColumn>
+
+                                            <DataGridTextColumn Binding="{Binding C024, StringFormat=F2}"
                                                                 Width="100"
-                                                                ElementStyle="{StaticResource RightCell}"/>
-                                            <DataGridTextColumn Header="TOTAL PW (g/prs)"
-                                                                Binding="{Binding C023, StringFormat=F2}"
-                                                                Width="110"
-                                                                ElementStyle="{StaticResource RightCell}"/>
-                                            <DataGridTextColumn Header="PART WT. (g/prs)"
-                                                                Binding="{Binding C021, StringFormat=F2}"
-                                                                Width="110"
-                                                                ElementStyle="{StaticResource RightCell}"/>
-                                            <DataGridTextColumn Header="RUNNER (g/prs)"
-                                                                Binding="{Binding C022, StringFormat=F2}"
-                                                                Width="110"
-                                                                ElementStyle="{StaticResource RightCell}"/>
-                                            <DataGridTextColumn Header="OPERATOR"
-                                                                Binding="{Binding C011}" Width="90"/>
+                                                                ElementStyle="{StaticResource RightCell}">
+                                                <DataGridTextColumn.Header>
+                                                    <TextBlock Text="TOTAL WT (g)" TextWrapping="WrapWithOverflow" TextAlignment="Center"/>
+                                                </DataGridTextColumn.Header>
+                                            </DataGridTextColumn>
+                                            
+                                            <DataGridTextColumn Binding="{Binding C024, StringFormat=F2}"
+                                                                Width="125"
+                                                                ElementStyle="{StaticResource RightCell}">
+                                                <DataGridTextColumn.Header>
+                                                    <TextBlock Text="TOTAL PW (g/prs)" TextWrapping="WrapWithOverflow" TextAlignment="Center"/>
+                                                </DataGridTextColumn.Header>
+                                            </DataGridTextColumn>
+                                            
+                                            <DataGridTextColumn Binding="{Binding C021, StringFormat=F2}"
+                                                                Width="115"
+                                                                ElementStyle="{StaticResource RightCell}">
+                                                <DataGridTextColumn.Header>
+                                                    <TextBlock Text="PART WT (g/prs)" TextWrapping="WrapWithOverflow" TextAlignment="Center"/>
+                                                </DataGridTextColumn.Header>
+                                            </DataGridTextColumn>
+                                            
+                                            <DataGridTextColumn Binding="{Binding C022, StringFormat=F2}"
+                                                                 Width="115"
+                                                                 ElementStyle="{StaticResource RightCell}">
+                                                <DataGridTextColumn.Header>
+                                                    <TextBlock Text="RUNNER (g/prs)" TextWrapping="WrapWithOverflow" TextAlignment="Center"/>
+                                                </DataGridTextColumn.Header>
+                                            </DataGridTextColumn>
+                                            
+                                            <DataGridTextColumn Binding="{Binding C011, StringFormat=F2}"
+                                                                 Width="100">
+                                                <DataGridTextColumn.Header>
+                                                    <TextBlock Text="OPERATOR" TextWrapping="WrapWithOverflow" TextAlignment="Center"/>
+                                                </DataGridTextColumn.Header>
+                                            </DataGridTextColumn>
                                         </DataGrid.Columns>
                                     </DataGrid>
                                 </Border>
@@ -605,7 +640,7 @@
                                         Background="{Binding ScaleTare,
                                                      Converter={StaticResource TareToBackground}}"
                                         BorderBrush="#E0E7EF" BorderThickness="0,0,0,1"
-                                        Padding="12,8">
+                                        Padding="10">
                                     <Grid>
                                         <Grid.ColumnDefinitions>
                                             <ColumnDefinition Width="*"/>
@@ -643,7 +678,7 @@
                                                 Background="{Binding ScaleCardBackground}">
                                             <TextBox Name="_txtScale"
                                                      Text="{Binding ScaleValue,
-                                                            UpdateSourceTrigger=PropertyChanged}"
+                                                            UpdateSourceTrigger=LostFocus}"
                                                      IsReadOnly="{Binding EnableReadScale}"
                                                      BorderThickness="0"
                                                      Background="Transparent"
@@ -679,7 +714,8 @@
                                 <DataGrid Grid.Row="2" x:Name="dgRefValues"
                                           ItemsSource="{Binding RefRowsCollection}"
                                           Style="{StaticResource GridStyle}"
-                                          RowStyle="{StaticResource RefRowStyle}">
+                                          RowStyle="{StaticResource RefRowStyle}"
+                                          Padding="10">
                                     <DataGrid.Columns>
 
                                         <!-- # -->
@@ -690,7 +726,8 @@
                                                             Background="#1565C0"
                                                             HorizontalAlignment="Center"
                                                             VerticalAlignment="Center"
-                                                            Margin="4,4">
+                                                           
+                                                            >
                                                         <TextBlock Text="{Binding No}"
                                                                    Foreground="White"
                                                                    FontWeight="Bold" FontSize="12"

@@ -1,0 +1,11 @@
+<Window x:Class="ShotweightEnterprise1000Users.Presentation.Views.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="Enterprise 1000 Users"
+        Height="600"
+        Width="1000">
+
+    <Grid Margin="20">
+        <DataGrid ItemsSource="{Binding Steps}" AutoGenerateColumns="True"/>
+    </Grid>
+</Window>

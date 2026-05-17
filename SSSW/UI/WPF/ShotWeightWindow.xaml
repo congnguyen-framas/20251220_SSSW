@@ -280,7 +280,7 @@
             <!-- ────────────────── RIGHT AREA ────────────────── -->
             <Grid Grid.Column="1">
                 <Grid.RowDefinitions>
-                    <RowDefinition Height="350"/>
+                    <RowDefinition Height="520"/>
                     <RowDefinition Height="Auto"/>
                     <RowDefinition Height="*"/>
                 </Grid.RowDefinitions>

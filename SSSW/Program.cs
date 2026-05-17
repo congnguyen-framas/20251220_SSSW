@@ -11,6 +11,7 @@ using SSSW.UI.WPF.ViewModels;
 using System.Globalization;
 using System.IO;
 using System.Reflection;
+using System.Windows;
 
 namespace SSSW
 {
@@ -99,6 +100,17 @@ namespace SSSW
             // Application.Run(winFormsForm).
             //
             var wpfApp = new System.Windows.Application();
+
+
+            //load resource dictionary
+            var dict = new ResourceDictionary
+            {
+                Source = new Uri("UI/WPF/Styles/ShotWeightStyles.xaml", UriKind.Relative)
+            };
+
+            wpfApp.Resources.MergedDictionaries.Add(dict);
+
+
             var wpfWin = scope.ServiceProvider.GetRequiredService<ShotWeightWindow>();
             wpfApp.Run(wpfWin);
         }

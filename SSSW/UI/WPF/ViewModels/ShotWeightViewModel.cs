@@ -271,13 +271,6 @@ namespace SSSW.UI.WPF.ViewModels
             set { _scaleCardBackground = value; OnPropertyChanged(); }
         }
 
-        private bool _enableReadScale = true;
-        public bool EnableReadScale
-        {
-            get => _enableReadScale;
-            set { _enableReadScale = value; OnPropertyChanged(); }
-        }
-
         public double ScaleValue
         {
             get => _scaleValue;
@@ -526,8 +519,7 @@ namespace SSSW.UI.WPF.ViewModels
             UsagePct = GlobalVariable.ConfigSystem.PercentOfUserNonWoven.ToString();
             _percentOfUsage = GlobalVariable.ConfigSystem.PercentOfUserNonWoven;
 
-            EnableReadScale = GlobalVariable.ConfigSystem.EnableReadScale ?? true;
-            ReadOnly = EnableReadScale;
+            ReadOnly = GlobalVariable.ConfigSystem.EnableReadScale ?? true;
 
             await LoadDataAsync();
         }

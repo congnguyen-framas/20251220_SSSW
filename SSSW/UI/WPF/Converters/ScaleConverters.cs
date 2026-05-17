@@ -6,6 +6,7 @@
 using ScanAndScale.Core.Models;
 using SSSW.UI.WPF.Models;
 using System.Globalization;
+using System.Windows;
 using System.Windows.Data;
 using System.Windows.Media;
 using Brushes = System.Windows.Media.Brushes;
@@ -149,5 +150,26 @@ namespace SSSW.UI.WPF.Converters
 
         public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
             => System.Windows.Data.Binding.DoNothing;
+    }
+
+    /// <summary>
+    /// Provides a value converter that maps a Boolean value to a System.Windows.Visibility value, returning Visible
+    /// when the input is false and Collapsed when the input is true.
+    /// </summary>
+    /// <remarks>This converter is typically used in WPF data binding scenarios to invert the standard
+    /// Boolean-to-Visibility mapping. It is useful when you want a UI element to be visible when a bound Boolean
+    /// property is false, and collapsed when it is true. The converter does not support conversion to Hidden; only
+    /// Visible and Collapsed are used.</remarks>
+    [ValueConversion(typeof(bool), typeof(System.Windows.Visibility))]
+    public class InverseBoolToVisibilityConverter : IValueConverter
+    {
+        public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
+        {
+            bool val = value is bool b && b;
+            return val ? Visibility.Collapsed : Visibility.Visible;
+        }
+
+        public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
+            => value is System.Windows.Visibility v && v == System.Windows.Visibility.Visible;
     }
 }

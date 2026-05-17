@@ -1516,10 +1516,10 @@ namespace SSSW.UI.WPF.ViewModels
         {
             _referenceRows = new List<ReferenceRow>
             {
-                new() { No=1, FieldName="Total W_Injection",           Unit="g",
+                new() { No=1, FieldName="Total Weight Injection",           Unit="g",
                         Std    = _stdRow?.C024 > 0 ? _stdRow.C024 : null,
                         Actual = _rowSelected?.C024 > 0 ? _rowSelected.C024 : null },
-                new() { No=2, FieldName="Total PW Weight",             Unit="g/prs",
+                new() { No=2, FieldName="Total Part Weight",             Unit="g/prs",
                         Std    = _stdRow?.C023 > 0 ? _stdRow.C023 : null,
                         Actual = _rowSelected?.C023 > 0 ? _rowSelected.C023 : null },
                 new() { No=3, FieldName="Part Weight",                 Unit="g/prs",

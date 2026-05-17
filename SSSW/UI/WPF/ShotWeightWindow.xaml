@@ -27,7 +27,7 @@
         <Grid.RowDefinitions>
             <RowDefinition Height="44"/>
             <RowDefinition Height="*"/>
-            <RowDefinition Height="72"/>
+            <RowDefinition Height="55"/>
         </Grid.RowDefinitions>
 
         <!-- ═══════════════════════════════ TITLE BAR ═══════════════════════════════ -->
@@ -285,7 +285,7 @@
             <!-- ────────────────── RIGHT AREA ────────────────── -->
             <Grid Grid.Column="1">
                 <Grid.RowDefinitions>
-                    <RowDefinition Height="410"/>
+                    <RowDefinition Height="428"/>
                     <RowDefinition Height="Auto"/>
                     <RowDefinition Height="*"/>
                 </Grid.RowDefinitions>
@@ -527,7 +527,7 @@
                                                       ElementStyle="{StaticResource RightCell}">
                                     <DataGridTextColumn.HeaderTemplate>
                                         <DataTemplate>
-                                            <TextBlock Text="RUNNER WEIGHT (g/prs)" TextWrapping="WrapWithOverflow" TextAlignment="Center"
+                                            <TextBlock Text="RUNNER / EXCESS MAT. WEIGHT (g/prs)" TextWrapping="WrapWithOverflow" TextAlignment="Center"
                                                        ToolTipService.ShowDuration="20000">
                                                 <TextBlock.ToolTip>
                                                     <TextBlock TextWrapping="Wrap" Width="250">
@@ -552,7 +552,7 @@
                 </Border>
 
                 <!-- RFID + Barcode row -->
-                <Border Grid.Row="1" Background="Transparent" Padding="0,4,0,0">
+                <Border Grid.Row="1" Background="Transparent" Padding="0,0,0,0">
                     <Grid>
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition Width="*"/>
@@ -738,7 +738,7 @@
                                                                  Width="115"
                                                                  ElementStyle="{StaticResource RightCell}">
                                                 <DataGridTextColumn.Header>
-                                                    <TextBlock Text="RUNNER WEIGHT (g/prs)" TextWrapping="WrapWithOverflow" TextAlignment="Center"/>
+                                                    <TextBlock Text="RUNNER / EXCESS MAT. WEIGHT (g/prs)" TextWrapping="WrapWithOverflow" TextAlignment="Center"/>
                                                 </DataGridTextColumn.Header>
                                             </DataGridTextColumn>
 
@@ -1048,7 +1048,7 @@
         </Grid>
 
         <!-- ═══════════════════════════════ BOTTOM BAR ═════════════════════════════ -->
-        <Border Grid.Row="2" Margin="6">
+        <Border Grid.Row="2" Margin="6,0,6,6">
             <StackPanel Orientation="Horizontal" HorizontalAlignment="Right"
                         VerticalAlignment="Center">
                 <Button Content="↓  Save"

@@ -102,140 +102,145 @@
             </Grid.ColumnDefinitions>
 
             <!-- ────────────────── LEFT PANEL – STEP INFORMATION ────────────────── -->
-            <Border Grid.Column="0" Style="{StaticResource CardStyle}">
-                <Grid>
-                    <Grid.RowDefinitions>
-                        <RowDefinition Height="Auto"/>
-                        <RowDefinition Height="*"/>
-                    </Grid.RowDefinitions>
+            <Grid Grid.Column="0">
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="*"/>
+                </Grid.RowDefinitions>
+                
+                <Border  Style="{StaticResource CardStyle}">
+                    <Grid Margin="4">
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="*"/>
+                        </Grid.RowDefinitions>
 
-                    <Border Grid.Row="0" Background="#1565C0" CornerRadius="4,4,0,0" Padding="12,8">
-                        <TextBlock Text="STEP INFORMATION" Foreground="White"
+                        <Border Grid.Row="0" Background="#1565C0" CornerRadius="4,4,0,0" Padding="12,8">
+                            <TextBlock Text="STEP INFORMATION" Foreground="White"
                                    FontWeight="Bold" FontSize="12" FontFamily="Segoe UI"/>
-                    </Border>
+                        </Border>
 
-                    <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto">
-                        <StackPanel Margin="12,12,12,12">
+                        <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto">
+                            <StackPanel Margin="4">
 
-                            <TextBlock Text="Name" Style="{StaticResource LabelStyle}"/>
-                            <TextBox Text="{Binding StepName, Mode=OneWay}"
+                                <TextBlock Text="Name" Style="{StaticResource LabelStyle}"/>
+                                <TextBox Text="{Binding StepName, Mode=OneWay}"
                                      Style="{StaticResource FieldStyle}"
                                      TextWrapping="Wrap" MinLines="2" MaxLines="3" Margin="0,0,0,8"/>
 
-                            <TextBlock Text="Code" Style="{StaticResource LabelStyle}"/>
-                            <TextBox Text="{Binding StepCode, Mode=OneWay}"
+                                <TextBlock Text="Code" Style="{StaticResource LabelStyle}"/>
+                                <TextBox Text="{Binding StepCode, Mode=OneWay}"
                                      Style="{StaticResource FieldStyle}"
                                      Margin="0,0,0,8"/>
 
-                            <!-- Machine + Quantity -->
-                            <Grid Margin="0,0,0,8">
-                                <Grid.ColumnDefinitions>
-                                    <ColumnDefinition Width="*"/>
-                                    <ColumnDefinition Width="8"/>
-                                    <ColumnDefinition Width="*"/>
-                                </Grid.ColumnDefinitions>
-                                <StackPanel Grid.Column="0">
-                                    <TextBlock Text="Machine" Style="{StaticResource LabelStyle}"/>
-                                    <TextBox Text="{Binding Machine, Mode=OneWay}"
+                                <!-- Machine + Quantity -->
+                                <Grid Margin="0,0,0,8">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="8"/>
+                                        <ColumnDefinition Width="*"/>
+                                    </Grid.ColumnDefinitions>
+                                    <StackPanel Grid.Column="0">
+                                        <TextBlock Text="Machine" Style="{StaticResource LabelStyle}"/>
+                                        <TextBox Text="{Binding Machine, Mode=OneWay}"
                                              Style="{StaticResource FieldStyle}"/>
-                                </StackPanel>
-                                <StackPanel Grid.Column="2">
-                                    <TextBlock Text="Quantity" Style="{StaticResource LabelStyle}"/>
-                                    <TextBox Text="{Binding Qty, Mode=OneWay}"
+                                    </StackPanel>
+                                    <StackPanel Grid.Column="2">
+                                        <TextBlock Text="Quantity" Style="{StaticResource LabelStyle}"/>
+                                        <TextBox Text="{Binding Qty, Mode=OneWay}"
                                              Style="{StaticResource FieldStyle}"/>
-                                </StackPanel>
-                            </Grid>
+                                    </StackPanel>
+                                </Grid>
 
-                            <!-- Partitioning + Toggle -->
-                            <Grid Margin="0,0,0,8">
-                                <Grid.ColumnDefinitions>
-                                    <ColumnDefinition Width="*"/>
-                                    <ColumnDefinition Width="8"/>
-                                    <ColumnDefinition Width="Auto"/>
-                                </Grid.ColumnDefinitions>
-                                <StackPanel Grid.Column="0">
-                                    <TextBlock Text="Partitioning (prs)" Style="{StaticResource LabelStyle}"/>
-                                    <TextBox x:Name="tbActualPairs"
+                                <!-- Partitioning + Toggle -->
+                                <Grid Margin="0,0,0,8">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="8"/>
+                                        <ColumnDefinition Width="Auto"/>
+                                    </Grid.ColumnDefinitions>
+                                    <StackPanel Grid.Column="0">
+                                        <TextBlock Text="Partitioning (prs)" Style="{StaticResource LabelStyle}"/>
+                                        <TextBox x:Name="tbActualPairs"
                                              Text="{Binding ActualPairs, Mode=OneWay}"
                                              IsReadOnly="{Binding IsActualPairsReadOnly}"
                                              Style="{StaticResource EditableFieldStyle}"
                                              KeyDown="tbActualPairs_KeyDown"/>
-                                </StackPanel>
-                                <StackPanel Grid.Column="2" VerticalAlignment="Bottom">
-                                    <TextBlock Text="Adj." Style="{StaticResource LabelStyle}"
+                                    </StackPanel>
+                                    <StackPanel Grid.Column="2" VerticalAlignment="Bottom">
+                                        <TextBlock Text="Adj." Style="{StaticResource LabelStyle}"
                                                HorizontalAlignment="Center"/>
-                                    <!-- Binding AllowPartitionAdj two-way -->
-                                    <CheckBox IsChecked="{Binding AllowPartitionAdj, Mode=TwoWay}"
+                                        <!-- Binding AllowPartitionAdj two-way -->
+                                        <CheckBox IsChecked="{Binding AllowPartitionAdj, Mode=TwoWay}"
                                               HorizontalAlignment="Center"/>
-                                </StackPanel>
-                            </Grid>
+                                    </StackPanel>
+                                </Grid>
 
-                            <!-- Runner + Usage% -->
-                            <Grid Margin="0,0,0,8">
-                                <Grid.ColumnDefinitions>
-                                    <ColumnDefinition Width="*"/>
-                                    <ColumnDefinition Width="8"/>
-                                    <ColumnDefinition Width="80"/>
-                                </Grid.ColumnDefinitions>
-                                <StackPanel Grid.Column="0">
-                                    <TextBlock Text="Runner" Style="{StaticResource LabelStyle}"/>
-                                    <!-- Binding RunnerText two-way -->
-                                    <ComboBox x:Name="cbRunner"
+                                <!-- Runner + Usage% -->
+                                <Grid Margin="0,0,0,8">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="8"/>
+                                        <ColumnDefinition Width="80"/>
+                                    </Grid.ColumnDefinitions>
+                                    <StackPanel Grid.Column="0">
+                                        <TextBlock Text="Runner" Style="{StaticResource LabelStyle}"/>
+                                        <!-- Binding RunnerText two-way -->
+                                        <ComboBox x:Name="cbRunner"
                                               SelectedValue="{Binding RunnerText, Mode=TwoWay}"
                                               FontFamily="Segoe UI" FontSize="20" Height="Auto">
-                                        <ComboBoxItem Content="YES"/>
-                                        <ComboBoxItem Content="NO"/>
-                                    </ComboBox>
-                                </StackPanel>
-                                <StackPanel Grid.Column="2">
-                                    <TextBlock Text="Usage %" Style="{StaticResource LabelStyle}"/>
-                                    <TextBox x:Name="tbUsagePct"
+                                            <ComboBoxItem Content="YES"/>
+                                            <ComboBoxItem Content="NO"/>
+                                        </ComboBox>
+                                    </StackPanel>
+                                    <StackPanel Grid.Column="2">
+                                        <TextBlock Text="Usage %" Style="{StaticResource LabelStyle}"/>
+                                        <TextBox x:Name="tbUsagePct"
                                              Text="{Binding UsagePct, Mode=OneWay}"
                                              IsReadOnly="{Binding IsUsagePctReadOnly}"
                                              Style="{StaticResource EditableFieldStyle}"
                                              KeyDown="tbUsagePct_KeyDown"/>
-                                </StackPanel>
-                            </Grid>
+                                    </StackPanel>
+                                </Grid>
 
-                            <!-- Size + SeqIndex -->
-                            <Grid Margin="0,0,0,8">
-                                <Grid.ColumnDefinitions>
-                                    <ColumnDefinition Width="*"/>
-                                    <ColumnDefinition Width="8"/>
-                                    <ColumnDefinition Width="*"/>
-                                </Grid.ColumnDefinitions>
-                                <StackPanel Grid.Column="0">
-                                    <TextBlock Text="Size" Style="{StaticResource LabelStyle}"/>
-                                    <TextBox Text="{Binding Size, Mode=OneWay}"
+                                <!-- Size + SeqIndex -->
+                                <Grid Margin="0,0,0,8">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="8"/>
+                                        <ColumnDefinition Width="*"/>
+                                    </Grid.ColumnDefinitions>
+                                    <StackPanel Grid.Column="0">
+                                        <TextBlock Text="Size" Style="{StaticResource LabelStyle}"/>
+                                        <TextBox Text="{Binding Size, Mode=OneWay}"
                                              Style="{StaticResource FieldStyle}"/>
-                                </StackPanel>
-                                <StackPanel Grid.Column="2">
-                                    <TextBlock Text="Seq. Index" Style="{StaticResource LabelStyle}"/>
-                                    <TextBox Text="{Binding StepIndex, Mode=OneWay}"
+                                    </StackPanel>
+                                    <StackPanel Grid.Column="2">
+                                        <TextBlock Text="Seq. Index" Style="{StaticResource LabelStyle}"/>
+                                        <TextBox Text="{Binding StepIndex, Mode=OneWay}"
                                              Style="{StaticResource FieldStyle}"/>
-                                </StackPanel>
-                            </Grid>
+                                    </StackPanel>
+                                </Grid>
 
-                            <TextBlock Text="FG Description" Style="{StaticResource LabelStyle}"/>
-                            <TextBox Text="{Binding FgName, Mode=OneWay}"
+                                <TextBlock Text="FG Description" Style="{StaticResource LabelStyle}"/>
+                                <TextBox Text="{Binding FgName, Mode=OneWay}"
                                      Style="{StaticResource FieldStyle}"
                                      TextWrapping="Wrap" MinLines="2" MaxLines="3" Margin="0,0,0,8"/>
 
-                            <TextBlock Text="FG Item Code" Style="{StaticResource LabelStyle}"/>
-                            <TextBox Text="{Binding FgItemCode, Mode=OneWay}"
+                                <TextBlock Text="FG Item Code" Style="{StaticResource LabelStyle}"/>
+                                <TextBox Text="{Binding FgItemCode, Mode=OneWay}"
                                      Style="{StaticResource FieldStyle}"
                                      Margin="0,0,0,8"/>
 
-                            <TextBlock Text="Remark" Style="{StaticResource LabelStyle}"/>
-                            <!-- Binding Remark two-way, setter trong VM sync _remarkFinal -->
-                            <TextBox Text="{Binding Remark, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                <TextBlock Text="Remark" Style="{StaticResource LabelStyle}"/>
+                                <!-- Binding Remark two-way, setter trong VM sync _remarkFinal -->
+                                <TextBox Text="{Binding Remark, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
                                      Style="{StaticResource EditableFieldStyle}"
                                      TextWrapping="Wrap" MinLines="2" Margin="0,0,0,8"/>
 
-                            <TextBlock Text="Select Step" Style="{StaticResource LabelStyle}"/>
+                                <TextBlock Text="Select Step" Style="{StaticResource LabelStyle}"/>
 
-                            <!-- DevExpress LookUpEdit: ItemsSource từ ViewModel, event bridge ở code-behind -->
-                            <dxg:LookUpEdit x:Name="cbStepName"
+                                <!-- DevExpress LookUpEdit: ItemsSource từ ViewModel, event bridge ở code-behind -->
+                                <dxg:LookUpEdit x:Name="cbStepName"
                                             ItemsSource="{Binding StepCodeMaster}"
                                             DisplayMember="StepItemName"
                                             ValueMember="StepItemCode"
@@ -247,47 +252,47 @@
                                             FontSize="20"
                                             TextWrapping="Wrap"
                                             >
-                                <dxg:LookUpEdit.StyleSettings>
-                                    <dxg:LookUpEditStyleSettings AllowColumnFiltering="True"/>
-                                </dxg:LookUpEdit.StyleSettings>
-                                <dxg:LookUpEdit.PopupContentTemplate>
-                                    <ControlTemplate>
-                                        <dxg:GridControl Name="PART_GridControl" IsFilterEnabled="True">
-                                            <dxg:GridControl.Columns>
-                                                <dxg:GridColumn FieldName="Machine"      Header="Machine"
+                                    <dxg:LookUpEdit.StyleSettings>
+                                        <dxg:LookUpEditStyleSettings AllowColumnFiltering="True"/>
+                                    </dxg:LookUpEdit.StyleSettings>
+                                    <dxg:LookUpEdit.PopupContentTemplate>
+                                        <ControlTemplate>
+                                            <dxg:GridControl Name="PART_GridControl" IsFilterEnabled="True">
+                                                <dxg:GridControl.Columns>
+                                                    <dxg:GridColumn FieldName="Machine"      Header="Machine"
                                                                 FilterPopupMode="Excel" ColumnFilterMode="DisplayText"/>
-                                                <dxg:GridColumn FieldName="StepItemCode" Header="Step Code"/>
-                                                <dxg:GridColumn FieldName="StepItemName" Header="Step Name"/>
-                                                <dxg:GridColumn FieldName="Size"         Header="Size"/>
-                                                <dxg:GridColumn FieldName="HydraOrderNo" Header="Hydra Order No"/>
-                                                <dxg:GridColumn FieldName="FT601Id"      Header="FT601 Id"/>
-                                            </dxg:GridControl.Columns>
-                                            <dxg:GridControl.View>
-                                                <dxg:TableView AutoWidth="True"
+                                                    <dxg:GridColumn FieldName="StepItemCode" Header="Step Code"/>
+                                                    <dxg:GridColumn FieldName="StepItemName" Header="Step Name"/>
+                                                    <dxg:GridColumn FieldName="Size"         Header="Size"/>
+                                                    <dxg:GridColumn FieldName="HydraOrderNo" Header="Hydra Order No"/>
+                                                    <dxg:GridColumn FieldName="FT601Id"      Header="FT601 Id"/>
+                                                </dxg:GridControl.Columns>
+                                                <dxg:GridControl.View>
+                                                    <dxg:TableView AutoWidth="True"
                                                                ShowFilterPanelMode="ShowAlways"
                                                                ShowAutoFilterRow="True"/>
-                                            </dxg:GridControl.View>
-                                        </dxg:GridControl>
-                                    </ControlTemplate>
-                                </dxg:LookUpEdit.PopupContentTemplate>
-                            </dxg:LookUpEdit>
+                                                </dxg:GridControl.View>
+                                            </dxg:GridControl>
+                                        </ControlTemplate>
+                                    </dxg:LookUpEdit.PopupContentTemplate>
+                                </dxg:LookUpEdit>
 
-                        </StackPanel>
-                    </ScrollViewer>
-                </Grid>
-            </Border>
-
+                            </StackPanel>
+                        </ScrollViewer>
+                    </Grid>
+                </Border>
+            </Grid>
             <!-- ────────────────── RIGHT AREA ────────────────── -->
             <Grid Grid.Column="1">
                 <Grid.RowDefinitions>
-                    <RowDefinition Height="520"/>
+                    <RowDefinition Height="410"/>
                     <RowDefinition Height="Auto"/>
                     <RowDefinition Height="*"/>
                 </Grid.RowDefinitions>
 
                 <!-- TOTAL STEPS -->
                 <Border Grid.Row="0" Style="{StaticResource CardStyle}">
-                    <Grid Margin="2">
+                    <Grid Margin="4">
                         <Grid.RowDefinitions>
                             <RowDefinition Height="Auto"/>
                             <RowDefinition Height="*"/>
@@ -834,13 +839,12 @@
                                                 BorderThickness="2"
                                                 CornerRadius="8" 
                                                 Background="{Binding ScaleCardBackground}"
-                                                Padding="5">
+                                                Padding="10">
                                             <TextBox Name="_txtScale"
                                                      Text="{Binding ScaleValue,
                                                             UpdateSourceTrigger=LostFocus}"
                                                      IsReadOnly="{Binding ReadOnly}"
                                                      BorderThickness="0"
-                                                     Background="#F0F7FF"
                                                      FontFamily="Consolas" FontSize="44"
                                                      FontWeight="Bold"
                                                      HorizontalAlignment="Center"

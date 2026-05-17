@@ -472,7 +472,7 @@
                                         <DataTemplate>
                                             <TextBlock Text="TOTAL W (g)" TextWrapping="WrapWithOverflow" TextAlignment="Center">
                                                 <TextBlock.ToolTip>
-                                                    <ToolTip Style="{StaticResource ModernToolTip}"
+                                                    <ToolTip Style="{StaticResource DarkToolTip}"
                                                             ToolTipService.ShowDuration="20000">
                                                         <TextBlock TextWrapping="Wrap" Width="250">
                                                                 Total weight after ejection. Reading from the scale.
@@ -491,7 +491,7 @@
                                         <DataTemplate>
                                             <TextBlock Text="TOTAL PW (g/prs)" TextWrapping="WrapWithOverflow" TextAlignment="Center">
                                                 <TextBlock.ToolTip>
-                                                    <ToolTip Style="{StaticResource ModernToolTip}"
+                                                    <ToolTip Style="{StaticResource DarkToolTip}"
                                                             ToolTipService.ShowDuration="20000">
                                                         <TextBlock TextWrapping="Wrap" Width="250">
                                                                 Includes the par of the current step and previous steps. Reading from the scale.
@@ -510,7 +510,7 @@
                                         <DataTemplate>
                                             <TextBlock Text="PART WT (g/prs)" TextWrapping="WrapWithOverflow" TextAlignment="Center">
                                                 <TextBlock.ToolTip>
-                                                    <ToolTip Style="{StaticResource ModernToolTip}"
+                                                    <ToolTip Style="{StaticResource DarkToolTip}"
                                                              ToolTipService.ShowDuration="20000">
                                                         <TextBlock TextWrapping="Wrap" Width="250">
                                                                 Part weight of the current step. Calculation = (TOTAL PW − TOTAL PW of the previous step) / pairs per shot
@@ -530,7 +530,7 @@
                                         <DataTemplate>
                                             <TextBlock Text="RUNNER (g/prs)" TextWrapping="WrapWithOverflow" TextAlignment="Center">
                                                 <TextBlock.ToolTip>
-                                                    <ToolTip Style="{StaticResource ModernToolTip}"
+                                                    <ToolTip Style="{StaticResource DarkToolTip}"
                                                             ToolTipService.ShowDuration="20000">
                                                         <TextBlock TextWrapping="Wrap" Width="250">
                                                              Runner weight of the current step. Calculation = (TOTAL W - TOTAL PW) / pairs per shot

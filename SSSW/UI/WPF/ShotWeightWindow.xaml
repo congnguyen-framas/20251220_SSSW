@@ -292,7 +292,7 @@
 
                 <!-- TOTAL STEPS -->
                 <Border Grid.Row="0" Style="{StaticResource CardStyle}">
-                    <Grid Margin="4">
+                    <Grid Margin="4" >
                         <Grid.RowDefinitions>
                             <RowDefinition Height="Auto"/>
                             <RowDefinition Height="*"/>
@@ -777,7 +777,7 @@
                                             <TextBlock Text="REFERENCE VALUES"
                                                        Foreground="White" FontWeight="Bold"
                                                        FontSize="13" FontFamily="Segoe UI"/>
-                                            <TextBlock Text="Std (target) ↔ Actual (live) · auto-colored vs. tolerance ±1% / ±3%"
+                                            <TextBlock Text= "{Binding DeltaInformation}"
                                                        Foreground="#B0BEC5" FontSize="10"
                                                        FontFamily="Segoe UI" Margin="0,3,0,0"/>
                                         </StackPanel>

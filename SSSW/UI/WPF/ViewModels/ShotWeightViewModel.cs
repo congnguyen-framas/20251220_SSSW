@@ -343,6 +343,13 @@ namespace SSSW.UI.WPF.ViewModels
             get => _scaleUnit;
             set { SetProperty(ref _scaleUnit, value); }
         }
+
+        private string _deltaInformation = string.Empty;
+        public string DeltaInformation
+        {
+            get => _deltaInformation;
+            set { SetProperty(ref _deltaInformation, value); }
+        }
         #endregion
 
         #region History
@@ -520,6 +527,7 @@ namespace SSSW.UI.WPF.ViewModels
             UsagePct = GlobalVariable.ConfigSystem.PercentOfUserNonWoven.ToString();
             _percentOfUsage = GlobalVariable.ConfigSystem.PercentOfUserNonWoven;
 
+            DeltaInformation = $"Std (target) ↔ Actual (live) · auto-colored vs. tolerance ±{GlobalVariable.ConfigSystem.DeltaLevel1}% / ±{GlobalVariable.ConfigSystem.DeltaLevel2}%";
             ReadOnly = GlobalVariable.ConfigSystem.EnableReadScale ?? true;
 
             await LoadDataAsync();

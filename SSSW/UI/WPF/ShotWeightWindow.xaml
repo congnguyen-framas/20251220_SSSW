@@ -348,7 +348,7 @@
                                                         CommandParameter="{Binding}"
                                                         Style="{StaticResource WarningButton}"/>
                                                 <Button Content="Delete" Tag="{Binding}"
-                                                        Command="{Binding DataContext.GridResetCommand,
+                                                        Command="{Binding DataContext.GridDeleteCommand,
                                                                   RelativeSource={RelativeSource AncestorType=DataGrid}}"
                                                         CommandParameter="{Binding}"
                                                         Style="{StaticResource DangerButton}"/>
@@ -470,14 +470,12 @@
                                                      ElementStyle="{StaticResource RightCell}">
                                     <DataGridTextColumn.HeaderTemplate>
                                         <DataTemplate>
-                                            <TextBlock Text="TOTAL W (g)" TextWrapping="WrapWithOverflow" TextAlignment="Center">
+                                            <TextBlock Text="TOTAL WEIGHT INJECTION (g)" TextWrapping="WrapWithOverflow" TextAlignment="Center"
+                                                       ToolTipService.ShowDuration="20000">
                                                 <TextBlock.ToolTip>
-                                                    <ToolTip Style="{StaticResource DarkToolTip}"
-                                                            ToolTipService.ShowDuration="20000">
-                                                        <TextBlock TextWrapping="Wrap" Width="250">
+                                                    <TextBlock TextWrapping="Wrap" Width="250">
                                                                 Total weight after ejection. Reading from the scale.
-                                                        </TextBlock>
-                                                    </ToolTip>
+                                                    </TextBlock>
                                                 </TextBlock.ToolTip>
                                              </TextBlock>
                                         </DataTemplate>
@@ -489,14 +487,12 @@
                                                      ElementStyle="{StaticResource RightCell}">
                                     <DataGridTextColumn.HeaderTemplate>
                                         <DataTemplate>
-                                            <TextBlock Text="TOTAL PW (g/prs)" TextWrapping="WrapWithOverflow" TextAlignment="Center">
+                                            <TextBlock Text="TOTAL PART WEIGHT (g/prs)" TextWrapping="WrapWithOverflow" TextAlignment="Center"
+                                                       ToolTipService.ShowDuration="20000">
                                                 <TextBlock.ToolTip>
-                                                    <ToolTip Style="{StaticResource DarkToolTip}"
-                                                            ToolTipService.ShowDuration="20000">
-                                                        <TextBlock TextWrapping="Wrap" Width="250">
+                                                    <TextBlock TextWrapping="Wrap" Width="250">
                                                                 Includes the par of the current step and previous steps. Reading from the scale.
-                                                        </TextBlock>
-                                                    </ToolTip>
+                                                    </TextBlock>
                                                 </TextBlock.ToolTip>
                                             </TextBlock>
                                         </DataTemplate>
@@ -508,14 +504,12 @@
                                                      ElementStyle="{StaticResource RightCell}">
                                     <DataGridTextColumn.HeaderTemplate>
                                         <DataTemplate>
-                                            <TextBlock Text="PART WT (g/prs)" TextWrapping="WrapWithOverflow" TextAlignment="Center">
+                                            <TextBlock Text="PART WEIGHT (g/prs)" TextWrapping="WrapWithOverflow" TextAlignment="Center"
+                                                       ToolTipService.ShowDuration="20000">
                                                 <TextBlock.ToolTip>
-                                                    <ToolTip Style="{StaticResource DarkToolTip}"
-                                                             ToolTipService.ShowDuration="20000">
-                                                        <TextBlock TextWrapping="Wrap" Width="250">
-                                                                Part weight of the current step. Calculation = (TOTAL PW − TOTAL PW of the previous step) / pairs per shot
-                                                        </TextBlock>
-                                                    </ToolTip>
+                                                    <TextBlock TextWrapping="Wrap" Width="250">
+                                                                Part weight of the current step. Calculation = (TOTAL PART WEIGHT − TOTAL PART WEIGHT of the previous step) / pairs per shot
+                                                    </TextBlock>
                                                 </TextBlock.ToolTip>
 
                                             </TextBlock>
@@ -528,14 +522,12 @@
                                                       ElementStyle="{StaticResource RightCell}">
                                     <DataGridTextColumn.HeaderTemplate>
                                         <DataTemplate>
-                                            <TextBlock Text="RUNNER (g/prs)" TextWrapping="WrapWithOverflow" TextAlignment="Center">
+                                            <TextBlock Text="RUNNER WEIGHT (g/prs)" TextWrapping="WrapWithOverflow" TextAlignment="Center"
+                                                       ToolTipService.ShowDuration="20000">
                                                 <TextBlock.ToolTip>
-                                                    <ToolTip Style="{StaticResource DarkToolTip}"
-                                                            ToolTipService.ShowDuration="20000">
-                                                        <TextBlock TextWrapping="Wrap" Width="250">
-                                                             Runner weight of the current step. Calculation = (TOTAL W - TOTAL PW) / pairs per shot
-                                                        </TextBlock>
-                                                    </ToolTip>
+                                                    <TextBlock TextWrapping="Wrap" Width="250">
+                                                             Runner weight of the current step. Calculation = (TOTAL WEIGHT INJECTION - TOTAL PART WEIGHT) / pairs per shot
+                                                    </TextBlock>
                                                 </TextBlock.ToolTip>
                                             </TextBlock>
                                         </DataTemplate>
@@ -717,7 +709,7 @@
                                                                 Width="100"
                                                                 ElementStyle="{StaticResource RightCell}">
                                                 <DataGridTextColumn.Header>
-                                                    <TextBlock Text="TOTAL WT (g)" TextWrapping="WrapWithOverflow" TextAlignment="Center"/>
+                                                    <TextBlock Text="TOTAL WEIGHT (g)" TextWrapping="WrapWithOverflow" TextAlignment="Center"/>
                                                 </DataGridTextColumn.Header>
                                             </DataGridTextColumn>
 
@@ -725,7 +717,7 @@
                                                                 Width="125"
                                                                 ElementStyle="{StaticResource RightCell}">
                                                 <DataGridTextColumn.Header>
-                                                    <TextBlock Text="TOTAL PW (g/prs)" TextWrapping="WrapWithOverflow" TextAlignment="Center"/>
+                                                    <TextBlock Text="TOTAL PART WEIGHT (g/prs)" TextWrapping="WrapWithOverflow" TextAlignment="Center"/>
                                                 </DataGridTextColumn.Header>
                                             </DataGridTextColumn>
 
@@ -733,7 +725,7 @@
                                                                 Width="115"
                                                                 ElementStyle="{StaticResource RightCell}">
                                                 <DataGridTextColumn.Header>
-                                                    <TextBlock Text="PART WT (g/prs)" TextWrapping="WrapWithOverflow" TextAlignment="Center"/>
+                                                    <TextBlock Text="PART WEIGHT (g/prs)" TextWrapping="WrapWithOverflow" TextAlignment="Center"/>
                                                 </DataGridTextColumn.Header>
                                             </DataGridTextColumn>
 
@@ -741,7 +733,7 @@
                                                                  Width="115"
                                                                  ElementStyle="{StaticResource RightCell}">
                                                 <DataGridTextColumn.Header>
-                                                    <TextBlock Text="RUNNER (g/prs)" TextWrapping="WrapWithOverflow" TextAlignment="Center"/>
+                                                    <TextBlock Text="RUNNER WEIGHT (g/prs)" TextWrapping="WrapWithOverflow" TextAlignment="Center"/>
                                                 </DataGridTextColumn.Header>
                                             </DataGridTextColumn>
 
@@ -911,7 +903,7 @@
                                         <DataGridTemplateColumn Header="FIELD (Unit)" Width="*">
                                             <DataGridTemplateColumn.CellTemplate>
                                                 <DataTemplate>
-                                                    <StackPanel Margin="8,6,8,6" VerticalAlignment="Center">
+                                                    <StackPanel Margin="8,6,8,6" VerticalAlignment="Center" HorizontalAlignment="Left">
                                                         <TextBlock Text="{Binding FieldName}"
                                                                    FontWeight="SemiBold" FontSize="12"
                                                                    TextWrapping="Wrap"/>
@@ -924,7 +916,23 @@
                                         </DataGridTemplateColumn>
 
                                         <!-- STD -->
-                                        <DataGridTemplateColumn Header="STD" Width="105">
+                                        <DataGridTemplateColumn  Width="130">
+                                            <DataGridTemplateColumn.HeaderTemplate>
+                                                <DataTemplate>
+                                                    <TextBlock Text="STD"
+                                                               TextWrapping="Wrap"
+                                                               TextAlignment="Center"
+                                                               ToolTipService.ShowDuration="20000">
+                                                        <TextBlock.ToolTip>
+                                                            <TextBlock TextWrapping="WrapWithOverflow" Width="250">
+                                                                    Most recent value.
+                                                            </TextBlock>
+                                                        </TextBlock.ToolTip>
+                                                    </TextBlock>
+                                                </DataTemplate>
+
+                                            </DataGridTemplateColumn.HeaderTemplate>
+
                                             <DataGridTemplateColumn.CellTemplate>
                                                 <DataTemplate>
                                                     <Border Background="{Binding Tolerance,
@@ -947,7 +955,23 @@
                                         </DataGridTemplateColumn>
 
                                         <!-- Δ -->
-                                        <DataGridTemplateColumn Header="Δ" Width="90">
+                                        <DataGridTemplateColumn Width="130">
+                                            <DataGridTemplateColumn.HeaderTemplate>
+                                                <DataTemplate>
+                                                    <TextBlock Text="Δ"
+                                                                TextWrapping="Wrap"
+                                                                TextAlignment="Center"
+                                                               ToolTipService.ShowDuration="20000">
+                                                        <TextBlock.ToolTip>
+                                                            <TextBlock TextWrapping="WrapWithOverflow" Width="250">
+                                                                            Difference between the current and most recent readings.
+                                                            </TextBlock>
+                                                        </TextBlock.ToolTip>
+                                                    </TextBlock>
+                                                </DataTemplate>
+
+                                            </DataGridTemplateColumn.HeaderTemplate>
+
                                             <DataGridTemplateColumn.CellTemplate>
                                                 <DataTemplate>
                                                     <Border CornerRadius="12" Padding="10,6"
@@ -971,7 +995,23 @@
                                         </DataGridTemplateColumn>
 
                                         <!-- ACTUAL -->
-                                        <DataGridTemplateColumn Header="ACTUAL" Width="105">
+                                        <DataGridTemplateColumn Width="130">
+                                            <DataGridTemplateColumn.HeaderTemplate>
+                                                <DataTemplate>
+                                                    <TextBlock Text="ACTUAL"
+                                                                TextWrapping="Wrap"
+                                                                TextAlignment="Center"
+                                                               ToolTipService.ShowDuration="20000">
+                                                        <TextBlock.ToolTip>
+                                                            <TextBlock TextWrapping="WrapWithOverflow" Width="250">
+                                                                        Current weighing value.
+                                                            </TextBlock>
+                                                        </TextBlock.ToolTip>
+                                                        </TextBlock>
+                                                </DataTemplate>
+
+                                            </DataGridTemplateColumn.HeaderTemplate>
+
                                             <DataGridTemplateColumn.CellTemplate>
                                                 <DataTemplate>
                                                     <Border Background="{Binding Tolerance,

@@ -72,7 +72,8 @@ namespace SSSW.UI.WPF.Models
         public string ActualDisplay => (Actual.HasValue && Actual > 0)
                                            ? Actual.Value.ToString("F2") : "—";
         public string DeltaDisplay  => Delta.HasValue
-                                           ? ((Delta >= 0 ? "+" : "") + Delta.Value.ToString("F2")) : "—";
+                                           ? ((Delta >= 0 ? "+" : "") + Delta.Value.ToString("F2") + " (" + DeltaPct.Value.ToString("F2")+" %)") 
+                                           : "—";
 
         public double? Delta => (Actual.HasValue && Std.HasValue && Std.Value != 0)
             ? Math.Round(Actual.Value - Std.Value, 3) : (double?)null;
@@ -86,8 +87,8 @@ namespace SSSW.UI.WPF.Models
             {
                 if (DeltaPct == null) return ToleranceCategory.Idle;
                 var abs = Math.Abs(DeltaPct.Value);
-                return abs <= 1.0 ? ToleranceCategory.Ok
-                     : abs <= 3.0 ? ToleranceCategory.Warn
+                return abs <= GlobalVariable.ConfigSystem.DeltaLevel1 ? ToleranceCategory.Ok
+                     : abs <= GlobalVariable.ConfigSystem.DeltaLevel2 ? ToleranceCategory.Warn
                      : ToleranceCategory.Err;
             }
         }

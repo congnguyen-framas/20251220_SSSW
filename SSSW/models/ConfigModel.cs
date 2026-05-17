@@ -44,6 +44,16 @@ namespace SSSW.modelss
         public List<CategoryModel>? CategoryOfNonInjectionUsagePartial { get; set; }
 
         public string? UpdatePath { get; set; }
+
+        /// <summary>
+        /// Gets or sets the delta value from which calculations or comparisons are performed.
+        /// </summary>
+        public double? DeltaLevel1 { get; set; } = 1;
+
+        /// <summary>
+        /// Gets or sets the delta value to use for calculations or comparisons.
+        /// </summary>
+        public double? DeltaLevel2 { get; set; } = 3;
     }
 
     public class CategoryModel

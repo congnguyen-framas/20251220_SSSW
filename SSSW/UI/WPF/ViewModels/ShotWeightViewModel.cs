@@ -424,6 +424,7 @@ namespace SSSW.UI.WPF.ViewModels
         public RelayCommand HistoryToggleCommand { get; }
         public RelayCommand GridScaleCommand { get; }
         public RelayCommand GridResetCommand { get; }
+        public RelayCommand GridDeleteCommand { get; }
 
         // ─────────────────────────────────────────────────────────────────────
         //  CONSTRUCTOR

@@ -96,12 +96,7 @@ namespace SSSW.UI.WPF.ViewModels
         //  BINDABLE DISPLAY PROPERTIES
         // ─────────────────────────────────────────────────────────────────────
 
-        private bool _readOnly = false;
-        public bool ReadOnly
-        {
-            get => _readOnly;
-            set { _readOnly = value; OnPropertyChanged(); }
-        }
+       
 
         #region Title / Header
         private string _windowTitle = "IT – Shotweight Station";
@@ -299,6 +294,13 @@ namespace SSSW.UI.WPF.ViewModels
             set => SetProperty(ref _barcodeScannedValue, value);
         }
 
+        private bool _readOnlyScanner = false;
+        public bool ReadOnlyScanner
+        {
+            get => _readOnlyScanner;
+            set { _readOnlyScanner = value; OnPropertyChanged(); }
+        }
+
         // ── RFID ─────────────────────────────────────────────────────────────
         private DriverStatus _rfidStatus = DriverStatus.Unknown;
         public DriverStatus RfidStatus
@@ -313,6 +315,13 @@ namespace SSSW.UI.WPF.ViewModels
         {
             get => _rfidCardCode;
             set { SetProperty(ref _rfidCardCode, value); }
+        }
+
+        private bool _readOnlyRfid = false;
+        public bool ReadOnlyRfid
+        {
+            get => _readOnlyRfid;
+            set { _readOnlyRfid = value; OnPropertyChanged(); }
         }
 
         // ── Scale ─────────────────────────────────────────────────────────────
@@ -350,6 +359,13 @@ namespace SSSW.UI.WPF.ViewModels
             get => _deltaInformation;
             set { SetProperty(ref _deltaInformation, value); }
         }
+
+        private bool _readOnlyScale = false;
+        public bool ReadOnlyScale
+        {
+            get => _readOnlyScale;
+            set { _readOnlyScale = value; OnPropertyChanged(); }
+        }
         #endregion
 
         #region History
@@ -374,6 +390,17 @@ namespace SSSW.UI.WPF.ViewModels
             set
             {
                 _historyToggleTextSecond = value;
+                OnPropertyChanged();
+            }
+        }
+
+        private string _historyToggleTextDetail = string.Empty;
+        public string HistoryToggleTextDetail
+        {
+            get => _historyToggleTextDetail;
+            set
+            {
+                _historyToggleTextDetail = value;
                 OnPropertyChanged();
             }
         }
@@ -527,8 +554,10 @@ namespace SSSW.UI.WPF.ViewModels
             UsagePct = GlobalVariable.ConfigSystem.PercentOfUserNonWoven.ToString();
             _percentOfUsage = GlobalVariable.ConfigSystem.PercentOfUserNonWoven;
 
-            DeltaInformation = $"Std (target) ↔ Actual (live) · auto-colored vs. tolerance ±{GlobalVariable.ConfigSystem.DeltaLevel1}% / ±{GlobalVariable.ConfigSystem.DeltaLevel2}%";
-            ReadOnly = GlobalVariable.ConfigSystem.EnableReadScale ?? true;
+            DeltaInformation = $"STD: Target Weight ↔ ACTUAL: Live Weight · auto colored vs. tolerance ±{GlobalVariable.ConfigSystem.DeltaLevel1}% / ±{GlobalVariable.ConfigSystem.DeltaLevel2}%";
+            ReadOnlyScale = GlobalVariable.ConfigSystem.Scale.ReadOnly ?? true;
+            ReadOnlyRfid = GlobalVariable.ConfigSystem.RFID.ReadOnly;
+            ReadOnlyScanner = GlobalVariable.ConfigSystem.Scanner.ReadOnly;
 
             await LoadDataAsync();
         }
@@ -598,6 +627,7 @@ namespace SSSW.UI.WPF.ViewModels
         public void OnScaleValueChanged(double value, bool stable = false, bool tare = false, string unit = "KG")
         {
             _scaleValue = Math.Round(value, 2);
+            ScaleValue = _scaleValue;
             ScaleDisplay = _scaleValue.ToString("F2");
             ScaleStable = stable;
             ScaleTare = tare;
@@ -638,7 +668,7 @@ namespace SSSW.UI.WPF.ViewModels
                 }
 
                 RfidName = _operatorInfo.C001;
-                UserName = $"{_operatorInfo.C000} · {_operatorInfo.C001}";
+                UserName = $"{_operatorInfo.C000} - {_operatorInfo.C001}";
             }
             catch (Exception ex)
             {
@@ -1506,7 +1536,8 @@ namespace SSSW.UI.WPF.ViewModels
                         HistoryCollection.Add(h);
 
                     var toggle = (_historyExpanded ? "▼" : "▶");
-                    HistoryToggleText = $"{toggle}  REFERENCE / HISTORY  ·  last {_refHistory.Count} weighings  ·  {StepInfo.C002}  ·  {StepInfo.C008}  ·  {StepInfo.C007}";
+                    HistoryToggleTextDetail = $"Last {_refHistory.Count} weighings  ·  {StepInfo.C002}  ·  {StepInfo.C008}  ·  {StepInfo.C007}";
+                    HistoryToggleText = $"{toggle}  REFERENCE / HISTORY";
                     HistoryToggleTextSecond = $"{StepInfo.C003}";
 
                 });

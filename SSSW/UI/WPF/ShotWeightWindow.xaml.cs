@@ -510,5 +510,19 @@ namespace SSSW.UI.WPF
                 Log.Error(ex.Message);
             }
         }
+
+        private void _tbEmployee_MouseLeftButtonDown(object sender, MouseButtonEventArgs e)
+        {
+
+            var child = new frmRfidInput();
+
+            bool? result = child.ShowDialog();
+
+            if (result == true)
+            {
+              
+            }
+
+        }
     }
 }

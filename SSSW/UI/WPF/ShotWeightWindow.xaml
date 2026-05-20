@@ -29,7 +29,7 @@
         <Grid.RowDefinitions>
             <RowDefinition Height="44" />
             <RowDefinition Height="*" />
-            <RowDefinition Height="55" />
+            <!--<RowDefinition Height="10" />-->
         </Grid.RowDefinitions>
 
         <!--  ═══════════════════════════════ TITLE BAR ═══════════════════════════════  -->
@@ -386,7 +386,6 @@
                                 <TextBox
                                     Name="_txtBarcode"
                                     MinWidth="260"
-                                    Foreground="#1565C0"
                                     IsReadOnly="{Binding ReadOnlyScanner}"
                                     KeyDown="_txtBarcode_KeyDown"
                                     Style="{StaticResource FieldStyle}"
@@ -536,7 +535,7 @@
                                 <DataGridTextColumn
                                     Width="80"
                                     Binding="{Binding C004}"
-                                    ElementStyle="{StaticResource LeftCell}">
+                                    ElementStyle="{StaticResource CenterCell}">
                                     <DataGridTextColumn.Header>
                                         <TextBlock
                                             Text="MACHINE"
@@ -560,7 +559,10 @@
                                     <!--  CELL TEMPLATE  -->
                                     <DataGridTemplateColumn.CellTemplate>
                                         <DataTemplate>
-                                            <StackPanel Margin="6,0">
+                                            <StackPanel
+                                                Margin="6,0"
+                                                HorizontalAlignment="Center"
+                                                VerticalAlignment="Center">
                                                 <TextBlock
                                                     FontSize="12"
                                                     FontWeight="Bold"
@@ -580,7 +582,7 @@
                                 <DataGridTextColumn
                                     Width="80"
                                     Binding="{Binding C015}"
-                                    ElementStyle="{StaticResource RightCell}">
+                                    ElementStyle="{StaticResource CenterCell1}">
                                     <DataGridTextColumn.Header>
                                         <TextBlock
                                             Text="SEQUENCE STEP"
@@ -640,7 +642,7 @@
                                     <DataGridTextColumn.HeaderTemplate>
                                         <DataTemplate>
                                             <TextBlock
-                                                Text="TOTAL WEIGHT INJECTION (g)"
+                                                Text="TOTAL INJECTION (g)"
                                                 TextAlignment="Center"
                                                 TextWrapping="WrapWithOverflow"
                                                 ToolTipService.ShowDuration="20000">
@@ -661,7 +663,7 @@
                                     <DataGridTextColumn.HeaderTemplate>
                                         <DataTemplate>
                                             <TextBlock
-                                                Text="TOTAL PART WEIGHT (g/prs)"
+                                                Text="TOTAL PART (g/prs)"
                                                 TextAlignment="Center"
                                                 TextWrapping="WrapWithOverflow"
                                                 ToolTipService.ShowDuration="20000">
@@ -682,7 +684,7 @@
                                     <DataGridTextColumn.HeaderTemplate>
                                         <DataTemplate>
                                             <TextBlock
-                                                Text="PART WEIGHT (g/prs)"
+                                                Text="PART (g/prs)"
                                                 TextAlignment="Center"
                                                 TextWrapping="WrapWithOverflow"
                                                 ToolTipService.ShowDuration="20000">
@@ -704,7 +706,7 @@
                                     <DataGridTextColumn.HeaderTemplate>
                                         <DataTemplate>
                                             <TextBlock
-                                                Text="RUNNER / EXCESS MAT. WEIGHT (g/prs)"
+                                                Text="RUNNER / EXCESS MAT. (g/prs)"
                                                 TextAlignment="Center"
                                                 TextWrapping="WrapWithOverflow"
                                                 ToolTipService.ShowDuration="20000">
@@ -896,6 +898,7 @@
                                         x:Name="dgHistory"
                                         ItemsSource="{Binding HistoryCollection}"
                                         Style="{StaticResource GridStyle}">
+
                                         <DataGrid.Columns>
                                             <DataGridTextColumn
                                                 Width="130"
@@ -912,7 +915,7 @@
                                             <DataGridTextColumn
                                                 Width="100"
                                                 Binding="{Binding C024, StringFormat=F2}"
-                                                ElementStyle="{StaticResource RightCell}">
+                                                ElementStyle="{StaticResource CenterCell}">
                                                 <DataGridTextColumn.Header>
                                                     <TextBlock
                                                         Text="TOTAL WEIGHT (g)"
@@ -924,7 +927,7 @@
                                             <DataGridTextColumn
                                                 Width="125"
                                                 Binding="{Binding C024, StringFormat=F2}"
-                                                ElementStyle="{StaticResource RightCell}">
+                                                ElementStyle="{StaticResource CenterCell}">
                                                 <DataGridTextColumn.Header>
                                                     <TextBlock
                                                         Text="TOTAL PART WEIGHT (g/prs)"
@@ -936,7 +939,7 @@
                                             <DataGridTextColumn
                                                 Width="115"
                                                 Binding="{Binding C021, StringFormat=F2}"
-                                                ElementStyle="{StaticResource RightCell}">
+                                                ElementStyle="{StaticResource CenterCell}">
                                                 <DataGridTextColumn.Header>
                                                     <TextBlock
                                                         Text="PART WEIGHT (g/prs)"
@@ -948,7 +951,7 @@
                                             <DataGridTextColumn
                                                 Width="115"
                                                 Binding="{Binding C022, StringFormat=F2}"
-                                                ElementStyle="{StaticResource RightCell}">
+                                                ElementStyle="{StaticResource CenterCell}">
                                                 <DataGridTextColumn.Header>
                                                     <TextBlock
                                                         Text="RUNNER / EXCESS MAT. WEIGHT (g/prs)"
@@ -957,9 +960,12 @@
                                                 </DataGridTextColumn.Header>
                                             </DataGridTextColumn>
 
-                                            <DataGridTextColumn Width="100" Binding="{Binding C011, StringFormat=F2}">
+                                            <DataGridTextColumn Width="100" Binding="{Binding C011}">
                                                 <DataGridTextColumn.Header>
                                                     <TextBlock
+                                                        Margin="0,0,10,13"
+                                                        HorizontalAlignment="Center"
+                                                        VerticalAlignment="Center"
                                                         Text="OPERATOR"
                                                         TextAlignment="Center"
                                                         TextWrapping="WrapWithOverflow" />
@@ -981,6 +987,7 @@
                                     <RowDefinition Height="Auto" />
                                     <RowDefinition Height="Auto" SharedSizeGroup="HeaderRow" />
                                     <RowDefinition Height="*" />
+                                    <RowDefinition Height="60" />
                                 </Grid.RowDefinitions>
 
                                 <!--  ── Header: REFERENCE VALUES (left) + SCALE VALUE indicator (right) ──  -->
@@ -1007,135 +1014,96 @@
                                     </Grid>
                                 </Border>
 
-                                <!--  ── Scale Value Display ──  -->
-                                <Border
-                                    Grid.Row="1"
-                                    Padding="5"
-                                    Background="{Binding ScaleTare, Converter={StaticResource TareToBackground}}"
-                                    BorderBrush="#E0E7EF"
-                                    BorderThickness="0,0,0,0">
-                                    <Grid>
-                                        <Grid.ColumnDefinitions>
-                                            <ColumnDefinition Width="*" />
-                                            <ColumnDefinition Width="Auto" />
-                                        </Grid.ColumnDefinitions>
 
-                                        <!--  Right: SCALE VALUE label + status dot  -->
-                                        <StackPanel
-                                            Grid.Column="0"
-                                            Margin="12"
-                                            HorizontalAlignment="Right"
+                                <!--  SCALE VALUE ROW (NEW)  -->
+                                <Grid Grid.Row="1" Margin="10">
+
+                                    <!--  3 cột align với DataGrid  -->
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="46" />
+                                        <!--  Label  -->
+                                        <ColumnDefinition Width="*" />
+                                        <!--  STD  -->
+                                        <ColumnDefinition Width="140" />
+                                        <!--  ACTUAL  -->
+                                        <ColumnDefinition Width="140" />
+                                        <ColumnDefinition Width="140" />
+                                        <!--  Stable  -->
+                                    </Grid.ColumnDefinitions>
+
+                                    <!--  LEFT: SCALE LABEL  -->
+                                    <StackPanel
+                                        Grid.Column="1"
+                                        Margin="0,0,10,0"
+                                        HorizontalAlignment="Right"
+                                        VerticalAlignment="Center"
+                                        Orientation="Horizontal">
+
+                                        <Ellipse
+                                            Width="8"
+                                            Height="8"
+                                            Margin="0,0,6,0"
+                                            Fill="#2E7D32" />
+
+                                        <TextBlock HorizontalAlignment="Right" VerticalAlignment="Center">
+                                            <Run
+                                                Text="SCALE VALUE "
+                                                FontSize="30"
+                                                FontWeight="Bold" />
+                                            <Run Text="(g)" FontSize="14" />
+                                        </TextBlock>
+                                    </StackPanel>
+
+
+                                    <!--  CENTER BIG VALUE (SPAN STD + ACTUAL)  -->
+                                    <Border
+                                        Grid.Column="2"
+                                        Grid.ColumnSpan="2"
+                                        Margin="0,0"
+                                        Padding="20"
+                                        Background="{Binding ScaleCardBackground}"
+                                        BorderBrush="{Binding ScaleCardBorderBrush}"
+                                        BorderThickness="2"
+                                        CornerRadius="8">
+
+                                        <TextBox
+                                            HorizontalAlignment="Center"
                                             VerticalAlignment="Center"
-                                            Orientation="Horizontal">
-                                            <Ellipse
-                                                Width="10"
-                                                Height="10"
-                                                Margin="0,0,6,0"
-                                                VerticalAlignment="Center"
-                                                Fill="{Binding ScaleStatus, Converter={StaticResource DriverStatusToColor}}" />
-                                            <TextBlock
-                                                VerticalAlignment="Center"
-                                                FontFamily="Segoe UI"
-                                                FontSize="15"
-                                                FontWeight="Bold"
-                                                Foreground="Black"
-                                                Text="SCALE VALUE (G)" />
-                                        </StackPanel>
+                                            Background="Transparent"
+                                            BorderThickness="0"
+                                            FontFamily="Consolas"
+                                            FontSize="50"
+                                            FontWeight="Bold"
+                                            Foreground="#1B5E20"
+                                            IsReadOnly="{Binding ReadOnlyScale}"
+                                            TextAlignment="Center"
+                                            Text="{Binding ScaleValue}" />
+                                    </Border>
 
 
-                                        <!--  Right: Large scale number — đổi màu theo tolerance  -->
-                                        <Border
-                                            Grid.Column="1"
-                                            Margin="0"
-                                            Padding="0"
-                                            Background="{Binding ScaleCardBackground}"
-                                            BorderBrush="{Binding ScaleCardBorderBrush}"
-                                            BorderThickness="2"
-                                            CornerRadius="8">
+                                    <!--  RIGHT: STABLE BADGE (TÁCH RIÊNG)  -->
+                                    <Border
+                                        Grid.Column="4"
+                                        Margin="10,0,0,0"
+                                        Padding="10,4"
+                                        HorizontalAlignment="Center"
+                                        VerticalAlignment="Center"
+                                        Background="#1B5E20"
+                                        CornerRadius="4">
 
-                                            <Grid>
-                                                <Grid.ColumnDefinitions>
-                                                    <ColumnDefinition Width="auto" />
-                                                    <ColumnDefinition Width="*" />
-                                                </Grid.ColumnDefinitions>
-                                                <TextBox
-                                                    Name="_txtScale"
-                                                    Grid.Column="0"
-                                                    MinWidth="300"
-                                                    Margin="10"
-                                                    Padding="0"
-                                                    HorizontalAlignment="Stretch"
-                                                    HorizontalContentAlignment="Right"
-                                                    BorderThickness="0"
-                                                    FontFamily="Consolas"
-                                                    FontSize="44"
-                                                    FontWeight="Bold"
-                                                    IsReadOnly="{Binding ReadOnlyScale}"
-                                                    KeyDown="_txtScale_KeyDown"
-                                                    Text="{Binding ScaleValue, UpdateSourceTrigger=LostFocus}">
-                                                    <TextBox.Style>
-                                                        <Style TargetType="TextBox">
-                                                            <Setter Property="Foreground" Value="#1B5E20" />
-                                                            <Style.Triggers>
-                                                                <DataTrigger Binding="{Binding ReadOnly}" Value="True">
-                                                                    <Setter Property="Foreground">
-                                                                        <Setter.Value>
-                                                                            <Binding
-                                                                                Converter="{StaticResource StableToForeground}"
-                                                                                Path="DataContext.ScaleStable"
-                                                                                RelativeSource="{RelativeSource Self}" />
-                                                                        </Setter.Value>
-                                                                    </Setter>
-                                                                </DataTrigger>
-                                                            </Style.Triggers>
-                                                        </Style>
-                                                    </TextBox.Style>
-                                                </TextBox>
+                                        <TextBlock
+                                            Foreground="White"
+                                            FontSize="12"
+                                            FontWeight="Bold"
+                                            Text="Stable Value" />
+                                    </Border>
 
-                                                <!--  Left: Stable / Tare badges  -->
-                                                <StackPanel
-                                                    Grid.Column="1"
-                                                    Margin="10,0,10,10"
-                                                    HorizontalAlignment="Center"
-                                                    VerticalAlignment="Center"
-                                                    Orientation="Vertical">
-                                                    <Border
-                                                        Margin="5"
-                                                        Padding="10,4"
-                                                        HorizontalAlignment="Left"
-                                                        Background="{Binding ScaleStable, Converter={StaticResource StableToForeground}}"
-                                                        CornerRadius="4"
-                                                        Visibility="{Binding ReadOnly, Converter={StaticResource InverseBoolToVisibilityConverter}}">
-                                                        <TextBlock
-                                                            FontSize="11"
-                                                            FontWeight="Bold"
-                                                            Foreground="White"
-                                                            Text="Stable Value" />
-                                                    </Border>
-                                                    <Border
-                                                        Margin="0,5,5,5"
-                                                        Padding="10,4"
-                                                        HorizontalAlignment="Left"
-                                                        Background="#E53935"
-                                                        CornerRadius="4"
-                                                        Visibility="{Binding ScaleTare, Converter={StaticResource BoolToVisibility}}">
-                                                        <TextBlock
-                                                            FontSize="11"
-                                                            FontWeight="Bold"
-                                                            Foreground="Black"
-                                                            Text="TARE" />
-                                                    </Border>
-                                                </StackPanel>
-                                            </Grid>
-
-                                        </Border>
-                                    </Grid>
-                                </Border>
+                                </Grid>
 
                                 <!--  ── REFERENCE VALUES DataGrid ──  -->
                                 <Border
                                     Grid.Row="2"
-                                    Padding="5,0,5,5"
+                                    Padding="0,0,0,5"
                                     Background="{Binding ScaleTare, Converter={StaticResource TareToBackground}}"
                                     BorderBrush="#E0E7EF"
                                     BorderThickness="0,0,0,0">
@@ -1151,7 +1119,8 @@
                                             Padding="10"
                                             ItemsSource="{Binding RefRowsCollection}"
                                             RowStyle="{StaticResource RefRowStyle}"
-                                            Style="{StaticResource GridStyle}">
+                                            Style="{StaticResource GridStyle}"
+                                            Grid.IsSharedSizeScope="True">
                                             <DataGrid.Columns>
 
                                                 <!--  #  -->
@@ -1160,12 +1129,12 @@
                                                         <DataTemplate>
                                                             <StackPanel Margin="8,9,8,6" VerticalAlignment="Center">
                                                                 <Border
-                                                                    Width="28"
-                                                                    Height="28"
+                                                                    Width="30"
+                                                                    Height="30"
                                                                     HorizontalAlignment="Center"
                                                                     VerticalAlignment="Center"
-                                                                    Background="#1565C0"
-                                                                    CornerRadius="14">
+                                                                    Background="#0D1117"
+                                                                    CornerRadius="15">
                                                                     <TextBlock
                                                                         HorizontalAlignment="Center"
                                                                         VerticalAlignment="Center"
@@ -1242,8 +1211,6 @@
                                                         </DataTemplate>
                                                     </DataGridTemplateColumn.CellTemplate>
                                                 </DataGridTemplateColumn>
-
-
 
                                                 <!--  ACTUAL  -->
                                                 <DataGridTemplateColumn Width="140">
@@ -1325,72 +1292,72 @@
 
                                         <StackPanel
                                             Grid.Row="1"
-                                            Margin="10"
-                                            VerticalAlignment="Center">
+                                            Margin="10,0,0,0"
+                                            VerticalAlignment="Center"
+                                            Grid.IsSharedSizeScope="True">
                                             <TextBlock
                                                 Margin="0,3,0,0"
                                                 Foreground="#B0BEC5"
                                                 Style="{StaticResource LabelStyle}"
-                                                FontSize="12"
+                                                FontSize="20"
                                                 Text="{Binding DeltaInformation}" />
                                         </StackPanel>
                                     </Grid>
 
                                 </Border>
 
+                                <!--  ═══════════════════════════════ BOTTOM BAR ═════════════════════════════  -->
+                                <Border Grid.Row="3">
+                                    <StackPanel
+                                        HorizontalAlignment="Right"
+                                        VerticalAlignment="Center"
+                                        Orientation="Horizontal">
+                                        <Button
+                                            Margin="0,0,4,0"
+                                            Padding="20,0"
+                                            Background="#0D1117"
+                                            Command="{Binding SaveCommand}"
+                                            Style="{StaticResource BottomBtn}">
+
+                                            <StackPanel Orientation="Horizontal">
+                                                <TextBlock Margin="0,0,6,0" Text="💾" />
+                                                <TextBlock Text="Save" />
+                                            </StackPanel>
+
+                                        </Button>
+                                        <Button
+                                            Margin="0,0,4,0"
+                                            Padding="20,0"
+                                            Background="#E65100"
+                                            Command="{Binding CancelCommand}"
+                                            Style="{StaticResource BottomBtn}">
+
+                                            <StackPanel Orientation="Horizontal">
+                                                <TextBlock Margin="0,0,6,0" Text="❌" />
+                                                <TextBlock Text="Cancel" />
+                                            </StackPanel>
+
+                                        </Button>
+                                        <Button
+                                            Padding="20,0"
+                                            Background="#2E7D32"
+                                            Command="{Binding ConfirmCommand}"
+                                            Style="{StaticResource BottomBtn}">
+
+                                            <StackPanel Orientation="Horizontal">
+                                                <TextBlock Margin="0,0,6,0" Text="✔" />
+                                                <TextBlock Text="Confirm" />
+                                            </StackPanel>
+
+                                        </Button>
+                                    </StackPanel>
+                                </Border>
                             </Grid>
                         </Border>
                     </Grid>
                 </Border>
             </Grid>
         </Grid>
-
-        <!--  ═══════════════════════════════ BOTTOM BAR ═════════════════════════════  -->
-        <Border Grid.Row="2" Margin="6,0,6,6">
-            <StackPanel
-                HorizontalAlignment="Right"
-                VerticalAlignment="Center"
-                Orientation="Horizontal">
-                <Button
-                    Margin="0,0,4,0"
-                    Padding="20,0"
-                    Background="#1A237E"
-                    Command="{Binding SaveCommand}"
-                    Style="{StaticResource BottomBtn}">
-
-                    <StackPanel Orientation="Horizontal">
-                        <TextBlock Margin="0,0,6,0" Text="💾" />
-                        <TextBlock Text="Save" />
-                    </StackPanel>
-
-                </Button>
-                <Button
-                    Margin="0,0,4,0"
-                    Padding="20,0"
-                    Background="#E65100"
-                    Command="{Binding CancelCommand}"
-                    Style="{StaticResource BottomBtn}">
-
-                    <StackPanel Orientation="Horizontal">
-                        <TextBlock Margin="0,0,6,0" Text="❌" />
-                        <TextBlock Text="Cancel" />
-                    </StackPanel>
-
-                </Button>
-                <Button
-                    Padding="20,0"
-                    Background="#2E7D32"
-                    Command="{Binding ConfirmCommand}"
-                    Style="{StaticResource BottomBtn}">
-
-                    <StackPanel Orientation="Horizontal">
-                        <TextBlock Margin="0,0,6,0" Text="✔" />
-                        <TextBlock Text="Confirm" />
-                    </StackPanel>
-
-                </Button>
-            </StackPanel>
-        </Border>
 
         <!--  ═══════════════════════════════ LOADING OVERLAY ═════════════════════════  -->
         <Grid

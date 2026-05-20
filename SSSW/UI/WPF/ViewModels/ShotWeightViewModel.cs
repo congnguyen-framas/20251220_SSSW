@@ -1537,7 +1537,10 @@ namespace SSSW.UI.WPF.ViewModels
 
                     var toggle = (_historyExpanded ? "▼" : "▶");
                     HistoryToggleTextDetail = $"Last {_refHistory.Count} weighings  ·  {StepInfo.C002}  ·  {StepInfo.C008}  ·  {StepInfo.C007}";
-                    HistoryToggleText = $"{toggle}  REFERENCE / HISTORY";
+
+                    //HistoryToggleText = $"{toggle}  REFERENCE / HISTORY";
+                    HistoryToggleText = $"REFERENCE / HISTORY";
+
                     HistoryToggleTextSecond = $"{StepInfo.C003}";
 
                 });

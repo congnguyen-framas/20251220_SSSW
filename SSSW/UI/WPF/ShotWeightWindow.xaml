@@ -437,21 +437,8 @@
                             Style="{StaticResource GridStyle}">
                             <DataGrid.Columns>
 
-                                <!--  Status strip  -->
-                                <!--<DataGridTemplateColumn Width="6" Header="" CanUserResize="False">
-                                    <DataGridTemplateColumn.CellTemplate>
-                                        <DataTemplate>
-                                            <Rectangle Width="4" HorizontalAlignment="Left" Margin="1,4,1,4">
-                                                <Rectangle.Fill>
-                                                    <SolidColorBrush Color="{Binding StatusBarColor}"/>
-                                                </Rectangle.Fill>
-                                            </Rectangle>
-                                        </DataTemplate>
-                                    </DataGridTemplateColumn.CellTemplate>
-                                </DataGridTemplateColumn>-->
-
                                 <!--  Action buttons – Command binding lên Window DataContext  -->
-                                <DataGridTemplateColumn Width="130" IsReadOnly="False">
+                                <DataGridTemplateColumn Width="125" IsReadOnly="False">
                                     <!--  HEADER TEMPLATE  -->
                                     <DataGridTemplateColumn.HeaderTemplate>
                                         <DataTemplate>
@@ -495,7 +482,7 @@
                                 </DataGridTemplateColumn>
 
                                 <!--  STATUS  -->
-                                <DataGridTemplateColumn Width="90">
+                                <DataGridTemplateColumn Width="65">
                                     <!--  HEADER TEMPLATE  -->
                                     <DataGridTemplateColumn.HeaderTemplate>
                                         <DataTemplate>
@@ -533,7 +520,7 @@
                                 </DataGridTemplateColumn>
 
                                 <DataGridTextColumn
-                                    Width="80"
+                                    Width="75"
                                     Binding="{Binding C004}"
                                     ElementStyle="{StaticResource CenterCell}">
                                     <DataGridTextColumn.Header>
@@ -544,7 +531,7 @@
                                     </DataGridTextColumn.Header>
                                 </DataGridTextColumn>
 
-                                <DataGridTemplateColumn Width="200">
+                                <DataGridTemplateColumn Width="150">
                                     <!--  HEADER TEMPLATE  -->
                                     <DataGridTemplateColumn.HeaderTemplate>
                                         <DataTemplate>
@@ -578,11 +565,10 @@
                                     </DataGridTemplateColumn.CellTemplate>
                                 </DataGridTemplateColumn>
 
-
                                 <DataGridTextColumn
                                     Width="80"
                                     Binding="{Binding C015}"
-                                    ElementStyle="{StaticResource CenterCell1}">
+                                    ElementStyle="{StaticResource CenterCell}">
                                     <DataGridTextColumn.Header>
                                         <TextBlock
                                             Text="SEQUENCE STEP"
@@ -591,7 +577,7 @@
                                     </DataGridTextColumn.Header>
                                 </DataGridTextColumn>
 
-                                <DataGridTemplateColumn Width="200">
+                                <DataGridTemplateColumn Width="426">
                                     <!--  HEADER TEMPLATE  -->
                                     <DataGridTemplateColumn.HeaderTemplate>
                                         <DataTemplate>
@@ -626,7 +612,7 @@
                                 <DataGridTextColumn
                                     Width="60"
                                     Binding="{Binding C008}"
-                                    ElementStyle="{StaticResource LeftCell}">
+                                    ElementStyle="{StaticResource CenterCell}">
                                     <DataGridTextColumn.Header>
                                         <TextBlock
                                             Text="SIZE"
@@ -657,7 +643,7 @@
                                 </DataGridTextColumn>
 
                                 <DataGridTextColumn
-                                    Width="100"
+                                    Width="60"
                                     Binding="{Binding C023, StringFormat=F2}"
                                     ElementStyle="{StaticResource CenterCell}">
                                     <DataGridTextColumn.HeaderTemplate>
@@ -678,7 +664,7 @@
                                 </DataGridTextColumn>
 
                                 <DataGridTextColumn
-                                    Width="100"
+                                    Width="60"
                                     Binding="{Binding C021, StringFormat=F2}"
                                     ElementStyle="{StaticResource CenterCell}">
                                     <DataGridTextColumn.HeaderTemplate>
@@ -721,16 +707,280 @@
                                 </DataGridTextColumn>
 
                                 <DataGridTextColumn
+                                    Width="100"
+                                    Binding="{Binding C028, StringFormat=F2}"
+                                    ElementStyle="{StaticResource CenterCell}">
+                                    <DataGridTextColumn.HeaderTemplate>
+                                        <DataTemplate>
+                                            <TextBlock
+                                                Text="Actual Partitioning (prs)"
+                                                TextAlignment="Center"
+                                                TextWrapping="WrapWithOverflow"
+                                                ToolTipService.ShowDuration="20000">
+                                                <!--<TextBlock.ToolTip>
+                                                    <TextBlock Width="250" TextWrapping="Wrap">
+                                                        Runner weight of the current step. Calculation = (TOTAL WEIGHT INJECTION - TOTAL PART WEIGHT) / pairs per shot
+                                                    </TextBlock>
+                                                </TextBlock.ToolTip>-->
+                                            </TextBlock>
+                                        </DataTemplate>
+                                    </DataGridTextColumn.HeaderTemplate>
+                                </DataGridTextColumn>
+
+                                <DataGridTextColumn
+                                    Width="80"
+                                    Binding="{Binding C017, StringFormat=F2}"
+                                    ElementStyle="{StaticResource CenterCell}">
+                                    <DataGridTextColumn.HeaderTemplate>
+                                        <DataTemplate>
+                                            <TextBlock
+                                                Text="Actual Pairs Shot (prs)"
+                                                TextAlignment="Center"
+                                                TextWrapping="WrapWithOverflow"
+                                                ToolTipService.ShowDuration="20000">
+                                                <!--<TextBlock.ToolTip>
+                    <TextBlock Width="250" TextWrapping="Wrap">
+                        Runner weight of the current step. Calculation = (TOTAL WEIGHT INJECTION - TOTAL PART WEIGHT) / pairs per shot
+                    </TextBlock>
+                </TextBlock.ToolTip>-->
+                                            </TextBlock>
+                                        </DataTemplate>
+                                    </DataGridTextColumn.HeaderTemplate>
+                                </DataGridTextColumn>
+
+
+                                <DataGridTextColumn
+                                    Width="80"
+                                    Binding="{Binding C018, StringFormat=F2}"
+                                    ElementStyle="{StaticResource CenterCell}">
+                                    <DataGridTextColumn.HeaderTemplate>
+                                        <DataTemplate>
+                                            <TextBlock
+                                                Text="Mold Pairs Shot (prs)"
+                                                TextAlignment="Center"
+                                                TextWrapping="WrapWithOverflow"
+                                                ToolTipService.ShowDuration="20000">
+                                                <!--<TextBlock.ToolTip>
+                    <TextBlock Width="250" TextWrapping="Wrap">
+                        Runner weight of the current step. Calculation = (TOTAL WEIGHT INJECTION - TOTAL PART WEIGHT) / pairs per shot
+                    </TextBlock>
+                </TextBlock.ToolTip>-->
+                                            </TextBlock>
+                                        </DataTemplate>
+                                    </DataGridTextColumn.HeaderTemplate>
+                                </DataGridTextColumn>
+
+                                <DataGridTextColumn
+                                    Width="70"
+                                    Binding="{Binding C025, StringFormat=F2}"
+                                    ElementStyle="{StaticResource CenterCell}">
+                                    <DataGridTextColumn.HeaderTemplate>
+                                        <DataTemplate>
+                                            <TextBlock
+                                                Text="Quantity"
+                                                TextAlignment="Center"
+                                                TextWrapping="WrapWithOverflow"
+                                                ToolTipService.ShowDuration="20000">
+                                                <!--<TextBlock.ToolTip>
+    <TextBlock Width="250" TextWrapping="Wrap">
+        Runner weight of the current step. Calculation = (TOTAL WEIGHT INJECTION - TOTAL PART WEIGHT) / pairs per shot
+    </TextBlock>
+</TextBlock.ToolTip>-->
+                                            </TextBlock>
+                                        </DataTemplate>
+                                    </DataGridTextColumn.HeaderTemplate>
+                                </DataGridTextColumn>
+
+                                <DataGridTextColumn
+                                    Width="80"
+                                    Binding="{Binding C036, StringFormat=F2}"
+                                    ElementStyle="{StaticResource CenterCell}">
+                                    <DataGridTextColumn.HeaderTemplate>
+                                        <DataTemplate>
+                                            <TextBlock
+                                                Text="Weight per Unit (g/unit)"
+                                                TextAlignment="Center"
+                                                TextWrapping="WrapWithOverflow"
+                                                ToolTipService.ShowDuration="20000">
+                                                <!--<TextBlock.ToolTip>
+    <TextBlock Width="250" TextWrapping="Wrap">
+        Runner weight of the current step. Calculation = (TOTAL WEIGHT INJECTION - TOTAL PART WEIGHT) / pairs per shot
+    </TextBlock>
+</TextBlock.ToolTip>-->
+                                            </TextBlock>
+                                        </DataTemplate>
+                                    </DataGridTextColumn.HeaderTemplate>
+                                </DataGridTextColumn>
+
+                                <DataGridTextColumn
+                                    Width="50"
+                                    Binding="{Binding C037, StringFormat=F2}"
+                                    ElementStyle="{StaticResource CenterCell}">
+                                    <DataGridTextColumn.HeaderTemplate>
+                                        <DataTemplate>
+                                            <TextBlock
+                                                Text="Unit"
+                                                TextAlignment="Center"
+                                                TextWrapping="WrapWithOverflow"
+                                                ToolTipService.ShowDuration="20000">
+                                                <!--<TextBlock.ToolTip>
+    <TextBlock Width="250" TextWrapping="Wrap">
+        Runner weight of the current step. Calculation = (TOTAL WEIGHT INJECTION - TOTAL PART WEIGHT) / pairs per shot
+    </TextBlock>
+</TextBlock.ToolTip>-->
+                                            </TextBlock>
+                                        </DataTemplate>
+                                    </DataGridTextColumn.HeaderTemplate>
+                                </DataGridTextColumn>
+
+                                <DataGridTemplateColumn Width="763">
+                                    <!--  HEADER TEMPLATE  -->
+                                    <DataGridTemplateColumn.HeaderTemplate>
+                                        <DataTemplate>
+                                            <TextBlock
+                                                FontWeight="Bold"
+                                                Text="FG / FG CODE"
+                                                TextAlignment="Center"
+                                                TextWrapping="Wrap" />
+                                        </DataTemplate>
+                                    </DataGridTemplateColumn.HeaderTemplate>
+
+                                    <!--  CELL TEMPLATE  -->
+                                    <DataGridTemplateColumn.CellTemplate>
+                                        <DataTemplate>
+                                            <StackPanel Margin="6,4">
+                                                <TextBlock
+                                                    FontSize="12"
+                                                    FontWeight="Bold"
+                                                    Text="{Binding C014}"
+                                                    TextWrapping="Wrap" />
+
+                                                <TextBlock
+                                                    FontSize="10"
+                                                    Foreground="#78909C"
+                                                    Text="{Binding C013}"
+                                                    TextWrapping="Wrap" />
+                                            </StackPanel>
+                                        </DataTemplate>
+                                    </DataGridTemplateColumn.CellTemplate>
+                                </DataGridTemplateColumn>
+
+                                <DataGridTextColumn
                                     Width="90"
-                                    Binding="{Binding C011}"
-                                    ElementStyle="{StaticResource LeftCell}">
+                                    Binding="{Binding C019}"
+                                    ElementStyle="{StaticResource CenterCell}">
                                     <DataGridTextColumn.Header>
                                         <TextBlock
-                                            Text="OPERATOR"
+                                            Text="MACHINE GROUP"
                                             TextAlignment="Center"
                                             TextWrapping="WrapWithOverflow" />
                                     </DataGridTextColumn.Header>
                                 </DataGridTextColumn>
+
+                                <DataGridTextColumn
+                                    Width="90"
+                                    Binding="{Binding C020}"
+                                    ElementStyle="{StaticResource CenterCell}">
+                                    <DataGridTextColumn.Header>
+                                        <TextBlock
+                                            Text="MOLD ID"
+                                            TextAlignment="Center"
+                                            TextWrapping="WrapWithOverflow" />
+                                    </DataGridTextColumn.Header>
+                                </DataGridTextColumn>
+
+                                <DataGridTextColumn
+                                    Width="90"
+                                    Binding="{Binding C038}"
+                                    ElementStyle="{StaticResource CenterCell}">
+                                    <DataGridTextColumn.Header>
+                                        <TextBlock
+                                            Text="REMARKS"
+                                            TextAlignment="Center"
+                                            TextWrapping="WrapWithOverflow" />
+                                    </DataGridTextColumn.Header>
+                                </DataGridTextColumn>
+
+                                <DataGridTextColumn
+                                    Width="90"
+                                    Binding="{Binding C005}"
+                                    ElementStyle="{StaticResource CenterCell}">
+                                    <DataGridTextColumn.Header>
+                                        <TextBlock
+                                            Text="ARTICLE"
+                                            TextAlignment="Center"
+                                            TextWrapping="WrapWithOverflow" />
+                                    </DataGridTextColumn.Header>
+                                </DataGridTextColumn>
+
+                                <DataGridTextColumn
+                                    Width="90"
+                                    Binding="{Binding C000}"
+                                    ElementStyle="{StaticResource CenterCell}">
+                                    <DataGridTextColumn.Header>
+                                        <TextBlock
+                                            Text="HYDRA ORDER"
+                                            TextAlignment="Center"
+                                            TextWrapping="WrapWithOverflow" />
+                                    </DataGridTextColumn.Header>
+                                </DataGridTextColumn>
+
+                                <DataGridTemplateColumn Width="200">
+                                    <!--  HEADER TEMPLATE  -->
+                                    <DataGridTemplateColumn.HeaderTemplate>
+                                        <DataTemplate>
+                                            <TextBlock
+                                                FontWeight="Bold"
+                                                Text="CATEGORY / CATEGORY CODE"
+                                                TextAlignment="Center"
+                                                TextWrapping="WrapWithOverflow" />
+                                        </DataTemplate>
+                                    </DataGridTemplateColumn.HeaderTemplate>
+
+                                    <!--  CELL TEMPLATE  -->
+                                    <DataGridTemplateColumn.CellTemplate>
+                                        <DataTemplate>
+                                            <StackPanel Margin="6,4">
+                                                <TextBlock
+                                                    FontSize="12"
+                                                    FontWeight="Bold"
+                                                    Text="{Binding C034}"
+                                                    TextWrapping="Wrap" />
+
+                                                <TextBlock
+                                                    FontSize="10"
+                                                    Foreground="#78909C"
+                                                    Text="{Binding C033}"
+                                                    TextWrapping="Wrap" />
+                                            </StackPanel>
+                                        </DataTemplate>
+                                    </DataGridTemplateColumn.CellTemplate>
+                                </DataGridTemplateColumn>
+
+                                <DataGridTextColumn
+                                    Width="90"
+                                    Binding="{Binding C035}"
+                                    ElementStyle="{StaticResource CenterCell}">
+                                    <DataGridTextColumn.Header>
+                                        <TextBlock
+                                            Text="PERCENT OF USAGE (%)"
+                                            TextAlignment="Center"
+                                            TextWrapping="WrapWithOverflow" />
+                                    </DataGridTextColumn.Header>
+                                </DataGridTextColumn>
+
+                                <DataGridTextColumn
+                                    Width="90"
+                                    Binding="{Binding C012}"
+                                    ElementStyle="{StaticResource CenterCell}">
+                                    <DataGridTextColumn.Header>
+                                        <TextBlock
+                                            Text="QR CODE"
+                                            TextAlignment="Center"
+                                            TextWrapping="Wrap" />
+                                    </DataGridTextColumn.Header>
+                                </DataGridTextColumn>
+
                             </DataGrid.Columns>
                         </DataGrid>
                     </Grid>
@@ -1050,21 +1300,27 @@
                                                 Text="SCALE VALUE "
                                                 FontSize="30"
                                                 FontWeight="Bold" />
-                                            <Run Text="(g)" FontSize="14" />
+                                            <Run
+                                                Text="(g)"
+                                                FontSize="30"
+                                                FontWeight="Bold" />
                                         </TextBlock>
                                     </StackPanel>
 
 
                                     <!--  CENTER BIG VALUE (SPAN STD + ACTUAL)  -->
+                                    <!--
+                                        Background="{Binding ScaleCardBackground}"
+                                        BorderBrush="{Binding ScaleCardBorderBrush}"
+                                    -->
                                     <Border
                                         Grid.Column="2"
                                         Grid.ColumnSpan="2"
                                         Margin="0,0"
                                         Padding="20"
-                                        Background="{Binding ScaleCardBackground}"
-                                        BorderBrush="{Binding ScaleCardBorderBrush}"
-                                        BorderThickness="2"
-                                        CornerRadius="8">
+                                        BorderThickness="1"
+                                        CornerRadius="8"
+                                        BorderBrush="#0D1117">
 
                                         <TextBox
                                             HorizontalAlignment="Center"
@@ -1074,7 +1330,7 @@
                                             FontFamily="Consolas"
                                             FontSize="50"
                                             FontWeight="Bold"
-                                            Foreground="#1B5E20"
+                                            Foreground="#0D1117"
                                             IsReadOnly="{Binding ReadOnlyScale}"
                                             TextAlignment="Center"
                                             Text="{Binding ScaleValue}" />
@@ -1127,7 +1383,7 @@
                                                 <DataGridTemplateColumn Width="46" Header="#">
                                                     <DataGridTemplateColumn.CellTemplate>
                                                         <DataTemplate>
-                                                            <StackPanel Margin="8,9,8,6" VerticalAlignment="Center">
+                                                            <StackPanel Margin="8,9,8,4" VerticalAlignment="Center">
                                                                 <Border
                                                                     Width="30"
                                                                     Height="30"

@@ -3,7 +3,7 @@ using System.ComponentModel.DataAnnotations.Schema;
 
 namespace SSSW.models
 {
-    [Table("FT608_Test")]
+    [Table("FT608")]
     public class FT608_Config: EntityCommon
     {
         [Key]

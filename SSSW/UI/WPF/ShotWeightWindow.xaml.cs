@@ -168,7 +168,7 @@ namespace SSSW.UI.WPF
                 DecimalNum = cfg.Scale.DecimalNum,
                 ModelName = cfg.Scale.ModelName,
                 CheckStable = cfg.Scale.CheckStable == true,
-                CheckTare = cfg.Scale.CheckTare == true
+                CheckTare = cfg.Scale.CheckTare == true,
             };
 
             bool enableScale = scaleCfg.Enable && (cfg.EnableReadScale ?? false);
@@ -252,7 +252,7 @@ namespace SSSW.UI.WPF
                 }
                 else if (data.DriverStatus == DriverStatus.Disconnected)
                 {
-                    _vm.OnScaleValueChanged(0, false, false, "KG");
+                    _vm.OnScaleValueChanged(0, false, false, "G");
                 }
             });
         }

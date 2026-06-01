@@ -96,7 +96,7 @@ namespace SSSW.UI.WPF.ViewModels
         //  BINDABLE DISPLAY PROPERTIES
         // ─────────────────────────────────────────────────────────────────────
 
-       
+
 
         #region Title / Header
         private string _windowTitle = "IT – Shotweight Station";
@@ -228,6 +228,7 @@ namespace SSSW.UI.WPF.ViewModels
         }
 
         // ComboBox Runner (YES/NO)
+        //public List<string> RunnerOptions { get; set; } = new() { "YES", "NO" };
         private string _runnerText = "YES";
         public string RunnerText
         {
@@ -488,6 +489,7 @@ namespace SSSW.UI.WPF.ViewModels
             HistoryToggleCommand = new RelayCommand(ToggleHistory);
             GridScaleCommand = new RelayCommand(p => OnGridScale(p as FT600));
             GridResetCommand = new RelayCommand(p => OnGridReset(p as FT600));
+            GridDeleteCommand = new RelayCommand(p => OnGridDelete(p as FT600));
 
             // Default: xóa các giá trị hiển thị trong VM thay vì xóa WinForms TextBox
             ClearBarcodeAction = () => BarcodeScannedValue = string.Empty;
@@ -624,9 +626,10 @@ namespace SSSW.UI.WPF.ViewModels
         // ─────────────────────────────────────────────────────────────────────
 
         /// <summary>Scale hardware trả về giá trị cân mới (từ ScanAndScale.Core driver).</summary>
-        public void OnScaleValueChanged(double value, bool stable = false, bool tare = false, string unit = "KG")
+        /// KG - G
+        public void OnScaleValueChanged(double value, bool stable = false, bool tare = false, string unit = "G")
         {
-            _scaleValue = Math.Round(value, 2);
+            _scaleValue = Math.Round(value * 1000, 2);
             ScaleValue = _scaleValue;
             ScaleDisplay = _scaleValue.ToString("F2");
             ScaleStable = stable;
@@ -1328,6 +1331,7 @@ namespace SSSW.UI.WPF.ViewModels
             _labelInfo = new FT606_Label();
             _qrCodeScan = string.Empty;
             _remarkFinal = string.Empty;
+
             ClearStepComboAction?.Invoke();
             ClearBarcodeAction?.Invoke();
             ResetNewLoop();
@@ -1384,6 +1388,25 @@ namespace SSSW.UI.WPF.ViewModels
             _rowSelected = rowSelect;
             _articlePaisShotFinaly = _rowSelected.C017 != 0 && _rowSelected.C017 == _rowSelected.C028
                 ? _rowSelected.C017 : _rowSelected.C028;
+            RefreshUI(true);
+            UpdateReferencePanel();
+        }
+
+        public void OnGridDelete(FT600? rowSelect)
+        {
+            if (rowSelect == null) return;
+
+            var rowReset = _scaleDataFinal.FirstOrDefault(x =>
+                x.AllowScale && x.C002 == rowSelect.C002);
+            if (rowReset == null)
+            {
+                System.Windows.Forms.MessageBox.Show("Cannot reset this line.", "Warning",
+                    (MessageBoxButtons)MessageBoxButton.OK, (MessageBoxIcon)MessageBoxImage.Information);
+                return;
+            }
+
+            _scaleDataFinal.Remove(rowReset);
+
             RefreshUI(true);
             UpdateReferencePanel();
         }
@@ -1622,6 +1645,7 @@ namespace SSSW.UI.WPF.ViewModels
                 Remark = _remarkFinal;
                 StepName = _rowSelected?.C003;
 
+
                 // Enable/disable Usage %
                 var catCheck = GlobalVariable.ConfigSystem.CategoryOfNonInjectionUsagePartial?
                     .FirstOrDefault(x => x.CategoryCode == _rowSelected?.C033);
@@ -1673,6 +1697,9 @@ namespace SSSW.UI.WPF.ViewModels
             _remarkFinal = string.Empty;
             _stdRow = new FT600();
             _refHistory = new List<FT600>();
+
+            HistoryToggleTextDetail = HistoryToggleTextSecond = string.Empty;
+            HistoryCollection.Clear();
 
             RunnerText = "YES";
 

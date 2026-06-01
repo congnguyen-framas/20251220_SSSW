@@ -1535,8 +1535,8 @@ namespace SSSW
 
                         return
                             (isLogo && !hasC002)
-                            || (isStuds && !hasC002)
-                            || duplicatedSize;
+                            || (isStuds && !hasC002);
+                            //|| duplicatedSize;
                     });
 
                     _scaleDataFinal = _scaleData.OrderBy(x => x.C015).ThenBy(x => x.C027).ToList();

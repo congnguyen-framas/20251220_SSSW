@@ -967,6 +967,7 @@ namespace SSSW.UI.WPF.ViewModels
 
                     _scaleData.AddRange(dataSize.Where(ds =>
                         !_scaleData.Any(sd => sd.C002 == ds.C002 && sd.C015 == ds.C015)));
+
                     _scaleDataFinal = _scaleData.OrderBy(x => x.C015).ThenBy(x => x.C027).ToList();
 
                     // Đọc dữ liệu các bước đã cân trước đó
@@ -1040,6 +1041,30 @@ namespace SSSW.UI.WPF.ViewModels
                             }
                         }
                     }
+
+                    //var stepAll = _allStepsFG.Select(x => x.ItemStepCode).ToList();
+                    var stepAll = _allStepsFG
+    .Select(x => x.ItemStepCode)
+    .ToHashSet();
+                    var checkMultiSize = _scaleDataFinal
+    .GroupBy(x => (x.C004, x.C020))
+    .Where(g => g.Count() > 1)
+    .ToDictionary(g => g.Key, g => g.ToList());
+
+                    _scaleDataFinal.RemoveAll(x =>
+                    {
+                        bool isLogo = x.C003.StartsWith("Logo");
+                        bool isStuds = x.C003.StartsWith("Studs");
+
+                        bool hasC002 = stepAll.Contains(x.C002);
+
+                        bool duplicatedSize = checkMultiSize.ContainsKey((x.C004, x.C020));
+
+                        return
+                            (isLogo && !hasC002)
+                            || (isStuds && !hasC002);
+                        //|| duplicatedSize;
+                    });
 
                     _scaleDataFinal = _scaleDataFinal.OrderBy(x => x.C015).ToList();
 

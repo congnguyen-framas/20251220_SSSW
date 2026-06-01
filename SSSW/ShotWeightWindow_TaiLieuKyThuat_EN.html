@@ -1,0 +1,795 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>ShotWeightWindow – Technical Reference</title>
+<style>
+  :root{
+    --blue:#1565C0;--blue-dark:#0D1117;--blue-light:#E3F2FD;
+    --green:#2E7D32;--green-light:#E8F5E9;
+    --orange:#E65100;--orange-light:#FFF3E0;
+    --red:#B71C1C;--red-light:#FFEBEE;
+    --purple:#4A148C;--purple-light:#F3E5F5;
+    --grey:#546E7A;--grey-light:#ECEFF1;
+    --text:#212121;--border:#CFD8DC;
+    --font:'Segoe UI',Arial,sans-serif;
+  }
+  *{box-sizing:border-box;margin:0;padding:0;}
+  body{font-family:var(--font);color:var(--text);background:#F5F7FA;font-size:14px;line-height:1.6;}
+  @media print{body{background:#fff;} .no-print{display:none;} .page-break{page-break-before:always;}}
+
+  /* ─── cover ─── */
+  .cover{background:var(--blue-dark);color:#fff;padding:80px 60px;min-height:100vh;display:flex;flex-direction:column;justify-content:center;}
+  .cover .brand{font-size:52px;font-weight:800;letter-spacing:2px;margin-bottom:8px;}
+  .cover .title{font-size:36px;font-weight:700;color:#90CAF9;margin-bottom:6px;}
+  .cover .subtitle{font-size:18px;color:#90A4AE;margin-bottom:40px;font-family:Consolas,monospace;}
+  .cover-meta{display:grid;grid-template-columns:160px 1fr;gap:8px 20px;background:#1A2335;border-radius:8px;padding:24px;max-width:600px;}
+  .cover-meta .k{color:#90A4AE;font-size:13px;}
+  .cover-meta .v{color:#E3F2FD;font-size:13px;font-weight:600;}
+
+  /* ─── layout ─── */
+  .toc-sidebar{position:fixed;top:0;left:0;width:260px;height:100vh;background:#1E2A38;overflow-y:auto;padding:20px 0;z-index:100;}
+  .toc-sidebar .toc-brand{padding:16px 20px 12px;font-size:15px;font-weight:700;color:#90CAF9;border-bottom:1px solid #2D3E50;}
+  .toc-sidebar a{display:block;padding:6px 20px;color:#B0BEC5;text-decoration:none;font-size:13px;transition:all .15s;}
+  .toc-sidebar a:hover,.toc-sidebar a.active{background:#2D3E50;color:#fff;}
+  .toc-sidebar a.h2{padding-left:32px;font-size:12px;color:#78909C;}
+  .toc-sidebar a.h2:hover{color:#B0BEC5;}
+  main{margin-left:260px;padding:0 40px 60px;}
+  @media(max-width:900px){.toc-sidebar{display:none;}main{margin-left:0;padding:0 20px 40px;}}
+
+  /* ─── sections ─── */
+  section{padding:48px 0 8px;}
+  h1{font-size:26px;font-weight:700;color:var(--blue-dark);padding-bottom:10px;border-bottom:3px solid var(--blue);margin-bottom:20px;}
+  h2{font-size:19px;font-weight:700;color:var(--blue);margin:32px 0 12px;}
+  h3{font-size:15px;font-weight:700;color:#37474F;margin:20px 0 8px;}
+  p{margin-bottom:12px;}
+  ul{margin:8px 0 12px 24px;}
+  ul li{margin-bottom:4px;}
+
+  /* ─── cards ─── */
+  .card{background:#fff;border-radius:8px;box-shadow:0 1px 4px rgba(0,0,0,.08);margin-bottom:20px;overflow:hidden;}
+  .card-header{background:var(--blue);color:#fff;padding:10px 16px;font-weight:700;font-size:13px;letter-spacing:.4px;}
+  .card-body{padding:16px;}
+
+  /* ─── tables ─── */
+  table{width:100%;border-collapse:collapse;margin-bottom:20px;font-size:13px;}
+  thead th{background:var(--blue);color:#fff;padding:10px 12px;text-align:left;font-weight:600;font-size:12px;letter-spacing:.3px;}
+  tbody tr:nth-child(even){background:#F8FAFC;}
+  tbody tr:hover{background:#EBF5FB;}
+  td{padding:9px 12px;border-bottom:1px solid var(--border);vertical-align:top;}
+  td.code{font-family:Consolas,monospace;font-size:12px;color:var(--purple);}
+  td.formula{font-family:Consolas,monospace;font-size:12px;color:#1B5E20;background:#F1F8E9;}
+  td.key{font-weight:600;background:var(--blue-light);white-space:nowrap;}
+  td.center{text-align:center;}
+
+  /* ─── formula blocks ─── */
+  .formula-block{background:#F1F8E9;border-left:4px solid var(--green);border-radius:4px;padding:14px 16px;margin:12px 0;font-family:Consolas,monospace;font-size:13px;color:#1B5E20;}
+  .formula-block .label{font-family:var(--font);font-weight:700;color:#1B5E20;margin-bottom:6px;font-size:13px;}
+
+  /* ─── badges ─── */
+  .badge{display:inline-block;padding:2px 10px;border-radius:12px;font-size:11px;font-weight:700;margin-right:4px;}
+  .badge-ok{background:#E8F5E9;color:#2E7D32;border:1px solid #A5D6A7;}
+  .badge-warn{background:#FFF3E0;color:#E65100;border:1px solid #FFCC80;}
+  .badge-err{background:#FFEBEE;color:#B71C1C;border:1px solid #EF9A9A;}
+  .badge-idle{background:#ECEFF1;color:#546E7A;border:1px solid #B0BEC5;}
+  .badge-blue{background:var(--blue-light);color:var(--blue);border:1px solid #90CAF9;}
+  .badge-purple{background:var(--purple-light);color:var(--purple);border:1px solid #CE93D8;}
+
+  /* ─── note ─── */
+  .note{background:#FFF8E1;border-left:4px solid #FFC107;border-radius:4px;padding:10px 14px;margin:12px 0;font-size:13px;color:#5D4037;}
+  .note strong{color:#E65100;}
+
+  /* ─── flow diagram ─── */
+  .flow{display:flex;align-items:center;flex-wrap:wrap;gap:0;margin:16px 0;}
+  .flow-step{background:var(--blue);color:#fff;padding:8px 14px;border-radius:6px;font-size:12px;font-weight:600;white-space:nowrap;}
+  .flow-step.green{background:var(--green);}
+  .flow-step.orange{background:var(--orange);}
+  .flow-step.purple{background:var(--purple);}
+  .flow-arrow{color:#90A4AE;font-size:18px;padding:0 6px;}
+
+  /* ─── status dots ─── */
+  .dot{display:inline-block;width:10px;height:10px;border-radius:50%;margin-right:6px;vertical-align:middle;}
+  .dot-green{background:#4CAF50;}
+  .dot-orange{background:#FF9800;}
+  .dot-red{background:#F44336;}
+  .dot-grey{background:#9E9E9E;}
+  .dot-blue{background:#1976D2;}
+
+  /* ─── tolerance color boxes ─── */
+  .tol-ok{background:#E8F5E9;border:1.5px solid #4CAF50;border-radius:6px;padding:6px 12px;display:inline-block;font-weight:700;color:#2E7D32;}
+  .tol-warn{background:#FFF3E0;border:1.5px solid #FF9800;border-radius:6px;padding:6px 12px;display:inline-block;font-weight:700;color:#E65100;}
+  .tol-err{background:#FFEBEE;border:1.5px solid #F44336;border-radius:6px;padding:6px 12px;display:inline-block;font-weight:700;color:#B71C1C;}
+  .tol-idle{background:#ECEFF1;border:1.5px solid #B0BEC5;border-radius:6px;padding:6px 12px;display:inline-block;font-weight:700;color:#546E7A;}
+
+  /* ─── column layout ─── */
+  .cols2{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px;}
+
+  /* ─── divider ─── */
+  hr{border:none;border-top:1px solid var(--border);margin:24px 0;}
+
+  /* ─── top breadcrumb ─── */
+  .topbar{background:#fff;border-bottom:2px solid var(--blue);padding:12px 40px;position:sticky;top:0;z-index:99;display:flex;align-items:center;gap:16px;box-shadow:0 1px 4px rgba(0,0,0,.06);}
+  .topbar .brand{font-weight:800;color:var(--blue-dark);font-size:15px;}
+  .topbar .sep{color:#B0BEC5;}
+  .topbar .module{color:var(--blue);font-size:13px;}
+</style>
+</head>
+<body>
+
+<!-- ═══════════════════ TOC SIDEBAR ═══════════════════ -->
+<nav class="toc-sidebar no-print">
+  <div class="toc-brand">📋 Contents</div>
+  <a href="#cover">Cover Page</a>
+  <a href="#sec1">1. System Overview</a>
+  <a href="#sec1-1" class="h2">1.1 Purpose</a>
+  <a href="#sec1-2" class="h2">1.2 Technical Environment</a>
+  <a href="#sec2">2. MVVM Architecture</a>
+  <a href="#sec2-1" class="h2">2.1 Layer Breakdown</a>
+  <a href="#sec2-2" class="h2">2.2 Startup Flow</a>
+  <a href="#sec2-3" class="h2">2.3 Hardware Event Flow</a>
+  <a href="#sec3">3. Database Schema</a>
+  <a href="#sec4">4. Business Logic &amp; Formulas</a>
+  <a href="#sec4-1" class="h2">4.1 Material Classification</a>
+  <a href="#sec4-2" class="h2">4.2 Calculation Formulas</a>
+  <a href="#sec4-3" class="h2">4.3 Tolerance System</a>
+  <a href="#sec4-4" class="h2">4.4 Barcode Flow</a>
+  <a href="#sec4-5" class="h2">4.5 RFID Flow</a>
+  <a href="#sec5">5. Commands</a>
+  <a href="#sec6">6. UI Interface</a>
+  <a href="#sec6-1" class="h2">6.1 Title Bar</a>
+  <a href="#sec6-2" class="h2">6.2 Left Panel</a>
+  <a href="#sec6-3" class="h2">6.3 Total Steps Grid</a>
+  <a href="#sec6-4" class="h2">6.4 RFID / Barcode</a>
+  <a href="#sec6-5" class="h2">6.5 History Panel</a>
+  <a href="#sec6-6" class="h2">6.6 Scale &amp; Reference</a>
+  <a href="#sec6-7" class="h2">6.7 Bottom Bar</a>
+  <a href="#sec7">7. User Guide</a>
+  <a href="#sec8">8. System Configuration</a>
+</nav>
+
+<main>
+
+<!-- ═══════════════════ COVER ═══════════════════ -->
+<div class="cover" id="cover">
+  <div class="brand">framas</div>
+  <div class="title">SHOT WEIGHT STATION</div>
+  <div class="subtitle">ShotWeightWindow.xaml</div>
+  <p style="color:#90A4AE;margin-bottom:32px;font-size:16px;font-style:italic;">Technical Reference – Architecture · Logic · Formulas · UI Guide</p>
+  <div class="cover-meta">
+    <span class="k">Project</span><span class="v">SSSW – Shot Weight Scale System</span>
+    <span class="k">Module</span><span class="v">ShotWeightWindow (WPF MVVM)</span>
+    <span class="k">Version</span><span class="v">WPF Refactor (from frmShotWeightScale)</span>
+    <span class="k">Date</span><span class="v">2026-05-17</span>
+    <span class="k">Author</span><span class="v">Cong Nguyen · cong.nguyen@framas.com</span>
+  </div>
+</div>
+
+<!-- ═══════════════════ TOPBAR ═══════════════════ -->
+<div class="topbar no-print">
+  <span class="brand">framas · SSSW</span>
+  <span class="sep">›</span>
+  <span class="module">ShotWeightWindow – Technical Reference (EN)</span>
+</div>
+
+<!-- ═══════════════════ 1. SYSTEM OVERVIEW ═══════════════════ -->
+<section id="sec1">
+  <h1>1. System Overview</h1>
+  <p>
+    <strong>ShotWeightWindow</strong> is the main screen of the Shot Weight Station (SSSW). The screen allows QC / production operators to weigh material at each production step according to the Hydra work order BOM.
+    Weighing results are stored in the database for retrieval, quality inspection, and material consumption tracking.
+  </p>
+
+  <h2 id="sec1-1">1.1 Purpose</h2>
+  <ul>
+    <li>Weigh and record <strong>Total Weight Injection</strong> and <strong>Part Weight</strong> for each BOM step.</li>
+    <li>Automatic calculation: Part Weight (C021), Runner Weight (C022), Total Part Weight (C023).</li>
+    <li>Compare actual weighed values against standard (STD) within tolerance <strong>±1% / ±3%</strong> with visual color coding.</li>
+    <li>Save data to table <code>FT600</code> (DogeWH database) with full operator, machine, and production batch information.</li>
+    <li>Synchronize production order data from the <strong>Hydra ERP</strong> system into table FT601.</li>
+  </ul>
+
+  <h2 id="sec1-2">1.2 Technical Environment</h2>
+  <table>
+    <thead><tr><th>Component</th><th>Detail</th></tr></thead>
+    <tbody>
+      <tr><td class="key">UI Framework</td><td>WPF (.NET) – MVVM Pattern</td></tr>
+      <tr><td class="key">Binding Pattern</td><td>Model-View-ViewModel (MVVM) strict</td></tr>
+      <tr><td class="key">Grid Component</td><td>DevExpress WPF – <code>dxg:LookUpEdit</code>, <code>GridControl</code></td></tr>
+      <tr><td class="key">Database ORM</td><td>Entity Framework Core – <code>DbContextDogeWH</code> (SQL Server)</td></tr>
+      <tr><td class="key">Hardware SDK</td><td>ScanAndScale.Core: <code>BarcodeDriver</code>, <code>RfidDriver</code>, <code>ScaleDriver</code></td></tr>
+      <tr><td class="key">DI Container</td><td>Microsoft.Extensions.DependencyInjection</td></tr>
+      <tr><td class="key">Auto Updater</td><td>AutoUpdaterDotNET</td></tr>
+      <tr><td class="key">Logging</td><td>Serilog</td></tr>
+      <tr><td class="key">Screen Size</td><td>1920 × 1080px (fullscreen – WindowStyle=None)</td></tr>
+    </tbody>
+  </table>
+</section>
+
+<!-- ═══════════════════ 2. MVVM ARCHITECTURE ═══════════════════ -->
+<section id="sec2">
+  <h1>2. MVVM Architecture</h1>
+  <p>ShotWeightWindow follows strict MVVM architecture. Code-behind contains only operations that cannot be bound: Win32 drag, hardware driver events, DevExpress bridge.</p>
+
+  <h2 id="sec2-1">2.1 Layer Breakdown</h2>
+  <table>
+    <thead><tr><th>Layer</th><th>File</th><th>Responsibility</th></tr></thead>
+    <tbody>
+      <tr>
+        <td class="key"><span style="color:#2E7D32">VIEW</span></td>
+        <td class="code">ShotWeightWindow.xaml<br>ShotWeightWindow.xaml.cs<br>ShotWeightStyles.xaml</td>
+        <td>UI, Data Binding, Event bridge for hardware drivers and DevExpress LookUpEdit</td>
+      </tr>
+      <tr>
+        <td class="key"><span style="color:#1565C0">VIEWMODEL</span></td>
+        <td class="code">ShotWeightViewModel.cs<br>BaseViewModel.cs</td>
+        <td>All business logic, Commands, Observable Properties, weight calculations</td>
+      </tr>
+      <tr>
+        <td class="key"><span style="color:#E65100">MODEL</span></td>
+        <td class="code">FT600.cs, FT601.cs, FT606.cs<br>FT029.cs, ReferenceRow.cs<br>StepSelectModel.cs, BomWinlineModel.cs</td>
+        <td>Entity classes, domain objects, DbContext (SQL Server)</td>
+      </tr>
+      <tr>
+        <td class="key"><span style="color:#B71C1C">HARDWARE</span></td>
+        <td class="code">BarcodeDriver<br>RfidDriver<br>ScaleDriver</td>
+        <td>Singleton drivers from ScanAndScale.Core – communicates with Barcode (Zebra), RFID (COM), Scale (TCP/IP)</td>
+      </tr>
+      <tr>
+        <td class="key"><span style="color:#4A148C">DATABASE</span></td>
+        <td class="code">DbContextDogeWH (SQL Server)</td>
+        <td>FT600s, FT601s, FT606s, FT029s, FT608s, FT031s – read/write via EF Core</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h2 id="sec2-2">2.2 Startup Flow</h2>
+  <div class="flow">
+    <span class="flow-step">DI Resolve</span><span class="flow-arrow">→</span>
+    <span class="flow-step">InitializeComponent</span><span class="flow-arrow">→</span>
+    <span class="flow-step">OnLoaded</span><span class="flow-arrow">→</span>
+    <span class="flow-step green">InitializeAsync()</span><span class="flow-arrow">→</span>
+    <span class="flow-step orange">ApplyHardwareConfig()</span><span class="flow-arrow">→</span>
+    <span class="flow-step purple">LoadDataAsync()</span>
+  </div>
+  <table>
+    <thead><tr><th>#</th><th>Step</th><th>Detail</th></tr></thead>
+    <tbody>
+      <tr><td class="center">1</td><td class="key">DI Resolve</td><td><code>ShotWeightWindow(ShotWeightViewModel)</code> is resolved from the DI container, assigns <code>DataContext = viewModel</code></td></tr>
+      <tr><td class="center">2</td><td class="key">OnLoaded</td><td>Registers <code>BarcodeDriver.DataValueChanged</code>, <code>RfidDriver.DataValueChanged</code>; assigns 5 View callbacks (FocusRfidNameAction, ClearStepComboAction, SetStepComboAction, FocusGridRowAction, ApplyHardwareConfigAction)</td></tr>
+      <tr><td class="center">3</td><td class="key">InitializeAsync()</td><td>Loads mesocomp/mesoyear from DB → sets WindowTitle. Loads <code>ConfigSystem</code> from FT608 by <code>Environment.MachineName</code>. Calls ApplyHardwareConfigAction.</td></tr>
+      <tr><td class="center">4</td><td class="key">ApplyHardwareConfig()</td><td>Maps config → BarcodeConfig, RfidConfig, ScaleConfig → Initializes each driver → updates BarcodeStatus / RfidStatus / ScaleStatus</td></tr>
+      <tr><td class="center">5</td><td class="key">LoadDataAsync()</td><td>Queries FT601s (active, correct mesoyear) → builds <code>StepCodeMaster</code> for LookUpEdit. Timeout 30s, supports cancel.</td></tr>
+    </tbody>
+  </table>
+
+  <h2 id="sec2-3">2.3 Hardware Driver Event Flow</h2>
+  <div class="note"><strong>⚠ Important:</strong> All hardware events fire on a background thread. Code-behind <strong>must</strong> use <code>Dispatcher.Invoke</code> / <code>InvokeAsync</code> to marshal back to the UI thread before calling the ViewModel.</div>
+  <table>
+    <thead><tr><th>Driver</th><th>Thread</th><th>ViewModel Action</th></tr></thead>
+    <tbody>
+      <tr><td class="key">BarcodeDriver</td><td>Zebra SDK thread</td><td><code>vm.BarcodeScannedValue = barcode</code> → <code>vm.OnBarcodeScannedAsync(barcode)</code></td></tr>
+      <tr><td class="key">RfidDriver</td><td>ThreadPool (SerialPort.DataReceived)</td><td><code>vm.RfidCardCode = code</code> → <code>vm.OnRfidValueChanged(code)</code></td></tr>
+      <tr><td class="key">ScaleDriver</td><td>ThreadPool (Timer.Elapsed / TCP)</td><td><code>vm.OnScaleValueChanged(value, stable, tare, unit)</code> → updates ScaleValue, ScaleStable, ScaleTare</td></tr>
+    </tbody>
+  </table>
+</section>
+
+<!-- ═══════════════════ 3. DATABASE SCHEMA ═══════════════════ -->
+<section id="sec3">
+  <h1>3. Database Tables (Schema)</h1>
+  <h2>3.1 FT600 Field Mapping – Display Columns</h2>
+  <p>FT600 stores weighing results. Each record = 1 weighing of 1 step. The <code>Cxxx</code> columns are mapped directly to the DataGrid:</p>
+  <table>
+    <thead><tr><th>Field</th><th>Display Name</th><th>Meaning</th></tr></thead>
+    <tbody>
+      <tr><td class="code" style="color:#4A148C;font-weight:700">C021</td><td><strong>Part Weight (g/prs)</strong></td><td>Part weight for the current step (g/pair) – <em>calculated value</em></td></tr>
+      <tr><td class="code" style="color:#B71C1C;font-weight:700">C022</td><td><strong>Runner Weight (g/prs)</strong></td><td>Runner / excess material weight for the current step (g/pair) – <em>calculated value</em></td></tr>
+      <tr><td class="code" style="color:#0D47A1;font-weight:700">C023</td><td><strong>Total Part Weight (g/prs)</strong></td><td>Cumulative total part weight up to the current step – <em>read directly from scale (2nd weighing)</em></td></tr>
+      <tr><td class="code" style="color:#1B5E20;font-weight:700">C024</td><td><strong>Total Weight Injection (g)</strong></td><td>Total weight after ejection (runner + part) – <em>read directly from scale (1st weighing)</em></td></tr>
+      <tr><td class="code">C002</td><td>Step Code</td><td>Step item code</td></tr>
+      <tr><td class="code">C003</td><td>Step Name</td><td>Step item name</td></tr>
+      <tr><td class="code">C004</td><td>Machine</td><td>Production machine</td></tr>
+      <tr><td class="code">C008</td><td>Size</td><td>Shoe size</td></tr>
+      <tr><td class="code">C010</td><td>Operator Code</td><td>Employee code</td></tr>
+      <tr><td class="code">C011</td><td>Operator Name</td><td>Name of the employee who performed the weighing</td></tr>
+      <tr><td class="code">C013</td><td>FG Item Code</td><td>Finished goods item code</td></tr>
+      <tr><td class="code">C014</td><td>FG Item Name</td><td>Finished goods item name</td></tr>
+      <tr><td class="code">C015</td><td>Sequence Step</td><td>Step sequence number in BOM (integer)</td></tr>
+      <tr><td class="code">C025</td><td>Quantity</td><td>Number of pieces in BOM</td></tr>
+      <tr><td class="code">C026</td><td>Main Code</td><td>Main article code</td></tr>
+      <tr><td class="code">C027</td><td>Main Name</td><td>Main article name</td></tr>
+      <tr><td class="code">C028</td><td>Pairs/Shot</td><td>Number of pairs per shot (article pairs per shot)</td></tr>
+      <tr><td class="code">C033</td><td>Category Code</td><td>Material classification (injection / non-injection)</td></tr>
+      <tr><td class="code">C035</td><td>Usage %</td><td>Usage percentage (applies to Nonwoven/Mesh)</td></tr>
+      <tr><td class="code">C036</td><td>Weight/piece</td><td>Weight per piece (Studs, Logo, Cleat_Ring)</td></tr>
+      <tr><td class="code">C038</td><td>Remark</td><td>Notes – synced to all rows in the session</td></tr>
+    </tbody>
+  </table>
+
+  <h2>3.2 Related Tables</h2>
+  <table>
+    <thead><tr><th>Table</th><th>Purpose</th></tr></thead>
+    <tbody>
+      <tr><td class="code">FT601s</td><td>Hydra work order master data (Step Item Code, FG Code, Machine, Pairs/Shot, Mold ID...)</td></tr>
+      <tr><td class="code">FT606s</td><td>Label/QR Code mapping: c001 = barcode string → c000 = FT601.Id</td></tr>
+      <tr><td class="code">FT029_Operator_RFIDs</td><td>Employee list: C000 = Employee ID, C001 = Name, C002 = DepartmentId</td></tr>
+      <tr><td class="code">FT031s</td><td>Departments: C000 = dept name (IT, QC...)</td></tr>
+      <tr><td class="code">FT608_Config</td><td>Hardware configuration per MachineName (JSON – ConfigModel)</td></tr>
+      <tr><td class="code">BomWinline</td><td>FG item BOM (via SP: sp_getBomWinlineOfItemFG)</td></tr>
+    </tbody>
+  </table>
+</section>
+
+<!-- ═══════════════════ 4. BUSINESS LOGIC & FORMULAS ═══════════════════ -->
+<section id="sec4">
+  <h1>4. Business Logic &amp; Calculation Formulas</h1>
+
+  <h2 id="sec4-1">4.1 Material Classification</h2>
+  <table>
+    <thead><tr><th>Type</th><th>Identification Condition</th><th>Weighing Process</th></tr></thead>
+    <tbody>
+      <tr>
+        <td class="key" style="color:#1565C0">Injection (plastic molding)</td>
+        <td>C002 does <strong>not</strong> start with <code>"REX"</code></td>
+        <td><strong>2 weighings:</strong> 1st = Total Injection Weight; 2nd = Total Part Weight</td>
+      </tr>
+      <tr>
+        <td class="key" style="color:#E65100">Non-Injection – Full (Receptacle)</td>
+        <td>C002 starts with <code>"REX"</code> AND does <strong>not</strong> belong to partial category</td>
+        <td><strong>1 weighing:</strong> entire weight = part weight</td>
+      </tr>
+      <tr>
+        <td class="key" style="color:#B71C1C">Non-Injection – Partial (Nonwoven/Mesh)</td>
+        <td>C002 starts with <code>"REX"</code> AND belongs to <code>CategoryOfNonInjectionUsagePartial</code></td>
+        <td><strong>1 weighing:</strong> only <code>UsagePct%</code> of total is used</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h2 id="sec4-2">4.2 Detailed Calculation Formulas</h2>
+
+  <h3>4.2.1 Injection – 1st Weighing (place entire shot on scale)</h3>
+  <div class="formula-block">
+    <div class="label">C024 (Total Weight Injection):</div>
+    C024 = ScaleValue
+  </div>
+
+  <h3>4.2.2 Injection – 2nd Weighing (remove runner, keep only part)</h3>
+  <div class="formula-block">
+    <div class="label">C023 (Total Part Weight – read from scale):</div>
+    C023 = ScaleValue
+  </div>
+  <div class="formula-block">
+    <div class="label">C022 (Runner Weight g/prs) – when Runner = YES:</div>
+    C022 = ( C024 − C023 × pairs ) / pairs
+  </div>
+  <div class="formula-block">
+    <div class="label">C022 (Runner Weight) – when Runner = NO:</div>
+    C022 = 0
+  </div>
+  <div class="formula-block">
+    <div class="label">C021 (Actual Part Weight for this step, g/prs):</div>
+    C021 = C023(this step) − Σ C023(previous step: C015 = currentStep.C015 − 1) − Σ C023(REX / Z-VHXXXXXX same C015)
+  </div>
+  <div class="note">
+    <strong>pairs</strong> = C028 (Pairs/Shot of the step being weighed – <code>_articlePaisShotFinaly</code>).
+    <br><strong>Previous step</strong> = all records in _scaleDataFinal with C015 = currentStep.C015 − 1.
+    <br><strong>Non-injection same step</strong> = records with C002 starting "REX" or C002 = "Z-VHXXXXXX" and same C015.
+  </div>
+
+  <h3>4.2.3 Non-Injection – Full (Receptacle – REX not in partial)</h3>
+  <div class="formula-block">
+    C024 = ScaleValue<br>
+    C023 = ScaleValue<br>
+    C021 = ScaleValue<br>
+    C036 = Round( ScaleValue / Quantity, 2 )   ← weight per piece
+  </div>
+
+  <h3>4.2.4 Non-Injection – Partial (Nonwoven/Mesh – REX in partial category)</h3>
+  <div class="formula-block">
+    <div class="label">Calculate usage and unusage first:</div>
+    usage    = Round( ScaleValue × UsagePct% / 100 / pairs, 3 )<br>
+    unusage  = ( ScaleValue − usage × pairs ) / pairs<br><br>
+    <div class="label">Write to record:</div>
+    C024 = ScaleValue<br>
+    C023 = usage<br>
+    C021 = usage<br>
+    C022 = unusage<br>
+    C036 = Round( usage / 2, 2 )   ← divide by 2 for left/right foot
+  </div>
+  <div class="note"><strong>UsagePct%</strong> = <code>GlobalVariable.ConfigSystem.PercentOfUserNonWoven</code> (default) or value entered by user in "Usage %" field and confirmed with Enter.</div>
+
+  <h3>4.2.5 Multi-size Mold (multiple sizes on one mold)</h3>
+  <p>When the same <code>MoldId (C020)</code> and <code>Machine (C004)</code> have multiple sizes on the same sequence step, the system distributes C024 and calculates C022 proportionally:</p>
+  <div class="formula-block">
+    sumPW    = Σ ( C023[i] × C028[i] )   ← total part weight × pairs for all sizes on the mold<br>
+    pairShot = Σ C028[i]                  ← total pairs across all sizes<br><br>
+    For each size (i):<br>
+    C024[i] = C024(row being weighed)     ← shared C024<br>
+    C022[i] = ( C024 − sumPW ) / pairShot   (if C023[i] > 0, otherwise = 0)
+  </div>
+
+  <h3>4.2.6 Cascade Update of Subsequent Steps (ExecuteSave)</h3>
+  <p>After Saving a step, the system automatically updates C021/C022 for subsequent steps that already have C024 &gt; 0:</p>
+  <div class="formula-block">
+    If item.C015 == _rowSelected.C015 (same sequence):<br>
+    &nbsp;&nbsp;item.C021 = item.C023 − _rowSelected.C023<br>
+    &nbsp;&nbsp;item.C022 = item.C024 − item.C021<br><br>
+    If item.C015 &gt; _rowSelected.C015 (subsequent step):<br>
+    &nbsp;&nbsp;item.C021 = item.C023 − prev.C023   (prev = immediately preceding step)<br>
+    &nbsp;&nbsp;item.C022 = item.C024 − item.C021
+  </div>
+  <div class="note"><strong>Cascade condition:</strong> Only applies to injection items (not REX, Stud, Inlay, Ring) and not sharing the same mold prefix with the step being saved.</div>
+
+  <h3>4.2.7 Studs / Logo / Cleat_Ring (C036)</h3>
+  <div class="formula-block">
+    C036 = Round( ScaleValue / pairs, 2 )   ← when step name starts with "Studs", "Logo", or "Cleat_Ring"
+  </div>
+
+  <h2 id="sec4-3">4.3 Tolerance System</h2>
+  <p>Values in the Reference Panel are automatically color-coded when comparing <strong>Actual vs STD</strong> (most recent weighing value from history):</p>
+  <table>
+    <thead><tr><th>Level</th><th>Condition</th><th>Display</th><th>Meaning</th></tr></thead>
+    <tbody>
+      <tr>
+        <td><span class="tol-idle">IDLE</span></td>
+        <td>No STD yet or Actual = 0</td>
+        <td>Light grey</td>
+        <td>No data available for comparison</td>
+      </tr>
+      <tr>
+        <td><span class="tol-ok">OK ✓</span></td>
+        <td>|Δ%| ≤ 1%</td>
+        <td>Green #4CAF50</td>
+        <td>Within safe threshold</td>
+      </tr>
+      <tr>
+        <td><span class="tol-warn">WARN ⚠</span></td>
+        <td>1% &lt; |Δ%| ≤ 3%</td>
+        <td>Orange #FF9800</td>
+        <td>Warning – needs attention</td>
+      </tr>
+      <tr>
+        <td><span class="tol-err">ERROR ✗</span></td>
+        <td>|Δ%| &gt; 3%</td>
+        <td>Red #F44336</td>
+        <td>Out of tolerance – requires review</td>
+      </tr>
+    </tbody>
+  </table>
+  <div class="formula-block">
+    Δ% = ( Actual − STD ) / STD × 100
+  </div>
+  <p>The ScaleCard (large scale number frame) changes background and border color based on the <strong>worst-case</strong> tolerance level among the 4 Reference Rows.</p>
+
+  <h2 id="sec4-4">4.4 Barcode / QR Code Processing Flow</h2>
+  <div class="flow" style="flex-wrap:wrap;gap:4px 0;">
+    <span class="flow-step">Scan QR</span><span class="flow-arrow">→</span>
+    <span class="flow-step">OnBarcodeScannedAsync</span><span class="flow-arrow">→</span>
+    <span class="flow-step orange">Query FT606s</span><span class="flow-arrow">→</span>
+    <span class="flow-step orange">Find FT601 (_dataHydra)</span><span class="flow-arrow">→</span>
+    <span class="flow-step green">FilterStepCombo → SetStepComboAction</span><span class="flow-arrow">→</span>
+    <span class="flow-step green">GetDataAsync</span>
+  </div>
+  <table>
+    <thead><tr><th>#</th><th>Step</th><th>Detail</th></tr></thead>
+    <tbody>
+      <tr><td class="center">1</td><td class="key">Scan QR Code</td><td>BarcodeDriver (or manual entry + Enter) → <code>vm.OnBarcodeScannedAsync(barcode)</code></td></tr>
+      <tr><td class="center">2</td><td class="key">Lookup FT606</td><td><code>db.FT606s.FirstOrDefaultAsync(x => x.c001 == barcode)</code> → get <code>_labelInfo</code></td></tr>
+      <tr><td class="center">3</td><td class="key">Identify Step</td><td><code>_dataHydra.FirstOrDefault(x => x.Id == _labelInfo.c000)</code> → <code>_stepSelected</code></td></tr>
+      <tr><td class="center">4</td><td class="key">Auto-select Step</td><td><code>SetStepComboAction(item)</code> → LookUpEdit auto-selects → <code>TriggerStepSelectionAsync</code></td></tr>
+    </tbody>
+  </table>
+
+  <h2 id="sec4-5">4.5 RFID Processing Flow</h2>
+  <div class="flow">
+    <span class="flow-step">Read RFID Card</span><span class="flow-arrow">→</span>
+    <span class="flow-step">OnRfidValueChanged</span><span class="flow-arrow">→</span>
+    <span class="flow-step orange">Query FT029</span><span class="flow-arrow">→</span>
+    <span class="flow-step orange">Check FT031 (IT/QC)</span><span class="flow-arrow">→</span>
+    <span class="flow-step green">Set RfidName / UserName</span>
+  </div>
+  <table>
+    <thead><tr><th>Case</th><th>Action</th></tr></thead>
+    <tbody>
+      <tr><td class="key">Found + correct department (IT/QC)</td><td>RfidName = C001; UserName = "{C000} · {C001}" shown in titlebar</td></tr>
+      <tr><td class="key">Not found in FT029</td><td>Clear RFID field → focus Employee Name field → user types name + Enter to register new entry in FT029</td></tr>
+      <tr><td class="key">Wrong department (not IT/QC)</td><td>Error message "Employee does not have permission", clear RFID field</td></tr>
+    </tbody>
+  </table>
+</section>
+
+<!-- ═══════════════════ 5. COMMANDS ═══════════════════ -->
+<section id="sec5">
+  <h1>5. Command List</h1>
+  <table>
+    <thead><tr><th>Command</th><th>Type</th><th>Action</th></tr></thead>
+    <tbody>
+      <tr><td class="code">ReloadCommand</td><td><span class="badge badge-blue">Async</span></td><td>Reload all FT601s from DB, timeout 30s, supports cancel</td></tr>
+      <tr><td class="code">HistoryViewCommand</td><td><span class="badge badge-idle">Sync</span></td><td>Open <code>frmMainView</code> (history – WinForms dialog)</td></tr>
+      <tr><td class="code">HydraCommand</td><td><span class="badge badge-blue">Async</span></td><td>Sync production orders from Hydra ERP (SP: <code>sp_GetFullStepItemHydraIsRun</code>) → insert into FT601</td></tr>
+      <tr><td class="code">SettingsCommand</td><td><span class="badge badge-idle">Sync</span></td><td>Open <code>frmUpdateMasterData</code>, then auto-reload data</td></tr>
+      <tr><td class="code">UpdateCommand</td><td><span class="badge badge-idle">Sync</span></td><td>Check and install new version (AutoUpdaterDotNET)</td></tr>
+      <tr><td class="code">SaveCommand</td><td><span class="badge badge-idle">Sync</span></td><td>Calculate and save weighed value to <code>_scaleDataFinal</code> (not yet written to DB). Can press multiple times: 1st → C024; 2nd → C023/C021/C022</td></tr>
+      <tr><td class="code">ConfirmCommand</td><td><span class="badge badge-blue">Async</span></td><td>Write <code>_scaleDataFinal</code> to DB in a transaction; mark FT601.C017=true; reset session</td></tr>
+      <tr><td class="code">CancelCommand</td><td><span class="badge badge-idle">Sync</span></td><td>Cancel weighing session, reset all state to initial</td></tr>
+      <tr><td class="code">GridScaleCommand</td><td><span class="badge badge-idle">Sync</span></td><td>Select row in TOTAL STEPS grid as the current weighing row (<code>_rowSelected</code>)</td></tr>
+      <tr><td class="code">GridResetCommand</td><td><span class="badge badge-idle">Sync</span></td><td>Reset C021=C022=C023=C024=0 for selected row</td></tr>
+      <tr><td class="code">GridDeleteCommand</td><td><span class="badge badge-idle">Sync</span></td><td>Remove row from temporary list</td></tr>
+      <tr><td class="code">CancelLoadCommand</td><td><span class="badge badge-idle">Sync</span></td><td>Cancel running LoadDataAsync (cancel CancellationToken)</td></tr>
+    </tbody>
+  </table>
+</section>
+
+<!-- ═══════════════════ 6. UI INTERFACE ═══════════════════ -->
+<section id="sec6">
+  <h1>6. User Interface Description</h1>
+  <p>Window <strong>1920×1080px</strong>, no Windows title bar (WindowStyle=None). Layout consists of 3 main Grid rows:</p>
+  <table>
+    <thead><tr><th>Row</th><th>Height</th><th>Content</th></tr></thead>
+    <tbody>
+      <tr><td class="center">0</td><td>44px</td><td>Custom Title Bar</td></tr>
+      <tr><td class="center">1</td><td>* (fill)</td><td>Main content – split into 2 columns: 1* (Left Panel) and 4* (Right Area)</td></tr>
+      <tr><td class="center">2</td><td>72px</td><td>Bottom Bar – action buttons</td></tr>
+    </tbody>
+  </table>
+
+  <h2 id="sec6-1">6.1 Title Bar (Row 0 – 44px)</h2>
+  <div class="card">
+    <div class="card-header" style="background:#0D1117">⬛ Title Bar – background #0D1117 (dark)</div>
+    <div class="card-body">
+      <table>
+        <thead><tr><th>Component</th><th>Binding / Action</th></tr></thead>
+        <tbody>
+          <tr><td class="key">Logo "framas"</td><td>Static TextBlock – brand label, white, bold</td></tr>
+          <tr><td class="key">WindowTitle</td><td><code>Binding WindowTitle</code> ← <em>"[Location] – Shotweight Station"</em> (e.g., fVN – Shotweight Station)</td></tr>
+          <tr><td class="key">UserName</td><td><code>Binding UserName</code> ← <em>"[EmployeeCode] · [EmployeeName]"</em> after successful RFID scan</td></tr>
+          <tr><td class="key">⟳ Reload</td><td>Command: <code>ReloadCommand</code> – reload master data FT601</td></tr>
+          <tr><td class="key">📋 History</td><td>Command: <code>HistoryViewCommand</code> – open frmMainView</td></tr>
+          <tr><td class="key">⚡ Hydra</td><td>Command: <code>HydraCommand</code> – sync Hydra ERP</td></tr>
+          <tr><td class="key">⚙ Settings</td><td>Command: <code>SettingsCommand</code> – open frmUpdateMasterData</td></tr>
+          <tr><td class="key">🔄 Update</td><td>Command: <code>UpdateCommand</code> – check for new version</td></tr>
+          <tr><td class="key">— Minimize</td><td>Click: <code>btnMinimize_Click</code> – minimize window</td></tr>
+          <tr><td class="key">□ Maximize</td><td>Click: <code>btnMaximize_Click</code> – maximize / restore toggle</td></tr>
+          <tr><td class="key">✕ Close (red #C62828)</td><td>Click: <code>btnClose_Click</code> – close application</td></tr>
+          <tr><td class="key">Drag window</td><td><code>TitleBar_MouseLeftButtonDown</code> → Win32 <code>WM_SYSCOMMAND SC_DRAGMOVE</code></td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <h2 id="sec6-2">6.2 Left Panel – STEP INFORMATION (1* column)</h2>
+  <p>Dark blue header "STEP INFORMATION". Content inside vertical ScrollViewer. All fields ReadOnly by default; editable fields have a blue border to distinguish them (<code>EditableFieldStyle</code>).</p>
+  <table>
+    <thead><tr><th>Field</th><th>Binding / Type</th><th>Description</th></tr></thead>
+    <tbody>
+      <tr><td class="key">Name</td><td>OneWay – ReadOnly</td><td>Step name (<code>StepName</code>) – auto-filled when step is selected</td></tr>
+      <tr><td class="key">Code</td><td>OneWay – ReadOnly</td><td>Step code (<code>StepCode = C002</code>)</td></tr>
+      <tr><td class="key">Machine</td><td>OneWay – ReadOnly</td><td>Production machine (<code>Machine = C004</code>)</td></tr>
+      <tr><td class="key">Quantity</td><td>OneWay – ReadOnly</td><td>Number of pieces (<code>Qty = C025</code>)</td></tr>
+      <tr><td class="key">Partitioning (prs)</td><td>OneWay ReadOnly ↔ Editable when Adj.=ON</td><td>Pairs/shot (<code>ActualPairs = C028</code>). Tick Adj. checkbox to enable edit. Press Enter to apply (→ <code>OnActualPairsEnter</code>).</td></tr>
+      <tr><td class="key">Adj. ✓ Checkbox</td><td>TwoWay – <code>AllowPartitionAdj</code></td><td>When ON: unlocks Partitioning field to edit pairs/shot</td></tr>
+      <tr><td class="key">Runner (ComboBox)</td><td>TwoWay – <code>RunnerText</code></td><td>YES / NO – directly affects the C022 (Runner Weight) formula</td></tr>
+      <tr><td class="key">Usage %</td><td>Editable when REX + partial</td><td>Nonwoven/Mesh usage percentage (<code>UsagePct</code>). Only editable when step is REX in partial category. Press Enter → <code>OnUsagePctEnter</code> → recalculates C021/C022/C023.</td></tr>
+      <tr><td class="key">Size</td><td>OneWay – ReadOnly</td><td>Shoe size (<code>Size = C008</code>)</td></tr>
+      <tr><td class="key">Seq. Index</td><td>OneWay – ReadOnly</td><td>Step sequence order (<code>StepIndex = C015</code>)</td></tr>
+      <tr><td class="key">FG Description</td><td>OneWay – ReadOnly</td><td>FG product name (<code>FgName = C014</code>)</td></tr>
+      <tr><td class="key">FG Item Code</td><td>OneWay – ReadOnly</td><td>FG item code (<code>FgItemCode = C013</code>)</td></tr>
+      <tr><td class="key">Remark</td><td>TwoWay – <code>UpdateSourceTrigger=PropertyChanged</code></td><td>Notes. Automatically syncs C038 for all rows in _scaleDataFinal on change.</td></tr>
+      <tr><td class="key">Select Step (LookUpEdit)</td><td>DevExpress – Event bridge</td><td>Step search dropdown with columns: Machine, Step Code, Step Name, Size, Hydra Order No, FT601 Id. Supports per-column Excel-style filter, AutoComplete, PopupWidth=1000. Select → <code>cbStepName_EditValueChangedAsync</code> → <code>vm.OnStepSelectedAsync</code>.</td></tr>
+    </tbody>
+  </table>
+
+  <h2 id="sec6-3">6.3 TOTAL STEPS Grid (top right – 410px)</h2>
+  <p>DataGrid showing all BOM steps of the product being weighed (<code>ItemsSource={Binding StepsCollection}</code>).</p>
+  <table>
+    <thead><tr><th>Column</th><th>Width</th><th>Description</th></tr></thead>
+    <tbody>
+      <tr><td class="key">Actions</td><td>130</td><td>3 buttons per row: <span class="badge badge-ok">[Scale]</span> select row to weigh; <span class="badge badge-warn">[Reset]</span> clear values; <span class="badge badge-err">[Delete]</span> remove row</td></tr>
+      <tr><td class="key">STATUS</td><td>90</td><td><span class="dot dot-green"></span><strong>Done</strong> (green) / <span class="dot dot-blue"></span><strong>Active</strong> (blue) / <span class="dot dot-grey"></span><strong>Pending</strong> (grey)</td></tr>
+      <tr><td class="key">MACHINE</td><td>80</td><td>C004 – production machine</td></tr>
+      <tr><td class="key">MAIN / MAIN CODE</td><td>200</td><td>C027 (article name – bold 12px) + C026 (article code – small 10px, grey)</td></tr>
+      <tr><td class="key">SEQUENCE STEP</td><td>80</td><td>C015 – step sequence number</td></tr>
+      <tr><td class="key">STEP / STEP CODE</td><td>200</td><td>C003 (step name – bold) + C002 (step code – small, grey)</td></tr>
+      <tr><td class="key">SIZE</td><td>60</td><td>C008 – shoe size</td></tr>
+      <tr><td class="key">TOTAL WEIGHT INJECTION (g)</td><td>100</td><td>C024 – total shot weight (runner + part), StringFormat F2</td></tr>
+      <tr><td class="key">TOTAL PART WEIGHT (g/prs)</td><td>100</td><td>C023 – cumulative total part weight, StringFormat F2</td></tr>
+      <tr><td class="key">PART WEIGHT (g/prs)</td><td>100</td><td>C021 – part weight for this step (calculated), StringFormat F2</td></tr>
+      <tr><td class="key">RUNNER WEIGHT (g/prs)</td><td>100</td><td>C022 – runner weight for this step (calculated), StringFormat F2</td></tr>
+      <tr><td class="key">OPERATOR</td><td>90</td><td>C011 – name of the employee who weighed</td></tr>
+    </tbody>
+  </table>
+
+  <h2 id="sec6-4">6.4 RFID / Barcode Row (middle – right)</h2>
+  <div class="cols2">
+    <div class="card">
+      <div class="card-header">🔖 RFID / Employee ID</div>
+      <div class="card-body">
+        <ul>
+          <li><span class="dot dot-green"></span><strong>Status dot</strong>: Converter <code>DriverStatusToColor</code> – Connected/Disconnected/Unknown</li>
+          <li><strong>RFID Code TextBox</strong>: Binding <code>RfidCardCode</code> TwoWay. ReadOnly when <code>ReadOnly=true</code> (scale hardware mode). Press Enter → <code>_txtRFID_KeyDown</code> → triggers RFID validation.</li>
+          <li><strong>Employee Name TextBox</strong>: Binding <code>RfidName</code> OneWay. Focused here when ID is not found for new registration.</li>
+        </ul>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-header">📷 Barcode / QR Scan</div>
+      <div class="card-body">
+        <ul>
+          <li><span class="dot dot-green"></span><strong>Status dot</strong>: Converter <code>DriverStatusToColor</code> by <code>BarcodeStatus</code></li>
+          <li><strong>Barcode TextBox</strong>: Binding <code>BarcodeScannedValue</code> TwoWay. Light blue background #F0F7FF, blue text #1565C0. ReadOnly in hardware mode. Press Enter → <code>_txtBarcode_KeyDown</code> → <code>OnBarcodeScannedAsync</code>.</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <h2 id="sec6-5">6.5 History Panel (bottom left)</h2>
+  <div class="card">
+    <div class="card-header">▼ REFERENCE / HISTORY</div>
+    <div class="card-body">
+      <ul>
+        <li><strong>Clickable header</strong>: <code>HistoryHeader_Click</code> → <code>vm.ToggleHistory()</code> – show/hide history list. Toggle shows ▼ / ▶.</li>
+        <li><strong>Header text line 1</strong>: Binding <code>HistoryToggleText</code> – displays: <em>"▼ REFERENCE/HISTORY · last 15 weighings · [StepCode] · [Size] · [FGCode]"</em></li>
+        <li><strong>Header text line 2</strong>: Binding <code>HistoryToggleTextSecond</code> – displays step name (<code>C003</code>)</li>
+        <li><strong>History DataGrid</strong>: 15 most recent weighings for the step (<code>HistoryCollection</code>). Columns: Date/Time (yyyy-MM-dd HH:mm), Total Weight, Total Part Weight, Part Weight, Runner Weight, Operator.</li>
+        <li>Visibility: <code>Binding IsHistoryExpanded, Converter=BoolToVisibility</code></li>
+      </ul>
+    </div>
+  </div>
+
+  <h2 id="sec6-6">6.6 Scale Card + Reference Values (bottom right)</h2>
+  <div class="card">
+    <div class="card-header">⚖ REFERENCE VALUES + SCALE VALUE</div>
+    <div class="card-body">
+      <h3>Scale Value Display</h3>
+      <ul>
+        <li><strong>SCALE STATUS dot</strong>: Converter <code>DriverStatusToColor</code> by <code>ScaleStatus</code>. Top right.</li>
+        <li><strong>Stable Badge</strong>: Shown when <code>ReadOnly=false</code> (hardware mode). Green when <code>ScaleStable=true</code>, grey when not stable.</li>
+        <li><strong>TARE Badge</strong> (red #E53935): Shown when <code>ScaleTare=true</code> – scale is in tare/zero mode. Visibility: <code>Binding ScaleTare, Converter=BoolToVisibility</code></li>
+        <li><strong>Scale Value TextBox</strong>: Font Consolas 44pt, bold, HorizontalContentAlignment=Right, MinWidth=300. Binding <code>ScaleValue</code> (UpdateSourceTrigger=LostFocus). ReadOnly in hardware mode; manual entry accepts only numeric characters (regex <code>^-?\d*\.?\d*$</code>). Press Enter → processes as if value received from hardware.</li>
+        <li><strong>Scale Card border/background</strong>: Changes color based on worst-case tolerance: <span class="tol-ok">Green (OK)</span> <span class="tol-warn">Orange (Warn)</span> <span class="tol-err">Red (Err)</span> <span class="tol-idle">Grey (Idle)</span></li>
+      </ul>
+      <h3 style="margin-top:16px">Reference DataGrid (4 rows)</h3>
+      <table>
+        <thead><tr><th>#</th><th>Field Name</th><th>Unit</th><th>STD</th><th>Δ</th><th>ACTUAL</th></tr></thead>
+        <tbody>
+          <tr><td class="center">1</td><td>Total W_Injection</td><td>g</td><td>_stdRow.C024</td><td>Actual−STD</td><td>_rowSelected.C024</td></tr>
+          <tr><td class="center">2</td><td>Total PW Weight</td><td>g/prs</td><td>_stdRow.C023</td><td>Actual−STD</td><td>_rowSelected.C023</td></tr>
+          <tr><td class="center">3</td><td>Part Weight</td><td>g/prs</td><td>_stdRow.C021</td><td>Actual−STD</td><td>_rowSelected.C021</td></tr>
+          <tr><td class="center">4</td><td>Runner/Excess Mat. Weight</td><td>g/prs</td><td>_stdRow.C022</td><td>Actual−STD</td><td>_rowSelected.C022</td></tr>
+        </tbody>
+      </table>
+      <p>STD = value from the most recent weighing (<code>_refHistory[0]</code>). Each STD/Δ/ACTUAL cell changes background+border+text color based on Tolerance. Δ badge is displayed as a rounded pill.</p>
+    </div>
+  </div>
+
+  <h2 id="sec6-7">6.7 Bottom Bar (Row 2 – 72px)</h2>
+  <table>
+    <thead><tr><th>Button</th><th>Background</th><th>Command</th><th>Action</th></tr></thead>
+    <tbody>
+      <tr>
+        <td class="key">↓ Save</td>
+        <td><span style="background:#1A237E;color:#fff;padding:2px 10px;border-radius:4px;font-size:12px">#1A237E</span></td>
+        <td><code>SaveCommand</code></td>
+        <td>Calculate &amp; save weighed value to memory. 1st press: writes C024. 2nd press: writes C023, calculates C021/C022. Cascades updates to subsequent steps.</td>
+      </tr>
+      <tr>
+        <td class="key">Cancel</td>
+        <td><span style="background:#E65100;color:#fff;padding:2px 10px;border-radius:4px;font-size:12px">#E65100</span></td>
+        <td><code>CancelCommand</code></td>
+        <td>Cancel weighing session, reset all state to initial (ResetNewLoop)</td>
+      </tr>
+      <tr>
+        <td class="key">Confirm</td>
+        <td><span style="background:#2E7D32;color:#fff;padding:2px 10px;border-radius:4px;font-size:12px">#2E7D32</span></td>
+        <td><code>ConfirmCommand</code></td>
+        <td>Write FT600s to DB in a transaction. Checks: RFID scanned, all weighing values complete. After success: reset session.</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h2>6.8 Loading Overlay</h2>
+  <p>Semi-transparent overlay (<code>#80000000</code>) appears when <code>IsOverlayVisible=true</code>. Contains text <em>"Loading… / Please wait"</em> and a <strong>Cancel</strong> button to stop the running <code>LoadDataAsync</code>. Overlay covers the entire window (<code>Grid.RowSpan=3</code>).</p>
+</section>
+
+<!-- ═══════════════════ 7. USER GUIDE ═══════════════════ -->
+<section id="sec7">
+  <h1>7. Step-by-Step User Guide</h1>
+
+  <h2>7.1 Basic Weighing Workflow (Injection items)</h2>
+  <table>
+    <thead><tr><th>#</th><th>Action</th><th>Expected Result</th></tr></thead>
+    <tbody>
+      <tr><td class="center">1</td><td><strong>Scan RFID card</strong> or type Employee ID then Enter</td><td>Employee Name auto-fills. UserName on titlebar updates.</td></tr>
+      <tr><td class="center">2a</td><td><strong>[Optional] Scan QR Code label</strong> with barcode gun</td><td>Corresponding step is auto-selected in LookUpEdit. Step Information fills automatically.</td></tr>
+      <tr><td class="center">2b</td><td><strong>[Or] Select Step</strong> in LookUpEdit (type name/code, filter, click)</td><td>Step Information auto-fills. TOTAL STEPS grid shows full BOM.</td></tr>
+      <tr><td class="center">3</td><td>Check TOTAL STEPS grid, verify "Active" step (blue dot)</td><td>Confirm the correct step to weigh.</td></tr>
+      <tr><td class="center">4</td><td>Place <strong>entire shot</strong> on scale (part + runner)</td><td>Scale Card shows total weight. Check "Stable" badge.</td></tr>
+      <tr><td class="center">5</td><td>Press <strong>[↓ Save] 1st time</strong></td><td>C024 = scale value. Grid "Total Weight Injection" column updates.</td></tr>
+      <tr><td class="center">6</td><td>Remove runner, <strong>place only the part</strong> on scale</td><td>Scale Card updates with new value.</td></tr>
+      <tr><td class="center">7</td><td>Press <strong>[↓ Save] 2nd time</strong></td><td>C023/C021/C022 are calculated. Reference Panel compares against STD and color-codes by tolerance.</td></tr>
+      <tr><td class="center">8</td><td>Repeat steps 2b–7 for <strong>remaining steps</strong> (click [Scale] on each row)</td><td>All steps show Done (green dot).</td></tr>
+      <tr><td class="center">9</td><td>Press <strong>[Confirm]</strong></td><td>Validation checks → write to DB → success message → reset session.</td></tr>
+    </tbody>
+  </table>
+
+  <h2>7.2 Weighing Non-Injection Material (REX items)</h2>
+  <ul>
+    <li>Select a step with code starting with <code>"REX"</code> (Nonwoven, Mesh, Receptacle...).</li>
+    <li>If <strong>Partial (Nonwoven/Mesh)</strong>: Check the <strong>Usage %</strong> field – enter the correct percentage then Enter <em>before</em> pressing Save.</li>
+    <li>Place the material on the scale → press <strong>[↓ Save]</strong> (only once).</li>
+    <li>The system automatically calculates usage/unusage using the Partial or Full formula.</li>
+  </ul>
+
+  <h2>7.3 Adjusting Partitioning (Adj.)</h2>
+  <ul>
+    <li>Tick the <strong>Adj.</strong> checkbox next to the Partitioning field to enable edit mode.</li>
+    <li>Enter the new pairs/shot value then press <strong>Enter</strong>.</li>
+    <li>The system updates C028 and recalculates related values.</li>
+  </ul>
+  <div class="note"><strong>Note:</strong> Only adjust when there is a mold change or special order. Default value comes from FT601.</div>
+
+  <h2>7.4 Manual Scale Value Entry</h2>
+  <ul>
+    <li>When the digital scale is disconnected or <code>EnableReadScale=false</code>: the Scale Value field can be typed manually.</li>
+    <li>Only numeric characters and <code>.</code> are accepted – other characters are blocked with a yellow warning tooltip.</li>
+    <li>Press <strong>Enter</strong> in the Scale Value field → system processes it as if a value was received from hardware.</li>
+  </ul>
+
+  <h2>7.5 Troubleshooting</h2>
+  <table>
+    <thead><tr><th>Situation</th><th>Resolution</th></tr></thead>
+    <tbody>
+      <tr><td class="key">Wrong weighing for a step</td><td>Click <span class="badge badge-warn">[Reset]</span> on the row → C021=C022=C023=C024=0 → re-weigh that step from scratch</td></tr>
+      <tr><td class="key">Cancel entire session</td><td>Click <span class="badge badge-err">[Cancel]</span> → all temporary data is cleared, returns to initial state</td></tr>
+      <tr><td class="key">RFID not found</td><td>Type name in Employee Name field → Enter → confirm new registration (QC department only)</td></tr>
+      <tr><td class="key">Previous step not weighed</td><td>System warns "The previous step has not been weighed." – must weigh the previous step first.</td></tr>
+      <tr><td class="key">Scale disconnected</td><td>Status dot turns red. Can manually type value in Scale Value field.</td></tr>
+      <tr><td class="key">Load data taking too long (&gt;30s)</td><td>Timeout fires automatically. Press [Cancel] on the overlay to stop earlier.</td></tr>
+      <tr><td class="key">Label does not match current step</td><td>Warning "Label does not match the item being weighed" when scanning QR in a session with a different step already selected.</td></tr>
+    </tbody>
+  </table>
+</section>
+
+<!-- ═══════════════════ 8. SYSTEM CONFIGURATION ═══════════════════ -->
+<section id="sec8">
+  <h1>8. System Configuration (ConfigSystem)</h1>
+  <p>Configuration is stored in table <code>FT608</code> keyed by <code>MachineName</code>, in JSON format (<code>ConfigModel</code>). Accessed via <code>GlobalVariable.ConfigSystem</code>.</p>
+  <table>
+    <thead><tr><th>Configuration</th><th>Effect</th></tr></thead>
+    <tbody>
+      <tr><td class="key">Scanner.Enable / Scanner.ReadOnly</td><td>Enable/disable Barcode scanner (Zebra CoreScanner SDK). ReadOnly = read only, do not process.</td></tr>
+      <tr><td class="key">RFID.Enable, Rfid_Com, Rfid_AutoFindCom, Rfid_Caption, Rfid_Manufact</td><td>Configure RFID reader via COM port. <code>AutoFindCom=true</code> = auto-find COM by Caption/Manufacturer.</td></tr>
+      <tr><td class="key">Scale.Enable, IP, Port, TimeScan (ms), CalibZero, CalibGain, DecimalNum, ModelName, CheckStable, CheckTare</td><td>Configure digital scale via TCP/IP. <code>TimeScan</code> = polling interval. <code>CalibZero/CalibGain</code> = calibration.</td></tr>
+      <tr><td class="key">EnableReadScale</td><td><code>true</code> = use hardware scale (ReadOnly TextBox); <code>false</code> = manual entry (editable TextBox)</td></tr>
+      <tr><td class="key">PercentOfUserNonWoven</td><td>Default usage percentage for Nonwoven/Mesh (e.g., 70)</td></tr>
+      <tr><td class="key">CategoryOfNonInjectionUsagePartial</td><td>List of CategoryCodes applying the Partial formula (Nonwoven, Mesh, ...)</td></tr>
+      <tr><td class="key">UpdatePath</td><td>XML file URL for AutoUpdaterDotNET to check for new versions</td></tr>
+    </tbody>
+  </table>
+  <div class="note"><strong>Note:</strong> If no configuration is found for the current MachineName, the system automatically creates a new record with default ConfigModel in FT608.</div>
+
+  <hr>
+  <p style="text-align:center;color:#90A4AE;font-size:12px;margin-top:24px;">
+    This document was generated from SSSW source code &nbsp;·&nbsp; Cong Nguyen &nbsp;·&nbsp; cong.nguyen@framas.com &nbsp;·&nbsp; 2026-05-17
+  </p>
+</section>
+
+</main>
+
+<script>
+// Active TOC link on scroll
+const sections = document.querySelectorAll('section[id], div[id="cover"]');
+const links = document.querySelectorAll('.toc-sidebar a[href]');
+window.addEventListener('scroll', () => {
+  let current = '';
+  sections.forEach(s => { if (window.scrollY >= s.offsetTop - 80) current = s.id; });
+  links.forEach(l => {
+    l.classList.remove('active');
+    if (l.getAttribute('href') === '#'+current) l.classList.add('active');
+  });
+});
+</script>
+</body>
+</html>

@@ -1,0 +1,750 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>ShotWeightWindow – Tài liệu kỹ thuật</title>
+<style>
+  :root {
+    --blue-dark: #1A237E;
+    --blue: #1565C0;
+    --blue-light: #E8F0FE;
+    --blue-mid: #1976D2;
+    --grey-dark: #37474F;
+    --grey: #546E7A;
+    --grey-light: #90A4AE;
+    --grey-bg: #F5F7FA;
+    --white: #FFFFFF;
+    --ok: #4CAF50; --ok-bg: #D4F7DC; --ok-text: #1B5E20;
+    --warn: #FF9800; --warn-bg: #FFF3CD; --warn-text: #E65100;
+    --err: #F44336; --err-bg: #FDE8E8; --err-text: #B71C1C;
+    --mono: Consolas, 'Courier New', monospace;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'Segoe UI', Arial, sans-serif; font-size: 14px; color: #263238; background: #F0F2F5; }
+
+  /* COVER */
+  .cover { background: linear-gradient(135deg, #0D1117 0%, #1A237E 60%, #1565C0 100%); color: white; padding: 80px 60px; min-height: 340px; display: flex; flex-direction: column; justify-content: center; }
+  .cover h1 { font-size: 42px; font-weight: 900; letter-spacing: -0.5px; margin-bottom: 16px; }
+  .cover .subtitle { font-size: 20px; color: #90A4AE; margin-bottom: 10px; }
+  .cover .meta { font-size: 13px; color: #546E7A; margin-top: 20px; }
+  .cover .badge { display: inline-block; background: rgba(255,255,255,0.12); border: 1px solid rgba(255,255,255,0.2); border-radius: 20px; padding: 4px 14px; font-size: 12px; margin-right: 8px; }
+
+  /* NAV */
+  .toc-wrapper { background: white; border-bottom: 2px solid #E0E7EF; padding: 20px 60px; }
+  .toc-wrapper h2 { font-size: 12px; text-transform: uppercase; letter-spacing: 1px; color: var(--grey-light); margin-bottom: 12px; }
+  .toc { display: flex; flex-wrap: wrap; gap: 6px; }
+  .toc a { text-decoration: none; background: var(--blue-light); color: var(--blue); border-radius: 4px; padding: 5px 12px; font-size: 13px; font-weight: 600; transition: background 0.15s; }
+  .toc a:hover { background: #1565C0; color: white; }
+
+  /* MAIN */
+  .main { max-width: 1280px; margin: 0 auto; padding: 32px 40px; }
+
+  /* SECTIONS */
+  .section { background: white; border-radius: 10px; border: 1px solid #E0E7EF; margin-bottom: 28px; overflow: hidden; box-shadow: 0 1px 4px rgba(0,0,0,0.06); }
+  .section-header { background: var(--blue); color: white; padding: 16px 24px; display: flex; align-items: center; gap: 12px; }
+  .section-header .num { background: rgba(255,255,255,0.2); border-radius: 50%; width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; font-weight: 900; font-size: 15px; flex-shrink: 0; }
+  .section-header h2 { font-size: 18px; font-weight: 700; }
+  .section-body { padding: 24px; }
+
+  h3 { color: var(--blue); font-size: 15px; margin: 20px 0 10px; border-left: 3px solid var(--blue); padding-left: 10px; }
+  h4 { color: var(--grey-dark); font-size: 13px; font-weight: 700; margin: 16px 0 8px; }
+  p { color: #455A64; line-height: 1.7; margin-bottom: 10px; }
+
+  /* TABLES */
+  table { width: 100%; border-collapse: collapse; font-size: 13px; margin: 14px 0; }
+  thead th { background: var(--blue); color: white; padding: 10px 14px; text-align: left; font-weight: 700; font-size: 12px; }
+  tbody tr:nth-child(even) { background: var(--grey-bg); }
+  tbody tr:hover { background: var(--blue-light); }
+  td { padding: 9px 14px; border-bottom: 1px solid #E0E7EF; vertical-align: top; line-height: 1.5; }
+  td:first-child { font-weight: 600; color: var(--blue-dark); white-space: nowrap; }
+
+  /* FORMULA BOX */
+  .formula { display: flex; border: 1px solid #CFD8DC; border-radius: 8px; overflow: hidden; margin: 12px 0; }
+  .formula-label { background: var(--blue); color: white; padding: 12px 16px; font-weight: 700; font-size: 13px; min-width: 160px; display: flex; align-items: center; }
+  .formula-body { background: var(--blue-light); padding: 12px 16px; flex: 1; }
+  .formula-eq { font-family: var(--mono); font-size: 15px; font-weight: 700; color: var(--blue-dark); margin-bottom: 4px; }
+  .formula-desc { font-size: 12px; color: var(--grey); }
+
+  /* NOTE BOX */
+  .note { background: #FFFDE7; border-left: 4px solid #F9A825; border-radius: 0 6px 6px 0; padding: 12px 16px; margin: 12px 0; font-size: 13px; color: #795548; }
+  .note strong { color: #E65100; }
+
+  /* TOLERANCE */
+  .tol-ok  { background: var(--ok-bg);   color: var(--ok-text);  border: 1px solid var(--ok);   border-radius: 4px; padding: 2px 8px; font-weight: 700; font-size: 12px; }
+  .tol-warn{ background: var(--warn-bg); color: var(--warn-text);border: 1px solid var(--warn); border-radius: 4px; padding: 2px 8px; font-weight: 700; font-size: 12px; }
+  .tol-err { background: var(--err-bg);  color: var(--err-text); border: 1px solid var(--err);  border-radius: 4px; padding: 2px 8px; font-weight: 700; font-size: 12px; }
+  .tol-idle{ background: #F5F5F5; color: #546E7A; border: 1px solid #CFD8DC; border-radius: 4px; padding: 2px 8px; font-weight: 700; font-size: 12px; }
+
+  /* CODE */
+  code { font-family: var(--mono); background: #ECEFF1; color: #B71C1C; padding: 1px 5px; border-radius: 3px; font-size: 13px; }
+
+  /* STEP BADGE */
+  .step { display: flex; align-items: flex-start; gap: 12px; margin-bottom: 10px; }
+  .step-num { background: var(--blue); color: white; border-radius: 50%; width: 26px; height: 26px; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 12px; flex-shrink: 0; margin-top: 1px; }
+  .step-text { line-height: 1.6; color: #455A64; }
+
+  /* GRID UI MOCKUP */
+  .ui-layout { display: grid; grid-template-columns: 1fr 4fr; gap: 12px; margin: 16px 0; }
+  .ui-panel { border: 2px solid var(--blue); border-radius: 8px; overflow: hidden; }
+  .ui-panel-header { background: var(--blue); color: white; padding: 8px 14px; font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; }
+  .ui-panel-body { padding: 12px; background: #FAFAFA; font-size: 12px; }
+  .ui-field { margin-bottom: 8px; }
+  .ui-field label { display: block; font-size: 10px; color: var(--grey-light); margin-bottom: 2px; text-transform: uppercase; }
+  .ui-field .val { background: white; border: 1px solid #CFD8DC; border-radius: 4px; padding: 5px 8px; font-size: 13px; color: var(--grey-dark); }
+  .ui-field .val.editable { border-color: var(--blue); background: #F0F7FF; }
+
+  /* STATUS DOTS */
+  .dot { display: inline-block; width: 10px; height: 10px; border-radius: 50%; margin-right: 6px; }
+  .dot-green { background: #4CAF50; }
+  .dot-blue  { background: #1976D2; }
+  .dot-grey  { background: #9E9E9E; }
+  .dot-red   { background: #F44336; }
+
+  /* FLOW DIAGRAM */
+  .flow { display: flex; align-items: center; flex-wrap: wrap; gap: 4px; margin: 12px 0; }
+  .flow-box { background: var(--blue-light); border: 1px solid var(--blue); border-radius: 6px; padding: 8px 14px; font-size: 12px; font-weight: 600; color: var(--blue-dark); white-space: nowrap; }
+  .flow-arrow { color: var(--grey-light); font-size: 18px; font-weight: 300; }
+  .flow-box.highlight { background: var(--blue); color: white; }
+  .flow-box.green { background: var(--ok-bg); border-color: var(--ok); color: var(--ok-text); }
+  .flow-box.orange { background: var(--warn-bg); border-color: var(--warn); color: var(--warn-text); }
+
+  /* PRINT */
+  @media print {
+    body { background: white; }
+    .cover { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+    .section { page-break-inside: avoid; }
+  }
+</style>
+</head>
+<body>
+
+<!-- ════════ COVER ════════ -->
+<div class="cover">
+  <div style="font-size:13px;color:#90A4AE;margin-bottom:20px;letter-spacing:1px;text-transform:uppercase;">SSSW · framas Internal</div>
+  <h1>ShotWeightWindow.xaml</h1>
+  <div class="subtitle">Tài liệu kỹ thuật – Shot Weight Station</div>
+  <div class="subtitle" style="font-size:15px;margin-top:4px;">Kiến trúc · Logic nghiệp vụ · Công thức tính toán · Hướng dẫn UI</div>
+  <div class="meta">
+    <span class="badge">Phiên bản 1.0</span>
+    <span class="badge">17/05/2026</span>
+    <span class="badge">WPF · MVVM · EF Core</span>
+    <span class="badge">ScanAndScale.Core</span>
+    <span class="badge">✍ Cong Nguyen · cong.nguyen@framas.com</span>
+  </div>
+</div>
+
+<!-- ════════ TOC ════════ -->
+<div class="toc-wrapper">
+  <h2>Nội dung</h2>
+  <div class="toc">
+    <a href="#s1">1. Tổng quan</a>
+    <a href="#s2">2. Kiến trúc MVVM</a>
+    <a href="#s3">3. Giao diện UI</a>
+    <a href="#s4">4. Logic nghiệp vụ</a>
+    <a href="#s5">5. Công thức tính toán</a>
+    <a href="#s6">6. Confirm & DB</a>
+    <a href="#s7">7. Data Model FT600</a>
+    <a href="#s8">8. Hướng dẫn UI</a>
+    <a href="#s9">9. Lỗi thường gặp</a>
+    <a href="#s10">10. Converters & Styles</a>
+    <a href="#s11">11. Stored Procedures</a>
+    <a href="#s12">12. Database Tables</a>
+  </div>
+</div>
+
+<div class="main">
+
+<!-- ════════════════ 1. TỔNG QUAN ════════════════ -->
+<div class="section" id="s1">
+  <div class="section-header"><div class="num">1</div><h2>Tổng quan hệ thống</h2></div>
+  <div class="section-body">
+    <p><strong>ShotWeightWindow</strong> là màn hình chính của ứng dụng SSSW (Shot-weight Scale Station) – giao diện WPF chạy trên máy tính trạm tại xưởng sản xuất. Nhân viên QC / IT sử dụng màn hình này để:</p>
+    <ul style="margin:10px 0 14px 24px;line-height:2;">
+      <li>Cân trọng lượng shot (injection molding) theo từng bước trong BOM sản xuất.</li>
+      <li>Tự động đọc dữ liệu từ <strong>cân điện tử</strong> (Scale), <strong>quét mã QR/Barcode</strong> và <strong>thẻ RFID</strong> nhân viên.</li>
+      <li>Tính toán <strong>Part Weight, Runner Weight, Total Weight</strong> cho từng bước.</li>
+      <li>Lưu kết quả vào database (bảng <code>FT600</code>) và cập nhật trạng thái Hydra (<code>FT601</code>).</li>
+      <li>So sánh với giá trị chuẩn (STD) theo ngưỡng dung sai <strong>±1%</strong> (OK) / <strong>±3%</strong> (Warn).</li>
+    </ul>
+    <table>
+      <thead><tr><th>Thông tin</th><th>Chi tiết</th></tr></thead>
+      <tbody>
+        <tr><td>Namespace chính</td><td><code>SSSW.UI.WPF</code></td></tr>
+        <tr><td>ViewModel</td><td><code>SSSW.UI.WPF.ViewModels.ShotWeightViewModel</code></td></tr>
+        <tr><td>Kích thước mặc định</td><td>1920 × 1080 px (Full HD), <code>WindowStyle=None</code> (custom title bar)</td></tr>
+        <tr><td>Framework UI</td><td>WPF (.NET) + DevExpress WPF Controls (LookUpEdit, GridControl)</td></tr>
+        <tr><td>Hardware SDK</td><td>ScanAndScale.Core – BarcodeDriver, RfidDriver, ScaleDriver</td></tr>
+        <tr><td>ORM / DB</td><td>Entity Framework Core – <code>DbContextDogeWH</code> (IDbContextFactory)</td></tr>
+        <tr><td>DI Framework</td><td>Microsoft.Extensions.DependencyInjection</td></tr>
+        <tr><td>Auto-update</td><td>AutoUpdaterDotNET</td></tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- ════════════════ 2. KIẾN TRÚC ════════════════ -->
+<div class="section" id="s2">
+  <div class="section-header"><div class="num">2</div><h2>Kiến trúc – Mô hình MVVM</h2></div>
+  <div class="section-body">
+
+    <h3>2.1 Phân tầng kiến trúc</h3>
+    <table>
+      <thead><tr><th>Tầng</th><th>File / Class</th><th>Vai trò</th></tr></thead>
+      <tbody>
+        <tr><td>View</td><td><code>ShotWeightWindow.xaml</code></td><td>Toàn bộ giao diện XAML – binding đến ViewModel, KHÔNG có business logic</td></tr>
+        <tr><td>Code-behind (View)</td><td><code>ShotWeightWindow.xaml.cs</code></td><td>Win32 drag, khởi tạo driver, event bridge driver→VM, DevExpress bridge, KeyDown bridge</td></tr>
+        <tr><td>ViewModel</td><td><code>ShotWeightViewModel.cs</code></td><td>Toàn bộ business logic, Commands, ObservableCollections, tính toán trọng lượng</td></tr>
+        <tr><td>Model – Domain</td><td><code>FT600, FT601</code> (EF entities)</td><td>Entity lưu kết quả cân và master step Hydra</td></tr>
+        <tr><td>Model – UI</td><td><code>ReferenceRow, ScaleModels.cs</code></td><td>Model cho bảng Reference Values, enum <code>ToleranceCategory</code></td></tr>
+        <tr><td>Hardware Drivers</td><td><code>BarcodeDriver, RfidDriver, ScaleDriver</code></td><td>Singleton drivers từ ScanAndScale.Core</td></tr>
+        <tr><td>Data Layer</td><td><code>DbContextDogeWH</code> (EF Core)</td><td>SQL Server: FT600, FT601, FT029, FT606, FT608</td></tr>
+      </tbody>
+    </table>
+
+    <h3>2.2 Luồng dữ liệu tổng quát</h3>
+    <div class="flow">
+      <div class="flow-box">App Start</div><div class="flow-arrow">→</div>
+      <div class="flow-box">DI Container</div><div class="flow-arrow">→</div>
+      <div class="flow-box highlight">ShotWeightWindow</div><div class="flow-arrow">→</div>
+      <div class="flow-box">Window.Loaded</div><div class="flow-arrow">→</div>
+      <div class="flow-box">InitializeAsync</div>
+    </div>
+    <div class="flow" style="margin-top:4px;">
+      <div class="flow-box">LoadDataAsync (FT601)</div><div class="flow-arrow">→</div>
+      <div class="flow-box">LookUpEdit (StepCodeMaster)</div>
+    </div>
+    <div class="flow" style="margin-top:4px;">
+      <div class="flow-box">Chọn Step / Quét Barcode</div><div class="flow-arrow">→</div>
+      <div class="flow-box">GetDataAsync</div><div class="flow-arrow">→</div>
+      <div class="flow-box">_scaleDataFinal (BOM)</div>
+    </div>
+    <div class="flow" style="margin-top:4px;">
+      <div class="flow-box">Scale hardware</div><div class="flow-arrow">→</div>
+      <div class="flow-box">ScaleDriver event</div><div class="flow-arrow">→</div>
+      <div class="flow-box">Dispatcher.Invoke</div><div class="flow-arrow">→</div>
+      <div class="flow-box">ScaleValue (UI)</div>
+    </div>
+    <div class="flow" style="margin-top:4px;">
+      <div class="flow-box">Nhấn Save</div><div class="flow-arrow">→</div>
+      <div class="flow-box highlight">ExecuteSave (tính C021-C024)</div><div class="flow-arrow">→</div>
+      <div class="flow-box">RefreshUI + Reference Panel</div>
+    </div>
+    <div class="flow" style="margin-top:4px;">
+      <div class="flow-box">Nhấn Confirm</div><div class="flow-arrow">→</div>
+      <div class="flow-box green">INSERT FT600</div><div class="flow-arrow">→</div>
+      <div class="flow-box green">UPDATE FT601.C017=true</div><div class="flow-arrow">→</div>
+      <div class="flow-box">ResetNewLoop</div>
+    </div>
+
+    <h3>2.3 Hardware Drivers</h3>
+    <div class="note"><strong>Lưu ý thread:</strong> Tất cả hardware events có thể fire từ background thread → bắt buộc dùng <code>Dispatcher.Invoke / InvokeAsync</code> trước khi cập nhật UI hoặc ViewModel properties.</div>
+    <table>
+      <thead><tr><th>Driver</th><th>Giao thức</th><th>Khởi tạo</th><th>Event</th></tr></thead>
+      <tbody>
+        <tr><td>BarcodeDriver</td><td>Zebra CoreScanner SDK</td><td>Singleton: <code>BarcodeDriver.Instance</code></td><td>DataValueChanged</td></tr>
+        <tr><td>RfidDriver</td><td>Serial Port (COM)</td><td>Singleton: <code>RfidDriver.Instance</code></td><td>DataValueChanged</td></tr>
+        <tr><td>ScaleDriver</td><td>TCP/IP (IP:Port)</td><td>new instance (dispose/re-init theo config)</td><td>DataValueChanged</td></tr>
+      </tbody>
+    </table>
+
+    <h3>2.4 Dependency Injection</h3>
+    <p>ShotWeightViewModel được resolve từ DI container với các dependencies:</p>
+    <ul style="margin:8px 0 8px 24px;line-height:2;">
+      <li><code>IDbContextFactory&lt;DbContextDogeWH&gt;</code> – tạo DbContext per-operation (thread-safe)</li>
+      <li><code>IServiceProvider</code> – resolve form phụ (frmMainView, frmUpdateMasterData)</li>
+      <li><code>ILogger&lt;ShotWeightViewModel&gt;</code> – ghi log lỗi (Microsoft.Extensions.Logging)</li>
+    </ul>
+    <p>Commands sử dụng <code>RelayCommand</code> (sync) và <code>AsyncRelayCommand</code> (async) theo pattern MVVM thuần.</p>
+
+    <h3>2.5 View Callbacks (Action&lt;T&gt;)</h3>
+    <p>Vì một số thao tác View không thể bind (DevExpress, focus WPF control...), ViewModel expose các <code>Action</code> để code-behind gán:</p>
+    <table>
+      <thead><tr><th>Action</th><th>Mô tả</th></tr></thead>
+      <tbody>
+        <tr><td><code>ClearBarcodeAction</code></td><td>Xóa nội dung ô barcode</td></tr>
+        <tr><td><code>ClearRfidAction</code></td><td>Xóa nội dung ô RFID</td></tr>
+        <tr><td><code>FocusRfidNameAction</code></td><td>Focus vào ô Employee Name</td></tr>
+        <tr><td><code>ClearStepComboAction</code></td><td>Reset DevExpress LookUpEdit về null</td></tr>
+        <tr><td><code>SetStepComboAction</code></td><td>Set giá trị cho LookUpEdit</td></tr>
+        <tr><td><code>FocusGridRowAction</code></td><td>Scroll + select dòng trong dgTotalSteps</td></tr>
+        <tr><td><code>ApplyHardwareConfigAction</code></td><td>Khởi tạo 3 drivers từ config DB</td></tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- ════════════════ 3. GIAO DIỆN UI ════════════════ -->
+<div class="section" id="s3">
+  <div class="section-header"><div class="num">3</div><h2>Cấu trúc giao diện UI</h2></div>
+  <div class="section-body">
+    <p>Cửa sổ chia 3 hàng: <strong>Title Bar</strong> (44px) / <strong>Main Content</strong> (*) / <strong>Bottom Bar</strong> (72px). Overlay Loading span toàn bộ.</p>
+
+    <h3>3.1 Title Bar (nền #0D1117)</h3>
+    <table>
+      <thead><tr><th>Thành phần</th><th>Binding / Hành động</th></tr></thead>
+      <tbody>
+        <tr><td>"framas" (logo)</td><td>Text tĩnh, font Bold 16pt trắng</td></tr>
+        <tr><td>WindowTitle</td><td><code>vm.WindowTitle</code> – ví dụ: "fVN – Shotweight Station"</td></tr>
+        <tr><td>UserName</td><td><code>vm.UserName</code> – hiện sau khi quét RFID: "EmployeeCode · EmployeeName"</td></tr>
+        <tr><td>🔄 Reload</td><td><code>ReloadCommand</code> → <code>LoadDataAsync(timeout=30s)</code></td></tr>
+        <tr><td>📋 History</td><td><code>HistoryViewCommand</code> → mở <code>frmMainView</code></td></tr>
+        <tr><td>⚡ Hydra</td><td><code>HydraCommand</code> → đồng bộ FT601 từ Hydra ERP</td></tr>
+        <tr><td>⚙ Settings</td><td><code>SettingsCommand</code> → mở <code>frmUpdateMasterData</code></td></tr>
+        <tr><td>⬆ Update</td><td><code>UpdateCommand</code> → AutoUpdaterDotNET</td></tr>
+        <tr><td>Minimize / Maximize / Close</td><td>Click handlers trong code-behind</td></tr>
+        <tr><td>Kéo cửa sổ</td><td>Win32 <code>SendMessage(WM_SYSCOMMAND, SC_DRAGMOVE)</code></td></tr>
+      </tbody>
+    </table>
+
+    <h3>3.2 Panel trái – STEP INFORMATION</h3>
+    <p>Chiều rộng: 1 phần (≈384px trên FHD). Scroll dọc khi nội dung dài.</p>
+    <table>
+      <thead><tr><th>Control</th><th>Binding</th><th>Mode</th><th>Ghi chú</th></tr></thead>
+      <tbody>
+        <tr><td>Name</td><td>StepName</td><td>OneWay</td><td>TextWrapping, ReadOnly</td></tr>
+        <tr><td>Code</td><td>StepCode</td><td>OneWay</td><td>ReadOnly</td></tr>
+        <tr><td>Machine</td><td>Machine</td><td>OneWay</td><td>ReadOnly</td></tr>
+        <tr><td>Quantity</td><td>Qty</td><td>OneWay</td><td>ReadOnly</td></tr>
+        <tr><td>Partitioning (prs)</td><td>ActualPairs</td><td>OneWay</td><td>IsReadOnly ← IsActualPairsReadOnly; Enter → OnActualPairsEnter</td></tr>
+        <tr><td>Adj. CheckBox</td><td>AllowPartitionAdj</td><td>TwoWay</td><td>Bật → mở khóa Partitioning + Usage %</td></tr>
+        <tr><td>Runner ComboBox</td><td>RunnerText</td><td>TwoWay</td><td>YES / NO</td></tr>
+        <tr><td>Usage %</td><td>UsagePct</td><td>OneWay</td><td>IsReadOnly ← IsUsagePctReadOnly; Enter → OnUsagePctEnter</td></tr>
+        <tr><td>Size</td><td>Size</td><td>OneWay</td><td>ReadOnly</td></tr>
+        <tr><td>Seq. Index</td><td>StepIndex</td><td>OneWay</td><td>ReadOnly</td></tr>
+        <tr><td>FG Description</td><td>FgName</td><td>OneWay</td><td>ReadOnly, TextWrapping</td></tr>
+        <tr><td>FG Item Code</td><td>FgItemCode</td><td>OneWay</td><td>ReadOnly</td></tr>
+        <tr><td>Remark</td><td>Remark</td><td>TwoWay, PropertyChanged</td><td>Setter sync sang <code>_scaleDataFinal[*].C038</code></td></tr>
+        <tr><td>Select Step (LookUpEdit)</td><td>StepCodeMaster (ItemsSource)</td><td>—</td><td>Event bridge qua <code>cbStepName_EditValueChangedAsync</code>; Popup filter Excel theo Machine, Code, Name, Size, HydraOrderNo, FT601Id</td></tr>
+      </tbody>
+    </table>
+
+    <h3>3.3 Lưới TOTAL STEPS (trên phải – 410px)</h3>
+    <p>DataGrid hiển thị tất cả step trong <code>_scaleDataFinal</code> (<code>ObservableCollection&lt;FT600&gt; StepsCollection</code>).</p>
+    <table>
+      <thead><tr><th>Cột</th><th>Binding</th><th>Ý nghĩa</th></tr></thead>
+      <tbody>
+        <tr><td>Actions</td><td>GridScaleCommand / GridResetCommand / GridDeleteCommand</td><td><span style="background:#1976D2;color:white;border-radius:3px;padding:2px 8px;font-size:11px;">Scale</span> <span style="background:#F9A825;color:white;border-radius:3px;padding:2px 8px;font-size:11px;">Reset</span> <span style="background:#D32F2F;color:white;border-radius:3px;padding:2px 8px;font-size:11px;">Delete</span></td></tr>
+        <tr><td>STATUS</td><td>StatusDotColor + StatusText</td><td><span class="dot dot-grey"></span>Pending / <span class="dot dot-blue"></span>Active / <span class="dot dot-green"></span>Done</td></tr>
+        <tr><td>MACHINE</td><td>C004</td><td>Mã máy sản xuất</td></tr>
+        <tr><td>MAIN / MAIN CODE</td><td>C027 + C026</td><td>Tên (bold 12pt) + mã Main item (xám 10pt)</td></tr>
+        <tr><td>SEQUENCE STEP</td><td>C015</td><td>Số thứ tự bước</td></tr>
+        <tr><td>STEP / STEP CODE</td><td>C003 + C002</td><td>Tên (bold) + mã bước</td></tr>
+        <tr><td>SIZE</td><td>C008</td><td>Kích cỡ</td></tr>
+        <tr><td>TOTAL WEIGHT INJECTION (g)</td><td>C024 (F2)</td><td>Tổng trọng lượng sau ejection (lần cân 1)</td></tr>
+        <tr><td>TOTAL PART WEIGHT (g/prs)</td><td>C023 (F2)</td><td>Tổng part weight tích lũy (lần cân 2)</td></tr>
+        <tr><td>PART WEIGHT (g/prs)</td><td>C021 (F2)</td><td>Part weight bước này</td></tr>
+        <tr><td>RUNNER WEIGHT (g/prs)</td><td>C022 (F2)</td><td>Runner/excess material</td></tr>
+        <tr><td>OPERATOR</td><td>C011</td><td>Tên nhân viên cân</td></tr>
+      </tbody>
+    </table>
+
+    <h3>3.4 Hàng giữa – RFID & Barcode</h3>
+    <table>
+      <thead><tr><th>Control</th><th>Binding</th><th>Mô tả</th></tr></thead>
+      <tbody>
+        <tr><td>Chấm RFID</td><td>RfidStatus → DriverStatusToColor</td><td>Xanh=Connected, Đỏ=Disconnected, Xám=Unknown</td></tr>
+        <tr><td>RFID / Employee ID</td><td>RfidCardCode (TwoWay)</td><td>Auto-fill từ driver; gõ tay + Enter cũng được</td></tr>
+        <tr><td>Employee Name</td><td>RfidName (OneWay)</td><td>Điền sau khi xác thực FT029; gõ + Enter để đăng ký mới</td></tr>
+        <tr><td>Chấm Barcode</td><td>BarcodeStatus → DriverStatusToColor</td><td>Trạng thái Zebra Scanner</td></tr>
+        <tr><td>Barcode / QR Scan</td><td>BarcodeScannedValue (TwoWay)</td><td>Auto-fill; gõ tay + Enter kích hoạt OnBarcodeScannedAsync</td></tr>
+      </tbody>
+    </table>
+
+    <h3>3.5 Panel HISTORY (dưới trái)</h3>
+    <p>Click header để toggle mở/đóng. Hiển thị 15 bản ghi FT600 gần nhất của step hiện tại.</p>
+    <table>
+      <thead><tr><th>Thành phần</th><th>Mô tả</th></tr></thead>
+      <tbody>
+        <tr><td>HistoryToggleText</td><td>"▼/▶  REFERENCE / HISTORY  · last N weighings · StepCode · Size · FGItemCode"</td></tr>
+        <tr><td>HistoryToggleTextSecond</td><td>Tên step</td></tr>
+        <tr><td>Columns</td><td>DATE/TIME, TOTAL WEIGHT (g), TOTAL PART WEIGHT (g/prs), PART WEIGHT (g/prs), RUNNER WEIGHT (g/prs), OPERATOR</td></tr>
+      </tbody>
+    </table>
+
+    <h3>3.6 SCALE VALUE + REFERENCE VALUES (dưới phải)</h3>
+    <table>
+      <thead><tr><th>Thành phần</th><th>Binding</th><th>Mô tả</th></tr></thead>
+      <tbody>
+        <tr><td>Chấm Scale</td><td>ScaleStatus → DriverStatusToColor</td><td>Trạng thái cân</td></tr>
+        <tr><td>Badge "Stable Value"</td><td>ScaleStable → StableToForeground</td><td>Xanh=ổn định, Cam=dao động</td></tr>
+        <tr><td>Badge "TARE"</td><td>ScaleTare → BoolToVisibility</td><td>Đỏ khi cân đang tare</td></tr>
+        <tr><td>Số cân lớn (_txtScale)</td><td>ScaleValue (LostFocus)</td><td>Consolas 44pt; chỉ nhận số; Enter = submit thủ công; validation PreviewTextInput + Pasting</td></tr>
+        <tr><td>ScaleCardBorderBrush</td><td>Tự tính</td><td>Xanh lá/Vàng/Đỏ/Xám theo tolerance xấu nhất</td></tr>
+        <tr><td>ScaleCardBackground</td><td>Tự tính</td><td>#D4F7DC / #FFF3CD / #FDE8E8 / #F5F5F5</td></tr>
+        <tr><td>dgRefValues (4 dòng)</td><td>RefRowsCollection</td><td>STD / Δ / ACTUAL cho Total W_Injection, Total PW, Part Weight, Runner Weight</td></tr>
+      </tbody>
+    </table>
+
+    <h3>3.7 Bottom Bar</h3>
+    <table>
+      <thead><tr><th>Nút</th><th>Command</th><th>Chức năng</th></tr></thead>
+      <tbody>
+        <tr><td><span style="background:#1A237E;color:white;border-radius:4px;padding:4px 14px;font-weight:bold;">↓ Save</span></td><td>SaveCommand</td><td>Tính C021/C022/C023/C024, lưu tạm vào memory (_rowSelected)</td></tr>
+        <tr><td><span style="background:#E65100;color:white;border-radius:4px;padding:4px 14px;font-weight:bold;">Cancel</span></td><td>CancelCommand</td><td>Hủy phiên cân, reset toàn bộ state</td></tr>
+        <tr><td><span style="background:#2E7D32;color:white;border-radius:4px;padding:4px 14px;font-weight:bold;">Confirm</span></td><td>ConfirmCommand</td><td>Lưu FT600 vào DB, cập nhật FT601.C017=true</td></tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- ════════════════ 4. LOGIC NGHIỆP VỤ ════════════════ -->
+<div class="section" id="s4">
+  <div class="section-header"><div class="num">4</div><h2>Logic nghiệp vụ</h2></div>
+  <div class="section-body">
+
+    <h3>4.1 Khởi động (InitializeAsync)</h3>
+    <div class="step"><div class="step-num">1</div><div class="step-text">Khởi tạo AutoUpdater (DownloadPath, events).</div></div>
+    <div class="step"><div class="step-num">2</div><div class="step-text">Truy vấn DB: <code>sp_MaterialGetCompanyName</code> → <code>_mesocomp</code>; <code>sp_MaterialGetMesoyear</code> → <code>_mesoYear</code>.</div></div>
+    <div class="step"><div class="step-num">3</div><div class="step-text">Map mesocomp → <code>EnumLocation</code> → WindowTitle (fVN / fKV / fFT / fIN / fGE – Shotweight Station).</div></div>
+    <div class="step"><div class="step-num">4</div><div class="step-text">Đọc <code>FT608_Config</code> theo <code>Environment.MachineName</code> → deserialize <code>ConfigModel</code>. Nếu chưa có → INSERT mặc định.</div></div>
+    <div class="step"><div class="step-num">5</div><div class="step-text">Gọi <code>ApplyHardwareConfigAction</code> → code-behind khởi tạo BarcodeDriver, RfidDriver, ScaleDriver.</div></div>
+    <div class="step"><div class="step-num">6</div><div class="step-text">Gán <code>UsagePct = ConfigSystem.PercentOfUserNonWoven</code>, <code>ReadOnly = ConfigSystem.EnableReadScale</code>.</div></div>
+    <div class="step"><div class="step-num">7</div><div class="step-text">Gọi <code>LoadDataAsync()</code>.</div></div>
+
+    <h3>4.2 LoadDataAsync – Tải master data</h3>
+    <p>Sử dụng <code>CancellationTokenSource</code> linked với timeout (mặc định 30s). Nếu đang chạy, hủy request cũ trước.</p>
+    <div class="step"><div class="step-num">1</div><div class="step-text">Hiện overlay + bật nút Cancel.</div></div>
+    <div class="step"><div class="step-num">2</div><div class="step-text"><code>Task.Run</code>: query <code>FT601s</code> WHERE <code>C021=true AND Mesoyear=_mesoYear</code>.</div></div>
+    <div class="step"><div class="step-num">3</div><div class="step-text">Project → <code>List&lt;StepSelectModel&gt;</code> → <code>StepCodeMaster</code> (ItemsSource của LookUpEdit).</div></div>
+    <div class="step"><div class="step-num">4</div><div class="step-text">Dispatch về UI thread → cập nhật <code>StepCodeMaster</code>. Ẩn overlay.</div></div>
+
+    <h3>4.3 GetDataAsync – Build danh sách step (phiên mới)</h3>
+    <div class="step"><div class="step-num">1</div><div class="step-text">ResetNewLoop() – xóa state cũ.</div></div>
+    <div class="step"><div class="step-num">2</div><div class="step-text">Query <code>FT601</code> theo <code>C007</code> (FGItemCode) → <code>_stepItemCodeScale</code>.</div></div>
+    <div class="step"><div class="step-num">3</div><div class="step-text">Gọi <code>sp_getBomWinlineOfItemFG(@itemFG)</code> → <code>_allStepsFG</code>.</div></div>
+    <div class="step"><div class="step-num">4</div><div class="step-text">Với mỗi BOM step: tìm FT601 tương ứng trong <code>_dataHydra</code>, tạo <code>FT600</code> tạm (<code>AllowScale</code> theo quy tắc: REX/Z-VHXXXXXX=true, mã không khớp=false).</div></div>
+    <div class="step"><div class="step-num">5</div><div class="step-text">Xử lý khuôn nhiều size: tìm <code>sameMolds</code> theo MoldId+Machine+prefix → thêm vào <code>_scaleData</code>.</div></div>
+    <div class="step"><div class="step-num">6</div><div class="step-text">Sắp xếp <code>_scaleDataFinal</code> theo C015 (sequence) → C027. Pre-fill giá trị cho Stud/Logo/Cleat_Ring/REX từ DB (bản ghi gần nhất).</div></div>
+    <div class="step"><div class="step-num">7</div><div class="step-text">Kiểm tra bước trước: nếu <code>C021 == 0</code> → cảnh báo "The previous step has not been weighed."</div></div>
+
+    <h3>4.4 RFID – Xác thực nhân viên</h3>
+    <div class="step"><div class="step-num">1</div><div class="step-text">Driver đọc thẻ → <code>OnRfidValueChanged(rfidCode)</code>.</div></div>
+    <div class="step"><div class="step-num">2</div><div class="step-text">Query <code>FT029_Operator_RFID</code> WHERE <code>C000.Contains(rfidCode)</code>.</div></div>
+    <div class="step"><div class="step-num">3</div><div class="step-text">Kiểm tra <code>DepartmentInfor</code>: phải thuộc IT hoặc QC (FT031). Nếu không → từ chối, xóa RFID.</div></div>
+    <div class="step"><div class="step-num">4</div><div class="step-text">Nếu hợp lệ: <code>RfidName = C001</code>, <code>UserName = "Code · Name"</code>.</div></div>
+    <div class="step"><div class="step-num">5</div><div class="step-text">Nếu chưa có trong DB: Focus tbRFIDName → gõ tên + Enter → <code>OnRfidNameEnterAsync</code> → INSERT FT029.</div></div>
+
+    <h3>4.5 Barcode – Tìm step từ QR</h3>
+    <div class="step"><div class="step-num">1</div><div class="step-text">Driver đọc → <code>OnBarcodeScannedAsync(barcode)</code>.</div></div>
+    <div class="step"><div class="step-num">2</div><div class="step-text">Query <code>FT606_Label</code> WHERE <code>c001 = barcode</code> → <code>_labelInfo</code>.</div></div>
+    <div class="step"><div class="step-num">3</div><div class="step-text">Tìm <code>_stepSelected</code> trong <code>_dataHydra</code> theo <code>_labelInfo.c000</code> (FT601.Id).</div></div>
+    <div class="step"><div class="step-num">4</div><div class="step-text"><code>FilterStepCombo</code> → set LookUpEdit → <code>TriggerStepSelectionAsync</code>.</div></div>
+  </div>
+</div>
+
+<!-- ════════════════ 5. CÔNG THỨC TÍNH TOÁN ════════════════ -->
+<div class="section" id="s5">
+  <div class="section-header"><div class="num">5</div><h2>Công thức tính toán (ExecuteSave)</h2></div>
+  <div class="section-body">
+    <p>Khi nhấn <strong>Save</strong>, hàm <code>ExecuteSave</code> phân nhánh theo loại vật liệu:</p>
+
+    <h3>5.1 Injection Items – Lần cân 1 (C024 == 0)</h3>
+    <div class="formula">
+      <div class="formula-label">C024</div>
+      <div class="formula-body">
+        <div class="formula-eq">C024 = ScaleValue</div>
+        <div class="formula-desc">Tổng trọng lượng sau ejection (part + runner). Đơn vị: gram. Đây là lần cân đầu tiên.</div>
+      </div>
+    </div>
+
+    <h3>5.2 Injection Items – Lần cân 2 (C024 &gt; 0)</h3>
+    <p>Chỉ giữ lại phần sản phẩm trên cân (lấy runner ra):</p>
+    <div class="formula">
+      <div class="formula-label">C023</div>
+      <div class="formula-body">
+        <div class="formula-eq">C023 = ScaleValue</div>
+        <div class="formula-desc">Total Part Weight (g/prs) – đọc trực tiếp từ cân.</div>
+      </div>
+    </div>
+    <div class="formula">
+      <div class="formula-label">C022 (Runner=YES)</div>
+      <div class="formula-body">
+        <div class="formula-eq">C022 = Round( (C024 − C023 × prsShot) / prsShot, 3 )</div>
+        <div class="formula-desc">Runner weight (g/prs). prsShot = _articlePaisShotFinaly. Nếu Runner = NO → C022 = 0.</div>
+      </div>
+    </div>
+    <div class="formula">
+      <div class="formula-label">C021</div>
+      <div class="formula-body">
+        <div class="formula-eq">C021 = C023 − Σ C023<sub>prev</sub> − Σ C023<sub>non-inj</sub></div>
+        <div class="formula-desc">
+          Part Weight bước này (g/prs).<br/>
+          • <code>Σ C023<sub>prev</sub></code>: tổng C023 của tất cả step có <code>C015 = C015_hiện_tại − 1</code>.<br/>
+          • <code>Σ C023<sub>non-inj</sub></code>: tổng C023 của step REX / Z-VHXXXXXX cùng C015.
+        </div>
+      </div>
+    </div>
+    <div class="formula">
+      <div class="formula-label">C036 (Studs/Logo/Cleat_Ring)</div>
+      <div class="formula-body">
+        <div class="formula-eq">C036 = Round( ScaleValue / prsShot, 2 )</div>
+        <div class="formula-desc">Trọng lượng/piece (g) của phụ kiện đặc biệt. Với bước khác: C036 = 0.</div>
+      </div>
+    </div>
+
+    <h3>5.3 Non-injection (REX…) – Receptacle (catCheck == null)</h3>
+    <div class="formula"><div class="formula-label">C024 = C023 = C021</div><div class="formula-body"><div class="formula-eq">= ScaleValue</div><div class="formula-desc">100% vật liệu là part weight. Không có waste.</div></div></div>
+    <div class="formula"><div class="formula-label">C036</div><div class="formula-body"><div class="formula-eq">C036 = Round( ScaleValue / C025, 2 )</div><div class="formula-desc">C025 = quantity.</div></div></div>
+
+    <h3>5.4 Non-injection (REX…) – Nonwoven / Mesh (catCheck != null, dùng Usage %)</h3>
+    <div class="formula"><div class="formula-label">usage</div><div class="formula-body"><div class="formula-eq">usage = Round( (ScaleValue × _percentOfUsage / 100) / C028, 3 )</div><div class="formula-desc">Phần sử dụng thực tế (g/prs). C028 = prsShot.</div></div></div>
+    <div class="formula"><div class="formula-label">unusage</div><div class="formula-body"><div class="formula-eq">unusage = (ScaleValue − usage × C028) / C028</div><div class="formula-desc">Phần không sử dụng (waste, g/prs).</div></div></div>
+    <div class="formula"><div class="formula-label">C024</div><div class="formula-body"><div class="formula-eq">C024 = ScaleValue</div><div class="formula-desc">Tổng trọng lượng raw material.</div></div></div>
+    <div class="formula"><div class="formula-label">C023 = C021</div><div class="formula-body"><div class="formula-eq">= usage</div><div class="formula-desc">Part weight = phần thực sự sử dụng.</div></div></div>
+    <div class="formula"><div class="formula-label">C022</div><div class="formula-body"><div class="formula-eq">C022 = unusage</div><div class="formula-desc">Excess = phần không dùng.</div></div></div>
+    <div class="formula"><div class="formula-label">C036</div><div class="formula-body"><div class="formula-eq">C036 = Round( usage / 2, 2 )</div><div class="formula-desc">Trọng lượng per foot (chia 2 vì 1 đôi = 2 chân).</div></div></div>
+
+    <h3>5.5 Khuôn nhiều size (Multi-size Mold)</h3>
+    <p>Khi <code>sameMolds.Count &gt; 1</code> (nhiều size trên cùng một khuôn):</p>
+    <div class="formula"><div class="formula-label">sumPW</div><div class="formula-body"><div class="formula-eq">sumPW = Σ( C023<sub>i</sub> × C028<sub>i</sub> )</div><div class="formula-desc">Tổng part weight × pairs của tất cả size.</div></div></div>
+    <div class="formula"><div class="formula-label">pairShot</div><div class="formula-body"><div class="formula-eq">pairShot = Σ C028<sub>i</sub></div><div class="formula-desc">Tổng pairs tất cả size.</div></div></div>
+    <div class="formula"><div class="formula-label">C024 (mỗi size)</div><div class="formula-body"><div class="formula-eq">C024 = _rowSelected.C024</div><div class="formula-desc">Dùng chung 1 giá trị cân tổng.</div></div></div>
+    <div class="formula"><div class="formula-label">C022 (mỗi size)</div><div class="formula-body"><div class="formula-eq">C022 = (C024 − sumPW) / pairShot  (nếu C023 &gt; 0, else 0)</div><div class="formula-desc">Runner weight phân bổ theo pairs.</div></div></div>
+
+    <h3>5.6 Cascade update (cập nhật bước sau)</h3>
+    <p>Sau Save, các bước tiếp theo có <code>C024 &gt; 0</code> được tính lại:</p>
+    <div class="formula"><div class="formula-label">C021 (cùng seq)</div><div class="formula-body"><div class="formula-eq">C021 = C023 − _rowSelected.C023</div></div></div>
+    <div class="formula"><div class="formula-label">C022 (cùng seq)</div><div class="formula-body"><div class="formula-eq">C022 = C024 − C021</div></div></div>
+    <div class="formula"><div class="formula-label">C021 (seq sau)</div><div class="formula-body"><div class="formula-eq">C021 = C023 − prev.C023</div><div class="formula-desc">prev = bước liền trước.</div></div></div>
+    <div class="formula"><div class="formula-label">C022 (seq sau)</div><div class="formula-body"><div class="formula-eq">C022 = C024 − C021</div></div></div>
+
+    <h3>5.7 Tolerance và màu sắc Reference Panel</h3>
+    <div class="formula"><div class="formula-label">Δ (Delta)</div><div class="formula-body"><div class="formula-eq">Δ = Actual − STD</div><div class="formula-desc">STD = giá trị C024/C023/C021/C022 của lần cân gần nhất trong DB.</div></div></div>
+    <div class="formula"><div class="formula-label">Δ% (DeltaPct)</div><div class="formula-body"><div class="formula-eq">Δ% = (Actual − STD) / STD × 100</div></div></div>
+    <br/>
+    <table>
+      <thead><tr><th>Mức</th><th>Điều kiện</th><th>Cell</th><th>Màu chữ</th><th>Viền Scale Card</th></tr></thead>
+      <tbody>
+        <tr><td><span class="tol-idle">Idle</span></td><td>STD hoặc Actual chưa có</td><td>#F5F5F5</td><td>#546E7A</td><td>#CFD8DC</td></tr>
+        <tr><td><span class="tol-ok">OK</span></td><td>|Δ%| ≤ DeltaLevel1 (thường 1%)</td><td>#D4F7DC</td><td>#1B5E20</td><td>#4CAF50</td></tr>
+        <tr><td><span class="tol-warn">WARN</span></td><td>DeltaLevel1 &lt; |Δ%| ≤ DeltaLevel2 (thường 3%)</td><td>#FFF3CD</td><td>#E65100</td><td>#FF9800</td></tr>
+        <tr><td><span class="tol-err">ERR</span></td><td>|Δ%| &gt; DeltaLevel2</td><td>#FDE8E8</td><td>#B71C1C</td><td>#F44336</td></tr>
+      </tbody>
+    </table>
+    <p style="margin-top:10px;">Màu viền và nền ScaleCard được set theo <strong>worst</strong> (ToleranceCategory xấu nhất) trong 4 dòng Reference.</p>
+  </div>
+</div>
+
+<!-- ════════════════ 6. CONFIRM ════════════════ -->
+<div class="section" id="s6">
+  <div class="section-header"><div class="num">6</div><h2>Luồng xác nhận và lưu DB (ExecuteConfirmAsync)</h2></div>
+  <div class="section-body">
+    <div class="step"><div class="step-num">1</div><div class="step-text">Kiểm tra <code>_operatorInfo.Id != Guid.Empty</code> – phải đã quét RFID hợp lệ.</div></div>
+    <div class="step"><div class="step-num">2</div><div class="step-text">Kiểm tra khuôn nhiều size (<code>sameMolds</code>): nếu &gt; 0 bỏ qua kiểm tra cân đầy đủ.</div></div>
+    <div class="step"><div class="step-num">3</div><div class="step-text">Kiểm tra từng dòng <code>AllowScale=true</code>: <code>C023 == 0 AND C024 == 0</code> (REX) → báo "Scale not completed for step: XXX".</div></div>
+    <div class="step"><div class="step-num">4</div><div class="step-text">Lọc <code>insert = _scaleDataFinal WHERE AllowScale=true AND C021 &gt; 0</code>.</div></div>
+    <div class="step"><div class="step-num">5</div><div class="step-text">Gán metadata: C010=EmployeeCode, C011=EmployeeName, CreatedDate=now, CreatedMachine, Mesocomp, Mesoyear.</div></div>
+    <div class="step"><div class="step-num">6</div><div class="step-text">Transaction: <code>db.FT600s.AddRangeAsync(insert)</code>.</div></div>
+    <div class="step"><div class="step-num">7</div><div class="step-text"><code>FT601s.ExecuteUpdateAsync</code>: SET <code>C017=true, ModifiedDate, ModifiedMachine</code> WHERE C004=_stepItemCodeScale.C004 AND C007=_stepItemCodeScale.C007 AND C017=false.</div></div>
+    <div class="step"><div class="step-num">8</div><div class="step-text"><code>SaveChangesAsync + CommitAsync</code>. Nếu lỗi → RollbackAsync.</div></div>
+    <div class="step"><div class="step-num">9</div><div class="step-text">Reset: xóa <code>_labelInfo</code>, gọi <code>ClearStepComboAction</code>, <code>ResetNewLoop()</code>.</div></div>
+  </div>
+</div>
+
+<!-- ════════════════ 7. DATA MODEL ════════════════ -->
+<div class="section" id="s7">
+  <div class="section-header"><div class="num">7</div><h2>Mô tả các trường dữ liệu – Entity FT600</h2></div>
+  <div class="section-body">
+    <table>
+      <thead><tr><th>Field</th><th>Kiểu</th><th>Ý nghĩa</th></tr></thead>
+      <tbody>
+        <tr><td>id</td><td>Guid</td><td>Khóa chính (Guid.NewGuid)</td></tr>
+        <tr><td>C002</td><td>string</td><td>Step Item Code (mã bước sản xuất)</td></tr>
+        <tr><td>C003</td><td>string</td><td>Step Item Name (tên bước)</td></tr>
+        <tr><td>C004</td><td>string</td><td>Machine (mã máy)</td></tr>
+        <tr><td>C008</td><td>string</td><td>Size</td></tr>
+        <tr><td>C010</td><td>string</td><td>Employee Code (người cân)</td></tr>
+        <tr><td>C011</td><td>string</td><td>Employee Name</td></tr>
+        <tr><td>C012</td><td>string</td><td>Barcode / QR code của label</td></tr>
+        <tr><td>C013</td><td>string</td><td>FG Item Code (mã thành phẩm)</td></tr>
+        <tr><td>C014</td><td>string</td><td>FG Item Name (tên thành phẩm)</td></tr>
+        <tr><td>C015</td><td>int?</td><td>Sequence index (thứ tự bước)</td></tr>
+        <tr><td>C017</td><td>decimal?</td><td>Article Pairs per Shot</td></tr>
+        <tr><td>C018</td><td>decimal?</td><td>Mold Pairs per Shot</td></tr>
+        <tr><td>C021</td><td>double?</td><td><strong>PART WEIGHT (g/prs)</strong> – trọng lượng phần sản phẩm bước này</td></tr>
+        <tr><td>C022</td><td>double?</td><td><strong>RUNNER WEIGHT (g/prs)</strong> – runner/excess material</td></tr>
+        <tr><td>C023</td><td>double?</td><td><strong>TOTAL PART WEIGHT (g/prs)</strong> – tổng part weight tích lũy</td></tr>
+        <tr><td>C024</td><td>double?</td><td><strong>TOTAL WEIGHT INJECTION (g)</strong> – tổng trọng lượng sau ejection</td></tr>
+        <tr><td>C025</td><td>double?</td><td>Quantity (số lượng)</td></tr>
+        <tr><td>C026</td><td>string</td><td>Main Item Code</td></tr>
+        <tr><td>C027</td><td>string</td><td>Main Item Name</td></tr>
+        <tr><td>C028</td><td>double?</td><td>Pairs per Shot thực tế (sau điều chỉnh)</td></tr>
+        <tr><td>C029</td><td>Guid?</td><td>Label Id (FT606)</td></tr>
+        <tr><td>C032</td><td>Guid?</td><td>FT601 Id (step master)</td></tr>
+        <tr><td>C033</td><td>string</td><td>Category Code (dùng cho REX logic)</td></tr>
+        <tr><td>C035</td><td>double?</td><td>Usage % (cho nonwoven/mesh)</td></tr>
+        <tr><td>C036</td><td>double?</td><td>Trọng lượng/piece (Studs, Logo, Cleat_Ring, REX)</td></tr>
+        <tr><td>C038</td><td>string</td><td>Remark</td></tr>
+        <tr><td>AllowScale</td><td>bool</td><td>Cho phép cân step này hay không</td></tr>
+        <tr><td>StatusText</td><td>string</td><td>UI only: Pending / Active / Done</td></tr>
+        <tr><td>StatusDotColor</td><td>string</td><td>UI only: màu hex cho chấm status</td></tr>
+        <tr><td>CreateDate</td><td>DateTime</td><td>Thời gian lưu DB</td></tr>
+        <tr><td>Mesocomp</td><td>string</td><td>Company code (VNT1, FKV, FTT1...)</td></tr>
+        <tr><td>Mesoyear</td><td>int</td><td>Năm sản xuất Meso</td></tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- ════════════════ 8. HƯỚNG DẪN ════════════════ -->
+<div class="section" id="s8">
+  <div class="section-header"><div class="num">8</div><h2>Hướng dẫn sử dụng giao diện</h2></div>
+  <div class="section-body">
+
+    <h3>8.1 Khởi động và đăng nhập</h3>
+    <div class="step"><div class="step-num">1</div><div class="step-text">Khởi động SSSW – chờ overlay "Loading…" biến mất.</div></div>
+    <div class="step"><div class="step-num">2</div><div class="step-text">Kiểm tra chấm thiết bị: <span class="dot dot-green"></span> xanh = đã kết nối, <span class="dot dot-red"></span> đỏ = mất kết nối.</div></div>
+    <div class="step"><div class="step-num">3</div><div class="step-text">Quét thẻ RFID (hoặc gõ Employee ID → Enter). Tên nhân viên hiện ra ở ô Employee Name và góc phải title bar.</div></div>
+    <div class="note"><strong>Lưu ý:</strong> Chỉ nhân viên IT / QC được phép cân. Lần đầu đăng ký: gõ tên vào Employee Name → Enter → xác nhận "Yes".</div>
+
+    <h3>8.2 Chọn bước sản xuất</h3>
+    <p><strong>Cách 1 – Quét QR/Barcode:</strong> Đặt con trỏ vào ô "Barcode / QR Scan" → quét → hệ thống tự chọn step.</p>
+    <p><strong>Cách 2 – LookUpEdit thủ công:</strong> Click "Select Step" → Popup mở → gõ từ khóa vào auto-filter → click dòng cần chọn.</p>
+    <p>Sau khi chọn: Panel trái điền đầy đủ, lưới Total Steps hiện BOM, History panel cập nhật.</p>
+
+    <h3>8.3 Thực hiện cân</h3>
+    <h4>Injection – Lần 1: Total Weight Injection (C024)</h4>
+    <div class="step"><div class="step-num">1</div><div class="step-text">Đặt toàn bộ shot (part + runner) lên cân. Chờ badge "Stable Value" xanh.</div></div>
+    <div class="step"><div class="step-num">2</div><div class="step-text">Click <span style="background:#1976D2;color:white;border-radius:3px;padding:2px 8px;">Scale</span> trong lưới hoặc nhấn nút <strong>Save</strong> ở bottom bar.</div></div>
+    <div class="step"><div class="step-num">3</div><div class="step-text">Cột "TOTAL WEIGHT INJECTION" cập nhật trong lưới.</div></div>
+    <h4>Injection – Lần 2: Total Part Weight (C023)</h4>
+    <div class="step"><div class="step-num">1</div><div class="step-text">Lấy runner ra, chỉ giữ phần sản phẩm. Chờ ổn định → nhấn Save.</div></div>
+    <div class="step"><div class="step-num">2</div><div class="step-text">C023, C022, C021 được tính và hiển thị. Reference Panel màu sắc theo tolerance.</div></div>
+    <h4>Non-injection (REX) – Cân 1 lần</h4>
+    <div class="step"><div class="step-num">1</div><div class="step-text">Đặt vật liệu lên cân → chờ ổn định → nhấn Save.</div></div>
+    <div class="step"><div class="step-num">2</div><div class="step-text">Hệ thống tự tính C021/C022/C023/C024 theo receptacle hoặc nonwoven logic.</div></div>
+
+    <h3>8.4 Điều chỉnh thông số</h3>
+    <table>
+      <thead><tr><th>Điều chỉnh</th><th>Cách thực hiện</th><th>Ghi chú</th></tr></thead>
+      <tbody>
+        <tr><td>Partitioning (prs)</td><td>Tick checkbox <strong>Adj.</strong> → ô trắng → gõ số → Enter</td><td>Khi số đôi thực tế khác Hydra</td></tr>
+        <tr><td>Usage %</td><td>Tick Adj. → gõ % → Enter</td><td>Chỉ với REX nonwoven/mesh</td></tr>
+        <tr><td>Runner</td><td>Chọn YES / NO trong ComboBox</td><td>NO → C022 = 0</td></tr>
+        <tr><td>Remark</td><td>Gõ trực tiếp vào ô Remark</td><td>Auto sync sang C038 tất cả dòng</td></tr>
+        <tr><td>Đổi step</td><td>Click <span style="background:#1976D2;color:white;border-radius:3px;padding:2px 8px;">Scale</span> trên dòng khác</td><td>Kiểm tra bước trước đã cân chưa</td></tr>
+        <tr><td>Reset dòng</td><td>Click <span style="background:#F9A825;color:white;border-radius:3px;padding:2px 8px;">Reset</span> trên dòng cần xóa</td><td>C021/C022/C023/C024 = 0</td></tr>
+      </tbody>
+    </table>
+
+    <h3>8.5 Nhập thủ công (khi cân không kết nối)</h3>
+    <div class="step"><div class="step-num">1</div><div class="step-text">Click vào ô số cân lớn (Consolas 44pt).</div></div>
+    <div class="step"><div class="step-num">2</div><div class="step-text">Gõ giá trị số (vd: 36.5) – chỉ nhận số và dấu chấm thập phân.</div></div>
+    <div class="step"><div class="step-num">3</div><div class="step-text">Nhấn Enter → hệ thống xử lý giống đọc từ cân thật.</div></div>
+    <div class="note">Tooltip cảnh báo màu vàng hiện tự động nếu gõ ký tự không hợp lệ (tự đóng sau 2 giây).</div>
+
+    <h3>8.6 Xác nhận và lưu (Confirm)</h3>
+    <div class="step"><div class="step-num">1</div><div class="step-text">Đảm bảo đã quét RFID hợp lệ.</div></div>
+    <div class="step"><div class="step-num">2</div><div class="step-text">Đảm bảo tất cả bước AllowScale=true đã cân xong.</div></div>
+    <div class="step"><div class="step-num">3</div><div class="step-text">Click <span style="background:#2E7D32;color:white;border-radius:4px;padding:4px 14px;font-weight:bold;">Confirm</span> → hệ thống lưu DB, hiện thông báo thành công, reset màn hình.</div></div>
+
+    <h3>8.7 Đồng bộ Hydra</h3>
+    <div class="step"><div class="step-num">1</div><div class="step-text">Click nút ⚡ Hydra trên title bar.</div></div>
+    <div class="step"><div class="step-num">2</div><div class="step-text">Gọi <code>sp_GetFullStepItemHydraIsRun</code> → INSERT FT601 các lệnh mới.</div></div>
+    <div class="step"><div class="step-num">3</div><div class="step-text">Tự động gọi LoadDataAsync để cập nhật LookUpEdit.</div></div>
+  </div>
+</div>
+
+<!-- ════════════════ 9. LỖI THƯỜNG GẶP ════════════════ -->
+<div class="section" id="s9">
+  <div class="section-header"><div class="num">9</div><h2>Xử lý lỗi và cảnh báo thường gặp</h2></div>
+  <div class="section-body">
+    <table>
+      <thead><tr><th>Thông báo</th><th>Nguyên nhân</th><th>Xử lý</th></tr></thead>
+      <tbody>
+        <tr><td>"The previous step has not been weighed"</td><td>Bước trước (C015-1) chưa có C021 &gt; 0</td><td>Cân bước trước trước</td></tr>
+        <tr><td>"Label does not match the item being weighed"</td><td>QR code không khớp với step đang chọn</td><td>Quét lại label đúng hoặc chọn đúng step</td></tr>
+        <tr><td>"Do not allow to scale this step"</td><td>AllowScale = false</td><td>Bỏ qua hoặc liên hệ IT</td></tr>
+        <tr><td>"Scale not completed for step: XXX"</td><td>Có step AllowScale=true chưa cân</td><td>Cân đủ tất cả step</td></tr>
+        <tr><td>"RFID card not yet scanned"</td><td>Chưa quét RFID trước Confirm</td><td>Quét thẻ RFID nhân viên</td></tr>
+        <tr><td>"Employee does not have permission"</td><td>Không thuộc phòng IT/QC</td><td>Dùng thẻ IT/QC</td></tr>
+        <tr><td>"Employee ID not found"</td><td>Mã thẻ chưa có trong FT029</td><td>Gõ tên + Enter để đăng ký mới</td></tr>
+        <tr><td>"Load data failure"</td><td>Lỗi kết nối DB</td><td>Kiểm tra mạng, SQL Server</td></tr>
+        <tr><td>"Transaction error"</td><td>Lỗi khi Confirm lưu DB</td><td>Xem InnerException, kiểm tra quyền DB</td></tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- ════════════════ 10. CONVERTERS & STYLES ════════════════ -->
+<div class="section" id="s10">
+  <div class="section-header"><div class="num">10</div><h2>Converters &amp; Styles (ShotWeightStyles.xaml)</h2></div>
+  <div class="section-body">
+    <h3>10.1 Converters</h3>
+    <table>
+      <thead><tr><th>Converter</th><th>Input</th><th>Output</th></tr></thead>
+      <tbody>
+        <tr><td>ToleranceToBrushConverter</td><td>ToleranceCategory</td><td>Brush – màu nền cell Reference</td></tr>
+        <tr><td>ToleranceToBorderBrushConverter</td><td>ToleranceCategory</td><td>Brush – màu viền cell Reference</td></tr>
+        <tr><td>ToleranceToForeConverter</td><td>ToleranceCategory</td><td>Brush – màu chữ cell Reference</td></tr>
+        <tr><td>BooleanToVisibilityConverter</td><td>bool</td><td>Visible / Collapsed (WPF built-in)</td></tr>
+        <tr><td>DriverStatusToColorConverter</td><td>DriverStatus</td><td>Brush – chấm thiết bị (xanh/đỏ/xám)</td></tr>
+        <tr><td>StableToForegroundConverter</td><td>bool (IsStable)</td><td>Xanh=ổn định, Cam=dao động</td></tr>
+        <tr><td>TareToBackgroundConverter</td><td>bool (IsTare)</td><td>Nền vùng Scale khi Tare</td></tr>
+        <tr><td>InverseBoolToVisibilityConverter</td><td>bool</td><td>Ngược (False→Visible)</td></tr>
+      </tbody>
+    </table>
+    <h3>10.2 Styles chính</h3>
+    <table>
+      <thead><tr><th>Key</th><th>TargetType</th><th>Mô tả</th></tr></thead>
+      <tbody>
+        <tr><td>LabelStyle</td><td>TextBlock</td><td>Segoe UI 20pt, #78909C</td></tr>
+        <tr><td>FieldStyle</td><td>TextBox</td><td>Segoe UI 20pt, nền #FAFAFA, viền #CFD8DC, IsReadOnly binding</td></tr>
+        <tr><td>EditableFieldStyle</td><td>TextBox</td><td>Kế thừa FieldStyle, IsReadOnly=false, nền trắng</td></tr>
+        <tr><td>CardStyle</td><td>Border</td><td>Nền trắng, viền #CFD8DC, CornerRadius=6</td></tr>
+        <tr><td>BottomBtn</td><td>Button</td><td>Bold 15pt, rounded, opacity hover/press/disabled</td></tr>
+        <tr><td>TitleIconBtn</td><td>Button</td><td>Segoe MDL2 Assets, 32×32, hover #3A4A7A</td></tr>
+        <tr><td>GridStyle</td><td>DataGrid</td><td>AutoGenerateColumns=False, alternating rows, font Segoe UI 12pt</td></tr>
+        <tr><td>PrimaryButton</td><td>Button</td><td>#1976D2 – nút Scale</td></tr>
+        <tr><td>WarningButton</td><td>Button</td><td>#F9A825 – nút Reset</td></tr>
+        <tr><td>DangerButton</td><td>Button</td><td>#D32F2F – nút Delete</td></tr>
+        <tr><td>RefRowStyle</td><td>DataGridRow</td><td>MinHeight=60, nền trắng</td></tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- ════════════════ 11. STORED PROCEDURES ════════════════ -->
+<div class="section" id="s11">
+  <div class="section-header"><div class="num">11</div><h2>Stored Procedures sử dụng</h2></div>
+  <div class="section-body">
+    <table>
+      <thead><tr><th>Stored Procedure</th><th>Tham số</th><th>Kết quả</th></tr></thead>
+      <tbody>
+        <tr><td><code>sp_MaterialGetCompanyName</code></td><td>(none)</td><td>string – mã company (VNT1, FKV, FTT1...)</td></tr>
+        <tr><td><code>sp_MaterialGetMesoyear</code></td><td>(none)</td><td>int – năm Meso hiện tại</td></tr>
+        <tr><td><code>sp_getBomWinlineOfItemFG</code></td><td>@itemFG = FGItemCode</td><td>List&lt;BomWinlineModel&gt; – BOM winline của FG</td></tr>
+        <tr><td><code>sp_GetFullStepItemHydraIsRun</code></td><td>(none)</td><td>List&lt;HydraItemDetailModel&gt; – tất cả step đang chạy trong Hydra</td></tr>
+        <tr><td><code>sp_GetCategorryOfItem</code></td><td>@ItemCode = codes (comma-separated)</td><td>List&lt;CategoryOfItemModel&gt; – category của từng item</td></tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- ════════════════ 12. DATABASE TABLES ════════════════ -->
+<div class="section" id="s12">
+  <div class="section-header"><div class="num">12</div><h2>Bảng Database liên quan</h2></div>
+  <div class="section-body">
+    <table>
+      <thead><tr><th>Bảng / Entity</th><th>Mục đích</th><th>Thao tác chính</th></tr></thead>
+      <tbody>
+        <tr><td>FT600</td><td>Kết quả cân shot weight</td><td>INSERT (Confirm), SELECT (History)</td></tr>
+        <tr><td>FT601</td><td>Master data step Hydra đang chạy</td><td>SELECT (LoadData), UPDATE C017=true (Confirm), INSERT (Hydra sync)</td></tr>
+        <tr><td>FT029_Operator_RFID</td><td>Danh sách nhân viên và thẻ RFID</td><td>SELECT (xác thực), INSERT (đăng ký mới)</td></tr>
+        <tr><td>FT031 (Department)</td><td>Phòng ban (IT, QC)</td><td>SELECT (kiểm tra quyền)</td></tr>
+        <tr><td>FT606_Label</td><td>Thông tin label QR code</td><td>SELECT (tra cứu theo barcode)</td></tr>
+        <tr><td>FT608_Config</td><td>Cấu hình hệ thống theo máy tính</td><td>SELECT (load config), INSERT (tạo mới)</td></tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+</div><!-- /main -->
+
+<div style="background:#0D1117;color:#546E7A;text-align:center;padding:20px;font-size:12px;margin-top:20px;">
+  SSSW – Shot Weight Station Documentation  ·  framas Internal Use Only  ·  v1.0 – 17/05/2026  ·  Cong Nguyen · cong.nguyen@framas.com
+</div>
+
+</body>
+</html>

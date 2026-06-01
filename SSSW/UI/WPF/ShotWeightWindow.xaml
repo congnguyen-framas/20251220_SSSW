@@ -47,15 +47,13 @@
                     <ColumnDefinition Width="Auto" />
                 </Grid.ColumnDefinitions>
 
-                <TextBlock
+                <Image
                     Grid.Column="1"
+                    Height="24"
                     Margin="14,0,10,0"
                     VerticalAlignment="Center"
-                    FontFamily="Segoe UI"
-                    FontSize="16"
-                    FontWeight="Bold"
-                    Foreground="White"
-                    Text="framas" />
+                    Source="/SSSW;component/Resources/framas_mini_white.png" />
+
 
                 <!--  Binding WindowTitle từ ViewModel  -->
                 <TextBlock
@@ -64,7 +62,7 @@
                     VerticalAlignment="Center"
                     FontFamily="Segoe UI"
                     FontSize="13"
-                    Foreground="#90A4AE"
+                    Foreground="White"
                     Text="{Binding WindowTitle}" />
 
                 <StackPanel Grid.Column="3" />

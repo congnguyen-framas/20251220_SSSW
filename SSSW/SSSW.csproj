@@ -19,6 +19,7 @@
 
   <ItemGroup>
     <None Remove="appsettings.json" />
+    <None Remove="Resources\framas_mini_white.png" />
   </ItemGroup>
 
   <ItemGroup>
@@ -55,6 +56,10 @@
     <Reference Include="ScanAndScale.Core">
       <HintPath>..\Dll\net8.0-windows\ScanAndScale.Core.dll</HintPath>
     </Reference>
+  </ItemGroup>
+
+  <ItemGroup>
+    <Resource Include="Resources\framas_mini_white.png" />
   </ItemGroup>
 
   <ItemGroup>

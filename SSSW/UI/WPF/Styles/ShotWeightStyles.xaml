@@ -4,85 +4,99 @@
     xmlns:conv="clr-namespace:SSSW.UI.WPF.Converters"
     xmlns:mdl="clr-namespace:SSSW.UI.WPF.Models">
 
-    <!-- ════════════════════════════════════════════════════════════════
-         CONVERTERS
-    ════════════════════════════════════════════════════════════════ -->
-    <conv:ToleranceToBrushConverter        x:Key="ToleranceToBrush"/>
-    <conv:ToleranceToBorderBrushConverter  x:Key="ToleranceToBorderBrush"/>
-    <conv:ToleranceToForeConverter         x:Key="ToleranceToFore"/>
-    <!-- WPF built-in: tránh XDG-000 "incompatible type" trong XAML designer -->
-    <BooleanToVisibilityConverter      x:Key="BoolToVisibility"/>
-    <!-- ScanAndScale.Core – trạng thái kết nối thiết bị -->
-    <conv:DriverStatusToColorConverter x:Key="DriverStatusToColor"/>
-    <conv:StableToForegroundConverter  x:Key="StableToForeground"/>
-    <conv:TareToBackgroundConverter    x:Key="TareToBackground"/>
-    <BooleanToVisibilityConverter x:Key="InverseBoolToVisibilityConverter"/>
+    <!--
+        ════════════════════════════════════════════════════════════════
+        CONVERTERS
+        ════════════════════════════════════════════════════════════════
+    -->
+    <conv:ToleranceToBrushConverter x:Key="ToleranceToBrush" />
+    <conv:ToleranceToBorderBrushConverter x:Key="ToleranceToBorderBrush" />
+    <conv:ToleranceToForeConverter x:Key="ToleranceToFore" />
+    <!--  WPF built-in: tránh XDG-000 "incompatible type" trong XAML designer  -->
+    <BooleanToVisibilityConverter x:Key="BoolToVisibility" />
+    <!--  ScanAndScale.Core – trạng thái kết nối thiết bị  -->
+    <conv:DriverStatusToColorConverter x:Key="DriverStatusToColor" />
+    <conv:StableToForegroundConverter x:Key="StableToForeground" />
+    <conv:TareToBackgroundConverter x:Key="TareToBackground" />
+    <BooleanToVisibilityConverter x:Key="InverseBoolToVisibilityConverter" />
 
-    <!-- ════════════════════════════════════════════════════════════════
-         TEXT – LABEL / FIELD
-    ════════════════════════════════════════════════════════════════ -->
+    <!--
+        ════════════════════════════════════════════════════════════════
+        TEXT – LABEL / FIELD
+        ════════════════════════════════════════════════════════════════
+    -->
     <Style x:Key="LabelStyle" TargetType="TextBlock">
-        <Setter Property="Foreground"  Value="#37474F"/>
-        <Setter Property="FontSize"    Value="15"/>
-        <Setter Property="FontFamily"  Value="Segoe UI"/>
-        <Setter Property="Margin"      Value="0,0,0,2"/>
+        <Setter Property="Foreground" Value="#37474F" />
+        <Setter Property="FontSize" Value="15" />
+        <Setter Property="FontFamily" Value="Segoe UI" />
+        <Setter Property="Margin" Value="0,0,0,2" />
     </Style>
 
     <Style x:Key="FieldStyle" TargetType="TextBox">
-        <Setter Property="FontFamily"       Value="Segoe UI"/>
-        <Setter Property="FontSize"         Value="15"/>
-        <Setter Property="Background"       Value="#FAFAFA"/>
-        <Setter Property="BorderBrush"      Value="#CFD8DC"/>
-        <Setter Property="BorderThickness"  Value="1"/>
-        <Setter Property="Padding"          Value="6,4"/>
-        <Setter Property="IsReadOnly"       Value="{Binding ReadOnly}"/>
+        <Setter Property="FontFamily" Value="Segoe UI" />
+        <Setter Property="FontSize" Value="15" />
+        <Setter Property="Background" Value="#FAFAFA" />
+        <Setter Property="BorderBrush" Value="#CFD8DC" />
+        <Setter Property="BorderThickness" Value="1" />
+        <Setter Property="Padding" Value="6,4" />
+        <Setter Property="IsReadOnly" Value="{Binding ReadOnly}" />
     </Style>
 
-    <Style x:Key="EditableFieldStyle" TargetType="TextBox" BasedOn="{StaticResource FieldStyle}">
-        <Setter Property="IsReadOnly"  Value="False"/>
-        <Setter Property="Background"  Value="White"/>
+    <Style
+        x:Key="EditableFieldStyle"
+        TargetType="TextBox"
+        BasedOn="{StaticResource FieldStyle}">
+        <Setter Property="IsReadOnly" Value="False" />
+        <Setter Property="Background" Value="White" />
     </Style>
 
-    <!-- ════════════════════════════════════════════════════════════════
-         CARD BORDER
-    ════════════════════════════════════════════════════════════════ -->
+    <!--
+        ════════════════════════════════════════════════════════════════
+        CARD BORDER
+        ════════════════════════════════════════════════════════════════
+    -->
     <Style x:Key="CardStyle" TargetType="Border">
-        <Setter Property="Background"      Value="White"/>
-        <Setter Property="BorderBrush"     Value="#CFD8DC"/>
-        <Setter Property="BorderThickness" Value="1"/>
-        <Setter Property="CornerRadius"    Value="6"/>
-        <Setter Property="Margin"          Value="4"/>
+        <Setter Property="Background" Value="White" />
+        <Setter Property="BorderBrush" Value="#CFD8DC" />
+        <Setter Property="BorderThickness" Value="1" />
+        <Setter Property="CornerRadius" Value="6" />
+        <Setter Property="Margin" Value="4" />
     </Style>
 
-    <!-- ════════════════════════════════════════════════════════════════
-         BOTTOM BUTTON
-    ════════════════════════════════════════════════════════════════ -->
+    <!--
+        ════════════════════════════════════════════════════════════════
+        BOTTOM BUTTON
+        ════════════════════════════════════════════════════════════════
+    -->
     <Style x:Key="BottomBtn" TargetType="Button">
-        <Setter Property="FontFamily"      Value="Segoe UI"/>
-        <Setter Property="FontSize"        Value="15"/>
-        <Setter Property="FontWeight"      Value="Bold"/>
-        <Setter Property="Foreground"      Value="White"/>
-        <Setter Property="BorderThickness" Value="0"/>
-        <Setter Property="Cursor"          Value="Hand"/>
-        <Setter Property="Height"          Value="48"/>
-        <Setter Property="MinWidth"        Value="140"/>
-        <Setter Property="Margin"          Value="6,0"/>
+        <Setter Property="FontFamily" Value="Segoe UI" />
+        <Setter Property="FontSize" Value="15" />
+        <Setter Property="FontWeight" Value="Bold" />
+        <Setter Property="Foreground" Value="White" />
+        <Setter Property="BorderThickness" Value="0" />
+        <Setter Property="Cursor" Value="Hand" />
+        <Setter Property="Height" Value="48" />
+        <Setter Property="MinWidth" Value="140" />
+        <Setter Property="Margin" Value="6,0" />
         <Setter Property="Template">
             <Setter.Value>
                 <ControlTemplate TargetType="Button">
-                    <Border x:Name="bd" Background="{TemplateBinding Background}"
-                            CornerRadius="6" Padding="{TemplateBinding Padding}">
-                        <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                    <Border
+                        x:Name="bd"
+                        Padding="{TemplateBinding Padding}"
+                        Background="{TemplateBinding Background}"
+                        CornerRadius="6">
+                        <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" />
                     </Border>
                     <ControlTemplate.Triggers>
                         <Trigger Property="IsMouseOver" Value="True">
-                            <Setter TargetName="bd" Property="Opacity" Value="0.85"/>
+                            <Setter TargetName="bd" Property="Opacity" Value="0.85" />
                         </Trigger>
                         <Trigger Property="IsPressed" Value="True">
-                            <Setter TargetName="bd" Property="Opacity" Value="0.7"/>
+                            <Setter TargetName="bd" Property="Opacity" Value="0.7" />
                         </Trigger>
                         <Trigger Property="IsEnabled" Value="False">
-                            <Setter TargetName="bd" Property="Opacity" Value="0.5"/>
+                            <Setter TargetName="bd" Property="Opacity" Value="0.5" />
                         </Trigger>
                     </ControlTemplate.Triggers>
                 </ControlTemplate>
@@ -90,27 +104,32 @@
         </Setter>
     </Style>
 
-    <!-- ════════════════════════════════════════════════════════════════
-         TITLE BAR ICON BUTTON
-    ════════════════════════════════════════════════════════════════ -->
+    <!--
+        ════════════════════════════════════════════════════════════════
+        TITLE BAR ICON BUTTON
+        ════════════════════════════════════════════════════════════════
+    -->
     <Style x:Key="TitleIconBtn" TargetType="Button">
-        <Setter Property="Background"      Value="Transparent"/>
-        <Setter Property="Foreground"      Value="White"/>
-        <Setter Property="BorderThickness" Value="0"/>
-        <Setter Property="Width"           Value="32"/>
-        <Setter Property="Height"          Value="32"/>
-        <Setter Property="FontFamily"      Value="Segoe MDL2 Assets"/>
-        <Setter Property="FontSize"        Value="13"/>
-        <Setter Property="Cursor"          Value="Hand"/>
+        <Setter Property="Background" Value="Transparent" />
+        <Setter Property="Foreground" Value="White" />
+        <Setter Property="BorderThickness" Value="0" />
+        <Setter Property="Width" Value="32" />
+        <Setter Property="Height" Value="32" />
+        <Setter Property="FontFamily" Value="Segoe MDL2 Assets" />
+        <Setter Property="FontSize" Value="13" />
+        <Setter Property="Cursor" Value="Hand" />
         <Setter Property="Template">
             <Setter.Value>
                 <ControlTemplate TargetType="Button">
-                    <Border x:Name="bd" Background="{TemplateBinding Background}" CornerRadius="4">
-                        <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                    <Border
+                        x:Name="bd"
+                        Background="{TemplateBinding Background}"
+                        CornerRadius="4">
+                        <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" />
                     </Border>
                     <ControlTemplate.Triggers>
                         <Trigger Property="IsMouseOver" Value="True">
-                            <Setter TargetName="bd" Property="Background" Value="#3A4A7A"/>
+                            <Setter TargetName="bd" Property="Background" Value="#3A4A7A" />
                         </Trigger>
                     </ControlTemplate.Triggers>
                 </ControlTemplate>
@@ -118,118 +137,127 @@
         </Setter>
     </Style>
 
-    <!-- ════════════════════════════════════════════════════════════════
-         DATAGRID – GLOBAL
-    ════════════════════════════════════════════════════════════════ -->
+    <!--
+        ════════════════════════════════════════════════════════════════
+        DATAGRID – GLOBAL
+        ════════════════════════════════════════════════════════════════
+    -->
     <Style x:Key="GridStyle" TargetType="DataGrid">
-        <Setter Property="AutoGenerateColumns"      Value="False"/>
-        <Setter Property="IsReadOnly"               Value="True"/>
-        <Setter Property="CanUserAddRows"           Value="False"/>
-        <Setter Property="CanUserDeleteRows"        Value="False"/>
-        <Setter Property="SelectionMode"            Value="Single"/>
-        <Setter Property="SelectionUnit"            Value="FullRow"/>
-        <Setter Property="GridLinesVisibility"      Value="Horizontal"/>
-        <Setter Property="HorizontalGridLinesBrush" Value="#ECEFF1"/>
-        <Setter Property="Background"               Value="White"/>
-        <Setter Property="RowBackground"            Value="White"/>
-        <Setter Property="AlternatingRowBackground" Value="#F8FAFB"/>
-        <Setter Property="FontFamily"               Value="Segoe UI"/>
-        <Setter Property="FontSize"                 Value="12"/>
-        <Setter Property="BorderThickness"          Value="0"/>
-        <Setter Property="HeadersVisibility"        Value="Column"/>
+        <Setter Property="AutoGenerateColumns" Value="False" />
+        <Setter Property="IsReadOnly" Value="True" />
+        <Setter Property="CanUserAddRows" Value="False" />
+        <Setter Property="CanUserDeleteRows" Value="False" />
+        <Setter Property="SelectionMode" Value="Single" />
+        <Setter Property="SelectionUnit" Value="FullRow" />
+        <Setter Property="GridLinesVisibility" Value="Horizontal" />
+        <Setter Property="HorizontalGridLinesBrush" Value="#ECEFF1" />
+        <Setter Property="Background" Value="White" />
+        <Setter Property="RowBackground" Value="White" />
+        <Setter Property="AlternatingRowBackground" Value="#F8FAFB" />
+        <Setter Property="FontFamily" Value="Segoe UI" />
+        <Setter Property="FontSize" Value="12" />
+        <Setter Property="BorderThickness" Value="0" />
+        <Setter Property="HeadersVisibility" Value="Column" />
     </Style>
 
     <Style TargetType="DataGridColumnHeader">
-        <Setter Property="Background"                  Value="#F5F7FA"/>
-        <Setter Property="Foreground"                  Value="#37474F"/>
-        <Setter Property="FontWeight"                  Value="Bold"/>
-        <Setter Property="FontSize"                    Value="12"/>
-        <Setter Property="Padding"                     Value="10,8"/>
-        <Setter Property="BorderBrush"                 Value="#DDE3EA"/>
-        <Setter Property="BorderThickness"             Value="0,0,0,2"/>
-        <Setter Property="HorizontalContentAlignment"  Value="Center"/>
+        <Setter Property="Background" Value="#F5F7FA" />
+        <Setter Property="Foreground" Value="#37474F" />
+        <Setter Property="FontWeight" Value="Bold" />
+        <Setter Property="FontSize" Value="12" />
+        <Setter Property="Padding" Value="10,8" />
+        <Setter Property="BorderBrush" Value="#DDE3EA" />
+        <Setter Property="BorderThickness" Value="0,0,0,2" />
+        <Setter Property="HorizontalContentAlignment" Value="Center" />
     </Style>
 
     <Style TargetType="DataGridCell">
-        <Setter Property="BorderThickness"   Value="0"/>
-        <Setter Property="Padding"           Value="0"/>
-        <Setter Property="VerticalAlignment" Value="Center"/>
+        <Setter Property="BorderThickness" Value="0" />
+        <Setter Property="Padding" Value="0" />
+        <Setter Property="VerticalAlignment" Value="Center" />
         <Style.Triggers>
             <Trigger Property="IsSelected" Value="True">
-                <Setter Property="Background" Value="Transparent"/>
-                <Setter Property="Foreground" Value="#1976D2"/>
+                <Setter Property="Background" Value="Transparent" />
+                <Setter Property="Foreground" Value="#1976D2" />
             </Trigger>
         </Style.Triggers>
     </Style>
 
-     <!--── Reference row style — rows luôn trắng, màu tolerance hiện trên từng ô ──--> 
+    <!--  ── Reference row style — rows luôn trắng, màu tolerance hiện trên từng ô ──  -->
     <Style x:Key="RefRowStyle" TargetType="DataGridRow">
-        <Setter Property="Background" Value="White"/>
-        <Setter Property="MinHeight"  Value="60"/>
+        <Setter Property="Background" Value="White" />
+        <Setter Property="MinHeight" Value="60" />
     </Style>
-    
 
-    <!-- ════════════════════════════════════════════════════════════════
-         CELL TEXT STYLES
-    ════════════════════════════════════════════════════════════════ -->
+
+    <!--
+        ════════════════════════════════════════════════════════════════
+        CELL TEXT STYLES
+        ════════════════════════════════════════════════════════════════
+    -->
     <Style x:Key="CenterCell" TargetType="TextBlock">
-        <Setter Property="HorizontalAlignment" Value="Center"/>
-        <Setter Property="VerticalAlignment"   Value="Center"/>
-        <Setter Property="Margin"              Value="0,0,10,12"/>
+        <Setter Property="HorizontalAlignment" Value="Center" />
+        <Setter Property="VerticalAlignment" Value="Center" />
+        <Setter Property="Margin" Value="0,0,10,12" />
     </Style>
 
     <Style x:Key="RightCell" TargetType="TextBlock">
-        <Setter Property="HorizontalAlignment" Value="Right"/>
-        <Setter Property="VerticalAlignment"   Value="Center"/>
-        <Setter Property="Margin"              Value="0,0,10,13"/>
+        <Setter Property="HorizontalAlignment" Value="Right" />
+        <Setter Property="VerticalAlignment" Value="Center" />
+        <Setter Property="Margin" Value="0,0,10,13" />
     </Style>
 
     <Style x:Key="LeftCell" TargetType="TextBlock">
-        <Setter Property="HorizontalAlignment" Value="Left"/>
-        <Setter Property="VerticalAlignment"   Value="Center"/>
-        <Setter Property="Margin"              Value="0,0,10,13"/>
+        <Setter Property="HorizontalAlignment" Value="Left" />
+        <Setter Property="VerticalAlignment" Value="Center" />
+        <Setter Property="Margin" Value="0,0,10,13" />
     </Style>
 
     <Style x:Key="RightCellBold" TargetType="TextBlock">
-        <Setter Property="HorizontalAlignment" Value="Right"/>
-        <Setter Property="VerticalAlignment"   Value="Center"/>
-        <Setter Property="FontWeight"          Value="Bold"/>
-        <Setter Property="FontSize"            Value="18"/>
-        <Setter Property="Margin"              Value="0,0,8,0"/>
+        <Setter Property="HorizontalAlignment" Value="Right" />
+        <Setter Property="VerticalAlignment" Value="Center" />
+        <Setter Property="FontWeight" Value="Bold" />
+        <Setter Property="FontSize" Value="18" />
+        <Setter Property="Margin" Value="0,0,8,0" />
     </Style>
 
     <Style x:Key="cellWrap" TargetType="TextBlock">
-        <Setter Property="TextWrapping" Value="WrapWithOverflow"/>
+        <Setter Property="TextWrapping" Value="WrapWithOverflow" />
     </Style>
 
-    <!-- ════════════════════════════════════════════════════════════════
-     GRID BUTTON
-════════════════════════════════════════════════════════════════ -->
+    <!--
+        ════════════════════════════════════════════════════════════════
+        GRID BUTTON
+        ════════════════════════════════════════════════════════════════
+    -->
     <Style x:Key="BaseBtn" TargetType="Button">
-        <Setter Property="FontFamily"      Value="Segoe UI"/>
-        <Setter Property="FontSize"        Value="10"/>
-        <Setter Property="FontWeight"      Value="Bold"/>
-        <Setter Property="BorderThickness" Value="0"/>
+        <Setter Property="FontFamily" Value="Segoe UI" />
+        <Setter Property="FontSize" Value="10" />
+        <Setter Property="FontWeight" Value="Bold" />
+        <Setter Property="BorderThickness" Value="0" />
         <!--<Setter Property="Height"          Value="25"/>
         <Setter Property="MinWidth"        Value="140"/>-->
-        <Setter Property="Margin"          Value="2,0"/>
-        <Setter Property="Padding"         Value="4,2"/>
+        <Setter Property="Margin" Value="2,0" />
+        <Setter Property="Padding" Value="4,2" />
         <Setter Property="Template">
             <Setter.Value>
                 <ControlTemplate TargetType="Button">
-                    <Border x:Name="bd" Background="{TemplateBinding Background}"
-                         CornerRadius="6" Padding="{TemplateBinding Padding}">
-                        <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                    <Border
+                        x:Name="bd"
+                        Padding="{TemplateBinding Padding}"
+                        Background="{TemplateBinding Background}"
+                        CornerRadius="6">
+                        <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" />
                     </Border>
                     <ControlTemplate.Triggers>
                         <Trigger Property="IsMouseOver" Value="True">
-                            <Setter TargetName="bd" Property="Opacity" Value="0.85"/>
+                            <Setter TargetName="bd" Property="Opacity" Value="0.85" />
                         </Trigger>
                         <Trigger Property="IsPressed" Value="True">
-                            <Setter TargetName="bd" Property="Opacity" Value="0.7"/>
+                            <Setter TargetName="bd" Property="Opacity" Value="0.7" />
                         </Trigger>
                         <Trigger Property="IsEnabled" Value="False">
-                            <Setter TargetName="bd" Property="Opacity" Value="0.5"/>
+                            <Setter TargetName="bd" Property="Opacity" Value="0.5" />
                         </Trigger>
                     </ControlTemplate.Triggers>
                 </ControlTemplate>
@@ -237,45 +265,58 @@
         </Setter>
     </Style>
 
-    <Style x:Key="PrimaryButton" TargetType="Button" BasedOn="{StaticResource BaseBtn}">
-        <Setter Property="Background" Value="#1976D2"/>
-        <Setter Property="Foreground" Value="White"/>
+    <Style
+        x:Key="PrimaryButton"
+        TargetType="Button"
+        BasedOn="{StaticResource BaseBtn}">
+        <Setter Property="Background" Value="#1976D2" />
+        <Setter Property="Foreground" Value="White" />
 
     </Style>
 
-    <Style x:Key="WarningButton" TargetType="Button" BasedOn="{StaticResource BaseBtn}">
-        <Setter Property="Background" Value="#F9A825"/>
-        <Setter Property="Foreground" Value="White"/>
+    <Style
+        x:Key="WarningButton"
+        TargetType="Button"
+        BasedOn="{StaticResource BaseBtn}">
+        <Setter Property="Background" Value="#F9A825" />
+        <Setter Property="Foreground" Value="White" />
     </Style>
 
-    <Style x:Key="DangerButton" TargetType="Button" BasedOn="{StaticResource BaseBtn}">
-        <Setter Property="Background" Value="#D32F2F"/>
-        <Setter Property="Foreground" Value="White"/>
+    <Style
+        x:Key="DangerButton"
+        TargetType="Button"
+        BasedOn="{StaticResource BaseBtn}">
+        <Setter Property="Background" Value="#D32F2F" />
+        <Setter Property="Foreground" Value="White" />
     </Style>
 
-    <!-- ════════════════════════════════════════════════════════════════
-     TOOLTIP
-════════════════════════════════════════════════════════════════ -->    
+    <!--
+        ════════════════════════════════════════════════════════════════
+        TOOLTIP
+        ════════════════════════════════════════════════════════════════
+    -->
     <Style TargetType="ToolTip">
-        <Setter Property="Background" Value="#263238"/>
-        <Setter Property="Foreground" Value="White"/>
-        <Setter Property="Padding" Value="10,6"/>
-        <Setter Property="FontSize" Value="12"/>
+        <Setter Property="Background" Value="#263238" />
+        <Setter Property="Foreground" Value="White" />
+        <Setter Property="Padding" Value="10,6" />
+        <Setter Property="FontSize" Value="12" />
 
         <Setter Property="Template">
             <Setter.Value>
                 <ControlTemplate TargetType="ToolTip">
-                    <Border Background="{TemplateBinding Background}"
-                        CornerRadius="6"
-                        Padding="{TemplateBinding Padding}">
+                    <Border
+                        Padding="{TemplateBinding Padding}"
+                        Background="{TemplateBinding Background}"
+                        CornerRadius="6">
 
                         <Border.Effect>
-                            <DropShadowEffect BlurRadius="10"
-                                          ShadowDepth="2"
-                                          Opacity="0.3"/>
+                            <DropShadowEffect
+                                BlurRadius="10"
+                                ShadowDepth="2"
+                                Opacity="0.3" />
                         </Border.Effect>
 
-                        <ContentPresenter/>
+                        <ContentPresenter />
                     </Border>
                 </ControlTemplate>
             </Setter.Value>

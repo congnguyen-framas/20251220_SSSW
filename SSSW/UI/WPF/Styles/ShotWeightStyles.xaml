@@ -198,7 +198,7 @@
     <Style x:Key="CenterCell" TargetType="TextBlock">
         <Setter Property="HorizontalAlignment" Value="Center" />
         <Setter Property="VerticalAlignment" Value="Center" />
-        <Setter Property="Margin" Value="0,0,10,12" />
+        <Setter Property="Margin" Value="0,10,0,10" />
     </Style>
 
     <Style x:Key="RightCell" TargetType="TextBlock">
@@ -223,6 +223,7 @@
 
     <Style x:Key="cellWrap" TargetType="TextBlock">
         <Setter Property="TextWrapping" Value="WrapWithOverflow" />
+        <Setter Property="Margin" Value="0,10,0,10" />
     </Style>
 
     <!--

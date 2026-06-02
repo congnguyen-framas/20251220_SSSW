@@ -1606,7 +1606,7 @@ namespace SSSW.UI.WPF.ViewModels
         {
             _referenceRows = new List<ReferenceRow>
             {
-                new() { No=1, FieldName="Total Weight Injection",           Unit="g",
+                new() { No=1, FieldName="Total Injection Weight",           Unit="g",
                         Std    = _stdRow?.C024 > 0 ? _stdRow.C024 : null,
                         Actual = _rowSelected?.C024 > 0 ? _rowSelected.C024 : null },
                 new() { No=2, FieldName="Total Part Weight",             Unit="g/prs",

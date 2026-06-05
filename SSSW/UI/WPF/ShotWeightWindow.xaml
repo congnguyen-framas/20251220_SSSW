@@ -1161,7 +1161,7 @@
                                 <!--  History grid – Visibility binding  -->
                                 <Border
                                     Grid.Row="2"
-                                    Padding="10"
+                                    Padding="10,0,10,10"
                                     Visibility="{Binding IsHistoryExpanded, Converter={StaticResource BoolToVisibility}}">
                                     <DataGrid
                                         x:Name="dgHistory"

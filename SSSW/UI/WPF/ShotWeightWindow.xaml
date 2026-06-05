@@ -746,7 +746,7 @@
                                 </DataGridTextColumn>
 
                                 <DataGridTextColumn
-                                    Width="80"
+                                    Width="100"
                                     Binding="{Binding C017, StringFormat=F2}"
                                     ElementStyle="{StaticResource CenterCell}">
                                     <DataGridTextColumn.HeaderTemplate>

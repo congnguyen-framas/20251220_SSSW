@@ -1148,11 +1148,12 @@
                                         <TextBlock
                                             Style="{StaticResource LabelStyle}"
                                             Text="{Binding HistoryToggleTextDetail}"
-                                            TextWrapping="WrapWithOverflow" />
+                                            TextWrapping="WrapWithOverflow"
+                                            FontSize="16" />
                                         <TextBlock
                                             Margin="0,3,0,0"
                                             Style="{StaticResource LabelStyle}"
-                                            FontSize="13"
+                                            FontSize="16"
                                             Text="{Binding HistoryToggleTextSecond}"
                                             TextWrapping="WrapWithOverflow" />
                                     </StackPanel>
@@ -1380,7 +1381,7 @@
                                         Background="#0D1117"
                                         Command="{Binding SaveCommand}"
                                         Style="{StaticResource BottomBtn}"
-                                        IsEnabled="{Binding ScaleStable}">
+                                        IsEnabled="{Binding EnableBtnSaveScale}">
 
                                         <StackPanel Orientation="Horizontal">
                                             <TextBlock Margin="0,0,6,0" Text="💾" />

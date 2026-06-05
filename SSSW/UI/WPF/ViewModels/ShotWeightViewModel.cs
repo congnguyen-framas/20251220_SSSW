@@ -367,6 +367,13 @@ namespace SSSW.UI.WPF.ViewModels
             get => _readOnlyScale;
             set { _readOnlyScale = value; OnPropertyChanged(); }
         }
+
+        private bool _enableBtnSaveScale = false;
+        public bool EnableBtnSaveScale
+        {
+            get => _enableBtnSaveScale;
+            set { _enableBtnSaveScale = value; OnPropertyChanged(); }
+        }
         #endregion
 
         #region History
@@ -635,6 +642,15 @@ namespace SSSW.UI.WPF.ViewModels
             ScaleStable = stable;
             ScaleTare = tare;
             ScaleUnit = unit;
+
+            if (ScaleStable == false && ReadOnlyScale == true)
+            {
+                EnableBtnSaveScale = false;
+            }
+            else //if (ScaleStable == true)
+            {
+                EnableBtnSaveScale = true;
+            }
         }
 
         /// <summary>RFID đọc được employee code.</summary>

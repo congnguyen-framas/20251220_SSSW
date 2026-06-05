@@ -1113,7 +1113,7 @@
                             Style="{StaticResource CardStyle}">
                             <Grid>
                                 <Grid.RowDefinitions>
-                                    <RowDefinition Height="Auto" />
+                                    <RowDefinition Height="Auto" SharedSizeGroup="TitleRow" />
                                     <RowDefinition Height="Auto" SharedSizeGroup="HeaderRow" />
                                     <RowDefinition Height="*" />
                                 </Grid.RowDefinitions>
@@ -1253,7 +1253,7 @@
                             Style="{StaticResource CardStyle}">
                             <Grid>
                                 <Grid.RowDefinitions>
-                                    <RowDefinition Height="Auto" />
+                                    <RowDefinition Height="Auto" SharedSizeGroup="TitleRow" />
                                     <RowDefinition Height="Auto" SharedSizeGroup="HeaderRow" />
                                     <RowDefinition Height="*" />
                                     <RowDefinition Height="60" />
@@ -1285,7 +1285,7 @@
 
 
                                 <!--  SCALE VALUE ROW (NEW)  -->
-                                <Grid Grid.Row="1" Margin="10">
+                                <Grid Grid.Row="1" Margin="0,8,0,8">
 
                                     <!--  3 cột align với DataGrid  -->
                                     <Grid.ColumnDefinitions>

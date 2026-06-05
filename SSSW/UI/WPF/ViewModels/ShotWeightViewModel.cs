@@ -556,7 +556,7 @@ namespace SSSW.UI.WPF.ViewModels
             UsagePct = GlobalVariable.ConfigSystem.PercentOfUserNonWoven.ToString();
             _percentOfUsage = GlobalVariable.ConfigSystem.PercentOfUserNonWoven;
 
-            DeltaInformation = $"STD: Target Weight ↔ ACTUAL: Live Weight · auto colored vs. tolerance ±{GlobalVariable.ConfigSystem.DeltaLevel1}% / ±{GlobalVariable.ConfigSystem.DeltaLevel2}%";
+            DeltaInformation = $"STD: Target Weight ↔ ACTUAL: Live Weight · auto colored vs. tolerance ±{GlobalVariable.ConfigSystem.DeltaLevel1}g / ±{GlobalVariable.ConfigSystem.DeltaLevel2}g";
             ReadOnlyScale = GlobalVariable.ConfigSystem.Scale.ReadOnly ?? true;
             ReadOnlyRfid = GlobalVariable.ConfigSystem.RFID.ReadOnly;
             ReadOnlyScanner = GlobalVariable.ConfigSystem.Scanner.ReadOnly;
@@ -1134,6 +1134,7 @@ namespace SSSW.UI.WPF.ViewModels
         private void ExecuteSave(object? _)
         {
             if (_rowSelected == null) return;
+
             if (!_rowSelected.AllowScale)
             {
                 System.Windows.Forms.MessageBox.Show("Cannot scale this step.", "Warning",
@@ -1164,26 +1165,36 @@ namespace SSSW.UI.WPF.ViewModels
                              (double?)prsShot) ?? 0, 3)
                         : 0;
 
-                    // C021 = Part weight thực tế (g/prs)
-                    // = C023(bước này) − ∑C023(bước trước) − ∑C023(non-injection cùng bước)
-                    var previuosStep = _scaleDataFinal
-                        .Where(x => x.C015 == _rowSelected.C015 - 1).ToList();
-                    var nonInjection = _scaleDataFinal
-                        .Where(x => x.C015 == _rowSelected.C015 &&
-                                    (x.C002 == "Z-VHXXXXXX" ||
-                                     (x.C002?.StartsWith("REX") ?? false))).ToList();
+                    if (!_rowSelected.C003.StartsWith("Studs") &&
+                        !_rowSelected.C003.StartsWith("Logo") &&
+                        !_rowSelected.C003.StartsWith("Cleat_Ring"))
+                    {
+                        // C021 = Part weight thực tế (g/prs)
+                        // = C023(bước này) − ∑C023(bước trước) − ∑C023(non-injection cùng bước)
+                        var previuosStep = _scaleDataFinal
+                            .Where(x => x.C015 == _rowSelected.C015 - 1).ToList();
+                        var nonInjection = _scaleDataFinal
+                            .Where(x => x.C015 == _rowSelected.C015 &&
+                                        (x.C002 == "Z-VHXXXXXX" ||
+                                         (x.C002?.StartsWith("REX") ?? false))).ToList();
 
-                    _rowSelected.C021 = _rowSelected.C023
-                                        - previuosStep?.Sum(x => x.C023)
-                                        - nonInjection?.Sum(x => x.C023);
-
-                    // C036 = trọng lượng/piece (Studs, Logo, Cleat_Ring)
-                    _rowSelected.C036 =
-                        (_rowSelected.C003?.StartsWith("Studs") ?? false) ||
-                        (_rowSelected.C003?.StartsWith("Logo") ?? false) ||
-                        (_rowSelected.C003?.StartsWith("Cleat_Ring") ?? false)
-                            ? Math.Round(_scaleValue / (double?)prsShot ?? 1.0, 2)
-                            : 0;
+                        _rowSelected.C021 = _rowSelected.C023
+                                            - previuosStep?.Sum(x => x.C023)
+                                            - nonInjection?.Sum(x => x.C023);
+                    }
+                    else
+                    {
+                        _rowSelected.C021 = _rowSelected.C023;
+                        // C036 = trọng lượng/piece (Studs, Logo, Cleat_Ring)
+                        _rowSelected.C036 = Math.Round(_scaleValue / _rowSelected.C025 ?? 1.0, 2);
+                    }
+                    //// C036 = trọng lượng/piece (Studs, Logo, Cleat_Ring)
+                    //_rowSelected.C036 =
+                    //    (_rowSelected.C003?.StartsWith("Studs") ?? false) ||
+                    //    (_rowSelected.C003?.StartsWith("Logo") ?? false) ||
+                    //    (_rowSelected.C003?.StartsWith("Cleat_Ring") ?? false)
+                    //        ? Math.Round(_scaleValue / (double?)prsShot ?? 1.0, 2)
+                    //        : 0;
                 }
             }
             else

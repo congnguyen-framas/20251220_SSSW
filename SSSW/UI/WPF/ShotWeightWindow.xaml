@@ -191,209 +191,228 @@
                         </Border>
 
                         <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto">
-                            <StackPanel Margin="4">
 
-                                <TextBlock Style="{StaticResource LabelStyle}" Text="Name" />
-                                <TextBox
-                                    Margin="0,0,0,8"
-                                    MaxLines="3"
-                                    MinLines="2"
-                                    Style="{StaticResource FieldStyle}"
-                                    Text="{Binding StepName, Mode=OneWay}"
-                                    TextWrapping="Wrap" />
+                            <Grid Margin="4">
+                                <Grid.RowDefinitions>
+                                    <!--  Form content  -->
+                                    <RowDefinition Height="Auto" />
+                                    <!--  Name  -->
+                                    <RowDefinition Height="Auto" />
+                                    <!--  Code  -->
+                                    <RowDefinition Height="Auto" />
+                                    <!--  Machine + Qty  -->
+                                    <RowDefinition Height="Auto" />
+                                    <!--  Partition  -->
+                                    <RowDefinition Height="Auto" />
+                                    <!--  Runner  -->
+                                    <RowDefinition Height="Auto" />
+                                    <!--  Size  -->
+                                    <RowDefinition Height="Auto" />
+                                    <!--  FG Desc  -->
+                                    <RowDefinition Height="Auto" />
+                                    <!--  FG Code  -->
+                                    <RowDefinition Height="Auto" />
+                                    <!--  Lookup  -->
+                                    <RowDefinition Height="Auto" />
+                                    <!--  Barcode  -->
 
-                                <TextBlock Style="{StaticResource LabelStyle}" Text="Code" />
-                                <TextBox
-                                    Margin="0,0,0,8"
-                                    Style="{StaticResource FieldStyle}"
-                                    Text="{Binding StepCode, Mode=OneWay}" />
+                                    <!--  ✅ Remark chiếm phần còn lại  -->
+                                    <RowDefinition Height="*" />
+                                </Grid.RowDefinitions>
 
-                                <!--  Machine + Quantity  -->
-                                <Grid Margin="0,0,0,8">
+                                <!--  Name  -->
+                                <StackPanel Grid.Row="0">
+                                    <TextBlock Style="{StaticResource LabelStyle}" Text="Name" />
+                                    <TextBox
+                                        Margin="0,0,0,8"
+                                        MinLines="2"
+                                        MaxLines="3"
+                                        Style="{StaticResource FieldStyle}"
+                                        Text="{Binding StepName}"
+                                        TextWrapping="Wrap" />
+                                </StackPanel>
+
+                                <!--  Code  -->
+                                <StackPanel Grid.Row="1">
+                                    <TextBlock Style="{StaticResource LabelStyle}" Text="Code" />
+                                    <TextBox
+                                        Margin="0,0,0,8"
+                                        Style="{StaticResource FieldStyle}"
+                                        Text="{Binding StepCode}" />
+                                </StackPanel>
+
+                                <!--  Machine + Qty  -->
+                                <Grid Grid.Row="2" Margin="0,0,0,8">
                                     <Grid.ColumnDefinitions>
                                         <ColumnDefinition Width="*" />
                                         <ColumnDefinition Width="8" />
                                         <ColumnDefinition Width="*" />
                                     </Grid.ColumnDefinitions>
+
                                     <StackPanel Grid.Column="0">
                                         <TextBlock Style="{StaticResource LabelStyle}" Text="Machine" />
-                                        <TextBox Style="{StaticResource FieldStyle}" Text="{Binding Machine, Mode=OneWay}" />
+                                        <TextBox Style="{StaticResource FieldStyle}" Text="{Binding Machine}" />
                                     </StackPanel>
+
                                     <StackPanel Grid.Column="2">
                                         <TextBlock Style="{StaticResource LabelStyle}" Text="Quantity" />
-                                        <TextBox Style="{StaticResource FieldStyle}" Text="{Binding Qty, Mode=OneWay}" />
+                                        <TextBox Style="{StaticResource FieldStyle}" Text="{Binding Qty}" />
                                     </StackPanel>
                                 </Grid>
 
-                                <!--  Partitioning + Toggle  -->
-                                <Grid Margin="0,0,0,8">
+                                <!--  Partition  -->
+                                <Grid Grid.Row="3" Margin="0,0,0,8">
                                     <Grid.ColumnDefinitions>
                                         <ColumnDefinition Width="*" />
                                         <ColumnDefinition Width="8" />
-                                        <ColumnDefinition Width="Auto" />
+                                        <ColumnDefinition Width="*" />
                                     </Grid.ColumnDefinitions>
+
                                     <StackPanel Grid.Column="0">
                                         <TextBlock Style="{StaticResource LabelStyle}" Text="Partitioning (prs)" />
-                                        <TextBox
-                                            x:Name="tbActualPairs"
-                                            IsReadOnly="{Binding IsActualPairsReadOnly}"
-                                            KeyDown="tbActualPairs_KeyDown"
-                                            Style="{StaticResource EditableFieldStyle}"
-                                            Text="{Binding ActualPairs, Mode=OneWay}" />
+                                        <TextBox Style="{StaticResource EditableFieldStyle}" Text="{Binding ActualPairs}" />
                                     </StackPanel>
+
                                     <StackPanel Grid.Column="2" VerticalAlignment="Bottom">
-                                        <TextBlock
-                                            HorizontalAlignment="Center"
-                                            Style="{StaticResource LabelStyle}"
-                                            Text="Adj." />
-                                        <!--  Binding AllowPartitionAdj two-way  -->
-                                        <CheckBox HorizontalAlignment="Center" IsChecked="{Binding AllowPartitionAdj, Mode=TwoWay}" />
+                                        <TextBlock Style="{StaticResource LabelStyle}" Text="Adjust no. of prs" />
+                                        <CheckBox IsChecked="{Binding AllowPartitionAdj}" />
                                     </StackPanel>
                                 </Grid>
 
-                                <!--  Runner + Usage%  -->
-                                <Grid Margin="0,0,0,8">
+                                <!--  Runner  -->
+                                <Grid Grid.Row="4" Margin="0,0,0,8">
                                     <Grid.ColumnDefinitions>
                                         <ColumnDefinition Width="*" />
                                         <ColumnDefinition Width="8" />
-                                        <ColumnDefinition Width="80" />
+                                        <ColumnDefinition Width="*" />
                                     </Grid.ColumnDefinitions>
+
                                     <StackPanel Grid.Column="0">
                                         <TextBlock Style="{StaticResource LabelStyle}" Text="Runner" />
-                                        <!--  Binding RunnerText two-way  -->
-                                        <ComboBox
-                                            x:Name="cbRunner"
-                                            Height="Auto"
-                                            FontFamily="Segoe UI"
-                                            FontSize="20"
-                                            SelectedValuePath="Content"
-                                            SelectedValue="{Binding RunnerText, Mode=TwoWay}">
+                                        <ComboBox SelectedValue="{Binding RunnerText}" SelectedValuePath="Content">
                                             <ComboBoxItem Content="YES" />
                                             <ComboBoxItem Content="NO" />
                                         </ComboBox>
                                     </StackPanel>
+
                                     <StackPanel Grid.Column="2">
                                         <TextBlock Style="{StaticResource LabelStyle}" Text="Usage %" />
-                                        <TextBox
-                                            x:Name="tbUsagePct"
-                                            IsReadOnly="{Binding IsUsagePctReadOnly}"
-                                            KeyDown="tbUsagePct_KeyDown"
-                                            Style="{StaticResource EditableFieldStyle}"
-                                            Text="{Binding UsagePct, Mode=OneWay}" />
+                                        <TextBox Style="{StaticResource EditableFieldStyle}" Text="{Binding UsagePct}" />
                                     </StackPanel>
                                 </Grid>
 
-                                <!--  Size + SeqIndex  -->
-                                <Grid Margin="0,0,0,8">
+                                <!--  Size  -->
+                                <Grid Grid.Row="5" Margin="0,0,0,8">
                                     <Grid.ColumnDefinitions>
                                         <ColumnDefinition Width="*" />
                                         <ColumnDefinition Width="8" />
                                         <ColumnDefinition Width="*" />
                                     </Grid.ColumnDefinitions>
+
                                     <StackPanel Grid.Column="0">
                                         <TextBlock Style="{StaticResource LabelStyle}" Text="Size" />
-                                        <TextBox Style="{StaticResource FieldStyle}" Text="{Binding Size, Mode=OneWay}" />
+                                        <TextBox Style="{StaticResource FieldStyle}" Text="{Binding Size}" />
                                     </StackPanel>
+
                                     <StackPanel Grid.Column="2">
-                                        <TextBlock Style="{StaticResource LabelStyle}" Text="Seq. Index" />
-                                        <TextBox Style="{StaticResource FieldStyle}" Text="{Binding StepIndex, Mode=OneWay}" />
+                                        <TextBlock Style="{StaticResource LabelStyle}" Text="Step No." />
+                                        <TextBox Style="{StaticResource FieldStyle}" Text="{Binding StepIndex}" />
                                     </StackPanel>
                                 </Grid>
 
-                                <TextBlock Style="{StaticResource LabelStyle}" Text="FG Description" />
-                                <TextBox
-                                    Margin="0,0,0,8"
-                                    MaxLines="3"
-                                    MinLines="2"
-                                    Style="{StaticResource FieldStyle}"
-                                    Text="{Binding FgName, Mode=OneWay}"
-                                    TextWrapping="Wrap" />
-
-                                <TextBlock Style="{StaticResource LabelStyle}" Text="FG Item Code" />
-                                <TextBox
-                                    Margin="0,0,0,8"
-                                    Style="{StaticResource FieldStyle}"
-                                    Text="{Binding FgItemCode, Mode=OneWay}" />
-
-                                <TextBlock Style="{StaticResource LabelStyle}" Text="Remark" />
-                                <!--  Binding Remark two-way, setter trong VM sync _remarkFinal  -->
-                                <TextBox
-                                    Margin="0,0,0,8"
-                                    MinLines="2"
-                                    Style="{StaticResource EditableFieldStyle}"
-                                    Text="{Binding Remark, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
-                                    TextWrapping="Wrap" />
-
-                                <TextBlock Style="{StaticResource LabelStyle}" Text="Select Step" />
-
-                                <!--  DevExpress LookUpEdit: ItemsSource từ ViewModel, event bridge ở code-behind  -->
-                                <dxg:LookUpEdit
-                                    x:Name="cbStepName"
-                                    Margin="0,0,0,8"
-                                    AutoComplete="True"
-                                    AutoPopulateColumns="False"
-                                    DisplayMember="StepItemName"
-                                    EditValueChanged="cbStepName_EditValueChangedAsync"
-                                    FontSize="15"
-                                    ItemsSource="{Binding StepCodeMaster}"
-                                    PopupHeight="500"
-                                    PopupWidth="1000"
-                                    TextWrapping="Wrap"
-                                    ValueMember="StepItemCode">
-                                    <dxg:LookUpEdit.StyleSettings>
-                                        <dxg:LookUpEditStyleSettings AllowColumnFiltering="True" />
-                                    </dxg:LookUpEdit.StyleSettings>
-                                    <dxg:LookUpEdit.PopupContentTemplate>
-                                        <ControlTemplate>
-                                            <dxg:GridControl Name="PART_GridControl" IsFilterEnabled="True">
-                                                <dxg:GridControl.Columns>
-                                                    <dxg:GridColumn
-                                                        ColumnFilterMode="DisplayText"
-                                                        FieldName="Machine"
-                                                        FilterPopupMode="Excel"
-                                                        Header="Machine" />
-                                                    <dxg:GridColumn FieldName="StepItemCode" Header="Step Code" />
-                                                    <dxg:GridColumn FieldName="StepItemName" Header="Step Name" />
-                                                    <dxg:GridColumn FieldName="Size" Header="Size" />
-                                                    <dxg:GridColumn FieldName="HydraOrderNo" Header="Hydra Order No" />
-                                                    <dxg:GridColumn FieldName="FT601Id" Header="FT601 Id" />
-                                                </dxg:GridControl.Columns>
-                                                <dxg:GridControl.View>
-                                                    <dxg:TableView
-                                                        AutoWidth="True"
-                                                        ShowAutoFilterRow="True"
-                                                        ShowFilterPanelMode="ShowAlways" />
-                                                </dxg:GridControl.View>
-                                            </dxg:GridControl>
-                                        </ControlTemplate>
-                                    </dxg:LookUpEdit.PopupContentTemplate>
-                                </dxg:LookUpEdit>
-
-                                <!--  ── Barcode Card ──  -->
-                                <StackPanel Orientation="Horizontal">
-                                    <Ellipse
-                                        Width="10"
-                                        Height="10"
-                                        Margin="0,0,6,0"
-                                        VerticalAlignment="Center"
-                                        Fill="{Binding BarcodeStatus, Converter={StaticResource DriverStatusToColor}}" />
-                                    <TextBlock
-                                        VerticalAlignment="Center"
-                                        Style="{StaticResource LabelStyle}"
-                                        Text="Barcode / QR Scan" />
+                                <!--  FG  -->
+                                <StackPanel Grid.Row="6">
+                                    <TextBlock Style="{StaticResource LabelStyle}" Text="FG Description" />
+                                    <TextBox
+                                        Margin="0,0,0,8"
+                                        MinLines="2"
+                                        TextWrapping="Wrap"
+                                        Style="{StaticResource FieldStyle}"
+                                        Text="{Binding FgName}" />
                                 </StackPanel>
-                                <TextBox
-                                    Name="_txtBarcode"
-                                    MinWidth="260"
-                                    IsReadOnly="{Binding ReadOnlyScanner}"
-                                    KeyDown="_txtBarcode_KeyDown"
-                                    Style="{StaticResource FieldStyle}"
-                                    Text="{Binding BarcodeScannedValue, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
-                                    TextWrapping="Wrap"
-                                    VerticalScrollBarVisibility="Auto" />
 
-                            </StackPanel>
+                                <StackPanel Grid.Row="7">
+                                    <TextBlock Style="{StaticResource LabelStyle}" Text="FG Item Code" />
+                                    <TextBox
+                                        Margin="0,0,0,8"
+                                        Style="{StaticResource FieldStyle}"
+                                        Text="{Binding FgItemCode}" />
+                                </StackPanel>
+
+                                <!--  Lookup  -->
+                                <StackPanel Grid.Row="8">
+                                    <TextBlock Style="{StaticResource LabelStyle}" Text="Select Step" />
+                                    <!--  DevExpress LookUpEdit: ItemsSource từ ViewModel, event bridge ở code-behind  -->
+                                    <dxg:LookUpEdit
+                                        x:Name="cbStepName"
+                                        Margin="0,0,0,8"
+                                        AutoComplete="True"
+                                        AutoPopulateColumns="False"
+                                        DisplayMember="StepItemName"
+                                        EditValueChanged="cbStepName_EditValueChangedAsync"
+                                        FontSize="15"
+                                        ItemsSource="{Binding StepCodeMaster}"
+                                        PopupHeight="500"
+                                        PopupWidth="1000"
+                                        TextWrapping="Wrap"
+                                        ValueMember="StepItemCode">
+                                        <dxg:LookUpEdit.StyleSettings>
+                                            <dxg:LookUpEditStyleSettings AllowColumnFiltering="True" />
+                                        </dxg:LookUpEdit.StyleSettings>
+                                        <dxg:LookUpEdit.PopupContentTemplate>
+                                            <ControlTemplate>
+                                                <dxg:GridControl Name="PART_GridControl" IsFilterEnabled="True">
+                                                    <dxg:GridControl.Columns>
+                                                        <dxg:GridColumn
+                                                            ColumnFilterMode="DisplayText"
+                                                            FieldName="Machine"
+                                                            FilterPopupMode="Excel"
+                                                            Header="Machine" />
+                                                        <dxg:GridColumn FieldName="StepItemCode" Header="Step Code" />
+                                                        <dxg:GridColumn FieldName="StepItemName" Header="Step Name" />
+                                                        <dxg:GridColumn FieldName="Size" Header="Size" />
+                                                        <dxg:GridColumn FieldName="HydraOrderNo" Header="Hydra Order No" />
+                                                        <dxg:GridColumn FieldName="FT601Id" Header="FT601 Id" />
+                                                    </dxg:GridControl.Columns>
+                                                    <dxg:GridControl.View>
+                                                        <dxg:TableView
+                                                            AutoWidth="True"
+                                                            ShowAutoFilterRow="True"
+                                                            ShowFilterPanelMode="ShowAlways" />
+                                                    </dxg:GridControl.View>
+                                                </dxg:GridControl>
+                                            </ControlTemplate>
+                                        </dxg:LookUpEdit.PopupContentTemplate>
+                                    </dxg:LookUpEdit>
+                                </StackPanel>
+
+                                <!--  Barcode  -->
+                                <StackPanel Grid.Row="9">
+                                    <TextBlock Style="{StaticResource LabelStyle}" Text="Barcode / QR Scan" />
+                                    <TextBox Text="{Binding BarcodeScannedValue}" Style="{StaticResource FieldStyle}" />
+                                </StackPanel>
+
+                                <!--  ✅ ✅ ✅ REMARK (FULL HEIGHT)  -->
+                                <Grid Grid.Row="10">
+                                    <Grid.RowDefinitions>
+                                        <RowDefinition Height="Auto" />
+                                        <RowDefinition Height="*" />
+                                    </Grid.RowDefinitions>
+
+                                    <TextBlock Text="Remark" Style="{StaticResource LabelStyle}" />
+
+                                    <TextBox
+                                        Grid.Row="1"
+                                        Style="{StaticResource EditableFieldStyle}"
+                                        Text="{Binding Remark, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                        TextWrapping="Wrap"
+                                        AcceptsReturn="True"
+                                        VerticalScrollBarVisibility="Auto" />
+                                </Grid>
+
+                            </Grid>
                         </ScrollViewer>
+
                     </Grid>
                 </Border>
             </Grid>
@@ -453,7 +472,6 @@
                                     <DataGridTemplateColumn.CellTemplate>
                                         <DataTemplate>
                                             <StackPanel
-                                                Margin="6,5"
                                                 HorizontalAlignment="Center"
                                                 VerticalAlignment="Center"
                                                 Orientation="Horizontal">
@@ -553,7 +571,8 @@
                                                     FontSize="12"
                                                     FontWeight="Bold"
                                                     Text="{Binding C027}"
-                                                    TextTrimming="CharacterEllipsis" />
+                                                    TextTrimming="CharacterEllipsis"
+                                                    TextWrapping="Wrap" />
                                                 <TextBlock
                                                     FontSize="10"
                                                     Foreground="#78909C"
@@ -570,13 +589,13 @@
                                     ElementStyle="{StaticResource CenterCell}">
                                     <DataGridTextColumn.Header>
                                         <TextBlock
-                                            Text="SEQUENCE STEP"
+                                            Text="Step No."
                                             TextAlignment="Center"
                                             TextWrapping="WrapWithOverflow" />
                                     </DataGridTextColumn.Header>
                                 </DataGridTextColumn>
 
-                                <DataGridTemplateColumn Width="426">
+                                <DataGridTemplateColumn Width="300">
                                     <!--  HEADER TEMPLATE  -->
                                     <DataGridTemplateColumn.HeaderTemplate>
                                         <DataTemplate>
@@ -733,7 +752,7 @@
                                     <DataGridTextColumn.HeaderTemplate>
                                         <DataTemplate>
                                             <TextBlock
-                                                Text="PPIC Pairs Shot (prs)"
+                                                Text="PPIC Partitioning (prs)"
                                                 TextAlignment="Center"
                                                 TextWrapping="WrapWithOverflow"
                                                 ToolTipService.ShowDuration="20000">
@@ -1120,7 +1139,8 @@
                                 </Border>
                                 <Border
                                     Grid.Row="1"
-                                    Padding="12,8"
+                                    MinHeight="60"
+                                    Margin="10"
                                     CornerRadius="4,4,0,0"
                                     Cursor="Hand"
                                     MouseLeftButtonDown="HistoryHeader_Click">
@@ -1175,7 +1195,7 @@
 
                                             <DataGridTextColumn
                                                 Width="125"
-                                                Binding="{Binding C024, StringFormat=F2}"
+                                                Binding="{Binding C023, StringFormat=F2}"
                                                 ElementStyle="{StaticResource CenterCell}">
                                                 <DataGridTextColumn.Header>
                                                     <TextBlock
@@ -1318,9 +1338,9 @@
                                         Grid.ColumnSpan="2"
                                         Margin="0,0"
                                         Padding="20"
-                                        BorderThickness="1"
-                                        CornerRadius="8"
-                                        BorderBrush="#0D1117">
+                                        BorderBrush="{Binding ScaleStable, Converter={StaticResource StableToForeground}}"
+                                        BorderThickness="1.5"
+                                        CornerRadius="8">
 
                                         <TextBox
                                             HorizontalAlignment="Center"
@@ -1338,7 +1358,7 @@
 
 
                                     <!--  RIGHT: STABLE BADGE (TÁCH RIÊNG)  -->
-                                    <Border
+                                    <!--<Border
                                         Grid.Column="4"
                                         Margin="10,0,0,0"
                                         Padding="10,4"
@@ -1352,14 +1372,29 @@
                                             FontSize="12"
                                             FontWeight="Bold"
                                             Text="Stable Value" />
-                                    </Border>
+                                    </Border>-->
+
+                                    <Button
+                                        Grid.Column="4"
+                                        Margin="10,0,0,0"
+                                        Background="#0D1117"
+                                        Command="{Binding SaveCommand}"
+                                        Style="{StaticResource BottomBtn}"
+                                        IsEnabled="{Binding ScaleStable}">
+
+                                        <StackPanel Orientation="Horizontal">
+                                            <TextBlock Margin="0,0,6,0" Text="💾" />
+                                            <TextBlock Text="Save" />
+                                        </StackPanel>
+
+                                    </Button>
 
                                 </Grid>
 
                                 <!--  ── REFERENCE VALUES DataGrid ──  -->
                                 <Border
                                     Grid.Row="2"
-                                    Padding="0,0,0,5"
+                                    Padding="0,0,0,30"
                                     Background="{Binding ScaleTare, Converter={StaticResource TareToBackground}}"
                                     BorderBrush="#E0E7EF"
                                     BorderThickness="0,0,0,0">
@@ -1372,7 +1407,7 @@
                                         <DataGrid
                                             x:Name="dgRefValues"
                                             Grid.Row="0"
-                                            Padding="10"
+                                            Padding="0"
                                             ItemsSource="{Binding RefRowsCollection}"
                                             RowStyle="{StaticResource RefRowStyle}"
                                             Style="{StaticResource GridStyle}"
@@ -1409,20 +1444,21 @@
                                                     <DataGridTemplateColumn.CellTemplate>
                                                         <DataTemplate>
                                                             <StackPanel
-                                                                Orientation="Horizontal"
-                                                              Margin="10,10,10,12"
+                                                                Margin="10,10,10,12"
                                                                 HorizontalAlignment="Center"
                                                                 VerticalAlignment="Center"
-                                                                >
+                                                                Orientation="Horizontal">
                                                                 <TextBlock
+                                                                    Padding="10,0,0,0"
                                                                     FontSize="15"
                                                                     FontWeight="SemiBold"
                                                                     Text="{Binding FieldName}"
-                                                                    TextWrapping="Wrap" Padding="10,0,0,0"/>
+                                                                    TextWrapping="Wrap" />
                                                                 <TextBlock
+                                                                    Padding="10,4,0,0"
                                                                     FontSize="10"
                                                                     Foreground="#78909C"
-                                                                    Text="{Binding Unit, StringFormat='[{0}]'}" Padding="10,4,0,0"/>
+                                                                    Text="{Binding Unit, StringFormat='[{0}]'}" />
                                                             </StackPanel>
                                                         </DataTemplate>
                                                     </DataGridTemplateColumn.CellTemplate>
@@ -1433,7 +1469,7 @@
                                                     <DataGridTemplateColumn.HeaderTemplate>
                                                         <DataTemplate>
                                                             <TextBlock
-                                                                Text="STD"
+                                                                Text="STANDARD"
                                                                 TextAlignment="Center"
                                                                 TextWrapping="Wrap"
                                                                 ToolTipService.ShowDuration="20000">
@@ -1569,19 +1605,7 @@
                                         HorizontalAlignment="Right"
                                         VerticalAlignment="Center"
                                         Orientation="Horizontal">
-                                        <Button
-                                            Margin="0,0,4,0"
-                                            Padding="20,0"
-                                            Background="#0D1117"
-                                            Command="{Binding SaveCommand}"
-                                            Style="{StaticResource BottomBtn}">
 
-                                            <StackPanel Orientation="Horizontal">
-                                                <TextBlock Margin="0,0,6,0" Text="💾" />
-                                                <TextBlock Text="Save" />
-                                            </StackPanel>
-
-                                        </Button>
                                         <Button
                                             Margin="0,0,4,0"
                                             Padding="20,0"

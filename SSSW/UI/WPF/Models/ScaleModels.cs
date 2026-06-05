@@ -85,6 +85,17 @@ namespace SSSW.UI.WPF.Models
         {
             get
             {
+                if (Delta == null) return ToleranceCategory.Idle;
+
+                return Delta <= GlobalVariable.ConfigSystem.DeltaLevel1 ? ToleranceCategory.Ok
+                     : Delta <= GlobalVariable.ConfigSystem.DeltaLevel2 ? ToleranceCategory.Warn
+                     : ToleranceCategory.Err;
+            }
+        }
+        public ToleranceCategory TolerancePercent
+        {
+            get
+            {
                 if (DeltaPct == null) return ToleranceCategory.Idle;
                 var abs = Math.Abs(DeltaPct.Value);
                 return abs <= GlobalVariable.ConfigSystem.DeltaLevel1 ? ToleranceCategory.Ok
@@ -92,6 +103,7 @@ namespace SSSW.UI.WPF.Models
                      : ToleranceCategory.Err;
             }
         }
+
 
         // ── INotifyPropertyChanged ───────────────────────────────────────────
         public event PropertyChangedEventHandler? PropertyChanged;

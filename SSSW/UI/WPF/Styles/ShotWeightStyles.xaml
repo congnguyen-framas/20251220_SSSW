@@ -76,7 +76,7 @@
         <Setter Property="BorderThickness" Value="0" />
         <Setter Property="Cursor" Value="Hand" />
         <Setter Property="Height" Value="48" />
-        <Setter Property="MinWidth" Value="140" />
+        <Setter Property="MinWidth" Value="130" />
         <Setter Property="Margin" Value="6,0" />
         <Setter Property="Template">
             <Setter.Value>

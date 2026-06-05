@@ -77,7 +77,7 @@ namespace SSSW.models
         [DisplayName("Total W_injection (g)")] public double? C024 { get; set; }
 
         /// <summary>
-        /// Số lượng. Dùng cho cân Recetacle/outsoleboard/Stud/Logo để quy đinh số lượng sử dụng trong bước.
+        /// Số lượng. Dùng cho Recetacle/outsoleboard/Stud/Logo để quy định số lượng sử dụng cho 1 đôi.
         /// non-injection materials quantity. Receptacle/Nonwoven/Mesh/Stud/Logo quantity.
         /// </summary>
         [DisplayName("Quantity")] public double? C025 { get; set; } = 0;

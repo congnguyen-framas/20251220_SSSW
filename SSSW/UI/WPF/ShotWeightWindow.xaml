@@ -1294,11 +1294,12 @@
                                         <!--  Label  -->
                                         <ColumnDefinition Width="*" />
                                         <!--  STD  -->
-                                        <ColumnDefinition Width="140" />
+                                        <ColumnDefinition Width="135" />
                                         <!--  ACTUAL  -->
-                                        <ColumnDefinition Width="140" />
-                                        <ColumnDefinition Width="140" />
+                                        <ColumnDefinition Width="135" />
                                         <!--  Stable  -->
+                                        <ColumnDefinition Width="150" />
+
                                     </Grid.ColumnDefinitions>
 
                                     <!--  LEFT: SCALE LABEL  -->
@@ -1377,7 +1378,7 @@
 
                                     <Button
                                         Grid.Column="4"
-                                        Margin="10,0,0,0"
+                                        Margin="10,0,5,0"
                                         Background="#0D1117"
                                         Command="{Binding SaveCommand}"
                                         Style="{StaticResource BottomBtn}"
@@ -1466,7 +1467,7 @@
                                                 </DataGridTemplateColumn>
 
                                                 <!--  STD  -->
-                                                <DataGridTemplateColumn Width="140">
+                                                <DataGridTemplateColumn Width="135">
                                                     <DataGridTemplateColumn.HeaderTemplate>
                                                         <DataTemplate>
                                                             <TextBlock
@@ -1507,7 +1508,7 @@
                                                 </DataGridTemplateColumn>
 
                                                 <!--  ACTUAL  -->
-                                                <DataGridTemplateColumn Width="140">
+                                                <DataGridTemplateColumn Width="135">
                                                     <DataGridTemplateColumn.HeaderTemplate>
                                                         <DataTemplate>
                                                             <TextBlock
@@ -1548,7 +1549,7 @@
                                                 </DataGridTemplateColumn>
 
                                                 <!--  Δ  -->
-                                                <DataGridTemplateColumn Width="140">
+                                                <DataGridTemplateColumn Width="150">
                                                     <DataGridTemplateColumn.HeaderTemplate>
                                                         <DataTemplate>
                                                             <TextBlock

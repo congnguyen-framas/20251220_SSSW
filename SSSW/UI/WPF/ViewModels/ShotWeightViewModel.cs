@@ -1181,8 +1181,7 @@ namespace SSSW.UI.WPF.ViewModels
                              (double?)prsShot) ?? 0, 3)
                         : 0;
 
-                    if (!_rowSelected.C003.StartsWith("Studs") &&
-                        !_rowSelected.C003.StartsWith("Logo") &&
+                    if (!_rowSelected.C003.StartsWith("Logo") &&
                         !_rowSelected.C003.StartsWith("Cleat_Ring"))
                     {
                         // C021 = Part weight thực tế (g/prs)
@@ -1193,10 +1192,14 @@ namespace SSSW.UI.WPF.ViewModels
                             .Where(x => x.C015 == _rowSelected.C015 &&
                                         (x.C002 == "Z-VHXXXXXX" ||
                                          (x.C002?.StartsWith("REX") ?? false))).ToList();
-
-                        _rowSelected.C021 = _rowSelected.C023
-                                            - previuosStep?.Sum(x => x.C023)
-                                            - nonInjection?.Sum(x => x.C023);
+                        if (!_rowSelected.C003.StartsWith("Studs")
+                            || (_rowSelected.C003.StartsWith("Studs") && !previuosStep.FirstOrDefault().C003.StartsWith("Logo") && !previuosStep.FirstOrDefault().C003.StartsWith("Cleat_Ring"))
+                            )
+                        {
+                            _rowSelected.C021 = _rowSelected.C023
+                                                - previuosStep?.Sum(x => x.C023)
+                                                - nonInjection?.Sum(x => x.C023);
+                        }
                     }
                     else
                     {

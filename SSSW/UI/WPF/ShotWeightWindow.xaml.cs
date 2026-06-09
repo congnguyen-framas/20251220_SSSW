@@ -463,7 +463,6 @@ namespace SSSW.UI.WPF
         {
             try
             {
-
                 if (e.Key == Key.Enter)
                 {
                     var tb = sender as TextBox;

@@ -90,9 +90,9 @@
                         Grid.Column="1"
                         Padding="10"
                         VerticalAlignment="Center"
-                        Style="{StaticResource LabelStyle}"
-                        Foreground="White"
                         FontWeight="Bold"
+                        Foreground="White"
+                        Style="{StaticResource LabelStyle}"
                         Text="RFID - Employee ID:" />
 
                     <TextBlock
@@ -102,9 +102,9 @@
                         FontFamily="Segoe UI"
                         FontSize="15"
                         Foreground="White"
-                        Text="{Binding UserName}"
                         IsEnabled="{Binding ReadonlyRfid}"
-                        MouseLeftButtonDown="_tbEmployee_MouseLeftButtonDown" />
+                        MouseLeftButtonDown="_tbEmployee_MouseLeftButtonDown"
+                        Text="{Binding UserName}" />
                 </StackPanel>
 
                 <StackPanel
@@ -225,8 +225,8 @@
                                     <TextBlock Style="{StaticResource LabelStyle}" Text="Name" />
                                     <TextBox
                                         Margin="0,0,0,8"
-                                        MinLines="2"
                                         MaxLines="3"
+                                        MinLines="2"
                                         Style="{StaticResource FieldStyle}"
                                         Text="{Binding StepName}"
                                         TextWrapping="Wrap" />
@@ -270,7 +270,10 @@
 
                                     <StackPanel Grid.Column="0">
                                         <TextBlock Style="{StaticResource LabelStyle}" Text="Partitioning (prs)" />
-                                        <TextBox Style="{StaticResource EditableFieldStyle}" Text="{Binding ActualPairs}" />
+                                        <TextBox
+                                            KeyDown="tbActualPairs_KeyDown"
+                                            Style="{StaticResource EditableFieldStyle}"
+                                            Text="{Binding ActualPairs}" />
                                     </StackPanel>
 
                                     <StackPanel Grid.Column="2" VerticalAlignment="Bottom">
@@ -289,7 +292,10 @@
 
                                     <StackPanel Grid.Column="0">
                                         <TextBlock Style="{StaticResource LabelStyle}" Text="Runner" />
-                                        <ComboBox SelectedValue="{Binding RunnerText}" SelectedValuePath="Content">
+                                        <ComboBox
+                                            FontSize="15"
+                                            SelectedValue="{Binding RunnerText}"
+                                            SelectedValuePath="Content">
                                             <ComboBoxItem Content="YES" />
                                             <ComboBoxItem Content="NO" />
                                         </ComboBox>
@@ -297,7 +303,10 @@
 
                                     <StackPanel Grid.Column="2">
                                         <TextBlock Style="{StaticResource LabelStyle}" Text="Usage %" />
-                                        <TextBox Style="{StaticResource EditableFieldStyle}" Text="{Binding UsagePct}" />
+                                        <TextBox
+                                            KeyDown="tbUsagePct_KeyDown"
+                                            Style="{StaticResource EditableFieldStyle}"
+                                            Text="{Binding UsagePct}" />
                                     </StackPanel>
                                 </Grid>
 
@@ -326,9 +335,9 @@
                                     <TextBox
                                         Margin="0,0,0,8"
                                         MinLines="2"
-                                        TextWrapping="Wrap"
                                         Style="{StaticResource FieldStyle}"
-                                        Text="{Binding FgName}" />
+                                        Text="{Binding FgName}"
+                                        TextWrapping="Wrap" />
                                 </StackPanel>
 
                                 <StackPanel Grid.Row="7">
@@ -389,7 +398,11 @@
                                 <!--  Barcode  -->
                                 <StackPanel Grid.Row="9">
                                     <TextBlock Style="{StaticResource LabelStyle}" Text="Barcode / QR Scan" />
-                                    <TextBox Text="{Binding BarcodeScannedValue}" Style="{StaticResource FieldStyle}" />
+                                    <TextBox
+                                        KeyDown="_txtBarcode_KeyDown"
+                                        Style="{StaticResource FieldStyle}"
+                                        Text="{Binding BarcodeScannedValue}"
+                                        TextWrapping="WrapWithOverflow" />
                                 </StackPanel>
 
                                 <!--  ✅ ✅ ✅ REMARK (FULL HEIGHT)  -->
@@ -399,14 +412,14 @@
                                         <RowDefinition Height="*" />
                                     </Grid.RowDefinitions>
 
-                                    <TextBlock Text="Remark" Style="{StaticResource LabelStyle}" />
+                                    <TextBlock Style="{StaticResource LabelStyle}" Text="Remark" />
 
                                     <TextBox
                                         Grid.Row="1"
+                                        AcceptsReturn="True"
                                         Style="{StaticResource EditableFieldStyle}"
                                         Text="{Binding Remark, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
                                         TextWrapping="Wrap"
-                                        AcceptsReturn="True"
                                         VerticalScrollBarVisibility="Auto" />
                                 </Grid>
 
@@ -1008,8 +1021,8 @@
                 <Border
                     Grid.Row="1"
                     Padding="0,0,0,0"
-                    Visibility="Collapsed"
-                    Background="Transparent">
+                    Background="Transparent"
+                    Visibility="Collapsed">
                     <Grid>
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition Width="*" />
@@ -1146,14 +1159,14 @@
                                     MouseLeftButtonDown="HistoryHeader_Click">
                                     <StackPanel VerticalAlignment="Center" Orientation="Vertical">
                                         <TextBlock
+                                            FontSize="16"
                                             Style="{StaticResource LabelStyle}"
                                             Text="{Binding HistoryToggleTextDetail}"
-                                            TextWrapping="WrapWithOverflow"
-                                            FontSize="16" />
+                                            TextWrapping="WrapWithOverflow" />
                                         <TextBlock
                                             Margin="0,3,0,0"
-                                            Style="{StaticResource LabelStyle}"
                                             FontSize="16"
+                                            Style="{StaticResource LabelStyle}"
                                             Text="{Binding HistoryToggleTextSecond}"
                                             TextWrapping="WrapWithOverflow" />
                                     </StackPanel>
@@ -1319,13 +1332,13 @@
 
                                         <TextBlock HorizontalAlignment="Right" VerticalAlignment="Center">
                                             <Run
-                                                Text="SCALE VALUE "
                                                 FontSize="30"
-                                                FontWeight="Bold" />
+                                                FontWeight="Bold"
+                                                Text="SCALE VALUE " />
                                             <Run
-                                                Text="(g)"
                                                 FontSize="30"
-                                                FontWeight="Bold" />
+                                                FontWeight="Bold"
+                                                Text="(g)" />
                                         </TextBlock>
                                     </StackPanel>
 
@@ -1354,8 +1367,8 @@
                                             FontWeight="Bold"
                                             Foreground="#0D1117"
                                             IsReadOnly="{Binding ReadOnlyScale}"
-                                            TextAlignment="Center"
-                                            Text="{Binding ScaleValue}" />
+                                            Text="{Binding ScaleValue}"
+                                            TextAlignment="Center" />
                                     </Border>
 
 
@@ -1381,8 +1394,8 @@
                                         Margin="10,0,5,0"
                                         Background="#0D1117"
                                         Command="{Binding SaveCommand}"
-                                        Style="{StaticResource BottomBtn}"
-                                        IsEnabled="{Binding EnableBtnSaveScale}">
+                                        IsEnabled="{Binding EnableBtnSaveScale}"
+                                        Style="{StaticResource BottomBtn}">
 
                                         <StackPanel Orientation="Horizontal">
                                             <TextBlock Margin="0,0,6,0" Text="💾" />
@@ -1410,10 +1423,10 @@
                                             x:Name="dgRefValues"
                                             Grid.Row="0"
                                             Padding="0"
+                                            Grid.IsSharedSizeScope="True"
                                             ItemsSource="{Binding RefRowsCollection}"
                                             RowStyle="{StaticResource RefRowStyle}"
-                                            Style="{StaticResource GridStyle}"
-                                            Grid.IsSharedSizeScope="True">
+                                            Style="{StaticResource GridStyle}">
                                             <DataGrid.Columns>
 
                                                 <!--  #  -->
@@ -1592,9 +1605,9 @@
                                             Grid.IsSharedSizeScope="True">
                                             <TextBlock
                                                 Margin="0,3,0,0"
+                                                FontSize="20"
                                                 Foreground="#B0BEC5"
                                                 Style="{StaticResource LabelStyle}"
-                                                FontSize="20"
                                                 Text="{Binding DeltaInformation}" />
                                         </StackPanel>
                                     </Grid>

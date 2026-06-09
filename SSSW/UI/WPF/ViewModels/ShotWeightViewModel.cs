@@ -1087,8 +1087,11 @@ namespace SSSW.UI.WPF.ViewModels
                     var stepSel = _scaleDataFinal.FirstOrDefault(x => x.C002 == _stepSelected.C004);
                     var prevSteps = _scaleDataFinal.Where(x => x.C015 < stepSel?.C015).ToList();
                     if (prevSteps.Any(x => x.C021 == 0))
+                    {
+                        _rowSelected = prevSteps.Where(x => x.C021 == 0).OrderBy(od => od.C015).FirstOrDefault();
                         System.Windows.Forms.MessageBox.Show("The previous step has not been weighed.", "Warning",
                             (MessageBoxButtons)MessageBoxButton.OK, (MessageBoxIcon)(MessageBoxIcon)MessageBoxImage.Warning);
+                    }
                     else
                         _rowSelected = _scaleDataFinal
                             .FirstOrDefault(x => x.C002 == _stepSelected.C004) ?? new FT600();

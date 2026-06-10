@@ -1364,7 +1364,7 @@ namespace SSSW
                         FT601 ckHydra = new();
                         ckHydra = item.ItemStepCode == _stepSelected.C004 ?
                             _stepSelected :
-                            _dataHydra.FirstOrDefault(x => x.C004 == item.ItemStepCode && x.C007 == item.ItemFgCode);
+                            _dataHydra.FirstOrDefault(x => x.C004 == item.ItemStepCode && x.C020 == item.ItemFgCode.Split('-')[0]);
 
                         if (ckHydra == null)
                         {

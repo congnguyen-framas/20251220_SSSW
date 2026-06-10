@@ -17,9 +17,9 @@ namespace SSSW.UI.WPF.Models
     /// </summary>
     public class ReferenceRow : INotifyPropertyChanged
     {
-        private int     _no;
-        private string  _fieldName = "";
-        private string  _unit      = "";
+        private int _no;
+        private string _fieldName = "";
+        private string _unit = "";
         private double? _std;
         private double? _actual;
 
@@ -68,11 +68,11 @@ namespace SSSW.UI.WPF.Models
         }
 
         // ── Computed display strings ─────────────────────────────────────────
-        public string StdDisplay    => Std.HasValue    ? Std.Value.ToString("F2")    : "—";
+        public string StdDisplay => Std.HasValue ? Std.Value.ToString("F2") : "—";
         public string ActualDisplay => (Actual.HasValue && Actual > 0)
                                            ? Actual.Value.ToString("F2") : "—";
-        public string DeltaDisplay  => Delta.HasValue
-                                           ? ((Delta >= 0 ? "+" : "") + Delta.Value.ToString("F2") + " (" + DeltaPct.Value.ToString("F2")+" %)") 
+        public string DeltaDisplay => Delta.HasValue
+                                           ? ((Delta >= 0 ? "+" : "") + Delta.Value.ToString("F2") + " (" + DeltaPct.Value.ToString("F2") + " %)")
                                            : "—";
 
         public double? Delta => (Actual.HasValue && Std.HasValue && Std.Value != 0)
@@ -87,8 +87,9 @@ namespace SSSW.UI.WPF.Models
             {
                 if (Delta == null) return ToleranceCategory.Idle;
 
-                return Delta <= GlobalVariable.ConfigSystem.DeltaLevel1 ? ToleranceCategory.Ok
-                     : Delta <= GlobalVariable.ConfigSystem.DeltaLevel2 ? ToleranceCategory.Warn
+                return Delta >= -GlobalVariable.ConfigSystem.DeltaLevel1 && Delta <= GlobalVariable.ConfigSystem.DeltaLevel1 ? ToleranceCategory.Ok
+                     : (Delta > GlobalVariable.ConfigSystem.DeltaLevel1 && Delta <= GlobalVariable.ConfigSystem.DeltaLevel2)
+                        || (Delta < -GlobalVariable.ConfigSystem.DeltaLevel1 && Delta >= -GlobalVariable.ConfigSystem.DeltaLevel2) ? ToleranceCategory.Warn
                      : ToleranceCategory.Err;
             }
         }

@@ -845,10 +845,12 @@ namespace SSSW.UI.WPF.ViewModels
                         bool allowScale = true;
                         FT601 ckHydra = new();
 
+                        //kiểm tra xem bước hiện tại có đúng với step đang chọn hay không
                         ckHydra = item.ItemStepCode == _stepSelected.C004
                             ? _stepSelected
                             : _dataHydra.FirstOrDefault(x =>
-                                x.C004 == item.ItemStepCode && x.C007 == item.ItemFgCode);
+                                //x.C004 == item.ItemStepCode && x.C007 == item.ItemFgCode);
+                                x.C004 == item.ItemStepCode && x.C020 == item.ItemFgCode.Split('-')[0]);
 
                         if (ckHydra == null)
                         {
@@ -863,6 +865,8 @@ namespace SSSW.UI.WPF.ViewModels
                             }
                             else
                             {
+                                var parallelInfo = _allStepsFG.Where(x => x.ParallelSequence == item.ParallelSequence).ToList();
+
                                 ckHydra = new FT601
                                 {
                                     C007 = item.ItemFgCode,
@@ -870,7 +874,7 @@ namespace SSSW.UI.WPF.ViewModels
                                     C004 = item.ItemStepCode,
                                     C005 = item.ItemStepName,
                                     C000 = _stepItemCodeScale.C000,
-                                    C010 = item.ParallelSequence
+                                    C010 = item.ParallelSequence,
                                 };
                             }
                         }
@@ -994,15 +998,29 @@ namespace SSSW.UI.WPF.ViewModels
 
                         if (item.C002?.Substring(0, 3) == "REX")
                         {
-                            var first = _scaleDataFinal
-                                .Where(x => x.C015 == item.C015 && !string.IsNullOrEmpty(x.C026));
+                            var parallelStep = _scaleDataFinal
+                                //.Where(x => x.C015 == item.C015 && !string.IsNullOrEmpty(x.C026));
+                                .Where(x => x.C015 == item.C015 && x.C002 != item.C002)
+                                .ToList();
+
+                            var updateMainInfo = parallelStep.FirstOrDefault(x => !string.IsNullOrEmpty(x.C026));
+                            parallelStep.ForEach(x =>
+                            {
+                                x.C026 = updateMainInfo?.C026;
+                                x.C027 = updateMainInfo?.C027;
+                            });
+
                             var paisShotFinal = catCheck == null
-                                ? first.FirstOrDefault()?.C028 : first.Sum(x => x.C028);
-                            item.C026 = first.FirstOrDefault()?.C026;
-                            item.C027 = first.FirstOrDefault()?.C027;
+                                ? parallelStep.FirstOrDefault()?.C028 : parallelStep.Sum(x => x.C028);
+
+                            var paisShotPPIC = catCheck == null
+                              ? parallelStep.FirstOrDefault()?.C017 : parallelStep.Sum(x => x.C017);
+
+                            item.C026 = parallelStep.FirstOrDefault()?.C026;
+                            item.C027 = parallelStep.FirstOrDefault()?.C027;
                             item.C028 = paisShotFinal;
-                            item.C017 = first.FirstOrDefault()?.C017 ?? 0;
-                            item.C018 = first.FirstOrDefault()?.C018 ?? 0;
+                            item.C017 = paisShotPPIC;
+                            item.C018 = parallelStep.FirstOrDefault()?.C018 ?? 0;
                         }
 
                         if (!item.C003!.StartsWith("Stud") && !item.C003.StartsWith("Logo") &&
@@ -1082,7 +1100,7 @@ namespace SSSW.UI.WPF.ViewModels
                         //|| duplicatedSize;
                     });
 
-                    _scaleDataFinal = _scaleDataFinal.OrderBy(x => x.C015).ToList();
+                    _scaleDataFinal = _scaleDataFinal.OrderBy(x => x.C015).ThenBy(x => x.C004).ToList();
 
                     var stepSel = _scaleDataFinal.FirstOrDefault(x => x.C002 == _stepSelected.C004);
                     var prevSteps = _scaleDataFinal.Where(x => x.C015 < stepSel?.C015).ToList();

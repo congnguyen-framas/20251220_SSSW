@@ -397,7 +397,17 @@
 
                                 <!--  Barcode  -->
                                 <StackPanel Grid.Row="9">
-                                    <TextBlock Style="{StaticResource LabelStyle}" Text="Barcode / QR Scan" />
+
+
+                                    <!--  Đèn trạng thái kết nối  -->
+                                    <StackPanel Margin="0,4" Orientation="Horizontal">
+                                        <Ellipse
+                                            Width="10"
+                                            Height="10"
+                                            Margin="0,0,6,0"
+                                            Fill="{Binding BarcodeStatus, Converter={StaticResource DriverStatusToColor}}" />
+                                        <TextBlock Style="{StaticResource LabelStyle}" Text="Barcode / QR Scan" />
+                                    </StackPanel>
                                     <TextBox
                                         KeyDown="_txtBarcode_KeyDown"
                                         Style="{StaticResource FieldStyle}"
@@ -659,7 +669,7 @@
                                     <DataGridTextColumn.HeaderTemplate>
                                         <DataTemplate>
                                             <TextBlock
-                                                Text="TOTAL INJECTION (g)"
+                                                Text="TOTAL WEIGHT (g)"
                                                 TextAlignment="Center"
                                                 TextWrapping="WrapWithOverflow"
                                                 ToolTipService.ShowDuration="20000">

@@ -1213,13 +1213,25 @@ namespace SSSW.UI.WPF.ViewModels
                             .Where(x => x.C015 == _rowSelected.C015 &&
                                         (x.C002 == "Z-VHXXXXXX" ||
                                          (x.C002?.StartsWith("REX") ?? false))).ToList();
-                        if (!_rowSelected.C003.StartsWith("Studs")
-                            || (_rowSelected.C003.StartsWith("Studs") && !previuosStep.FirstOrDefault().C003.StartsWith("Logo") && !previuosStep.FirstOrDefault().C003.StartsWith("Cleat_Ring"))
-                            )
+
+                        if (!_rowSelected.C003.StartsWith("Studs"))
                         {
                             _rowSelected.C021 = _rowSelected.C023
                                                 - previuosStep?.Sum(x => x.C023)
                                                 - nonInjection?.Sum(x => x.C023);
+                        }
+                        else if (_rowSelected.C003.StartsWith("Studs"))
+                        {
+                            if (previuosStep.FirstOrDefault().C003.StartsWith("Logo") || previuosStep.FirstOrDefault().C003.StartsWith("Cleat_Ring"))
+                            {
+                                _rowSelected.C021 = _rowSelected.C023;
+                            }
+                            else
+                            {
+                                _rowSelected.C021 = _rowSelected.C023
+                                                    - previuosStep?.Sum(x => x.C023)
+                                                    - nonInjection?.Sum(x => x.C023);
+                            }
                         }
                     }
                     else
@@ -1657,7 +1669,7 @@ namespace SSSW.UI.WPF.ViewModels
         {
             _referenceRows = new List<ReferenceRow>
             {
-                new() { No=1, FieldName="Total Injection Weight",           Unit="g",
+                new() { No=1, FieldName="Total Weight",           Unit="g",
                         Std    = _stdRow?.C024 > 0 ? _stdRow.C024 : null,
                         Actual = _rowSelected?.C024 > 0 ? _rowSelected.C024 : null },
                 new() { No=2, FieldName="Total Part Weight",             Unit="g/prs",

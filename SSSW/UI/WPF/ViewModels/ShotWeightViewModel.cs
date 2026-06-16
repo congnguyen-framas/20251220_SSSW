@@ -563,7 +563,7 @@ namespace SSSW.UI.WPF.ViewModels
             UsagePct = GlobalVariable.ConfigSystem.PercentOfUserNonWoven.ToString();
             _percentOfUsage = GlobalVariable.ConfigSystem.PercentOfUserNonWoven;
 
-            DeltaInformation = $"STD: Target Weight ↔ ACTUAL: Live Weight · auto colored vs. tolerance ±{GlobalVariable.ConfigSystem.DeltaLevel1}g / ±{GlobalVariable.ConfigSystem.DeltaLevel2}g";
+            DeltaInformation = $"STD: Target Weight ↔ ACTUAL: Live Weight · auto colored vs. tolerance: -{GlobalVariable.ConfigSystem.DeltaLevel1}g<=Delta<={GlobalVariable.ConfigSystem.DeltaLevel1}g -->green;  -{GlobalVariable.ConfigSystem.DeltaLevel2}g<=Delta<=-{GlobalVariable.ConfigSystem.DeltaLevel1}g or {GlobalVariable.ConfigSystem.DeltaLevel1}g<=Delta<={GlobalVariable.ConfigSystem.DeltaLevel2}g -->Orange; Delta<-{GlobalVariable.ConfigSystem.DeltaLevel2}g or Delta>{GlobalVariable.ConfigSystem.DeltaLevel2}g -->Red.";
             ReadOnlyScale = GlobalVariable.ConfigSystem.Scale.ReadOnly ?? true;
             ReadOnlyRfid = GlobalVariable.ConfigSystem.RFID.ReadOnly;
             ReadOnlyScanner = GlobalVariable.ConfigSystem.Scanner.ReadOnly;
@@ -1399,6 +1399,10 @@ namespace SSSW.UI.WPF.ViewModels
 
                 _labelInfo = new FT606_Label();
                 ClearStepComboAction?.Invoke();
+
+                _qrCodeScan = string.Empty;
+                ClearBarcodeAction?.Invoke();
+
                 ResetNewLoop();
             }
             catch (Exception ex)

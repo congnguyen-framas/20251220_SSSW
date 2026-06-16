@@ -1419,7 +1419,7 @@
                                 <!--  ── REFERENCE VALUES DataGrid ──  -->
                                 <Border
                                     Grid.Row="2"
-                                    Padding="0,0,0,30"
+                                    Padding="0,0,0,15"
                                     Background="{Binding ScaleTare, Converter={StaticResource TareToBackground}}"
                                     BorderBrush="#E0E7EF"
                                     BorderThickness="0,0,0,0">
@@ -1614,11 +1614,12 @@
                                             VerticalAlignment="Center"
                                             Grid.IsSharedSizeScope="True">
                                             <TextBlock
-                                                Margin="0,3,0,0"
-                                                FontSize="20"
+                                                Margin="0,0,0,0"
+                                                FontSize="16"
                                                 Foreground="#B0BEC5"
                                                 Style="{StaticResource LabelStyle}"
-                                                Text="{Binding DeltaInformation}" />
+                                                Text="{Binding DeltaInformation}" 
+                                                TextWrapping="WrapWithOverflow"/>
                                         </StackPanel>
                                     </Grid>
 

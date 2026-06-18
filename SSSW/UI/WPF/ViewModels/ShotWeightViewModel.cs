@@ -595,7 +595,8 @@ namespace SSSW.UI.WPF.ViewModels
                     token.ThrowIfCancellationRequested();
                     using var ctx = _dbFactory.CreateDbContext();
                     return await ctx.FT601s
-                        .Where(x => x.C021 == true && x.Mesoyear == _mesoYear)
+                        //.Where(x => x.C021 == true && x.Mesoyear == _mesoYear)
+                        .Where(x => x.C021 == true)
                         .ToListAsync(token);
                 }, token);
 

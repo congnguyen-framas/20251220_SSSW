@@ -7,7 +7,7 @@ namespace SSSW.models
     /// Operator.
     /// </summary>
     [Table("FT029")]
-    public class FT029_Operator_RFID : EntityCommon
+    public class FT029_Operator_RFID : BaseEntity
     {
         [Key]
         public Guid Id { get; set; }

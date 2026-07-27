@@ -5,7 +5,7 @@ using System.ComponentModel.DataAnnotations.Schema;
 namespace SSSW.models
 {
     [Table("FT601")]
-    public class FT601 : EntityCommon
+    public class FT601 : BaseEntity
     {
         [Browsable(false)][Key] public Guid Id { get; set; }
 

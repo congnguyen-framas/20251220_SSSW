@@ -7,7 +7,7 @@ namespace SSSW.models
     /// Department.
     /// </summary>
     [Table("FT031")]
-    public class FT031_Department : EntityCommon
+    public class FT031_Department : BaseEntity
     {
         [Key]
         public Guid Id { get; set; }

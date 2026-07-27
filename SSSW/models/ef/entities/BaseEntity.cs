@@ -3,7 +3,7 @@ using System.ComponentModel.DataAnnotations;
 
 namespace SSSW.models;
 
-public class EntityCommon
+public class BaseEntity
 {
     [Browsable(false)]
     [DisplayFormat(ApplyFormatInEditMode = true, DataFormatString = "{0:dd/MM/yyyy HH:mm:ss}")]

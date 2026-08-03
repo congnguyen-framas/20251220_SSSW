@@ -68,11 +68,11 @@ namespace SSSW.UI.WPF.Models
         }
 
         // ── Computed display strings ─────────────────────────────────────────
-        public string StdDisplay => Std.HasValue ? Std.Value.ToString("F2") : "—";
+        public string StdDisplay => Std.HasValue ? Std.Value.ToString("F3") : "—";
         public string ActualDisplay => (Actual.HasValue && Actual > 0)
-                                           ? Actual.Value.ToString("F2") : "—";
+                                           ? Actual.Value.ToString("F3") : "—";
         public string DeltaDisplay => Delta.HasValue
-                                           ? ((Delta >= 0 ? "+" : "") + Delta.Value.ToString("F2") + " (" + DeltaPct.Value.ToString("F2") + " %)")
+                                           ? ((Delta >= 0 ? "+" : "") + Delta.Value.ToString("F3") + " (" + DeltaPct.Value.ToString("F3") + " %)")
                                            : "—";
 
         public double? Delta => (Actual.HasValue && Std.HasValue && Std.Value != 0)

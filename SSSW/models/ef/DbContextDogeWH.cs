@@ -38,6 +38,8 @@ namespace SSSW.modelss
         public DbSet<FT029_Operator_RFID> fT029_Operator_RFIDs { get; set; }
         public DbSet<FT031_Department> FT031s { get; set; }
 
+        public DbSet<FT609_ShotWeightUpToWL> FT609_ShotWeightUpToWLs { get; set; }
+
         override protected void OnModelCreating(ModelBuilder modelBuilder)
         {
             base.OnModelCreating(modelBuilder);
@@ -58,6 +60,7 @@ namespace SSSW.modelss
             modelBuilder.Entity<FT602>().HasQueryFilter(p => p.Actived == true);
             modelBuilder.Entity<FT606_Label>().HasQueryFilter(p => p.Actived == true);
             modelBuilder.Entity<FT608_Config>().HasQueryFilter(p => p.Actived == true);
+            modelBuilder.Entity<FT609_ShotWeightUpToWL>().HasQueryFilter(p => p.Actived == true);
         }
     }
 }

@@ -56,6 +56,7 @@ namespace SSSW.models
         /// </summary>
         [DisplayFormat(ApplyFormatInEditMode = true, DataFormatString = "{0:#,##0.##}")]
         [DisplayName("Part Weight (g/prs)")] public double? C021 { get; set; }
+
         /// <summary>
         /// Runner weight (g) of step.
         /// </summary>

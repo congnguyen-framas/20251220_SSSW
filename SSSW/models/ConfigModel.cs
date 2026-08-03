@@ -46,14 +46,19 @@ namespace SSSW.modelss
         public string? UpdatePath { get; set; }
 
         /// <summary>
-        /// Gets or sets the delta value from which calculations or comparisons are performed.
+        /// Gets or sets the delta value from which calculations or comparisons are performed (g).
         /// </summary>
         public double? DeltaLevel1 { get; set; } = 1;
 
         /// <summary>
-        /// Gets or sets the delta value to use for calculations or comparisons.
+        /// Gets or sets the delta value to use for calculations or comparisons (g).
         /// </summary>
         public double? DeltaLevel2 { get; set; } = 3;
+
+        /// <summary>
+        /// Gets or sets the delta value to use for calculations or comparisons and then update to winline (%).
+        /// </summary>
+        public double? DeltaUpWL { get; set; } = 1;
     }
 
     public class CategoryModel

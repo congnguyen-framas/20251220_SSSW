@@ -81,5 +81,25 @@ namespace SSSW.models
         /// FT600.Id string.join. Ex: "FT600.Id1,FT600.Id2,FT600.Id3".
         /// </summary>
         public string? C010 { get; set; } = string.Empty;
+
+        /// <summary>
+        /// The last part weight value that was updated to Winline (g).
+        /// </summary>
+        public double? C011 { get; set; } = 0;
+
+        /// <summary>
+        /// The last runner weight value that was updated to Winline (g).
+        /// </summary>
+        public double? C012 { get; set; } = 0;
+
+        /// <summary>
+        /// The last shot weight value that was updated to Winline (g).
+        /// </summary>
+        public double? C013 { get; set; } = 0;
+
+        /// <summary>
+        /// The percentage deviation exceeds the allowed tolerance.
+        /// </summary>
+        public double? C014 { get; set; } = 0;
     }
 }

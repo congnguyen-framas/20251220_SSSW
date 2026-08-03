@@ -18,6 +18,7 @@ using SSSW.UI.WPF.Models;
 using System.Collections.ObjectModel;
 using System.Data;
 using System.Data.SqlClient;
+using System.Reflection.PortableExecutable;
 using System.Windows;
 using System.Windows.Media;
 // ── Disambiguate WPF vs WinForms/Drawing types (project uses UseWPF + UseWindowsForms) ──
@@ -613,6 +614,8 @@ namespace SSSW.UI.WPF.ViewModels
                     MoldPairsShot = x.C014,
                     Machine = x.C015,
                     HydraOrderNo = x.C018,
+                    FGCode = x.C007,
+                    FGName = x.C008,
                     FT601Id = x.Id
                 }).Distinct().ToList();
 
@@ -930,11 +933,18 @@ namespace SSSW.UI.WPF.ViewModels
                     var dataSize = new List<FT600>();
                     foreach (var item in _scaleData)
                     {
-                        var pfx2 = GlobalVariable.PrefixUpToSecondHyphen(item.C002);
+                        //var pfx2 = GlobalVariable.PrefixUpToSecondHyphen(item.C002);
+                        //var sameMolds = _dataHydra.Where(x =>
+                        //    x.C019 == item.C020 && x.C015 == item.C004 &&
+                        //    x.C004 != item.C002 && x.C002 != item.C008 &&
+                        //    GlobalVariable.PrefixUpToSecondHyphen(x.C004) == pfx2 &&
+                        //    x.C010 == item.C015).DistinctBy(x => x.C002).ToList();
+
+                        var pfx2 = GlobalVariable.PrefixUpToThirdHyphen(item.C002);
                         var sameMolds = _dataHydra.Where(x =>
                             x.C019 == item.C020 && x.C015 == item.C004 &&
                             x.C004 != item.C002 && x.C002 != item.C008 &&
-                            GlobalVariable.PrefixUpToSecondHyphen(x.C004) == pfx2 &&
+                            GlobalVariable.PrefixUpToThirdHyphen(x.C004) == pfx2 &&
                             x.C010 == item.C015).DistinctBy(x => x.C002).ToList();
 
                         if (!sameMolds.Any()) continue;
@@ -1089,20 +1099,40 @@ namespace SSSW.UI.WPF.ViewModels
     .Where(g => g.Count() > 1)
     .ToDictionary(g => g.Key, g => g.ToList());
 
-                    _scaleDataFinal.RemoveAll(x =>
+                    //nếu là cân cho bước khác logo/studs/ring thì xóa các bước logo/studs/ring mà không có trong BOM
+                    if (!stepCode.C005.StartsWith("Logo ")  
+                        && !stepCode.C005.StartsWith("Cleat_Ring")
+                        //&& !stepCode.C005.StartsWith("Studs ")
+                      )
                     {
-                        bool isLogo = x.C003.StartsWith("Logo");
-                        bool isStuds = x.C003.StartsWith("Studs");
+                        _scaleDataFinal.RemoveAll(x =>
+                        {
+                            bool isLogo = x.C003.StartsWith("Logo");
+                            bool isStuds = x.C003.StartsWith("Studs");
+                            bool isRing = x.C003.StartsWith("Cleat_Ring");
 
-                        bool hasC002 = stepAll.Contains(x.C002);
+                            bool hasC002 = stepAll.Contains(x.C002);
 
-                        bool duplicatedSize = checkMultiSize.ContainsKey((x.C004, x.C020));
+                            bool duplicatedSize = checkMultiSize.ContainsKey((x.C004, x.C020));
 
-                        return
-                            (isLogo && !hasC002)
-                            || (isStuds && !hasC002);
-                        //|| duplicatedSize;
-                    });
+                            return (isLogo || isStuds || isRing) && !hasC002;
+                            //|| duplicatedSize;
+                        });
+                    }
+                    else//nếu là cân cho bước logo/studs/ring thì xóa các bước khác logo/studs/ring
+                    {
+                        var startWith = stepCode.C005.StartsWith("Logo") ? "Logo"
+                            //: stepCode.C005.StartsWith("Studs") ? "Studs"
+                            : "Cleat_Ring";
+
+                        _scaleDataFinal.RemoveAll(x =>
+                        {
+                            bool isStartWith = x.C003.StartsWith(startWith);
+
+                            return (!isStartWith);
+                            //|| duplicatedSize;
+                        });
+                    }
 
                     _scaleDataFinal = _scaleDataFinal.OrderBy(x => x.C015).ThenBy(x => x.C004).ToList();
 
@@ -1402,107 +1432,7 @@ namespace SSSW.UI.WPF.ViewModels
                     (MessageBoxButtons)MessageBoxButton.OK, (MessageBoxIcon)MessageBoxImage.Information);
 
                 #region check update to WL
-                //var dt = new DataTable();
-
-                //dt.Columns.Add(nameof(WeightUpdateModel.ItemCode), typeof(string));
-                //dt.Columns.Add(nameof(WeightUpdateModel.PartWeight_C201), typeof(double));
-                //dt.Columns.Add(nameof(WeightUpdateModel.RunnerWeight_C022), typeof(double));
-                //dt.Columns.Add(nameof(WeightUpdateModel.MachineGroup_C019), typeof(string));
-                //dt.Columns.Add(nameof(WeightUpdateModel.MoldId_C020), typeof(string));
-
-                //var itemJoin = string.Join(",", insert
-                //                    .Select(x => x.C002));
-                ////.Distinct());
-
-                //var curentWhotweight = await db.Database.SqlQueryRaw<GetShotWeightWL_DTO>("sp_Shotweight_Gets @Items = {0}", itemJoin).ToListAsync();
-
-                //foreach (var item in curentWhotweight)
-                //{
-                //    var itemUpdate = insert.FirstOrDefault(x => x.C002 == item.ItemCode_C016);
-
-                //    if (itemUpdate == null) continue;
-
-                //    //só sánh nếu nằm trong ngưỡng cho phép thì update WL
-                //    var delta = (itemUpdate.C021 + itemUpdate.C022) / item.ShotWeight * 100;
-
-                //    if (delta >= -GlobalVariable.ConfigSystem.DeltaUpWL && delta <= GlobalVariable.ConfigSystem.DeltaUpWL)
-                //    {
-                //        dt.Rows.Add(
-                //            itemUpdate.C002,
-                //            itemUpdate.C021,
-                //            itemUpdate.C022,
-                //            itemUpdate.C019,
-                //            itemUpdate.C020);
-                //    }
-                //}
-
-                //var tvpParam = new SqlParameter("@Items", dt)
-                //{
-                //    SqlDbType = SqlDbType.Structured,
-                //    TypeName = "dbo.WeightUpdateType"
-                //};
-
-                //var result = await db.Set<ResultModel>()
-                //    .FromSqlRaw(
-                //        "EXEC sp_Showweight_UpdateToWinline @Items",
-                //        tvpParam)
-                //    .AsNoTracking()
-                //    .FirstOrDefaultAsync();
-
-                //if (result?.Result == true)
-                //{
-                //    var createdAt = DateTime.Now;
-                //    var createdBy = _operatorInfo.C001;
-                //    var createdMachine = Environment.MachineName;
-
-                //    var insertFT609 = new List<FT609_ShotWeightUpToWL>();
-                //    var itemSuccess = result?.Message.Split(";");
-                //    foreach (var item in insert)
-                //    {
-                //        var ck = itemSuccess.Contains(item.C002);
-
-                //        if (!ck) continue;
-
-                //        insertFT609.Add(new FT609_ShotWeightUpToWL()
-                //        {
-                //            Id = Guid.NewGuid(),
-                //            CreatedDate = createdAt,
-                //            CreatedBy = createdBy,
-                //            CreatedMachine = createdMachine,
-                //            Actived = true,
-                //            C000 = item.C002,
-                //            C001 = item.C003,
-                //            C002 = item.C026,
-                //            C003 = item.C027,
-                //            C004 = item.C021,
-                //            C005 = item.C022,
-                //            C006 = Math.Round((double)(item.C021 + item.C022), 3),
-                //            C007=true,
-                //            C008 = item.C019,
-                //            C009 = item.C020,
-                //            C010 = item.id.ToString(),
-                //        });
-                //    }
-
-                //    //deactive giá trị cũ
-                //    await db.FT609_ShotWeightUpToWLs
-                //    .Where(b => insertFT609.con)
-                //    .ExecuteUpdateAsync(s => s
-                //        .SetProperty(b => b.C017, true)
-                //        .SetProperty(b => b.ModifiedDate, now)
-                //        .SetProperty(b => b.ModifiedMachine, machine));
-
-                //    System.Windows.Forms.MessageBox.Show("Update data to Winline saved successfully.", "Information",
-                //  (MessageBoxButtons)MessageBoxButton.OK, (MessageBoxIcon)MessageBoxImage.Information);
-                //}
-                //else
-                //{
-                //    // Error
-                //    var msg = result?.Message;
-                //    System.Windows.Forms.MessageBox.Show(msg, "ERROR",
-                //  (MessageBoxButtons)MessageBoxButton.OK, (MessageBoxIcon)MessageBoxImage.Error);
-                //    _logger.LogError(msg, "Update WL error.");
-                //}
+                //await UpdateShotweightWlAsync(insert);
                 #endregion
 
                 _labelInfo = new FT606_Label();
@@ -1520,6 +1450,129 @@ namespace SSSW.UI.WPF.ViewModels
                 System.Windows.Forms.MessageBox.Show(
                     $"Transaction error: {ex.Message}\n{ex.InnerException?.Message}",
                     "ERROR", (MessageBoxButtons)MessageBoxButton.OK, (MessageBoxIcon)MessageBoxImage.Error);
+            }
+        }
+
+        //
+        private async Task UpdateShotweightWlAsync(List<FT600> insert)
+        {
+            using var db = _dbFactory.CreateDbContext();
+            var now = DateTime.Now;
+            var machine = Environment.MachineName;
+
+            var dt = new DataTable();
+
+            dt.Columns.Add(nameof(WeightUpdateModel.ItemCode), typeof(string));
+            dt.Columns.Add(nameof(WeightUpdateModel.PartWeight_C201), typeof(double));
+            dt.Columns.Add(nameof(WeightUpdateModel.RunnerWeight_C022), typeof(double));
+            dt.Columns.Add(nameof(WeightUpdateModel.MachineGroup_C019), typeof(string));
+            dt.Columns.Add(nameof(WeightUpdateModel.MoldId_C020), typeof(string));
+
+            var itemJoin = string.Join(",", insert
+                                .Select(x => x.C002));
+            //.Distinct());
+
+            var curentShotweight = await db.Database.SqlQueryRaw<GetShotWeightWL_DTO>("sp_Shotweight_Gets @Items = {0}", itemJoin).ToListAsync();
+
+            foreach (var item in curentShotweight)
+            {
+                var itemUpdate = insert.FirstOrDefault(x => x.C002 == item.ItemCode_C016);
+
+                if (itemUpdate == null) continue;
+
+                //só sánh nếu nằm trong ngưỡng cho phép thì update WL
+                var delta = ((itemUpdate.C021 + itemUpdate.C022) - item.ShotWeight) / item.ShotWeight * 100;
+
+                if (delta >= -GlobalVariable.ConfigSystem.DeltaUpWL && delta <= GlobalVariable.ConfigSystem.DeltaUpWL)
+                {
+                    dt.Rows.Add(
+                        itemUpdate.C002,
+                        itemUpdate.C021,
+                        itemUpdate.C022,
+                        itemUpdate.C019,
+                        itemUpdate.C020);
+                }
+            }
+
+            var tvpParam = new SqlParameter("@Items", dt)
+            {
+                SqlDbType = SqlDbType.Structured,
+                TypeName = "dbo.WeightUpdateType"
+            };
+
+            var result = await db.Set<ResultModel>()
+                .FromSqlRaw(
+                    "EXEC sp_Showweight_UpdateToWinline @Items",
+                    tvpParam)
+                .AsNoTracking()
+                .FirstOrDefaultAsync();
+
+            if (result?.Result == true)
+            {
+                var createdAt = DateTime.Now;
+                var createdBy = _operatorInfo.C001;
+                var createdMachine = Environment.MachineName;
+
+                var insertFT609 = new List<FT609_ShotWeightUpToWL>();
+                var itemSuccess = result?.Message.Split(";");
+                foreach (var item in insert)
+                {
+                    var ck = itemSuccess.Contains(item.C002);
+
+                    if (!ck) continue;
+
+                    var curentSwWl = curentShotweight.FirstOrDefault(x => x.ItemCode_C016 == item.C002);
+                    var delta = Math.Round((double)(((item.C021 + item.C022) - curentSwWl.ShotWeight) / curentSwWl.ShotWeight * 100), 2);
+
+                    insertFT609.Add(new FT609_ShotWeightUpToWL()
+                    {
+                        Id = Guid.NewGuid(),
+                        CreatedDate = createdAt,
+                        CreatedBy = createdBy,
+                        CreatedMachine = createdMachine,
+                        Actived = true,
+                        C000 = item.C002,
+                        C001 = item.C003,
+                        C002 = item.C026,
+                        C003 = item.C027,
+                        C004 = item.C021,
+                        C005 = item.C022,
+                        C006 = Math.Round((double)(item.C021 + item.C022), 3),
+                        C007 = true,
+                        C008 = item.C019,
+                        C009 = item.C020,
+                        C010 = item.id.ToString(),
+                        C011 = curentSwWl.PartWeight_c063,
+                        C012 = curentSwWl.RunnerWeight_c064,
+                        C013 = curentSwWl.ShotWeight,
+                        C014 = delta,
+                    });
+                }
+
+                //deactive giá trị cũ
+                var updateInactive = insertFT609.Select(x => x.C000).ToList();
+                await db.FT609_ShotWeightUpToWLs
+                .Where(b => updateInactive.Contains(b.C000) && b.C007 == true)
+                .ExecuteUpdateAsync(s => s
+                    .SetProperty(b => b.C007, false)
+                    .SetProperty(b => b.ModifiedDate, now)
+                    .SetProperty(b => b.ModifiedMachine, machine));
+
+                //insert thông tin shotweight mới vào.
+                await db.FT609_ShotWeightUpToWLs.AddRangeAsync(insertFT609);
+
+                await db.SaveChangesAsync();
+
+                System.Windows.Forms.MessageBox.Show("Update data to Winline saved successfully.", "Information",
+             (MessageBoxButtons)MessageBoxButton.OK, (MessageBoxIcon)MessageBoxImage.Information);
+            }
+            else
+            {
+                // Error
+                var msg = result?.Message;
+                System.Windows.Forms.MessageBox.Show(msg, "ERROR",
+              (MessageBoxButtons)MessageBoxButton.OK, (MessageBoxIcon)MessageBoxImage.Error);
+                _logger.LogError(msg, "Update WL error.");
             }
         }
 

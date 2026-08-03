@@ -12,6 +12,9 @@
 
         public string? HydraOrderNo { get; set; } = string.Empty;
 
+        public string? FGCode { get; set; }=string.Empty;
+
+        public string? FGName { get; set; } = string.Empty;
 
         public Guid FT601Id { get; set; }
     }

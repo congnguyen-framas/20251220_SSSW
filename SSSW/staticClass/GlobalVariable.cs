@@ -39,5 +39,12 @@ namespace SSSW
             return string.Join("-", parts.Take(2));
         }
 
+        public static string PrefixUpToThirdHyphen(string? s)
+        {
+            if (string.IsNullOrEmpty(s) || !s.Contains("-")) return string.Empty;
+            var parts = s.Split('-');
+            // Ghép lại 2 phần đầu, nếu không đủ thì ghép những gì có
+            return string.Join("-", parts.Take(3));
+        }
     }
 }

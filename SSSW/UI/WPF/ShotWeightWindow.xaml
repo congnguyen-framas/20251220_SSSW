@@ -381,6 +381,8 @@
                                                         <dxg:GridColumn FieldName="StepItemName" Header="Step Name" />
                                                         <dxg:GridColumn FieldName="Size" Header="Size" />
                                                         <dxg:GridColumn FieldName="HydraOrderNo" Header="Hydra Order No" />
+                                                        <dxg:GridColumn FieldName="FGCode" Header="FG Code" />
+                                                        <dxg:GridColumn FieldName="FGName" Header="FG Name" />
                                                         <dxg:GridColumn FieldName="FT601Id" Header="FT601 Id" />
                                                     </dxg:GridControl.Columns>
                                                     <dxg:GridControl.View>

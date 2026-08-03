@@ -10,8 +10,18 @@ namespace SSSW
     {
         public string? ItemCode_C016 { get; set; }
 
+        /// <summary>
+        /// FG--Kg; step--Gr.
+        /// </summary>
         public double? PartWeight_c063 { get; set; } = 0;
+        /// <summary>
+        /// FG--Kg; step--Gr.
+        /// </summary>
         public double? RunnerWeight_c064 { get; set; } = 0;
+
+        /// <summary>
+        /// FG--Kg; step--Gr.
+        /// </summary>
         public double? ShotWeight { get; set; } = 0;
     }
 }

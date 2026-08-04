@@ -1161,7 +1161,7 @@ namespace SSSW.UI.WPF.ViewModels
                         var previousStep = _allStepsFG.FirstOrDefault(x => x.ParallelSequence == stepCode.C010 - 1);
 
                         if ((inlaySteps.Count() > 1 && !stepCode.C005.StartsWith("Inlay"))
-                            || (!stepCode.C005.StartsWith("Studs")
+                            && (!stepCode.C005.StartsWith("Studs")
                                 || (stepCode.C005.StartsWith("Studs") && previousStep.ItemStepName.StartsWith("Base"))
                                 )
                             )
@@ -1203,9 +1203,11 @@ namespace SSSW.UI.WPF.ViewModels
                                    )
                                 )
                         {
+                            var startWith1 =  stepCode.C005.StartsWith("Studs") ? "Studs": "Inlay";
+
                             _scaleDataFinal.RemoveAll(x =>
                             {
-                                bool isStartWith = x.C003.StartsWith("Inlay") || x.C003.StartsWith("Studs");
+                                bool isStartWith = x.C003.StartsWith(startWith1);
 
                                 return (!isStartWith);
                                 //|| duplicatedSize;

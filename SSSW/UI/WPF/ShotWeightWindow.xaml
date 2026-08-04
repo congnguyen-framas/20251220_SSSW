@@ -504,18 +504,21 @@
                                                     Command="{Binding DataContext.GridScaleCommand, RelativeSource={RelativeSource AncestorType=DataGrid}}"
                                                     CommandParameter="{Binding}"
                                                     Content="Scale"
+                                                    IsEnabled="{Binding AllowScale}"
                                                     Style="{StaticResource PrimaryButton}"
                                                     Tag="{Binding}" />
                                                 <Button
                                                     Command="{Binding DataContext.GridResetCommand, RelativeSource={RelativeSource AncestorType=DataGrid}}"
                                                     CommandParameter="{Binding}"
                                                     Content="Reset"
+                                                    IsEnabled="{Binding AllowScale}"
                                                     Style="{StaticResource WarningButton}"
                                                     Tag="{Binding}" />
                                                 <Button
                                                     Command="{Binding DataContext.GridDeleteCommand, RelativeSource={RelativeSource AncestorType=DataGrid}}"
                                                     CommandParameter="{Binding}"
                                                     Content="Delete"
+                                                    IsEnabled="{Binding AllowScale}"
                                                     Style="{StaticResource DangerButton}"
                                                     Tag="{Binding}" />
                                             </StackPanel>

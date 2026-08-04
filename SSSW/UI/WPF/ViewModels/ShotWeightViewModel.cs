@@ -5,6 +5,7 @@
 //  Namespace : SSSW.UI.WPF.ViewModels
 // ============================================================================
 using AutoUpdaterDotNET;
+using DevExpress.Mvvm.Native;
 using DevExpress.XtraRichEdit.Import.Html;
 using DevExpress.XtraSpreadsheet.Import.Xls;
 using Microsoft.EntityFrameworkCore;
@@ -1099,45 +1100,124 @@ namespace SSSW.UI.WPF.ViewModels
     .Where(g => g.Count() > 1)
     .ToDictionary(g => g.Key, g => g.ToList());
 
-                    //nếu là cân cho bước khác logo/studs/ring thì xóa các bước logo/studs/ring mà không có trong BOM
-                    if (!stepCode.C005.StartsWith("Logo ")  
-                        && !stepCode.C005.StartsWith("Cleat_Ring")
-                        //&& !stepCode.C005.StartsWith("Studs ")
+                    var startWith = stepCode.C005.StartsWith("Logo") ? "Logo"
+                           : stepCode.C005.StartsWith("Studs") ? "Studs"
+                           : "Cleat_Ring";
+
+                    //nếu là cân cho bước logo/studs/ring thì xóa các bước khác logo/studs/ring
+                    if (stepCode.C005.StartsWith("Logo ")
+                        || stepCode.C005.StartsWith("Cleat_Ring")
+                      //|| stepCode.C005.StartsWith("Studs ")
                       )
                     {
-                        _scaleDataFinal.RemoveAll(x =>
+                        //var previousStep = _allStepsFG.FirstOrDefault(x => x.ParallelSequence == stepCode.C010 - 1);
+
+                        //if (startWith != "Studs"
+                        //    || (startWith == "Studs"
+                        //        && (previousStep == null
+                        //            || (previousStep != null && !previousStep.ItemStepName.StartsWith("Base"))
+                        //            )
+                        //        )
+                        //    )
                         {
-                            bool isLogo = x.C003.StartsWith("Logo");
-                            bool isStuds = x.C003.StartsWith("Studs");
-                            bool isRing = x.C003.StartsWith("Cleat_Ring");
+                            _scaleDataFinal.RemoveAll(x =>
+                            {
+                                bool isStartWith = x.C003.StartsWith(startWith);
 
-                            bool hasC002 = stepAll.Contains(x.C002);
-
-                            bool duplicatedSize = checkMultiSize.ContainsKey((x.C004, x.C020));
-
-                            return (isLogo || isStuds || isRing) && !hasC002;
-                            //|| duplicatedSize;
-                        });
+                                return (!isStartWith);
+                                //|| duplicatedSize;
+                            });
+                        }
                     }
-                    else//nếu là cân cho bước logo/studs/ring thì xóa các bước khác logo/studs/ring
+                    //nếu là cân cho bước khác logo/studs/ring thì xóa các bước logo/studs/ring mà không có trong BOM
+                    else
                     {
-                        var startWith = stepCode.C005.StartsWith("Logo") ? "Logo"
-                            //: stepCode.C005.StartsWith("Studs") ? "Studs"
-                            : "Cleat_Ring";
+                        //lọc lại nếu bước được chọn cân mà ko phải là Stud hoặc Inlay (nhiều size/1 mold) thì khóa ko cho cân Stud và Inlay
+                        //bắt buộc phải cân Stud và Inlay riêng
 
-                        _scaleDataFinal.RemoveAll(x =>
+                        var logosStep = _scaleDataFinal.FirstOrDefault(x => x.C003.StartsWith("Logo"));
+
+                        if (logosStep != null && !stepCode.C005.StartsWith("Logo"))
                         {
-                            bool isStartWith = x.C003.StartsWith(startWith);
+                            logosStep.AllowScale = false;
+                        }
 
-                            return (!isStartWith);
-                            //|| duplicatedSize;
-                        });
+                        var cleat_RingStep = _scaleDataFinal.FirstOrDefault(x => x.C003.StartsWith("Cleat_Ring"));
+
+                        if (cleat_RingStep != null && !stepCode.C005.StartsWith("Cleat_Ring"))
+                        {
+                            cleat_RingStep.AllowScale = false;
+                        }
+
+                        var studsStep = _scaleDataFinal.FirstOrDefault(x => x.C003.StartsWith("Studs"));
+
+                        //if (studsStep != null && !stepCode.C005.StartsWith("Studs"))
+                        //{
+                        //    studsStep.AllowScale = false;
+                        //}
+
+                        var inlaySteps = _scaleDataFinal.Where(x => x.C003.StartsWith("Inlay")).ToList();
+
+                        var previousStep = _allStepsFG.FirstOrDefault(x => x.ParallelSequence == stepCode.C010 - 1);
+
+                        if ((inlaySteps.Count() > 1 && !stepCode.C005.StartsWith("Inlay"))
+                            || (!stepCode.C005.StartsWith("Studs")
+                                || (stepCode.C005.StartsWith("Studs") && previousStep.ItemStepName.StartsWith("Base"))
+                                )
+                            )
+                        {
+                            inlaySteps.ForEach(x => x.AllowScale = false);
+
+                            //check allow scle for studs
+                            if (studsStep != null)
+                            {
+                                var previousStepBse = _allStepsFG.FirstOrDefault(x => x.ParallelSequence == studsStep.C015 - 1);
+
+                                studsStep.AllowScale = !(previousStep == null 
+                                                            || (previousStep != null && !previousStep.ItemStepName.StartsWith("Base")
+                                                                )
+                                                         );
+                            }
+
+                            //xóa những step ko có trong BOM ra
+                            _scaleDataFinal.RemoveAll(x =>
+                            {
+                                bool isLogo = x.C003.StartsWith("Logo");
+                                bool isStuds = x.C003.StartsWith("Studs");
+                                bool isRing = x.C003.StartsWith("Cleat_Ring");
+                                bool isInlay = x.C003.StartsWith("Inlay");
+
+                                bool hasC002 = stepAll.Contains(x.C002);
+
+                                bool duplicatedSize = checkMultiSize.ContainsKey((x.C004, x.C020));
+
+                                return (isLogo || isStuds || isRing || isInlay) && !hasC002;
+                                //|| duplicatedSize;
+                            });
+                        }
+                        else if (stepCode.C005.StartsWith("Inlay")
+                                || (stepCode.C005.StartsWith("Studs")
+                                    && (previousStep == null
+                                        || (previousStep != null && !previousStep.ItemStepName.StartsWith("Base"))
+                                        )
+                                   )
+                                )
+                        {
+                            _scaleDataFinal.RemoveAll(x =>
+                            {
+                                bool isStartWith = x.C003.StartsWith("Inlay") || x.C003.StartsWith("Studs");
+
+                                return (!isStartWith);
+                                //|| duplicatedSize;
+                            });
+                        }
                     }
+
 
                     _scaleDataFinal = _scaleDataFinal.OrderBy(x => x.C015).ThenBy(x => x.C004).ToList();
 
                     var stepSel = _scaleDataFinal.FirstOrDefault(x => x.C002 == _stepSelected.C004);
-                    var prevSteps = _scaleDataFinal.Where(x => x.C015 < stepSel?.C015).ToList();
+                    var prevSteps = _scaleDataFinal.Where(x => x.AllowScale == true && x.C015 < stepSel?.C015).ToList();
                     if (prevSteps.Any(x => x.C021 == 0))
                     {
                         _rowSelected = prevSteps.Where(x => x.C021 == 0).OrderBy(od => od.C015).FirstOrDefault();
@@ -1243,6 +1323,7 @@ namespace SSSW.UI.WPF.ViewModels
                         // = C023(bước này) − ∑C023(bước trước) − ∑C023(non-injection cùng bước)
                         var previuosStep = _scaleDataFinal
                             .Where(x => x.C015 == _rowSelected.C015 - 1).ToList();
+
                         var nonInjection = _scaleDataFinal
                             .Where(x => x.C015 == _rowSelected.C015 &&
                                         (x.C002 == "Z-VHXXXXXX" ||
@@ -1256,7 +1337,16 @@ namespace SSSW.UI.WPF.ViewModels
                         }
                         else if (_rowSelected.C003.StartsWith("Studs"))
                         {
-                            if (previuosStep.FirstOrDefault().C003.StartsWith("Logo") || previuosStep.FirstOrDefault().C003.StartsWith("Cleat_Ring"))
+                            if (previuosStep == null
+                                || !previuosStep.Any()
+                                || (previuosStep != null
+                                    && previuosStep.Any()
+                                    && (previuosStep.FirstOrDefault().C003.StartsWith("Logo")
+                                        || previuosStep.FirstOrDefault().C003.StartsWith("Cleat_Ring")
+                                        || previuosStep.FirstOrDefault().C003.StartsWith("Inlay")
+                                        )
+                                    )
+                                )
                             {
                                 _rowSelected.C021 = _rowSelected.C023;
                             }

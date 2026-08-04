@@ -99,6 +99,11 @@
 
   </PropertyGroup>
 
+
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
+    <Optimize>False</Optimize>
+  </PropertyGroup>
+
   <!-- 1) Chỉ tạo update.xml khi build Release -->
   <Target Name="GenerateUpdateXml" AfterTargets="Build" Condition="'$(Configuration)' == 'Release'">
 

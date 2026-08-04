@@ -841,7 +841,7 @@ namespace SSSW.UI.WPF.ViewModels
                     _stepItemCodeScale = await db.FT601s
                         .Where(x => x.C007 == stepCode.C007)
                         .FirstOrDefaultAsync()
-                        ?? throw new Exception($"Step item code {stepCode.C007} not found.");
+                        ?? throw new Exception($"Step item1 code {stepCode.C007} not found.");
 
                     _allStepsFG = await db.Database
                         .SqlQueryRaw<BomWinlineModel>(
@@ -857,7 +857,7 @@ namespace SSSW.UI.WPF.ViewModels
                         ckHydra = item.ItemStepCode == _stepSelected.C004
                             ? _stepSelected
                             : _dataHydra.FirstOrDefault(x =>
-                                //x.C004 == item.ItemStepCode && x.C007 == item.ItemFgCode);
+                                //x.C004 == item1.ItemStepCode && x.C007 == item1.ItemFgCode);
                                 x.C004 == item.ItemStepCode && x.C020 == item.ItemFgCode.Split('-')[0]);
 
                         if (ckHydra == null)
@@ -934,12 +934,12 @@ namespace SSSW.UI.WPF.ViewModels
                     var dataSize = new List<FT600>();
                     foreach (var item in _scaleData)
                     {
-                        //var pfx2 = GlobalVariable.PrefixUpToSecondHyphen(item.C002);
+                        //var pfx2 = GlobalVariable.PrefixUpToSecondHyphen(item1.C002);
                         //var sameMolds = _dataHydra.Where(x =>
-                        //    x.C019 == item.C020 && x.C015 == item.C004 &&
-                        //    x.C004 != item.C002 && x.C002 != item.C008 &&
+                        //    x.C019 == item1.C020 && x.C015 == item1.C004 &&
+                        //    x.C004 != item1.C002 && x.C002 != item1.C008 &&
                         //    GlobalVariable.PrefixUpToSecondHyphen(x.C004) == pfx2 &&
-                        //    x.C010 == item.C015).DistinctBy(x => x.C002).ToList();
+                        //    x.C010 == item1.C015).DistinctBy(x => x.C002).ToList();
 
                         var pfx2 = GlobalVariable.PrefixUpToThirdHyphen(item.C002);
                         var sameMolds = _dataHydra.Where(x =>
@@ -1005,100 +1005,21 @@ namespace SSSW.UI.WPF.ViewModels
 
                     _scaleDataFinal = _scaleData.OrderBy(x => x.C015).ThenBy(x => x.C027).ToList();
 
-                    // Đọc dữ liệu các bước đã cân trước đó
-                    foreach (var item in _scaleDataFinal)
-                    {
-                        var catCheck = GlobalVariable.ConfigSystem.CategoryOfNonInjectionUsagePartial?
-                            .FirstOrDefault(x => x.CategoryCode == item.C033);
-
-                        if (item.C002?.Substring(0, 3) == "REX")
-                        {
-                            var parallelStep = _scaleDataFinal
-                                //.Where(x => x.C015 == item.C015 && !string.IsNullOrEmpty(x.C026));
-                                .Where(x => x.C015 == item.C015 && x.C002 != item.C002)
-                                .ToList();
-
-                            var updateMainInfo = parallelStep.FirstOrDefault(x => !string.IsNullOrEmpty(x.C026));
-                            parallelStep.ForEach(x =>
-                            {
-                                x.C026 = updateMainInfo?.C026;
-                                x.C027 = updateMainInfo?.C027;
-                            });
-
-                            var paisShotFinal = catCheck == null
-                                ? parallelStep.FirstOrDefault()?.C028 : parallelStep.Sum(x => x.C028);
-
-                            var paisShotPPIC = catCheck == null
-                              ? parallelStep.FirstOrDefault()?.C017 : parallelStep.Sum(x => x.C017);
-
-                            item.C026 = parallelStep.FirstOrDefault()?.C026;
-                            item.C027 = parallelStep.FirstOrDefault()?.C027;
-                            item.C028 = paisShotFinal;
-                            item.C017 = paisShotPPIC;
-                            item.C018 = parallelStep.FirstOrDefault()?.C018 ?? 0;
-                        }
-
-                        if (!item.C003!.StartsWith("Stud") && !item.C003.StartsWith("Logo") &&
-                            !item.C003.StartsWith("Cleat_Ring") && !item.C002!.StartsWith("REX"))
-                            continue;
-
-                        FT600? stepPrevious;
-                        if (item.C002 != "Z-VHXXXXXX" && item.C002.Substring(0, 3) != "REX")
-                        {
-                            var mainCode = item.C002.Split('-')[1];
-                            stepPrevious = await db.FT600s
-                                .Where(x => x.C015 == item.C015 &&
-                                    (x.C002 == item.C002 ||
-                                     (x.C002!.Contains(mainCode) && x.C008 == item.C008)))
-                                .OrderByDescending(x => x.CreatedDate).FirstOrDefaultAsync();
-                        }
-                        else
-                        {
-                            stepPrevious = await db.FT600s
-                                .Where(x => x.C002 == item.C002)
-                                .OrderByDescending(x => x.CreatedDate).FirstOrDefaultAsync();
-                        }
-
-                        if (stepPrevious != null)
-                        {
-                            _percentOfUsage = (double)stepPrevious.C035!;
-                            if (item.C002.StartsWith("REX"))
-                            {
-                                var total = catCheck == null
-                                    ? stepPrevious?.C036 * item.C025
-                                    : stepPrevious?.C036;
-                                var usage = (double)Math.Round(
-                                    (decimal)(total * _percentOfUsage / 100), 3);
-                                var unusage = total - usage;
-
-                                item.C021 = catCheck == null ? usage : usage / item.C028;
-                                item.C022 = catCheck == null ? unusage : unusage / item.C028;
-                                item.C023 = catCheck == null ? usage : usage / item.C028;
-                                item.C024 = total;
-                                item.C035 = stepPrevious!.C035;
-                                item.C036 = stepPrevious?.C036;
-                            }
-                            else
-                            {
-                                item.C021 = stepPrevious.C021;
-                                item.C022 = stepPrevious.C022;
-                                item.C023 = stepPrevious.C023;
-                                item.C024 = stepPrevious.C024;
-                                item.C028 = stepPrevious.C028;
-                                item.C035 = stepPrevious.C035;
-                                item.C036 = stepPrevious?.C036;
-                            }
-                        }
-                    }
+                    #region Lọc lại để cho phép cân hay là không các bước không được lấy ra theo step đọc từ QR/selected Lookup
+                    /*
+                     * Nếu là Logo/Cleat_Ring/Studs(có stepNo ko đứng sau bước Base)/Inlay(chung machine và MoldId) thì chỉ cho phép cân các bước Logo/Cleat_Ring/Studs/Inlay tương ứng, các bước khác sẽ bị xóa khỏi danh sách cân.
+                     * Khi quét tem chọn can các bước khác Logo/Cleat_Ring/Studs/Inlay thì sẽ set bit AllowScale = False cho các bước Logo/Cleat_Ring/Studs/Inlay theo các điều kiện như trên ra để không cho phép cân. còn ngaoif ra thì cho phép cân bình thường.
+                     * Nếu chọn cân bước cuối mà có các bước trước đó chưa có giá trị cân thì cần phải cân các bước đó trước rồi mới cân bước cuối. Nếu không thì sẽ báo lỗi và không cho phép cân bước cuối.
+                     */
 
                     //var stepAll = _allStepsFG.Select(x => x.ItemStepCode).ToList();
                     var stepAll = _allStepsFG
-    .Select(x => x.ItemStepCode)
-    .ToHashSet();
+                                .Select(x => x.ItemStepCode)
+                                .ToHashSet();
                     var checkMultiSize = _scaleDataFinal
-    .GroupBy(x => (x.C004, x.C020))
-    .Where(g => g.Count() > 1)
-    .ToDictionary(g => g.Key, g => g.ToList());
+                                .GroupBy(x => (x.C004, x.C020))
+                                .Where(g => g.Count() > 1)
+                                .ToDictionary(g => g.Key, g => g.ToList());
 
                     var startWith = stepCode.C005.StartsWith("Logo") ? "Logo"
                            : stepCode.C005.StartsWith("Studs") ? "Studs"
@@ -1173,7 +1094,7 @@ namespace SSSW.UI.WPF.ViewModels
                             {
                                 var previousStepBse = _allStepsFG.FirstOrDefault(x => x.ParallelSequence == studsStep.C015 - 1);
 
-                                studsStep.AllowScale = !(previousStep == null 
+                                studsStep.AllowScale = !(previousStep == null
                                                             || (previousStep != null && !previousStep.ItemStepName.StartsWith("Base")
                                                                 )
                                                          );
@@ -1203,7 +1124,7 @@ namespace SSSW.UI.WPF.ViewModels
                                    )
                                 )
                         {
-                            var startWith1 =  stepCode.C005.StartsWith("Studs") ? "Studs": "Inlay";
+                            var startWith1 = stepCode.C005.StartsWith("Studs") ? "Studs" : "Inlay";
 
                             _scaleDataFinal.RemoveAll(x =>
                             {
@@ -1214,7 +1135,93 @@ namespace SSSW.UI.WPF.ViewModels
                             });
                         }
                     }
+                    #endregion
 
+                    // Đọc dữ liệu các bước đã cân trước đó
+                    foreach (var item1 in _scaleDataFinal)
+                    {
+                        var catCheck = GlobalVariable.ConfigSystem.CategoryOfNonInjectionUsagePartial?
+                            .FirstOrDefault(x => x.CategoryCode == item1.C033);
+
+                        if (item1.C002?.Substring(0, 3) == "REX")
+                        {
+                            var parallelStep = _scaleDataFinal
+                                //.Where(x => x.C015 == item1.C015 && !string.IsNullOrEmpty(x.C026));
+                                .Where(x => x.C015 == item1.C015 && x.C002 != item1.C002)
+                                .ToList();
+
+                            var updateMainInfo = parallelStep.FirstOrDefault(x => !string.IsNullOrEmpty(x.C026));
+                            parallelStep.ForEach(x =>
+                            {
+                                x.C026 = updateMainInfo?.C026;
+                                x.C027 = updateMainInfo?.C027;
+                            });
+
+                            var paisShotFinal = catCheck == null
+                                ? parallelStep.FirstOrDefault()?.C028 : parallelStep.Sum(x => x.C028);
+
+                            var paisShotPPIC = catCheck == null
+                              ? parallelStep.FirstOrDefault()?.C017 : parallelStep.Sum(x => x.C017);
+
+                            item1.C026 = parallelStep.FirstOrDefault()?.C026;
+                            item1.C027 = parallelStep.FirstOrDefault()?.C027;
+                            item1.C028 = paisShotFinal;
+                            item1.C017 = paisShotPPIC;
+                            item1.C018 = parallelStep.FirstOrDefault()?.C018 ?? 0;
+                        }
+
+                        if (!item1.C003!.StartsWith("Stud") && !item1.C003.StartsWith("Logo") &&
+                            !item1.C003.StartsWith("Cleat_Ring") && !item1.C002!.StartsWith("REX") && !item1.C003!.StartsWith("Inlay"))
+                            continue;
+
+                        FT600? stepPrevious;
+                        if (item1.C002 != "Z-VHXXXXXX" && item1.C002.Substring(0, 3) != "REX")
+                        {
+                            var mainCode = item1.C002.Split('-')[1];
+                            stepPrevious = await db.FT600s
+                                .Where(x => x.C015 == item1.C015 &&
+                                    (x.C002 == item1.C002 ||
+                                     (x.C002!.Contains(mainCode) && x.C008 == item1.C008)))
+                                .OrderByDescending(x => x.CreatedDate).FirstOrDefaultAsync();
+                        }
+                        else
+                        {
+                            stepPrevious = await db.FT600s
+                                .Where(x => x.C002 == item1.C002)
+                                .OrderByDescending(x => x.CreatedDate).FirstOrDefaultAsync();
+                        }
+
+                        if (stepPrevious != null)
+                        {
+                            _percentOfUsage = (double)stepPrevious.C035!;
+                            if (item1.C002.StartsWith("REX"))
+                            {
+                                var total = catCheck == null
+                                    ? stepPrevious?.C036 * item1.C025
+                                    : stepPrevious?.C036;
+                                var usage = (double)Math.Round(
+                                    (decimal)(total * _percentOfUsage / 100), 3);
+                                var unusage = total - usage;
+
+                                item1.C021 = catCheck == null ? usage : usage / item1.C028;
+                                item1.C022 = catCheck == null ? unusage : unusage / item1.C028;
+                                item1.C023 = catCheck == null ? usage : usage / item1.C028;
+                                item1.C024 = total;
+                                item1.C035 = stepPrevious!.C035;
+                                item1.C036 = stepPrevious?.C036;
+                            }
+                            else
+                            {
+                                item1.C021 = stepPrevious.C021;
+                                item1.C022 = stepPrevious.C022;
+                                item1.C023 = stepPrevious.C023;
+                                item1.C024 = stepPrevious.C024;
+                                item1.C028 = stepPrevious.C028;
+                                item1.C035 = stepPrevious.C035;
+                                item1.C036 = stepPrevious?.C036;
+                            }
+                        }
+                    }
 
                     _scaleDataFinal = _scaleDataFinal.OrderBy(x => x.C015).ThenBy(x => x.C004).ToList();
 
@@ -1240,7 +1247,7 @@ namespace SSSW.UI.WPF.ViewModels
                     if (rowSelect == null)
                     {
                         System.Windows.Forms.MessageBox.Show(
-                            $"Label does not match the item being weighed.\n{_stepSelected.C004}|{_stepSelected.C005}",
+                            $"Label does not match the item1 being weighed.\n{_stepSelected.C004}|{_stepSelected.C005}",
                             "WARNING", (MessageBoxButtons)MessageBoxButton.OK, (MessageBoxIcon)MessageBoxImage.Warning);
                         return;
                     }
@@ -1292,6 +1299,23 @@ namespace SSSW.UI.WPF.ViewModels
             {
                 System.Windows.Forms.MessageBox.Show("Cannot scale this step.", "Warning",
                     (MessageBoxButtons)MessageBoxButton.OK, (MessageBoxIcon)MessageBoxImage.Warning);
+                return;
+            }
+
+            var unweighedPrevSteps = _scaleDataFinal
+                .Where(x => x.C015 < _rowSelected.C015 && (x.C021 ?? 0) == 0)
+                .OrderBy(x => x.C015)
+                .ToList();
+
+            if (unweighedPrevSteps.Count > 0)
+            {
+                var detail = string.Join(Environment.NewLine, unweighedPrevSteps.Select((x, i) =>
+                    $"{i + 1}. Step {x.C015} [{x.C002}]: {x.C003} (Size:{x.C008})"));
+
+                System.Windows.Forms.MessageBox.Show(
+                    $"{unweighedPrevSteps.Count} previous step(s) are missing Part Weight and must be weighed first:" +
+                    $"{Environment.NewLine}{Environment.NewLine}{detail}",
+                    "Warning", (MessageBoxButtons)MessageBoxButton.OK, (MessageBoxIcon)MessageBoxImage.Warning);
                 return;
             }
 

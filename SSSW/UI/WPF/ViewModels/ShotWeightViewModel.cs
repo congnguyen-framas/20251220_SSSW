@@ -1348,7 +1348,7 @@ namespace SSSW.UI.WPF.ViewModels
                         // C021 = Part weight thực tế (g/prs)
                         // = C023(bước này) − ∑C023(bước trước) − ∑C023(non-injection cùng bước)
                         var previuosStep = _scaleDataFinal
-                            .Where(x => x.C015 == _rowSelected.C015 - 1).ToList();
+                            .Where(x => x.C015 <= _rowSelected.C015 - 1).ToList();
 
                         var nonInjection = _scaleDataFinal
                             .Where(x => x.C015 == _rowSelected.C015 &&
@@ -1358,8 +1358,7 @@ namespace SSSW.UI.WPF.ViewModels
                         if (!_rowSelected.C003.StartsWith("Studs"))
                         {
                             _rowSelected.C021 = _rowSelected.C023
-                                                - previuosStep?.Sum(x => x.C023)
-                                                - nonInjection?.Sum(x => x.C023);
+                                                - previuosStep?.Sum(x => x.C021);
                         }
                         else if (_rowSelected.C003.StartsWith("Studs"))
                         {
@@ -1379,8 +1378,7 @@ namespace SSSW.UI.WPF.ViewModels
                             else
                             {
                                 _rowSelected.C021 = _rowSelected.C023
-                                                    - previuosStep?.Sum(x => x.C023)
-                                                    - nonInjection?.Sum(x => x.C023);
+                                                    - previuosStep?.Sum(x => x.C021);
                             }
                         }
                     }

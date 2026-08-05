@@ -1,12 +1,12 @@
 ﻿<Window
-    x:Class="SSSW.UI.WPF.ShotWeightWindow"
+    x:Class="SSSW.UI.WPF.ShotWeightFGWindow"
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:dxg="http://schemas.devexpress.com/winfx/2008/xaml/grid"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     xmlns:vm="clr-namespace:SSSW.UI.WPF.ViewModels"
-    Title="IT – Shotweight Station"
+    Title="IT – Scan FG Sample Weighing"
     Width="1920"
     Height="1080"
     AllowsTransparency="False"
@@ -112,41 +112,6 @@
                     Margin="0,0,4,0"
                     VerticalAlignment="Center"
                     Orientation="Horizontal">
-                    <Button
-                        Background="White"
-                        Command="{Binding ScaneFGCommand}"
-                        Style="{StaticResource TitleIconBtn}"
-                        ToolTip="Scale shotweight for Finish Good">
-                        <Image
-                            Width="20"
-                            Height="20"
-                            Source="/SSSW;component/Resources/scale_30.png" />
-                    </Button>
-                    <Button
-                        Command="{Binding ReloadCommand}"
-                        Content="&#xE72C;"
-                        Style="{StaticResource TitleIconBtn}"
-                        ToolTip="Reload" />
-                    <Button
-                        Command="{Binding HistoryViewCommand}"
-                        Content="&#xE81C;"
-                        Style="{StaticResource TitleIconBtn}"
-                        ToolTip="History" />
-                    <Button
-                        Command="{Binding HydraCommand}"
-                        Content="&#xE895;"
-                        Style="{StaticResource TitleIconBtn}"
-                        ToolTip="Hydra" />
-                    <Button
-                        Command="{Binding SettingsCommand}"
-                        Content="&#xE713;"
-                        Style="{StaticResource TitleIconBtn}"
-                        ToolTip="Settings" />
-                    <Button
-                        Command="{Binding UpdateCommand}"
-                        Content="&#xE777;"
-                        Style="{StaticResource TitleIconBtn}"
-                        ToolTip="Update" />
                     <Button
                         Click="btnMinimize_Click"
                         Content="&#xE921;"
@@ -477,7 +442,7 @@
                                 FontSize="20"
                                 FontWeight="Bold"
                                 Foreground="White"
-                                Text="TOTAL STEPS" />
+                                Text="DANH SÁCH CÂN MẪU" />
                         </Border>
 
                         <!--  ItemsSource binding từ ViewModel  -->
@@ -1682,11 +1647,14 @@
         </Grid>
 
         <!--  ═══════════════════════════════ LOADING OVERLAY ═════════════════════════  -->
+        <!--  TODO (code sau): chưa có ViewModel/DataContext nên tạm ẩn cứng bằng
+             Visibility="Collapsed" thay vì Binding IsOverlayVisible — Binding vào
+             DataContext null sẽ fallback về default của Visibility (Visible) và
+             che luôn cả cửa sổ. Khi nối ViewModel, đổi lại thành Binding.  -->
         <Grid
             Grid.RowSpan="3"
-            d:Visibility="Collapsed"
             Background="#80000000"
-            Visibility="{Binding IsOverlayVisible, Converter={StaticResource BoolToVisibility}}">
+            Visibility="Collapsed">
             <Border
                 MinWidth="240"
                 Padding="40,28"

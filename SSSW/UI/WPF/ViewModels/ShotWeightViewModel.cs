@@ -456,6 +456,7 @@ namespace SSSW.UI.WPF.ViewModels
         // ─────────────────────────────────────────────────────────────────────
         //  COMMANDS
         // ─────────────────────────────────────────────────────────────────────
+        public RelayCommand ScaneFGCommand { get; }
         public AsyncRelayCommand ReloadCommand { get; }
         public RelayCommand HistoryViewCommand { get; }
         public AsyncRelayCommand HydraCommand { get; }
@@ -486,6 +487,7 @@ namespace SSSW.UI.WPF.ViewModels
             _logger = logger;
 
             // Wire commands
+            ScaneFGCommand = new RelayCommand(OpenShotWeightFGWindow);
             ReloadCommand = new AsyncRelayCommand(() => LoadDataAsync(TimeSpan.FromSeconds(30)));
             HistoryViewCommand = new RelayCommand(OpenHistoryView);
             HydraCommand = new AsyncRelayCommand(GetDataHydraAsync);
@@ -2100,6 +2102,14 @@ namespace SSSW.UI.WPF.ViewModels
         // ─────────────────────────────────────────────────────────────────────
         //  NAVIGATION COMMANDS
         // ─────────────────────────────────────────────────────────────────────
+        private void OpenShotWeightFGWindow()
+        {
+            var win = _serviceProvider.GetRequiredService<ShotWeightFGWindow>();
+            win.Owner = System.Windows.Application.Current.MainWindow;
+            win.WindowStartupLocation = System.Windows.WindowStartupLocation.CenterOwner;
+            win.ShowDialog();
+        }
+
         private void OpenHistoryView()
         {
             var nf = _serviceProvider.GetRequiredService<frmMainView>();

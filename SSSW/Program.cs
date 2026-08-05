@@ -83,6 +83,7 @@ namespace SSSW
                     services.AddTransient<frmShotWeightScaleV2>();
                     services.AddTransient<ShotWeightViewModel>(); // MVVM ViewModel
                     services.AddTransient<ShotWeightWindow>();   // WPF Option-A window
+                    services.AddTransient<ShotWeightFGWindow>(); // WPF Scan FG sample-weighing window
                 })
                 .Build();
 

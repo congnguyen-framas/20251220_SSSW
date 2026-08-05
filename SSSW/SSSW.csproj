@@ -20,6 +20,7 @@
   <ItemGroup>
     <None Remove="appsettings.json" />
     <None Remove="Resources\framas_mini_white.png" />
+    <None Remove="Resources\scale_30.png" />
   </ItemGroup>
 
   <ItemGroup>
@@ -60,6 +61,7 @@
 
   <ItemGroup>
     <Resource Include="Resources\framas_mini_white.png" />
+    <Resource Include="Resources\scale_30.png" />
   </ItemGroup>
 
   <ItemGroup>

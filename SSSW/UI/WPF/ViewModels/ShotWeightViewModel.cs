@@ -1751,7 +1751,18 @@ namespace SSSW.UI.WPF.ViewModels
                     (MessageBoxButtons)MessageBoxButton.OK, (MessageBoxIcon)MessageBoxImage.Information);
                 return;
             }
-            rowReset.C021 = rowReset.C022 = rowReset.C023 = rowReset.C024 = 0;
+
+            // Trường hợp 1 khuôn nhiều size: reset luôn các dòng cùng khuôn (Machine + MoldID + prefix step code).
+            var pfx3 = GlobalVariable.PrefixUpToThirdHyphen(rowReset.C002);
+            var sameMolds = _scaleDataFinal.Where(x =>
+                x.AllowScale &&
+                x.C004 == rowReset.C004 &&
+                x.C020 == rowReset.C020 &&
+                GlobalVariable.PrefixUpToThirdHyphen(x.C002) == pfx3).ToList();
+
+            foreach (var row in sameMolds)
+                row.C021 = row.C022 = row.C023 = row.C024 = 0;
+
             _rowSelected = rowSelect;
             _articlePaisShotFinaly = _rowSelected.C017 != 0 && _rowSelected.C017 == _rowSelected.C028
                 ? _rowSelected.C017 : _rowSelected.C028;

@@ -79,6 +79,12 @@
     </EmbeddedResource>
   </ItemGroup>
 
+  <!--fFT-->
+  <!--<DeployDir>\\10.40.10.9\Public$\98_Public_Share\99_Shared\05_IT\01_Update\36_SSSW\</DeployDir>-->
+  <!--fVN-->
+  <!--<DeployDir>\\192.168.1.241\FramasPublic\PUBLIC_Able to deleted\22 IT\01-UpdateApp\48.SSSW</DeployDir>-->
+  <!-- Đường dẫn share deploy (DeployDir) được tách ra file cấu hình riêng — xem DeployConfig.props -->
+  <Import Project="DeployConfig.props" />
 
   <PropertyGroup>
     <!-- Đưa file vào đúng thư mục bin\<Configuration>\<TFM>\ -->
@@ -86,16 +92,7 @@
     <ZipFilePath>$(TargetDir)Update.zip</ZipFilePath>
     <XmlFilePath>$(TargetDir)update.xml</XmlFilePath>
 
-    <!-- URL tải về cho AutoUpdater.NET (không ảnh hưởng build) -->
-    <!-- Thư mục share đích (không kèm tên file) -->
-    <!--fFT-->
-
-    <!-- Thư mục share đích (không kèm tên file) -->
-    <DeployDir>\\10.40.10.9\Public$\98_Public_Share\99_Shared\05_IT\01_Update\36_SSSW\</DeployDir>
-    <!--fVN-->
-    <!--<DeployDir>\\192.168.1.241\FramasPublic\PUBLIC_Able to deleted\22 IT\01-UpdateApp\11-SSFG_IDC\36_SSSW\</DeployDir>-->
-
-    <!-- Đường dẫn đích đầy đủ cho từng file -->
+    <!-- Đường dẫn đích đầy đủ cho từng file (DeployDir đến từ DeployConfig.props) -->
     <DeployZipPath>$(DeployDir)Update.zip</DeployZipPath>
     <DeployXmlPath>$(DeployDir)update.xml</DeployXmlPath>
 

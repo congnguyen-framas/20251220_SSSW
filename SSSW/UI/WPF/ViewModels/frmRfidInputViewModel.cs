@@ -1,6 +1,7 @@
 ﻿using DevExpress.Data.Controls.ExpressionEditor;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
+using SSSW.models;
 using SSSW.modelss;
 using System;
 using System.Collections.Generic;
@@ -32,11 +33,7 @@ namespace SSSW.UI.WPF.ViewModels
         public string RfidName
         {
             get => _rfidName;
-            set
-            {
-                _rfidCardCode = value;
-                SetProperty(ref _rfidName, value);
-            }
+            set { SetProperty(ref _rfidName, value); }
         }
 
         private string _userName = string.Empty;
@@ -98,6 +95,51 @@ namespace SSSW.UI.WPF.ViewModels
                 _logger.LogError(ex, "RFID error");
                 System.Windows.Forms.MessageBox.Show(ex.Message, "ERROR",
                     (MessageBoxButtons)(MessageBoxButtons)MessageBoxButton.OK, (MessageBoxIcon)MessageBoxImage.Error);
+            }
+        }
+
+        /// <summary>Người dùng nhấn Enter trong ô Employee Name để đăng ký operator mới (khi ID chưa tồn tại).</summary>
+        public async Task OnRfidNameEnterAsync(string name)
+        {
+            try
+            {
+                if (string.IsNullOrEmpty(RfidCardCode) || string.IsNullOrEmpty(name))
+                    throw new Exception("ID or name cannot be null.");
+
+                var res = System.Windows.Forms.MessageBox.Show(
+                    $"Register operator {name} with ID {RfidCardCode}?",
+                    "Confirm", (MessageBoxButtons)MessageBoxButton.YesNo, (MessageBoxIcon)MessageBoxImage.Question);
+                if (res != DialogResult.Yes) return;
+
+                using var db = _dbFactory.CreateDbContext();
+                var dept = db.FT031s.FirstOrDefault(x => x.C000 == "QC")
+                           ?? throw new Exception("Department 'QC' not found.");
+
+                if (await db.fT029_Operator_RFIDs.AnyAsync(x => x.C000 == RfidCardCode))
+                    throw new Exception("ID already exists.");
+
+                await db.fT029_Operator_RFIDs.AddAsync(new FT029_Operator_RFID
+                {
+                    Id = Guid.NewGuid(),
+                    C000 = RfidCardCode,
+                    C001 = name,
+                    C002 = dept.Id,
+                    CreatedDate = DateTime.Now,
+                    CreatedBy = string.Empty,
+                    CreatedMachine = Environment.MachineName,
+                    Actived = true
+                });
+                await db.SaveChangesAsync();
+
+                // Đăng ký xong → tra cứu lại ngay để RfidName/UserName phản ánh operator vừa tạo,
+                // để dialog có thể trả kết quả về form chính mà không cần người dùng nhấn Enter lại ở ô ID.
+                OnRfidValueChanged();
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "RFID name enter error");
+                System.Windows.Forms.MessageBox.Show(ex.Message, "WARNING",
+                    (MessageBoxButtons)MessageBoxButton.OK, (MessageBoxIcon)(MessageBoxIcon)MessageBoxImage.Warning);
             }
         }
     }

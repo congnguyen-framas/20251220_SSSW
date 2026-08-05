@@ -24,3 +24,5 @@ ShotweightApp
 │
 ├── App.xaml
 └── App.xaml.cs
+
+Chỉnh DeployConfig.props để khi build (release) sẽ tự copy lên thư mục update.

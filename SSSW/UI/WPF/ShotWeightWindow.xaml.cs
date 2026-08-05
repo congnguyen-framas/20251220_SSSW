@@ -510,18 +510,15 @@ namespace SSSW.UI.WPF
             }
         }
 
+        /// <summary>
+        /// Bấm vào tên nhân viên trên title bar → mở dialog nhập tay Employee ID
+        /// (khi không quét được thẻ RFID). Toàn bộ logic mở dialog + áp kết quả
+        /// nằm trong ViewModel (OpenRfidInputDialog) để nhất quán với pattern
+        /// điều hướng còn lại (OpenShotWeightFGWindow, OpenHistoryView, ...).
+        /// </summary>
         private void _tbEmployee_MouseLeftButtonDown(object sender, MouseButtonEventArgs e)
         {
-
-            var child = new frmRfidInput();
-
-            bool? result = child.ShowDialog();
-
-            if (result == true)
-            {
-              
-            }
-
+            _vm?.OpenRfidInputDialog();
         }
     }
 }

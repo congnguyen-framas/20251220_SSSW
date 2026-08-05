@@ -76,4 +76,8 @@ Several stored procedures are called directly rather than modeled as DbSets (BOM
 
 ### Multi-site config
 
-`GlobalVariable` maps DB-reported company code (`mesocomp`) to `EnumLocation` (`fVN`/`fKV`/`fFT`/`fIN`/`fGE`) which drives the window title and the `DeployDir` used for auto-update packaging in the csproj — this repo currently targets the fFT site's share path (see the commented `fVN`/`fFT` blocks in both `SSSW.csproj` and `appsettings.json`'s connection string). When switching target sites, both need updating together.
+`GlobalVariable` maps DB-reported company code (`mesocomp`) to `EnumLocation` (`fVN`/`fKV`/`fFT`/`fIN`/`fGE`) which drives the window title and the `DeployDir` used for auto-update packaging — this repo currently targets the fFT site's share path. `DeployDir` itself lives in [SSSW/DeployConfig.props](SSSW/DeployConfig.props) (imported by `SSSW.csproj` via `<Import Project="DeployConfig.props" />`, not inlined in the csproj) — switch sites by editing the `<DeployDir>` block there (comment/uncomment fFT vs fVN), no `.csproj` edit needed. `appsettings.json`'s connection string still has its own commented `fVN`/`fFT` blocks and needs updating separately when switching target sites — the two are not linked.
+
+### Worklog
+
+[docs/worklog/](SSSW/docs/worklog/) holds a dated, per-task log of work done on this repo (what was asked, what changed, assumptions made, open questions, build result) — separate from the architecture docs above, which describe current-state design rather than change history. **Check [docs/worklog/INDEX.md](SSSW/docs/worklog/INDEX.md) at the start of a session** (at least the most recent entry, more if continuing related work) before re-deriving context from git log/code alone. Append a new entry (don't edit old ones) after any non-trivial task — see the conventions at the bottom of `INDEX.md`.

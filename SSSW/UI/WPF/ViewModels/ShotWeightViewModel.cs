@@ -2118,6 +2118,25 @@ namespace SSSW.UI.WPF.ViewModels
             nf.ShowDialog();
         }
 
+        /// <summary>
+        /// Mở dialog nhập tay Employee ID (khi không quét được RFID). Nếu người dùng
+        /// bấm OK, áp kết quả vào form chính giống hệt như khi quét RFID thật
+        /// (set RfidCardCode rồi chạy lại OnRfidValueChanged để tra cứu/ cập nhật UserName).
+        /// </summary>
+        public void OpenRfidInputDialog()
+        {
+            var dlg = _serviceProvider.GetRequiredService<frmRfidInput>();
+            dlg.Owner = System.Windows.Application.Current.MainWindow;
+            dlg.WindowStartupLocation = System.Windows.WindowStartupLocation.CenterOwner;
+
+            bool? result = dlg.ShowDialog();
+            if (result == true)
+            {
+                RfidCardCode = dlg.ResultRfidCode;
+                OnRfidValueChanged(dlg.ResultRfidCode);
+            }
+        }
+
         private void OpenSettings()
         {
             var nf = _serviceProvider.GetRequiredService<frmUpdateMasterData>();

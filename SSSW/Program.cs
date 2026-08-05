@@ -84,6 +84,8 @@ namespace SSSW
                     services.AddTransient<ShotWeightViewModel>(); // MVVM ViewModel
                     services.AddTransient<ShotWeightWindow>();   // WPF Option-A window
                     services.AddTransient<ShotWeightFGWindow>(); // WPF Scan FG sample-weighing window
+                    services.AddTransient<frmRfidInputViewModel>(); // Manual Employee ID entry ViewModel
+                    services.AddTransient<frmRfidInput>();          // Manual Employee ID entry dialog
                 })
                 .Build();
 

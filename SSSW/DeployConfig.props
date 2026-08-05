@@ -1,0 +1,18 @@
+<Project>
+  <!--
+    ════════════════════════════════════════════════════════════════
+    Cấu hình đường dẫn deploy (Update.zip / update.xml) theo từng site.
+    Được import từ SSSW.csproj — đổi site ở đây, KHÔNG cần sửa .csproj.
+
+    Cách đổi site: bỏ comment khối <DeployDir> của site cần dùng,
+    comment lại khối đang active (chỉ được để 1 <DeployDir> active).
+    ════════════════════════════════════════════════════════════════
+  -->
+  <PropertyGroup>
+    <!--fFT-->
+    <!--<DeployDir>\\10.40.10.9\Public$\98_Public_Share\99_Shared\05_IT\01_Update\36_SSSW\</DeployDir>-->
+
+    <!--fVN-->
+    <DeployDir>\\192.168.1.241\FramasPublic\PUBLIC_Able to deleted\22 IT\01-UpdateApp\48.SSSW\</DeployDir>
+  </PropertyGroup>
+</Project>

@@ -1038,8 +1038,9 @@ namespace SSSW.UI.WPF.ViewModels
                                 .ToDictionary(g => g.Key, g => g.ToList());
 
                     var startWith = stepCode.C005.StartsWith("Logo") ? "Logo"
-                           : stepCode.C005.StartsWith("Studs") ? "Studs"
-                           : "Cleat_Ring";
+                           : stepCode.C005.StartsWith("Studs") || stepCode.C005.StartsWith("Outer_Studs") || stepCode.C005.StartsWith("Inner_Studs") ? "Studs"
+                           : stepCode.C005.StartsWith("Cleat_Ring") ? "Cleaat_Ring"
+                        : string.Empty;
 
                     //nếu là cân cho bước logo/studs/ring thì xóa các bước khác logo/studs/ring
                     if (stepCode.C005.StartsWith("Logo ")
@@ -1086,15 +1087,20 @@ namespace SSSW.UI.WPF.ViewModels
                             cleat_RingStep.AllowScale = false;
                         }
 
-                        var studsSteps = _scaleDataFinal.Where(x => x.C003.StartsWith("Studs")).ToList();
+                        var studsSteps = _scaleDataFinal
+                            .Where(x => x.C003.StartsWith("Studs")
+                                || x.C003.StartsWith("Outer_Studs")
+                                || x.C003.StartsWith("Inner_Studs")
+                            )
+                            .ToList();
 
                         var inlaySteps = _scaleDataFinal.Where(x => x.C003.StartsWith("Inlay")).ToList();
 
                         var previousStep = _allStepsFG.FirstOrDefault(x => x.ParallelSequence == stepCode.C010 - 1);
 
-                        if ((inlaySteps.Count() > 1 && !stepCode.C005.StartsWith("Inlay"))
-                            && (!stepCode.C005.StartsWith("Studs")
-                                || (stepCode.C005.StartsWith("Studs") && previousStep.ItemStepName.StartsWith("Base"))
+                        if (inlaySteps.Count < 2 && !stepCode.C005.StartsWith("Inlay")
+                            && (startWith != "Studs"
+                                || (startWith == "Studs" && (previousStep.ItemStepName.StartsWith("Base")|| previousStep.ItemStepName.StartsWith("Outer_Studs")))
                                 )
                             )
                         {
@@ -1103,20 +1109,41 @@ namespace SSSW.UI.WPF.ViewModels
                             //check allow scle for studs
                             if (studsSteps != null)
                             {
-                                var previousStepBse = _allStepsFG.FirstOrDefault(x => x.ParallelSequence == studsSteps.FirstOrDefault()?.C015 - 1);
+                                //lấy ra bước trước của nước studs để check xem có phải là base hay không, nếu là base thì cho phép cân studs, nếu ko phải base thì ko cho phép cân studs
+                                //nếu ở fVN thì nếu bước trước là Studs thì cho phép cân bước studs này luôn, và sẽ trừ số lượng cân của bước Studs trước đó ra khỏi số lượng cân của bước Studs hiện tại. Ex: 6112042502-C134-2801 - item code:3-VB042502-C136-5065
 
-                                var allowStudsScale = !(previousStep == null
-                                                            || (previousStep != null && !previousStep.ItemStepName.StartsWith("Base")
-                                                                )
-                                                         );
-                                studsSteps.ForEach(x => x.AllowScale = allowStudsScale);
+                                //var previousStepBse = _allStepsFG.FirstOrDefault(x => x.ParallelSequence == studsSteps.FirstOrDefault(x => x.C002 == stepCode.C004)?.C015 - 1);
+
+                                //var allowStudsScale = !(previousStepBse == null
+                                //                            || (previousStepBse != null
+                                //                                    && !previousStepBse.ItemStepName.StartsWith("Base")
+                                //                                    && !previousStepBse.ItemStepName.StartsWith("Studs")
+                                //                                    && !previousStepBse.ItemStepName.StartsWith("Outer_Studs")
+                                //                                    && !previousStepBse.ItemStepName.StartsWith("Inner_Studs")
+                                //                                )
+                                //                         );
+                                //studsSteps.ForEach(x => x.AllowScale = allowStudsScale);
+
+                                foreach (var itemStud in studsSteps)
+                                {
+                                    var previousStepS = _allStepsFG.FirstOrDefault(x => x.ParallelSequence == itemStud.C015 - 1);
+
+                                    itemStud.AllowScale = !(previousStepS == null
+                                                                || (previousStepS != null
+                                                                        && !previousStepS.ItemStepName.StartsWith("Base")
+                                                                        && !previousStepS.ItemStepName.StartsWith("Studs")
+                                                                        && !previousStepS.ItemStepName.StartsWith("Outer_Studs")
+                                                                        && !previousStepS.ItemStepName.StartsWith("Inner_Studs")
+                                                                    ));
+
+                                }
                             }
 
                             //xóa những step ko có trong BOM ra
                             _scaleDataFinal.RemoveAll(x =>
                             {
                                 bool isLogo = x.C003.StartsWith("Logo");
-                                bool isStuds = x.C003.StartsWith("Studs");
+                                bool isStuds = x.C003.StartsWith("Studs") || x.C003.StartsWith("Outer_Studs") || x.C003.StartsWith("Inner_Studs");
                                 bool isRing = x.C003.StartsWith("Cleat_Ring");
                                 bool isInlay = x.C003.StartsWith("Inlay");
 
@@ -1129,14 +1156,17 @@ namespace SSSW.UI.WPF.ViewModels
                             });
                         }
                         else if (stepCode.C005.StartsWith("Inlay")
-                                || (stepCode.C005.StartsWith("Studs")
+                                || (startWith == "Studs"
                                     && (previousStep == null
                                         || (previousStep != null && !previousStep.ItemStepName.StartsWith("Base"))
                                         )
                                    )
                                 )
                         {
-                            var startWith1 = stepCode.C005.StartsWith("Studs") ? "Studs" : "Inlay";
+                            var startWith1 = stepCode.C005.StartsWith("Studs") ? "Studs"
+                                : stepCode.C005.StartsWith("Outer_Studs") ? "Outer_Studs"
+                                    : stepCode.C005.StartsWith("Inner_Studs") ? "Inner_Studs"
+                                        : "Inlay";
 
                             _scaleDataFinal.RemoveAll(x =>
                             {

@@ -6,7 +6,7 @@
   "compilationOptions": {},
   "targets": {
     ".NETCoreApp,Version=v8.0": {
-      "SSSW/1.0.0806.1049": {
+      "SSSW/1.0.0806.1145": {
         "dependencies": {
           "Autoupdater.NET.Official": "1.9.2",
           "DevExpress.Win.Design": "24.2.3",
@@ -3029,7 +3029,7 @@
     }
   },
   "libraries": {
-    "SSSW/1.0.0806.1049": {
+    "SSSW/1.0.0806.1145": {
       "type": "project",
       "serviceable": false,
       "sha512": ""

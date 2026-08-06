@@ -43,7 +43,7 @@ namespace SSSW.modelss
         /// </summary>
         public List<CategoryModel>? CategoryOfNonInjectionUsagePartial { get; set; }
 
-        public string? UpdatePath { get; set; }
+        public string? UpdatePath { get; set; } = "\\\\192.168.1.241\\FramasPublic\\PUBLIC_Able to deleted\\22 IT\\01-UpdateApp\\48.SSSW\\Update.xml";
 
         /// <summary>
         /// Gets or sets the delta value from which calculations or comparisons are performed (g).

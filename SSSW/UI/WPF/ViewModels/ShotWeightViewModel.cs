@@ -1072,11 +1072,11 @@ namespace SSSW.UI.WPF.ViewModels
                         //lọc lại nếu bước được chọn cân mà ko phải là Stud hoặc Inlay (nhiều size/1 mold) thì khóa ko cho cân Stud và Inlay
                         //bắt buộc phải cân Stud và Inlay riêng
 
-                        var logosStep = _scaleDataFinal.FirstOrDefault(x => x.C003.StartsWith("Logo"));
+                        var logosStep = _scaleDataFinal.Where(x => x.C003.StartsWith("Logo")).ToList();
 
-                        if (logosStep != null && !stepCode.C005.StartsWith("Logo"))
+                        if (logosStep.Any() && !stepCode.C005.StartsWith("Logo"))
                         {
-                            logosStep.AllowScale = false;
+                            logosStep.ForEach(x => x.AllowScale = false);
                         }
 
                         var cleat_RingStep = _scaleDataFinal.FirstOrDefault(x => x.C003.StartsWith("Cleat_Ring"));
@@ -1086,12 +1086,7 @@ namespace SSSW.UI.WPF.ViewModels
                             cleat_RingStep.AllowScale = false;
                         }
 
-                        var studsStep = _scaleDataFinal.FirstOrDefault(x => x.C003.StartsWith("Studs"));
-
-                        //if (studsStep != null && !stepCode.C005.StartsWith("Studs"))
-                        //{
-                        //    studsStep.AllowScale = false;
-                        //}
+                        var studsSteps = _scaleDataFinal.Where(x => x.C003.StartsWith("Studs")).ToList();
 
                         var inlaySteps = _scaleDataFinal.Where(x => x.C003.StartsWith("Inlay")).ToList();
 
@@ -1106,14 +1101,15 @@ namespace SSSW.UI.WPF.ViewModels
                             inlaySteps.ForEach(x => x.AllowScale = false);
 
                             //check allow scle for studs
-                            if (studsStep != null)
+                            if (studsSteps != null)
                             {
-                                var previousStepBse = _allStepsFG.FirstOrDefault(x => x.ParallelSequence == studsStep.C015 - 1);
+                                var previousStepBse = _allStepsFG.FirstOrDefault(x => x.ParallelSequence == studsSteps.FirstOrDefault()?.C015 - 1);
 
-                                studsStep.AllowScale = !(previousStep == null
+                                var allowStudsScale = !(previousStep == null
                                                             || (previousStep != null && !previousStep.ItemStepName.StartsWith("Base")
                                                                 )
                                                          );
+                                studsSteps.ForEach(x => x.AllowScale = allowStudsScale);
                             }
 
                             //xóa những step ko có trong BOM ra

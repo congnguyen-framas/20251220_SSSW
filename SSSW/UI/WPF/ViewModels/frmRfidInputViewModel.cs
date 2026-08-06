@@ -64,10 +64,15 @@ namespace SSSW.UI.WPF.ViewModels
                     throw new Exception("ID cannot be null.");
 
                 using var db = _dbFactory.CreateDbContext();
-                var operatorInfo = db.fT029_Operator_RFIDs
-                      .FirstOrDefault(x => x.C000.Contains(RfidCardCode));
 
-                if (operatorInfo == null || operatorInfo.Id == Guid.Empty)
+                // 1 nhân viên (C000) có thể có NHIỀU dòng FT029 — mỗi dòng ứng với 1 phòng ban/quyền (C002 → FT031).
+                // Phải duyệt tất cả các dòng của nhân viên để tìm dòng có quyền IT/QC, thay vì chỉ xét dòng đầu tiên
+                // (dòng đầu tiên trả về từ DB có thể là 1 phòng ban không có quyền, dù nhân viên có dòng khác hợp lệ).
+                var operatorRows = db.fT029_Operator_RFIDs
+                    .Where(x => x.C000.Contains(RfidCardCode))
+                    .ToList();
+
+                if (operatorRows.Count == 0)
                 {
                     ClearRfidAction?.Invoke();
 
@@ -76,16 +81,21 @@ namespace SSSW.UI.WPF.ViewModels
                         "Please enter the name and press Enter to register.");
                 }
 
-                operatorInfo.DepartmentInfor = db.FT031s.FirstOrDefault(x =>
-                    x.Id == operatorInfo.C002 && (x.C000 == "IT" || x.C000 == "QC"));
+                var allowedDepartments = db.FT031s
+                    .Where(d => d.C000 == "IT" || d.C000 == "QC")
+                    .ToList();
 
-                if (operatorInfo.DepartmentInfor == null)
+                var operatorInfo = operatorRows.FirstOrDefault(op => allowedDepartments.Any(d => d.Id == op.C002));
+
+                if (operatorInfo == null)
                 {
                     RfidCardCode = string.Empty;
                     RfidName = string.Empty;
                     ClearRfidAction?.Invoke();
                     throw new Exception("Employee does not have permission for this function.");
                 }
+
+                operatorInfo.DepartmentInfor = allowedDepartments.First(d => d.Id == operatorInfo.C002);
 
                 RfidName = operatorInfo.C001;
                 UserName = $"{operatorInfo.C000} · {operatorInfo.C001}";

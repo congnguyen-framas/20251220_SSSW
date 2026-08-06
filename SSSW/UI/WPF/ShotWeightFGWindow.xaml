@@ -442,7 +442,7 @@
                                 FontSize="20"
                                 FontWeight="Bold"
                                 Foreground="White"
-                                Text="DANH SÁCH CÂN MẪU" />
+                                Text="SAMPLING LIST" />
                         </Border>
 
                         <!--  ItemsSource binding từ ViewModel  -->

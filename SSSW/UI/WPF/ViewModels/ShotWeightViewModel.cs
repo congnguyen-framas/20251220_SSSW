@@ -537,8 +537,11 @@ namespace SSSW.UI.WPF.ViewModels
                 "fGE" => "fGE",
                 _ => "Unknown"
             };
+            // Version build (đến từ <Version> trong SSSW.csproj, embed vào AssemblyVersion lúc build)
+            var appVersion = System.Reflection.Assembly.GetExecutingAssembly().GetName().Version?.ToString() ?? "N/A";
+
             if (Enum.TryParse<EnumLocation>(location, true, out var loc))
-                WindowTitle = $"{loc} – Shotweight Station";
+                WindowTitle = $"{loc} – Shotweight Station – Ver-{appVersion}";
 
             // Config
             var configData = await db.FT608s
@@ -673,10 +676,15 @@ namespace SSSW.UI.WPF.ViewModels
                     throw new Exception("ID cannot be null.");
 
                 using var db = _dbFactory.CreateDbContext();
-                _operatorInfo = db.fT029_Operator_RFIDs
-                    .FirstOrDefault(x => x.C000.Contains(_employeeCode));
 
-                if (_operatorInfo == null || _operatorInfo.Id == Guid.Empty)
+                // 1 nhân viên (C000) có thể có NHIỀU dòng FT029 — mỗi dòng ứng với 1 phòng ban/quyền (C002 → FT031).
+                // Phải duyệt tất cả các dòng của nhân viên để tìm dòng có quyền IT/QC, thay vì chỉ xét dòng đầu tiên
+                // (dòng đầu tiên trả về từ DB có thể là 1 phòng ban không có quyền, dù nhân viên có dòng khác hợp lệ).
+                var operatorRows = db.fT029_Operator_RFIDs
+                    .Where(x => x.C000.Contains(_employeeCode))
+                    .ToList();
+
+                if (operatorRows.Count == 0)
                 {
                     ClearRfidAction?.Invoke();
                     FocusRfidNameAction?.Invoke();
@@ -685,16 +693,22 @@ namespace SSSW.UI.WPF.ViewModels
                         "Please enter the name and press Enter to register.");
                 }
 
-                _operatorInfo.DepartmentInfor = db.FT031s.FirstOrDefault(x =>
-                    x.Id == _operatorInfo.C002 && (x.C000 == "IT" || x.C000 == "QC"));
+                var allowedDepartments = db.FT031s
+                    .Where(d => d.C000 == "IT" || d.C000 == "QC")
+                    .ToList();
 
-                if (_operatorInfo.DepartmentInfor == null)
+                _operatorInfo = operatorRows.FirstOrDefault(op => allowedDepartments.Any(d => d.Id == op.C002))
+                                 ?? new FT029_Operator_RFID();
+
+                if (_operatorInfo.Id == Guid.Empty)
                 {
                     _employeeCode = string.Empty;
                     RfidName = string.Empty;
                     ClearRfidAction?.Invoke();
                     throw new Exception("Employee does not have permission for this function.");
                 }
+
+                _operatorInfo.DepartmentInfor = allowedDepartments.First(d => d.Id == _operatorInfo.C002);
 
                 RfidName = _operatorInfo.C001;
                 UserName = $"{_operatorInfo.C000} - {_operatorInfo.C001}";

@@ -14,10 +14,10 @@ namespace SSSW.models
         /// <summary>
         /// Department name.
         /// </summary>
-        public string C000 { get; set; }
+        public string? C000 { get; set; }
         /// <summary>
         /// Note free text.
         /// </summary>
-        public string C001 { get; set; }
+        public string? C001 { get; set; }
     }
 }

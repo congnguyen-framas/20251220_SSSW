@@ -8,6 +8,7 @@ using AutoUpdaterDotNET;
 using DevExpress.Mvvm.Native;
 using DevExpress.XtraRichEdit.Import.Html;
 using DevExpress.XtraSpreadsheet.Import.Xls;
+using DevExpress.XtraSpreadsheet.Model.CopyOperation;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
@@ -889,7 +890,7 @@ namespace SSSW.UI.WPF.ViewModels
                             }
                             else
                             {
-                                var parallelInfo = _allStepsFG.Where(x => x.ParallelSequence == item.ParallelSequence).ToList();
+                                var parallelInfo = _allStepsFG.FirstOrDefault(x => x.ParallelSequence == item.ParallelSequence && !x.ItemStepCode.StartsWith("REX"));
 
                                 ckHydra = new FT601
                                 {
@@ -899,6 +900,8 @@ namespace SSSW.UI.WPF.ViewModels
                                     C005 = item.ItemStepName,
                                     C000 = _stepItemCodeScale.C000,
                                     C010 = item.ParallelSequence,
+                                    C002 = parallelInfo?.Size,
+
                                 };
                             }
                         }
@@ -1098,13 +1101,14 @@ namespace SSSW.UI.WPF.ViewModels
 
                         var previousStep = _allStepsFG.FirstOrDefault(x => x.ParallelSequence == stepCode.C010 - 1);
 
-                        if (inlaySteps.Count < 2 && !stepCode.C005.StartsWith("Inlay")
+                        if (!stepCode.C005.StartsWith("Inlay")
                             && (startWith != "Studs"
-                                || (startWith == "Studs" && (previousStep.ItemStepName.StartsWith("Base")|| previousStep.ItemStepName.StartsWith("Outer_Studs")))
+                                || (startWith == "Studs" && (previousStep.ItemStepName.StartsWith("Base") || previousStep.ItemStepName.StartsWith("Outer_Studs")))
                                 )
                             )
                         {
-                            inlaySteps.ForEach(x => x.AllowScale = false);
+                            if (inlaySteps.Count() > 1)
+                                inlaySteps.ForEach(x => x.AllowScale = false);
 
                             //check allow scle for studs
                             if (studsSteps != null)
@@ -1163,7 +1167,7 @@ namespace SSSW.UI.WPF.ViewModels
                                    )
                                 )
                         {
-                            var startWith1 = stepCode.C005.StartsWith("Studs") ? "Studs"
+                            var startWith1 = stepCode.C005.StartsWith("Studs") || stepCode.C005.StartsWith("Outer_Studs") || stepCode.C005.StartsWith("Inner_Studs") ? "Studs"
                                 : stepCode.C005.StartsWith("Outer_Studs") ? "Outer_Studs"
                                     : stepCode.C005.StartsWith("Inner_Studs") ? "Inner_Studs"
                                         : "Inlay";
@@ -1212,7 +1216,7 @@ namespace SSSW.UI.WPF.ViewModels
                             item1.C018 = parallelStep.FirstOrDefault()?.C018 ?? 0;
                         }
 
-                        if (!item1.C003!.StartsWith("Stud") && !item1.C003.StartsWith("Logo") &&
+                        if (!item1.C003!.StartsWith("Stud") && !item1.C003!.StartsWith("Outer_Stud") && !item1.C003!.StartsWith("Inner_Stud") && !item1.C003.StartsWith("Logo") &&
                             !item1.C003.StartsWith("Cleat_Ring") && !item1.C002!.StartsWith("REX") && !item1.C003!.StartsWith("Inlay"))
                             continue;
 
@@ -1400,7 +1404,8 @@ namespace SSSW.UI.WPF.ViewModels
                         if (!_rowSelected.C003.StartsWith("Studs"))
                         {
                             _rowSelected.C021 = _rowSelected.C023
-                                                - previuosStep?.Sum(x => x.C021);
+                                                - previuosStep?.Sum(x => x.C021)
+                                                - nonInjection?.Sum(x => x.C021);
                         }
                         else if (_rowSelected.C003.StartsWith("Studs"))
                         {
@@ -1420,7 +1425,8 @@ namespace SSSW.UI.WPF.ViewModels
                             else
                             {
                                 _rowSelected.C021 = _rowSelected.C023
-                                                    - previuosStep?.Sum(x => x.C021);
+                                                    - previuosStep?.Sum(x => x.C021)
+                                                    - nonInjection?.Sum(x => x.C021);
                             }
                         }
                     }
@@ -1553,6 +1559,94 @@ namespace SSSW.UI.WPF.ViewModels
                                 $"Scale not completed for step: {item.C002}.", "Warning",
                                 (MessageBoxButtons)MessageBoxButton.OK, (MessageBoxIcon)MessageBoxImage.Warning);
                             return;
+                        }
+                    }
+                }
+                else
+                {
+                    var nonInjectionCheck = _scaleDataFinal.FirstOrDefault(x => x.C015 == _rowSelected.C015 && x.C002.StartsWith("REX"));
+
+                    var category = await db.Database
+                          .SqlQueryRaw<CategoryOfItemModel>(
+                              "sp_GetCategorryOfItem @ItemCode = {0}", nonInjectionCheck?.C002)
+                          .AsNoTracking().ToListAsync();
+
+                    var catCheck = GlobalVariable.ConfigSystem.CategoryOfNonInjectionUsagePartial?
+                          .FirstOrDefault(x => x.CategoryCode == category?.FirstOrDefault().CategoryCode);
+
+                    if (catCheck != null)
+                    {
+                        var sizes = _scaleDataFinal.Where(x => x.C015 == _rowSelected.C015 && !x.C002.StartsWith("REX")).ToList();
+                        //nonInjectionCheck.C008 = 
+
+
+                        foreach (var item in sizes)
+                        {
+                            var upSize = _scaleDataFinal.FirstOrDefault(x => x.C002.StartsWith("REX") && x.C015 == item.C015 && x.C008 != item.C008 && string.IsNullOrEmpty(x.C008));
+
+                            if (upSize != null)
+                            {
+                                upSize.C008 = item.C008;
+                            }
+                            else
+                            {
+                                var newItem = new FT600
+                                {
+                                    id = Guid.NewGuid(),
+
+                                    C000 = _stepItemCodeScale.C000, // override
+                                    C001 = item.C001,
+                                    C002 = nonInjectionCheck.C002,
+                                    C003 = nonInjectionCheck.C003,
+                                    C004 = nonInjectionCheck.C004,
+                                    C005 = nonInjectionCheck.C005,
+                                    C006 = nonInjectionCheck.C006,
+                                    C007 = nonInjectionCheck.C007,
+                                    C008 = item.C008,
+                                    C009 = item.C009,
+                                    C010 = item.C010,
+                                    C011 = item.C011,
+                                    C012 = nonInjectionCheck.C012,
+                                    C013 = item.C013,
+                                    C014 = item.C014,
+                                    C015 = item.C015,
+                                    C016 = item.C016,
+                                    C017 = nonInjectionCheck.C017,
+                                    C018 = item.C018,
+                                    C019 = nonInjectionCheck.C019,
+                                    C020 = nonInjectionCheck.C020,
+                                    C021 = nonInjectionCheck.C021,
+                                    C022 = nonInjectionCheck.C022,
+                                    C023 = nonInjectionCheck.C023,
+                                    C024 = nonInjectionCheck.C024,
+                                    C025 = nonInjectionCheck.C025,
+                                    C026 = item.C026,
+                                    C027 = item.C027,
+                                    C028 = nonInjectionCheck.C028,
+                                    C029 = nonInjectionCheck.C029,
+                                    C030 = item.C030,
+                                    C031 = item.C031,
+                                    C032 = nonInjectionCheck.C032,
+                                    C033 = nonInjectionCheck.C033,
+                                    C034 = nonInjectionCheck.C034,
+                                    C035 = nonInjectionCheck.C035,
+                                    C036 = nonInjectionCheck.C036,
+                                    C037 = nonInjectionCheck.C037,
+                                    C038 = item.C038,
+
+                                    // BaseEntity
+                                    CreatedDate = item.CreatedDate,
+                                    ModifiedDate = item.ModifiedDate,
+                                    CreatedBy = item.CreatedBy,
+                                    ModifiedBy = item.ModifiedBy,
+                                    AllowScale = item.AllowScale,
+                                    StatusText = nonInjectionCheck.StatusText,
+                                    StatusDotColor = nonInjectionCheck.StatusDotColor,
+                                    StatusBarColor = nonInjectionCheck.StatusBarColor,
+                                };
+
+                                _scaleDataFinal.Add(newItem);
+                            }
                         }
                     }
                 }

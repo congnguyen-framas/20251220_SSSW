@@ -57,7 +57,6 @@ namespace SSSW.UI.WPF.ViewModels
         private string _mesocomp = string.Empty;
         private int _mesoYear = 0;
         private double _scaleValue = 0;
-        private string? _remarkFinal = string.Empty;
         private bool _historyExpanded = false;
 
         private FT600 _stdRow = new();
@@ -140,9 +139,20 @@ namespace SSSW.UI.WPF.ViewModels
             {
                 _remark = value;
                 OnPropertyChanged();
-                // sync remarkFinal và lan sang tất cả sample chưa confirm
-                _remarkFinal = value;
-                _samples?.ForEach(x => x.C038 = _remarkFinal);
+
+                // Remark chỉ áp dụng cho đúng sample (Sample Num) đang chọn — KHÔNG lan sang các
+                // sample khác đã có trong SAMPLING LIST (trước đây ForEach lên toàn bộ _samples,
+                // khiến mọi dòng bị đè cùng 1 remark). Nếu chưa chọn sample nào thì bỏ qua.
+                if (_rowSelected != null)
+                {
+                    _rowSelected.C038 = value;
+
+                    // FT600 không implement INotifyPropertyChanged nên gán C038 ở trên không tự
+                    // đẩy lên DataGrid — phải ép rebind lại SamplesCollection để cột REMARKS hiện
+                    // giá trị mới ngay khi gõ. Không gọi RefreshUI() ở đây vì RefreshUI() có set lại
+                    // Remark = _rowSelected.C038, sẽ gọi ngược lại setter này → đệ quy vô hạn.
+                    RefreshSamplesGrid();
+                }
             }
         }
 
@@ -763,7 +773,9 @@ namespace SSSW.UI.WPF.ViewModels
                 C000 = fg.HydraOrderNo,
                 C032 = fg.FT601Id,
                 C009 = sampleNum,
-                C038 = _remarkFinal,
+                // Remark của mỗi sample độc lập với nhau — sample mới luôn bắt đầu trống, không
+                // kế thừa remark của sample khác (theo yêu cầu: remark ăn theo đúng Sample Num).
+                C038 = string.Empty,
                 C028 = fg.ArticlePairsShot,
                 C017 = fg.ArticlePairsShot,
                 C018 = fg.MoldPairsShot,
@@ -996,7 +1008,6 @@ namespace SSSW.UI.WPF.ViewModels
         private void ExecuteCancel(object? _)
         {
             _labelInfo = new FT606_Label();
-            _remarkFinal = string.Empty;
 
             ClearFgComboAction?.Invoke();
             ClearBarcodeAction?.Invoke();
@@ -1150,16 +1161,34 @@ namespace SSSW.UI.WPF.ViewModels
                 Machine = _rowSelected?.C004;
                 Size = _rowSelected?.C008;
                 SampleNum = _rowSelected?.C009?.ToString();
-                Remark = _remarkFinal;
+                // Hiển thị remark của đúng sample đang chọn — không phải 1 giá trị dùng chung.
+                Remark = _rowSelected?.C038;
 
                 UpdateSampleStatuses();
-
-                SamplesCollection.Clear();
-                foreach (var item in _samples)
-                    SamplesCollection.Add(item);
+                RefreshSamplesGridCore();
 
                 UpdateReferencePanel();
             });
+        }
+
+        /// <summary>
+        /// Ép DataGrid SAMPLING LIST rebind lại toàn bộ row từ _samples. FT600 không implement
+        /// INotifyPropertyChanged nên việc sửa trực tiếp 1 field (VD C038 khi gõ Remark) không tự
+        /// đẩy lên UI — phải Clear + Add lại ObservableCollection để WPF render lại cell mới nhất.
+        /// Luôn chạy trên UI thread (Dispatcher.Invoke), an toàn để gọi từ bất kỳ thread nào.
+        /// </summary>
+        private void RefreshSamplesGrid()
+        {
+            System.Windows.Application.Current.Dispatcher.Invoke(RefreshSamplesGridCore);
+        }
+
+        /// <summary>Phần lõi (không tự Dispatcher.Invoke) dùng chung bởi RefreshUI() (đã ở trong
+        /// Dispatcher.Invoke) và RefreshSamplesGrid() (public entry, tự lo Dispatcher).</summary>
+        private void RefreshSamplesGridCore()
+        {
+            SamplesCollection.Clear();
+            foreach (var item in _samples)
+                SamplesCollection.Add(item);
         }
 
         private void UpdateSampleStatuses()

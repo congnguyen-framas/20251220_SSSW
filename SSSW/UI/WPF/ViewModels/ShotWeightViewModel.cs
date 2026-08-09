@@ -551,7 +551,7 @@ namespace SSSW.UI.WPF.ViewModels
             var appVersion = System.Reflection.Assembly.GetExecutingAssembly().GetName().Version?.ToString() ?? "N/A";
 
             if (Enum.TryParse<EnumLocation>(location, true, out var loc))
-                WindowTitle = $"{loc} – Shotweight Station – Ver-{appVersion}";
+                WindowTitle = $"{loc} – Shotweight Station For Step Component – Ver-{appVersion}";
 
             // Config
             var configData = await db.FT608s

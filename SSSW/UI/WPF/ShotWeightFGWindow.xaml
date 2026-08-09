@@ -102,7 +102,6 @@
                         FontFamily="Segoe UI"
                         FontSize="15"
                         Foreground="White"
-                        IsEnabled="{Binding ReadOnlyRfid}"
                         MouseLeftButtonDown="_tbEmployee_MouseLeftButtonDown"
                         Text="{Binding UserName}" />
                 </StackPanel>
@@ -112,6 +111,16 @@
                     Margin="0,0,4,0"
                     VerticalAlignment="Center"
                     Orientation="Horizontal">
+                    <Button
+                        Command="{Binding ReloadCommand}"
+                        Content="&#xE72C;"
+                        Style="{StaticResource TitleIconBtn}"
+                        ToolTip="Reload" />
+                    <Button
+                        Command="{Binding HistoryViewCommand}"
+                        Content="&#xE81C;"
+                        Style="{StaticResource TitleIconBtn}"
+                        ToolTip="History" />
                     <Button
                         Click="btnMinimize_Click"
                         Content="&#xE921;"
@@ -611,17 +620,40 @@
                                     </DataGridTextColumn.Header>
                                 </DataGridTextColumn>
 
-                                <DataGridTextColumn
-                                    Width="90"
-                                    Binding="{Binding C026}"
-                                    ElementStyle="{StaticResource CenterCell}">
-                                    <DataGridTextColumn.Header>
-                                        <TextBlock
-                                            Text="MAIN CODE"
-                                            TextAlignment="Center"
-                                            TextWrapping="WrapWithOverflow" />
-                                    </DataGridTextColumn.Header>
-                                </DataGridTextColumn>
+                                <DataGridTemplateColumn Width="150">
+                                    <!--  HEADER TEMPLATE  -->
+                                    <DataGridTemplateColumn.HeaderTemplate>
+                                        <DataTemplate>
+                                            <TextBlock
+                                                FontWeight="Bold"
+                                                Text="MAIN / MAIN CODE"
+                                                TextAlignment="Center"
+                                                TextWrapping="Wrap" />
+                                        </DataTemplate>
+                                    </DataGridTemplateColumn.HeaderTemplate>
+
+                                    <!--  CELL TEMPLATE  -->
+                                    <DataGridTemplateColumn.CellTemplate>
+                                        <DataTemplate>
+                                            <StackPanel
+                                                Margin="6,0"
+                                                HorizontalAlignment="Center"
+                                                VerticalAlignment="Center">
+                                                <TextBlock
+                                                    FontSize="12"
+                                                    FontWeight="Bold"
+                                                    Text="{Binding C027}"
+                                                    TextTrimming="CharacterEllipsis"
+                                                    TextWrapping="Wrap" />
+                                                <TextBlock
+                                                    FontSize="10"
+                                                    Foreground="#78909C"
+                                                    Text="{Binding C026}"
+                                                    TextTrimming="CharacterEllipsis" />
+                                            </StackPanel>
+                                        </DataTemplate>
+                                    </DataGridTemplateColumn.CellTemplate>
+                                </DataGridTemplateColumn>
 
                                 <DataGridTextColumn
                                     Width="90"
@@ -635,26 +667,37 @@
                                     </DataGridTextColumn.Header>
                                 </DataGridTextColumn>
 
-                                <DataGridTextColumn
-                                    Width="110"
-                                    Binding="{Binding C034}"
-                                    ElementStyle="{StaticResource CenterCell}">
-                                    <DataGridTextColumn.HeaderTemplate>
+                                <DataGridTemplateColumn Width="200">
+                                    <!--  HEADER TEMPLATE  -->
+                                    <DataGridTemplateColumn.HeaderTemplate>
                                         <DataTemplate>
                                             <TextBlock
-                                                Text="CATEGORY"
+                                                FontWeight="Bold"
+                                                Text="CATEGORY / CATEGORY CODE"
                                                 TextAlignment="Center"
-                                                TextWrapping="WrapWithOverflow"
-                                                ToolTipService.ShowDuration="20000">
-                                                <TextBlock.ToolTip>
-                                                    <TextBlock Width="200" TextWrapping="Wrap">
-                                                        Category name (Category code: bound field C033).
-                                                    </TextBlock>
-                                                </TextBlock.ToolTip>
-                                            </TextBlock>
+                                                TextWrapping="WrapWithOverflow" />
                                         </DataTemplate>
-                                    </DataGridTextColumn.HeaderTemplate>
-                                </DataGridTextColumn>
+                                    </DataGridTemplateColumn.HeaderTemplate>
+
+                                    <!--  CELL TEMPLATE  -->
+                                    <DataGridTemplateColumn.CellTemplate>
+                                        <DataTemplate>
+                                            <StackPanel Margin="6,4">
+                                                <TextBlock
+                                                    FontSize="12"
+                                                    FontWeight="Bold"
+                                                    Text="{Binding C034}"
+                                                    TextWrapping="Wrap" />
+
+                                                <TextBlock
+                                                    FontSize="10"
+                                                    Foreground="#78909C"
+                                                    Text="{Binding C033}"
+                                                    TextWrapping="Wrap" />
+                                            </StackPanel>
+                                        </DataTemplate>
+                                    </DataGridTemplateColumn.CellTemplate>
+                                </DataGridTemplateColumn>
 
                                 <DataGridTextColumn
                                     Width="100"

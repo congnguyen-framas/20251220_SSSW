@@ -19,6 +19,9 @@ namespace SSSW.models
         /// <summary>Main Code (FT601.C020).</summary>
         public string? MainCode { get; set; }
 
+        /// <summary>Main item name (FT601.C003) — hiển thị cùng MainCode kiểu "MAIN / MAIN CODE" giống grid Total Steps.</summary>
+        public string? MainName { get; set; }
+
         /// <summary>Article (FT601.C006).</summary>
         public string? Article { get; set; }
 

@@ -358,6 +358,7 @@ namespace SSSW.UI.WPF.ViewModels
         //  COMMANDS
         // ─────────────────────────────────────────────────────────────────────
         public RelayCommand ReloadCommand { get; }
+        public RelayCommand HistoryViewCommand { get; }
         public RelayCommand MinimizeCommand { get; }
         public RelayCommand MaximizeCommand { get; }
         public RelayCommand CloseCommand { get; }
@@ -383,6 +384,7 @@ namespace SSSW.UI.WPF.ViewModels
             _logger = logger;
 
             ReloadCommand = new RelayCommand(() => _ = LoadDataAsync(TimeSpan.FromSeconds(30)));
+            HistoryViewCommand = new RelayCommand(OpenHistoryView);
             MinimizeCommand = new RelayCommand(() => System.Windows.Application.Current.MainWindow.WindowState = System.Windows.WindowState.Minimized);
             MaximizeCommand = new RelayCommand(ToggleMaximize);
             CloseCommand = new RelayCommand(() => System.Windows.Application.Current.MainWindow.Close());
@@ -459,6 +461,7 @@ namespace SSSW.UI.WPF.ViewModels
                         FT601Id = x.Id,
                         ArticlePairsShot = x.C013,
                         MainCode = x.C020,
+                        MainName = x.C003,
                         Article = x.C006,
                         MachineGroup = x.C016,
                         MoldId = x.C019,
@@ -504,7 +507,7 @@ namespace SSSW.UI.WPF.ViewModels
                 System.Windows.Application.Current.Dispatcher.Invoke(() =>
                 {
                     FgCodeMaster = master;
-                    WindowTitle = $"{location} – FG Shotweight Station – Ver-{appVersion}";
+                    WindowTitle = $"{location} – Shotweight Station For FG – Ver-{appVersion}";
                     DeltaInformation = $"STD: Target Weight ↔ ACTUAL: Live Weight · auto colored vs. tolerance: -{GlobalVariable.ConfigSystem.DeltaLevel1}g<=Delta<={GlobalVariable.ConfigSystem.DeltaLevel1}g -->green;  -{GlobalVariable.ConfigSystem.DeltaLevel2}g<=Delta<=-{GlobalVariable.ConfigSystem.DeltaLevel1}g or {GlobalVariable.ConfigSystem.DeltaLevel1}g<=Delta<={GlobalVariable.ConfigSystem.DeltaLevel2}g -->Orange; Delta<-{GlobalVariable.ConfigSystem.DeltaLevel2}g or Delta>{GlobalVariable.ConfigSystem.DeltaLevel2}g -->Red.";
                 });
             }
@@ -641,6 +644,16 @@ namespace SSSW.UI.WPF.ViewModels
             }
         }
 
+        /// <summary>Mở màn hình xem lại lịch sử cân (frmMainView) — giống hệt nút History bên
+        /// ShotWeightViewModel (dùng chung 1 màn hình cho cả 2 form, không tách riêng theo FG/step).</summary>
+        private void OpenHistoryView()
+        {
+            var nf = _serviceProvider.GetRequiredService<frmMainView>();
+            nf.StartPosition = System.Windows.Forms.FormStartPosition.CenterScreen;
+            nf.WindowState = System.Windows.Forms.FormWindowState.Maximized;
+            nf.ShowDialog();
+        }
+
         /// <summary>Mở dialog nhập tay Employee ID (khi không quét được RFID). Copy nguyên vẹn từ
         /// ShotWeightViewModel.</summary>
         public void OpenRfidInputDialog()
@@ -694,6 +707,7 @@ namespace SSSW.UI.WPF.ViewModels
                     FT601Id = hydraRow.Id,
                     ArticlePairsShot = hydraRow.C013,
                     MainCode = hydraRow.C020,
+                    MainName = hydraRow.C003,
                     Article = hydraRow.C006,
                     MachineGroup = hydraRow.C016,
                     MoldId = hydraRow.C019,
@@ -754,6 +768,7 @@ namespace SSSW.UI.WPF.ViewModels
                 C017 = fg.ArticlePairsShot,
                 C018 = fg.MoldPairsShot,
                 C026 = fg.MainCode,
+                C027 = fg.MainName,
                 C005 = fg.Article,
                 C019 = fg.MachineGroup,
                 C020 = fg.MoldId,
@@ -815,6 +830,7 @@ namespace SSSW.UI.WPF.ViewModels
                     FT601Id = _rowSelected.C032 ?? Guid.Empty,
                     ArticlePairsShot = _rowSelected.C028.HasValue ? (int)_rowSelected.C028.Value : null,
                     MainCode = _rowSelected.C026,
+                    MainName = _rowSelected.C027,
                     Article = _rowSelected.C005,
                     MachineGroup = _rowSelected.C019,
                     MoldId = _rowSelected.C020,

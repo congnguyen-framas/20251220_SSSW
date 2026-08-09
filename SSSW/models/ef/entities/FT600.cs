@@ -188,7 +188,6 @@ namespace SSSW.models
         /// Số mẫu cần lấy.
         /// Mặc định 1.
         /// </summary>
-        [Browsable(false)]
         [DisplayName("Sample num")] 
         public int? C009 { get; set; } = 1;
 

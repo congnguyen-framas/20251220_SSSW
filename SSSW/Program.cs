@@ -7,6 +7,7 @@ using Serilog;
 using Serilog.Events;
 using SSSW.modelss;
 using SSSW.UI.WPF;
+using SSSW.UI.WPF.Services;
 using SSSW.UI.WPF.ViewModels;
 using System.Globalization;
 using System.IO;
@@ -81,8 +82,10 @@ namespace SSSW
                     services.AddTransient<frmMainView>();
                     services.AddTransient<frmUpdateMasterData>();
                     services.AddTransient<frmShotWeightScaleV2>();
+                    services.AddSingleton<DeviceConnectionService>(); // Shared Barcode/RFID/Scale drivers
                     services.AddTransient<ShotWeightViewModel>(); // MVVM ViewModel
                     services.AddTransient<ShotWeightWindow>();   // WPF Option-A window
+                    services.AddTransient<ShotWeightFGViewModel>(); // FG-only MVVM ViewModel (no step/BOM)
                     services.AddTransient<ShotWeightFGWindow>(); // WPF Scan FG sample-weighing window
                     services.AddTransient<frmRfidInputViewModel>(); // Manual Employee ID entry ViewModel
                     services.AddTransient<frmRfidInput>();          // Manual Employee ID entry dialog
@@ -116,6 +119,10 @@ namespace SSSW
 
             var wpfWin = scope.ServiceProvider.GetRequiredService<ShotWeightWindow>();
             wpfApp.Run(wpfWin);
+
+            // Release hardware connections exactly once at process exit, regardless of
+            // which window(s) (main / FG) were opened during the run.
+            scope.ServiceProvider.GetRequiredService<DeviceConnectionService>().Shutdown();
         }
     }
 }

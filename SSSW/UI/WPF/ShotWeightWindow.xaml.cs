@@ -18,6 +18,7 @@ using ScanAndScale.Core.Drivers;
 using ScanAndScale.Core.Models;
 using SSSW.models;
 using SSSW.modelss;
+using SSSW.UI.WPF.Services;
 using SSSW.UI.WPF.ViewModels;
 using System.Runtime.InteropServices;
 using System.Text.RegularExpressions;
@@ -43,19 +44,18 @@ namespace SSSW.UI.WPF
         // ── ViewModel ────────────────────────────────────────────────────────
         private ShotWeightViewModel _vm = null!;
 
-        // ── ScanAndScale.Core drivers (thay thế BarcodeButtonEdit / RFIDButtonEdit / ScaleButtonEdit) ──
-        private readonly BarcodeDriver _barcodeDriver = BarcodeDriver.Instance;
-        private readonly RfidDriver _rfidDriver = RfidDriver.Instance;
-        private ScaleDriver? _scaleDriver;
+        // ── Shared hardware connections (owned by DeviceConnectionService, not this window) ──
+        private DeviceConnectionService _deviceService = null!;
 
         // ════════════════════════════════════════════════════════════════════
         //  CONSTRUCTORS
         // ════════════════════════════════════════════════════════════════════
 
         /// <summary>DI constructor – nhận ViewModel từ DI container.</summary>
-        public ShotWeightWindow(ShotWeightViewModel viewModel) : this()
+        public ShotWeightWindow(ShotWeightViewModel viewModel, DeviceConnectionService deviceService) : this()
         {
             _vm = viewModel;
+            _deviceService = deviceService;
             DataContext = viewModel;
         }
 
@@ -74,9 +74,11 @@ namespace SSSW.UI.WPF
         {
             if (_vm == null) return; // guard cho design-time preview
 
-            // 1. Đăng ký events TRƯỚC khi Initialize để không bỏ sót status thay đổi
-            _barcodeDriver.DataValueChanged += BarcodeDriver_DataValueChanged;
-            _rfidDriver.DataValueChanged += RfidDriver_DataValueChanged;
+            // 1. Đăng ký các event re-broadcast từ DeviceConnectionService TRƯỚC khi
+            //    EnsureInitialized() để không bỏ sót status thay đổi.
+            _deviceService.BarcodeChanged += BarcodeDriver_DataValueChanged;
+            _deviceService.RfidChanged += RfidDriver_DataValueChanged;
+            _deviceService.ScaleChanged += ScaleDriver_DataValueChanged;
 
             // 2. Cấu hình View callbacks để ViewModel gọi lại View khi cần
             //    Ghi chú: ClearBarcodeAction / ClearRfidAction đã được VM khởi tạo
@@ -86,9 +88,39 @@ namespace SSSW.UI.WPF
             _vm.ClearStepComboAction = () => { cbStepName.EditValue = null; };
             _vm.SetStepComboAction = item => { cbStepName.EditValue = item?.StepItemCode; };
             _vm.FocusGridRowAction = code => FocusStepInGrid(code);
-            _vm.ApplyHardwareConfigAction = ApplyHardwareConfig;
 
-            // 3. Khởi tạo ViewModel (load config DB + master data)
+            // 3. Kết nối hardware (Barcode/RFID/Scale) — VM tự gọi callback này SAU khi
+            //    GlobalVariable.ConfigSystem đã load xong từ DB (trong InitializeAsync),
+            //    không phải ngay bây giờ, để tránh connect bằng config mặc định.
+            //    No-op nếu window kia (FG) đã kết nối trước đó.
+            _vm.ConnectHardwareAction = () =>
+            {
+                _deviceService.EnsureInitialized();
+
+                // Backfill trạng thái hiện tại — phòng trường hợp driver đã kết nối
+                // từ trước (window kia init trước) nên sẽ không có event mới nào bắn ra.
+                _vm.BarcodeStatus = _deviceService.BarcodeStatus;
+                _vm.RfidStatus = _deviceService.RfidStatus;
+                _vm.ScaleStatus = _deviceService.ScaleStatus;
+            };
+
+            // 4. Tạm ngưng nhận event hardware khi cửa sổ FG (dialog con) đang mở, tránh
+            //    một lần scan/cân vật lý bị xử lý trùng ở cả 2 cửa sổ cùng lúc.
+            _vm.SuspendDeviceEventsAction = () =>
+            {
+                _deviceService.BarcodeChanged -= BarcodeDriver_DataValueChanged;
+                _deviceService.RfidChanged -= RfidDriver_DataValueChanged;
+                _deviceService.ScaleChanged -= ScaleDriver_DataValueChanged;
+            };
+            _vm.ResumeDeviceEventsAction = () =>
+            {
+                _deviceService.BarcodeChanged += BarcodeDriver_DataValueChanged;
+                _deviceService.RfidChanged += RfidDriver_DataValueChanged;
+                _deviceService.ScaleChanged += ScaleDriver_DataValueChanged;
+            };
+
+            // 5. Khởi tạo ViewModel (load config DB + master data; sẽ gọi ConnectHardwareAction
+            //    ở đúng thời điểm bên trong).
             await _vm.InitializeAsync();
         }
 
@@ -97,90 +129,12 @@ namespace SSSW.UI.WPF
         // ════════════════════════════════════════════════════════════════════
         private void OnClosing(object? sender, System.ComponentModel.CancelEventArgs e)
         {
-            // Hủy đăng ký events → tránh memory leak
-            _barcodeDriver.DataValueChanged -= BarcodeDriver_DataValueChanged;
-            _rfidDriver.DataValueChanged -= RfidDriver_DataValueChanged;
-            if (_scaleDriver != null)
-                _scaleDriver.DataValueChanged -= ScaleDriver_DataValueChanged;
-
-            // Dispose drivers để giải phóng serial port, TCP socket
-            _barcodeDriver.Dispose();
-            _rfidDriver.Dispose();
-            _scaleDriver?.Dispose();
-            _scaleDriver = null;
-        }
-
-        // ════════════════════════════════════════════════════════════════════
-        //  HARDWARE CONFIG
-        //  Gọi từ ViewModel (ApplyHardwareConfigAction) sau khi load config từ DB.
-        //  Map ScanAndScale.Driver config → ScanAndScale.Core config → Initialize.
-        // ════════════════════════════════════════════════════════════════════
-        private void ApplyHardwareConfig()
-        {
-            var cfg = GlobalVariable.ConfigSystem;
-
-            // ── Barcode (Zebra CoreScanner SDK) ──────────────────────────────
-            var barcodeCfg = new BarcodeConfig
-            {
-                Enable = cfg.Scanner.Enable,
-                ReadOnly = cfg.Scanner.ReadOnly
-            };
-
-            if (barcodeCfg.Enable)
-            {
-                bool ok = _barcodeDriver.Initialize(barcodeCfg);
-                _vm.BarcodeStatus = ok ? DriverStatus.Connected : DriverStatus.Disconnected;
-            }
-            else
-                _vm.BarcodeStatus = DriverStatus.Disconnected;
-
-            // ── RFID (SerialPort / COM) ───────────────────────────────────────
-            //  Map: Rfid_Com → ComPort, Rfid_AutoFindCom → AutoFindCom,
-            //       Rfid_Caption → DeviceCaption, Rfid_Manufact → DeviceManufacturer
-            var rfidCfg = new RfidConfig
-            {
-                Enable = cfg.RFID.Enable,
-                AutoFindCom = cfg.RFID.Rfid_AutoFindCom,
-                ComPort = cfg.RFID.Rfid_Com,
-                DeviceCaption = cfg.RFID.Rfid_Caption,
-                DeviceManufacturer = cfg.RFID.Rfid_Manufact
-            };
-
-            if (rfidCfg.Enable)
-            {
-                bool ok = _rfidDriver.Initialize(rfidCfg);
-                _vm.RfidStatus = ok ? DriverStatus.Connected : DriverStatus.Disconnected;
-            }
-            else
-                _vm.RfidStatus = DriverStatus.Disconnected;
-
-            // ── Scale (TCP/IP) ────────────────────────────────────────────────
-            //  Map: TimeScan → TimeScanMs (tên property khác nhau giữa hai thư viện)
-            var scaleCfg = new ScaleConfig
-            {
-                Enable = cfg.Scale.Enable == true,
-                ReadOnly = cfg.Scale.ReadOnly == true,
-                IP = cfg.Scale.IP,
-                Port = cfg.Scale.Port,
-                TimeScanMs = cfg.Scale.TimeScan,
-                CalibZero = cfg.Scale.CalibZero,
-                CalibGain = cfg.Scale.CalibGain,
-                DecimalNum = cfg.Scale.DecimalNum,
-                ModelName = cfg.Scale.ModelName,
-                CheckStable = cfg.Scale.CheckStable == true,
-                CheckTare = cfg.Scale.CheckTare == true,
-            };
-
-            bool enableScale = scaleCfg.Enable && (cfg.EnableReadScale ?? false);
-            if (enableScale)
-            {
-                _scaleDriver = new ScaleDriver();
-                _scaleDriver.DataValueChanged += ScaleDriver_DataValueChanged;
-                _scaleDriver.Initialize(scaleCfg);
-                // Connected/Disconnected sẽ được cập nhật khi event đầu tiên fire
-            }
-            else
-                _vm.ScaleStatus = DriverStatus.Disconnected;
+            // Hủy đăng ký events → tránh memory leak. KHÔNG dispose driver ở đây:
+            // chúng được chia sẻ với ShotWeightFGWindow và chỉ được giải phóng một
+            // lần bởi DeviceConnectionService.Shutdown() khi ứng dụng thoát.
+            _deviceService.BarcodeChanged -= BarcodeDriver_DataValueChanged;
+            _deviceService.RfidChanged -= RfidDriver_DataValueChanged;
+            _deviceService.ScaleChanged -= ScaleDriver_DataValueChanged;
         }
 
         // ════════════════════════════════════════════════════════════════════

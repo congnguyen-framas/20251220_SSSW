@@ -451,8 +451,17 @@ namespace SSSW.UI.WPF.ViewModels
         public Action<StepSelectModel?>? SetStepComboAction { get; set; }
         /// <summary>Code-behind gán: focus+scroll đến row trong dgTotalSteps.</summary>
         public Action<string?>? FocusGridRowAction { get; set; }
-        /// <summary>Code-behind gán: apply config cho hardware controls.</summary>
-        public Action? ApplyHardwareConfigAction { get; set; }
+        /// <summary>Code-behind gán: kết nối hardware (DeviceConnectionService.EnsureInitialized()).
+        /// PHẢI được gọi sau khi GlobalVariable.ConfigSystem đã load xong từ DB (xem InitializeAsync)
+        /// — gọi sớm hơn sẽ khiến driver kết nối bằng config mặc định (IP/COM sai) thay vì config
+        /// thật của máy.</summary>
+        public Action? ConnectHardwareAction { get; set; }
+        /// <summary>Code-behind gán: hủy đăng ký event hardware của cửa sổ chính, dùng khi
+        /// mở dialog ShotWeightFGWindow — tránh 1 lần scan/cân vật lý bị cả 2 cửa sổ cùng xử lý.</summary>
+        public Action? SuspendDeviceEventsAction { get; set; }
+        /// <summary>Code-behind gán: đăng ký lại event hardware của cửa sổ chính sau khi dialog
+        /// ShotWeightFGWindow đóng lại.</summary>
+        public Action? ResumeDeviceEventsAction { get; set; }
 
         // ─────────────────────────────────────────────────────────────────────
         //  COMMANDS
@@ -567,8 +576,10 @@ namespace SSSW.UI.WPF.ViewModels
                 await db.SaveChangesAsync();
             }
 
-            // Apply hardware config qua callback
-            ApplyHardwareConfigAction?.Invoke();
+            // Hardware (Barcode/RFID/Scale) do DeviceConnectionService sở hữu và khởi tạo,
+            // nhưng phải đợi tới đây (SAU khi GlobalVariable.ConfigSystem đã load xong ở trên)
+            // mới được phép kết nối — nếu không sẽ dùng nhầm config mặc định.
+            ConnectHardwareAction?.Invoke();
 
             // Default values
             UsagePct = GlobalVariable.ConfigSystem.PercentOfUserNonWoven.ToString();
@@ -2241,7 +2252,18 @@ namespace SSSW.UI.WPF.ViewModels
             var win = _serviceProvider.GetRequiredService<ShotWeightFGWindow>();
             win.Owner = System.Windows.Application.Current.MainWindow;
             win.WindowStartupLocation = System.Windows.WindowStartupLocation.CenterOwner;
-            win.ShowDialog();
+
+            // Tạm ngưng nhận event hardware của cửa sổ chính trong lúc dialog FG mở —
+            // dialog FG có subscription hardware riêng của chính nó (ShotWeightFGWindow.OnLoaded).
+            SuspendDeviceEventsAction?.Invoke();
+            try
+            {
+                win.ShowDialog();
+            }
+            finally
+            {
+                ResumeDeviceEventsAction?.Invoke();
+            }
         }
 
         private void OpenHistoryView()

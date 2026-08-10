@@ -426,7 +426,7 @@ namespace SSSW.UI.WPF.ViewModels
         // ─────────────────────────────────────────────────────────────────────
         public async Task LoadDataAsync(TimeSpan? timeout = null)
         {
-            timeout ??= TimeSpan.FromSeconds(30);
+            timeout ??= TimeSpan.FromSeconds(60);
             _loadCts?.Cancel();
             _loadCts?.Dispose();
             _loadCts = new CancellationTokenSource();
@@ -480,29 +480,17 @@ namespace SSSW.UI.WPF.ViewModels
                     .OrderBy(x => x.FGName)
                     .ToList();
 
-                // Category/Unit của từng FG item — lấy giống bên form step (sp_GetCategorryOfItem),
-                // nhưng gọi 1 lần theo batch cho toàn bộ FG code thay vì gọi lẻ từng dòng.
-                if (master.Count > 0)
-                {
-                    var itemList = string.Join(",", master.Select(x => x.FGCode).Distinct());
-                    var categories = await Task.Run(async () =>
-                    {
-                        using var ctx = _dbFactory.CreateDbContext();
-                        return await ctx.Database
-                            .SqlQueryRaw<CategoryOfItemModel>(
-                                "sp_GetCategorryOfItem @ItemCode = {0}", itemList)
-                            .AsNoTracking().ToListAsync(token);
-                    }, token);
-
-                    foreach (var m in master)
-                    {
-                        var cat = categories.FirstOrDefault(x => x.ItemCode == m.FGCode);
-                        m.CategoryCode = cat?.CategoryCode;
-                        m.CategoryName = cat?.CategoryName;
-                        m.Unit = cat?.Unit;
-                    }
-                }
-
+                // Category/Unit KHÔNG còn được batch-load ở đây nữa.
+                // Lý do: master là TOÀN BỘ FT601 active (không lọc theo machine/company) — với hệ
+                // thống thực tế lên tới hàng nghìn FG item (~7600+), kể cả khi chia batch 200
+                // item/lần (fix trước) thì tổng số round-trip vẫn quá lớn và vẫn vượt timeout →
+                // TaskCanceledException lặp lại. sp_GetCategorryOfItem vốn chỉ được thiết kế để
+                // gọi với 1 vài item (xem cách gọi bên frmShotWeightScale/ShotWeightViewModel —
+                // luôn truyền "sameMolds", không bao giờ truyền cả danh mục).
+                // Vì Category/Unit chỉ thực sự được dùng tại thời điểm 1 FG cụ thể được CHỌN/QUÉT
+                // (AddSample/OnFgSelectedAsync/OnBarcodeScannedAsync), nó được tra cứu LAZY — đúng
+                // 1 item — ngay tại thời điểm đó (xem ResolveCategoryAsync), không cần thiết phải
+                // preload cho toàn bộ master list.
                 var location = _mesocomp switch
                 {
                     "VNT1" => "fVN",
@@ -521,7 +509,16 @@ namespace SSSW.UI.WPF.ViewModels
                     DeltaInformation = $"STD: Target Weight ↔ ACTUAL: Live Weight · auto colored vs. tolerance: -{GlobalVariable.ConfigSystem.DeltaLevel1}g<=Delta<={GlobalVariable.ConfigSystem.DeltaLevel1}g -->green;  -{GlobalVariable.ConfigSystem.DeltaLevel2}g<=Delta<=-{GlobalVariable.ConfigSystem.DeltaLevel1}g or {GlobalVariable.ConfigSystem.DeltaLevel1}g<=Delta<={GlobalVariable.ConfigSystem.DeltaLevel2}g -->Orange; Delta<-{GlobalVariable.ConfigSystem.DeltaLevel2}g or Delta>{GlobalVariable.ConfigSystem.DeltaLevel2}g -->Red.";
                 });
             }
-            catch (OperationCanceledException) { }
+            catch (OperationCanceledException)
+            {
+                // Phân biệt user bấm "Cancel Load" (không cần log) với timeout tự động (đáng log —
+                // trước đây bị nuốt lặng lẽ hoàn toàn, không có dấu vết gì để chẩn đoán khi
+                // sp_GetCategorryOfItem/FT601 query chạy chậm).
+                if (timeoutCts.IsCancellationRequested)
+                    _logger.LogWarning(
+                        "LoadDataAsync timed out after {TimeoutSeconds}s — check sp_GetCategorryOfItem/FT601 query performance",
+                        timeout.Value.TotalSeconds);
+            }
             catch (Exception ex)
             {
                 System.Windows.Forms.MessageBox.Show($"Load data failure:\n{ex.Message}", "Load data",
@@ -685,11 +682,11 @@ namespace SSSW.UI.WPF.ViewModels
         // ─────────────────────────────────────────────────────────────────────
 
         /// <summary>Gọi từ code-behind khi DevExpress LookUpEdit (cbFgCode) thay đổi selection.</summary>
-        public Task OnFgSelectedAsync(FgSelectModel? selected)
+        public async Task OnFgSelectedAsync(FgSelectModel? selected)
         {
-            if (selected == null) return Task.CompletedTask;
+            if (selected == null) return;
+            await ResolveCategoryAsync(selected);
             AddSample(selected);
-            return Task.CompletedTask;
         }
 
         /// <summary>Barcode scanner đọc được QR code của label FG.</summary>
@@ -705,9 +702,7 @@ namespace SSSW.UI.WPF.ViewModels
                 var hydraRow = _dataHydra.FirstOrDefault(x => x.Id == _labelInfo.c000)
                                ?? throw new Exception("FG information not found.");
 
-                var masterMatch = FgCodeMaster.FirstOrDefault(x => x.FGCode == hydraRow.C007);
-
-                AddSample(new FgSelectModel
+                var newFg = new FgSelectModel
                 {
                     FGCode = hydraRow.C007,
                     FGName = hydraRow.C008,
@@ -722,17 +717,44 @@ namespace SSSW.UI.WPF.ViewModels
                     MachineGroup = hydraRow.C016,
                     MoldId = hydraRow.C019,
                     MoldPairsShot = hydraRow.C014,
-                    CategoryCode = masterMatch?.CategoryCode,
-                    CategoryName = masterMatch?.CategoryName,
-                    Unit = masterMatch?.Unit,
                     QrCode = _labelInfo.c001
-                });
+                };
+                await ResolveCategoryAsync(newFg);
+                AddSample(newFg);
             }
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Barcode scan error");
                 System.Windows.Forms.MessageBox.Show(ex.Message, "WARNING",
                     (MessageBoxButtons)MessageBoxButton.OK, (MessageBoxIcon)MessageBoxImage.Warning);
+            }
+        }
+
+        /// <summary>
+        /// Tra Category/Unit cho đúng 1 FG code, gọi LAZY tại thời điểm FG được CHỌN (combo) hoặc
+        /// QUÉT (barcode) — thay vì batch-load sẵn cho toàn bộ master list trong LoadDataAsync (đã
+        /// gỡ bỏ, xem ghi chú trong LoadDataAsync). sp_GetCategorryOfItem chỉ nhận đúng 1 item ở
+        /// đây nên luôn nhanh, không phụ thuộc vào tổng số FG item của toàn hệ thống.
+        /// </summary>
+        private async Task ResolveCategoryAsync(FgSelectModel fg)
+        {
+            if (string.IsNullOrEmpty(fg.FGCode) || fg.CategoryCode.HasValue) return;
+            try
+            {
+                using var ctx = _dbFactory.CreateDbContext();
+                var cat = (await ctx.Database
+                        .SqlQueryRaw<CategoryOfItemModel>("sp_GetCategorryOfItem @ItemCode = {0}", fg.FGCode)
+                        .AsNoTracking().ToListAsync())
+                    .FirstOrDefault();
+                fg.CategoryCode = cat?.CategoryCode;
+                fg.CategoryName = cat?.CategoryName;
+                fg.Unit = cat?.Unit;
+            }
+            catch (Exception ex)
+            {
+                // Không chặn luồng thêm sample nếu tra Category lỗi — chỉ log, Category/Unit sẽ để
+                // trống trên dòng FT600 (không phải lỗi nghiêm trọng, có thể sửa tay sau).
+                _logger.LogError(ex, "ResolveCategoryAsync error for FGCode {FGCode}", fg.FGCode);
             }
         }
 

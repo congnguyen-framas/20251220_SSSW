@@ -41,6 +41,10 @@ namespace SSSW.UI.WPF
         // ── ViewModel (instance RIÊNG của cửa sổ này) ───────────────────────
         private ShotWeightFGViewModel _vm = null!;
 
+        // ── Chặn EditValueChanged bắn chồng lên nhau (VD người dùng bấm nhanh 2 dòng
+        // liên tiếp trong popup trước khi lần chọn trước load DB xong) ──────────────
+        private bool _isHandlingFgSelection;
+
         // ── Shared hardware connections (singleton, xem DeviceConnectionService) ──
         private DeviceConnectionService _deviceService = null!;
 
@@ -192,14 +196,22 @@ namespace SSSW.UI.WPF
         // ════════════════════════════════════════════════════════════════════
         private async void cbFgCode_EditValueChangedAsync(object sender, EditValueChangedEventArgs e)
         {
-            if (_vm == null) return;
+            if (_vm == null || _isHandlingFgSelection) return;
 
             var editVal = cbFgCode.EditValue?.ToString();
             var selected = string.IsNullOrEmpty(editVal)
                 ? null
                 : _vm.FgCodeMaster.FirstOrDefault(x => x.FGCode == editVal);
 
-            await _vm.OnFgSelectedAsync(selected);
+            _isHandlingFgSelection = true;
+            try
+            {
+                await _vm.OnFgSelectedAsync(selected);
+            }
+            finally
+            {
+                _isHandlingFgSelection = false;
+            }
         }
 
         // ════════════════════════════════════════════════════════════════════

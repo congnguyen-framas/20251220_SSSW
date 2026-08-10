@@ -249,36 +249,67 @@
                                     <dxg:LookUpEdit
                                         x:Name="cbFgCode"
                                         Margin="0,0,0,8"
-                                        AutoComplete="True"
                                         AutoPopulateColumns="False"
                                         DisplayMember="FGName"
                                         EditValueChanged="cbFgCode_EditValueChangedAsync"
                                         FontSize="15"
                                         ItemsSource="{Binding FgCodeMaster}"
                                         PopupHeight="500"
-                                        PopupWidth="1000"
+                                        PopupWidth="1500"
                                         TextWrapping="Wrap"
                                         ValueMember="FGCode">
-                                        <dxg:LookUpEdit.StyleSettings>
-                                            <dxg:LookUpEditStyleSettings AllowColumnFiltering="True" />
-                                        </dxg:LookUpEdit.StyleSettings>
+                                        <!--
+                                            KHÔNG dùng AutoComplete + KHÔNG dùng LookUpEditStyleSettings.AllowColumnFiltering:
+                                            popup ở đây đã bị thay hoàn toàn bởi PART_GridControl tùy biến bên dưới, nên 2 setting
+                                            đó không áp dụng (chỉ có tác dụng với popup mặc định do AutoPopulateColumns sinh ra) —
+                                            để AutoComplete bật cùng lúc với bộ lọc riêng của GridControl gây ra tình trạng đơ khi
+                                            gõ tìm và popup không tự đóng sau khi chọn dòng.
+                                        -->
                                         <dxg:LookUpEdit.PopupContentTemplate>
                                             <ControlTemplate>
                                                 <dxg:GridControl Name="PART_GridControl" IsFilterEnabled="True">
+                                                    <!--  AutoFilterCondition="Contains" trên từng cột: ô lọc tìm theo "chứa" thay vì mặc định "bắt đầu bằng"  -->
                                                     <dxg:GridControl.Columns>
                                                         <dxg:GridColumn
+                                                            AutoFilterCondition="Contains"
                                                             ColumnFilterMode="DisplayText"
                                                             FieldName="Machine"
-                                                            FilterPopupMode="Excel"
                                                             Header="Machine" />
-                                                        <dxg:GridColumn FieldName="Size" Header="Size" />
-                                                        <dxg:GridColumn FieldName="HydraOrderNo" Header="Hydra Order No" />
-                                                        <dxg:GridColumn FieldName="FGCode" Header="FG Code" />
-                                                        <dxg:GridColumn FieldName="FGName" Header="FG Name" />
+                                                        <dxg:GridColumn
+                                                            AutoFilterCondition="Contains"
+                                                            FieldName="Size"
+                                                            Header="Size" />
+                                                        <dxg:GridColumn
+                                                            AutoFilterCondition="Contains"
+                                                            FieldName="FGCode"
+                                                            Header="FG Code" />
+                                                        <dxg:GridColumn
+                                                            AutoFilterCondition="Contains"
+                                                            FieldName="FGName"
+                                                            Header="FG Name" />
+                                                        <dxg:GridColumn
+                                                            AutoFilterCondition="Contains"
+                                                            FieldName="HydraOrderNo"
+                                                            Header="Hydra Order No" />
                                                     </dxg:GridControl.Columns>
                                                     <dxg:GridControl.View>
+                                                        <!--
+                                                            ColumnFilterPopupMode="Disabled": tắt popup lọc kiểu Excel trên header cột —
+                                                            popup lồng trong popup của LookUpEdit là nguyên nhân treo/mất con trỏ khi bấm
+                                                            "Clear Filter". Lọc theo cột vẫn dùng ShowAutoFilterRow (ô nhập trực tiếp
+                                                            trong lưới, không phải popup) nên không mất chức năng tìm kiếm.
+                                                            
+                                                            AutoWidth="False" + BestFitModeOnSourceChange="AllRows": tắt chế độ ép cột
+                                                            giãn vừa khung (AutoWidth) để mỗi cột được tự động "Best Fit" theo nội dung
+                                                            (giống lệnh "Best Fit (all columns)" trong menu chuột phải) mỗi khi dữ liệu/lọc
+                                                            thay đổi; HorizontalScrollbarVisibility="Auto" để cuộn ngang khi tổng bề rộng
+                                                            cột vượt khung popup thay vì bị bóp chữ.
+                                                        -->
                                                         <dxg:TableView
-                                                            AutoWidth="True"
+                                                            AutoWidth="False"
+                                                            BestFitModeOnSourceChange="AllRows"
+                                                            ColumnFilterPopupMode="Disabled"
+                                                            HorizontalScrollbarVisibility="Auto"
                                                             ShowAutoFilterRow="True"
                                                             ShowFilterPanelMode="ShowAlways" />
                                                     </dxg:GridControl.View>
@@ -546,7 +577,7 @@
                                                 ToolTipService.ShowDuration="20000">
                                                 <TextBlock.ToolTip>
                                                     <TextBlock Width="250" TextWrapping="Wrap">
-                                        = Total Part Weight (2nd weighing).
+                                                        = Total Part Weight (2nd weighing).
                                                     </TextBlock>
                                                 </TextBlock.ToolTip>
 

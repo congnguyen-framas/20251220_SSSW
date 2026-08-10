@@ -62,7 +62,6 @@ namespace SSSW.UI.WPF.ViewModels
         private bool _isRunner = true;
         private double? _articlePaisShotFinaly = 0;
         private double _percentOfUsage = 0;
-        private string? _remarkFinal = string.Empty;
         private List<StepSelectModel> _allStepCodeMaster = new();
         private StepSelectModel? _selectedStepItem;
 
@@ -192,9 +191,20 @@ namespace SSSW.UI.WPF.ViewModels
             {
                 _remark = value;
                 OnPropertyChanged();
-                // sync remarkFinal và lan sang tất cả rows
-                _remarkFinal = value;
-                _scaleDataFinal?.ForEach(x => x.C038 = _remarkFinal);
+
+                // Remark chỉ áp dụng cho đúng step đang chọn — KHÔNG lan sang các step khác đã có
+                // trong TOTAL STEPS (trước đây ForEach lên toàn bộ _scaleDataFinal, khiến mọi dòng
+                // bị đè cùng 1 remark). Nếu chưa chọn step nào thì bỏ qua.
+                if (_rowSelected != null)
+                {
+                    _rowSelected.C038 = value;
+
+                    // FT600 không implement INotifyPropertyChanged nên gán C038 ở trên không tự
+                    // đẩy lên DataGrid — phải ép rebind lại StepsCollection để cột REMARKS hiện
+                    // giá trị mới ngay khi gõ. Không gọi RefreshUI() ở đây vì RefreshUI() có set lại
+                    // Remark = _rowSelected.C038, sẽ gọi ngược lại setter này → đệ quy vô hạn.
+                    RefreshStepsGrid();
+                }
             }
         }
 
@@ -1844,7 +1854,6 @@ namespace SSSW.UI.WPF.ViewModels
         {
             _labelInfo = new FT606_Label();
             _qrCodeScan = string.Empty;
-            _remarkFinal = string.Empty;
 
             ClearStepComboAction?.Invoke();
             ClearBarcodeAction?.Invoke();
@@ -2179,7 +2188,8 @@ namespace SSSW.UI.WPF.ViewModels
                 FgName = _rowSelected?.C014;
                 UsagePct = (_rowSelected?.C035 != 0
                                   ? _rowSelected?.C035 : _percentOfUsage)?.ToString();
-                Remark = _remarkFinal;
+                // Hiển thị remark của đúng step đang chọn — không phải 1 giá trị dùng chung.
+                Remark = _rowSelected?.C038;
                 StepName = _rowSelected?.C003;
 
 
@@ -2193,13 +2203,31 @@ namespace SSSW.UI.WPF.ViewModels
                 UpdateStepStatuses();
 
                 // Rebuild grid collection
-                StepsCollection.Clear();
-                if (_scaleDataFinal != null)
-                    foreach (var item in _scaleDataFinal)
-                        StepsCollection.Add(item);
+                RefreshStepsGridCore();
 
                 UpdateReferencePanel();
             });
+        }
+
+        /// <summary>
+        /// Ép DataGrid TOTAL STEPS rebind lại toàn bộ row từ _scaleDataFinal. FT600 không implement
+        /// INotifyPropertyChanged nên việc sửa trực tiếp 1 field (VD C038 khi gõ Remark) không tự
+        /// đẩy lên UI — phải Clear + Add lại ObservableCollection để WPF render lại cell mới nhất.
+        /// Luôn chạy trên UI thread (Dispatcher.Invoke), an toàn để gọi từ bất kỳ thread nào.
+        /// </summary>
+        private void RefreshStepsGrid()
+        {
+            System.Windows.Application.Current.Dispatcher.Invoke(RefreshStepsGridCore);
+        }
+
+        /// <summary>Phần lõi (không tự Dispatcher.Invoke) dùng chung bởi RefreshUI() (đã ở trong
+        /// Dispatcher.Invoke) và RefreshStepsGrid() (public entry, tự lo Dispatcher).</summary>
+        private void RefreshStepsGridCore()
+        {
+            StepsCollection.Clear();
+            if (_scaleDataFinal != null)
+                foreach (var item in _scaleDataFinal)
+                    StepsCollection.Add(item);
         }
 
         private void UpdateStepStatuses()
@@ -2231,7 +2259,6 @@ namespace SSSW.UI.WPF.ViewModels
             _qrCodeScan = string.Empty;
             _percentOfUsage = GlobalVariable.ConfigSystem.PercentOfUserNonWoven;
             _articlePaisShotFinaly = 0;
-            _remarkFinal = string.Empty;
             _stdRow = new FT600();
             _refHistory = new List<FT600>();
 

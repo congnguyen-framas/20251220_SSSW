@@ -44,6 +44,10 @@ namespace SSSW.UI.WPF
         // ── ViewModel ────────────────────────────────────────────────────────
         private ShotWeightViewModel _vm = null!;
 
+        // ── Chặn EditValueChanged bắn chồng lên nhau (VD người dùng bấm nhanh 2 dòng
+        // liên tiếp trong popup trước khi lần chọn trước load DB xong) ──────────────
+        private bool _isHandlingStepSelection;
+
         // ── Shared hardware connections (owned by DeviceConnectionService, not this window) ──
         private DeviceConnectionService _deviceService = null!;
 
@@ -221,14 +225,22 @@ namespace SSSW.UI.WPF
         /// </summary>
         private async void cbStepName_EditValueChangedAsync(object sender, EditValueChangedEventArgs e)
         {
-            if (_vm == null) return;
+            if (_vm == null || _isHandlingStepSelection) return;
 
             var editVal = cbStepName.EditValue?.ToString();
             var selected = string.IsNullOrEmpty(editVal)
                 ? null
                 : _vm.StepCodeMaster.FirstOrDefault(x => x.StepItemCode == editVal);
 
-            await _vm.OnStepSelectedAsync(selected);
+            _isHandlingStepSelection = true;
+            try
+            {
+                await _vm.OnStepSelectedAsync(selected);
+            }
+            finally
+            {
+                _isHandlingStepSelection = false;
+            }
         }
 
         // ════════════════════════════════════════════════════════════════════

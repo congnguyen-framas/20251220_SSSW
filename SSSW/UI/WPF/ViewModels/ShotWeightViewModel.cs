@@ -1114,7 +1114,7 @@ namespace SSSW.UI.WPF.ViewModels
 
                         if (!stepCode.C005.StartsWith("Inlay")
                             && (startWith != "Studs"
-                                || (startWith == "Studs" && (previousStep.ItemStepName.StartsWith("Base") || previousStep.ItemStepName.StartsWith("Outer_Studs")))
+                                || (startWith == "Studs" && previousStep != null && (previousStep.ItemStepName.StartsWith("Base") || previousStep.ItemStepName.StartsWith("Outer_Studs")))
                                 )
                             )
                         {

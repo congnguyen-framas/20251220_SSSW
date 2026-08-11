@@ -12,12 +12,12 @@ namespace SSSW.models
         /// <summary>
         /// FT601.Id
         /// </summary>
-        public Guid? c000 { get; set; }
+        public Guid? C000 { get; set; }
 
         /// <summary>
         /// QR code.
         /// </summary>
 
-        public string? c001 { get; set; }
+        public string? C001 { get; set; }
     }
 }

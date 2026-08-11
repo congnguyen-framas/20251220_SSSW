@@ -796,10 +796,10 @@ namespace SSSW.UI.WPF.ViewModels
                 using var db = _dbFactory.CreateDbContext();
 
                 _labelInfo = new FT606_Label();
-                _labelInfo = await db.FT606s.FirstOrDefaultAsync(x => x.c001 == _qrCodeScan)
+                _labelInfo = await db.FT606s.FirstOrDefaultAsync(x => x.C001 == _qrCodeScan)
                              ?? throw new Exception("Label information not found.");
 
-                _stepSelected = _dataHydra.FirstOrDefault(x => x.Id == _labelInfo.c000)
+                _stepSelected = _dataHydra.FirstOrDefault(x => x.Id == _labelInfo.C000)
                                 ?? throw new Exception("Step information not found.");
 
                 FilterStepCombo(_stepSelected.Id);
@@ -938,7 +938,7 @@ namespace SSSW.UI.WPF.ViewModels
                             C006 = ckHydra?.C011,
                             C007 = ckHydra?.C012,
                             C009 = 1,
-                            C012 = ckHydra?.Id == _labelInfo.c000 ? _labelInfo?.c001 : null,
+                            C012 = ckHydra?.Id == _labelInfo.C000 ? _labelInfo?.C001 : null,
                             C013 = ckHydra?.C007,
                             C014 = ckHydra?.C008,
                             C016 = null,
@@ -958,7 +958,7 @@ namespace SSSW.UI.WPF.ViewModels
                             C026 = ckHydra?.C020,
                             C027 = ckHydra?.C003,
                             C028 = ckHydra?.C013 != null ? (int)ckHydra.C013 : 0,
-                            C029 = ckHydra?.Id == _labelInfo.c000 ? _labelInfo?.Id : null,
+                            C029 = ckHydra?.Id == _labelInfo.C000 ? _labelInfo?.Id : null,
                             C032 = ckHydra?.Id,
                             C033 = item.CategoryCode,
                             C034 = item.CategoryName,
@@ -1010,7 +1010,7 @@ namespace SSSW.UI.WPF.ViewModels
                                 C006 = ms?.C011,
                                 C007 = ms?.C012,
                                 C009 = 1,
-                                C012 = _labelInfo?.c001,
+                                C012 = _labelInfo?.C001,
                                 C013 = ms?.C007,
                                 C014 = ms?.C008,
                                 C017 = ms?.C013,
@@ -1333,7 +1333,7 @@ namespace SSSW.UI.WPF.ViewModels
                             return;
                         }
                     }
-                    rowSelect.C012 = _labelInfo?.c001;
+                    rowSelect.C012 = _labelInfo?.C001;
                     rowSelect.C029 = _labelInfo?.Id;
                     _rowSelected = rowSelect;
                 }

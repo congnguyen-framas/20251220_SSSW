@@ -779,12 +779,12 @@ namespace SSSW
                 _qrCodeScan = e.NewValue.Value.ToString();
                 using var db = _dbFactory.CreateDbContext();
                 _labelInfo   = new FT606_Label();
-                _labelInfo   = await db.FT606s.FirstOrDefaultAsync(x => x.c001 == _qrCodeScan);
+                _labelInfo   = await db.FT606s.FirstOrDefaultAsync(x => x.C001 == _qrCodeScan);
 
                 if (_labelInfo == null)
                     throw new Exception("Label information not found.");
 
-                _stepSelected = _dataHydra.FirstOrDefault(x => x.Id == _labelInfo.c000);
+                _stepSelected = _dataHydra.FirstOrDefault(x => x.Id == _labelInfo.C000);
                 if (_stepSelected == null)
                     throw new Exception("Step information not found.");
 
@@ -1035,7 +1035,7 @@ namespace SSSW
                             C006  = ckHydra?.C011,
                             C007  = ckHydra?.C012,
                             C009  = 1,
-                            C012  = ckHydra.Id == _labelInfo.c000 ? _labelInfo?.c001 : null,
+                            C012  = ckHydra.Id == _labelInfo.C000 ? _labelInfo?.C001 : null,
                             C013  = ckHydra?.C007,
                             C014  = ckHydra?.C008,
                             C016  = null,
@@ -1052,7 +1052,7 @@ namespace SSSW
                             C026  = ckHydra?.C020,
                             C027  = ckHydra?.C003,
                             C028  = ckHydra?.C013 != null ? (int)ckHydra.C013 : 0,
-                            C029  = ckHydra.Id == _labelInfo.c000 ? _labelInfo.Id : null,
+                            C029  = ckHydra.Id == _labelInfo.C000 ? _labelInfo.Id : null,
                             C032  = ckHydra?.Id,
                             C033  = item.CategoryCode,
                             C034  = item.CategoryName,
@@ -1093,7 +1093,7 @@ namespace SSSW
                                             ? EnumSampleLocation.Production : EnumSampleLocation.Sample,
                                 C004  = ms?.C015, C005 = ms?.C006, C006 = ms?.C011, C007 = ms?.C012,
                                 C009  = 1,
-                                C012  = _labelInfo?.c001,
+                                C012  = _labelInfo?.C001,
                                 C013  = ms?.C007, C014 = ms?.C008,
                                 C017  = ms?.C013, C018 = ms?.C014, C019 = ms?.C016, C020 = ms?.C019,
                                 C002  = ms?.C004, C003 = ms?.C005, C008 = ms?.C002, C015 = ms?.C010,
@@ -1219,7 +1219,7 @@ namespace SSSW
                             return;
                         }
                     }
-                    rowSelect.C012 = _labelInfo?.c001;
+                    rowSelect.C012 = _labelInfo?.C001;
                     rowSelect.C029 = _labelInfo?.Id;
                     _rowSelected   = rowSelect;
                 }

@@ -696,10 +696,10 @@ namespace SSSW.UI.WPF.ViewModels
             {
                 using var db = _dbFactory.CreateDbContext();
 
-                _labelInfo = await db.FT606s.FirstOrDefaultAsync(x => x.c001 == barcode)
+                _labelInfo = await db.FT606s.FirstOrDefaultAsync(x => x.C001 == barcode)
                              ?? throw new Exception("Label information not found.");
 
-                var hydraRow = _dataHydra.FirstOrDefault(x => x.Id == _labelInfo.c000)
+                var hydraRow = _dataHydra.FirstOrDefault(x => x.Id == _labelInfo.C000)
                                ?? throw new Exception("FG information not found.");
 
                 var newFg = new FgSelectModel
@@ -717,7 +717,7 @@ namespace SSSW.UI.WPF.ViewModels
                     MachineGroup = hydraRow.C016,
                     MoldId = hydraRow.C019,
                     MoldPairsShot = hydraRow.C014,
-                    QrCode = _labelInfo.c001
+                    QrCode = _labelInfo.C001
                 };
                 await ResolveCategoryAsync(newFg);
                 AddSample(newFg);

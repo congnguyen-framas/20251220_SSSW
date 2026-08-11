@@ -973,14 +973,14 @@ namespace SSSW
 
                 _labelInfo = new FT606_Label();
 
-                _labelInfo = await dbContext.FT606s.FirstOrDefaultAsync(x => x.c001 == _qrCodeScan);
+                _labelInfo = await dbContext.FT606s.FirstOrDefaultAsync(x => x.C001 == _qrCodeScan);
 
                 if (_labelInfo == null)
                 {
                     throw new Exception("The label information was not found.");
                 }
 
-                _stepSelected = _dataHydra.FirstOrDefault(x => x.Id == _labelInfo.c000);
+                _stepSelected = _dataHydra.FirstOrDefault(x => x.Id == _labelInfo.C000);
 
                 if (_stepSelected == null)
                 {
@@ -1401,7 +1401,7 @@ namespace SSSW
                         line.C006 = ckHydra?.C011;
                         line.C007 = ckHydra?.C012;
                         line.C009 = 1;
-                        line.C012 = ckHydra.Id == _labelInfo.c000 ? _labelInfo?.c001 : null;
+                        line.C012 = ckHydra.Id == _labelInfo.C000 ? _labelInfo?.C001 : null;
                         line.C013 = ckHydra?.C007;
                         line.C014 = ckHydra?.C008;
                         line.C016 = null;
@@ -1423,7 +1423,7 @@ namespace SSSW
                         line.C026 = ckHydra?.C020;
                         line.C027 = ckHydra?.C003;
                         line.C028 = ckHydra?.C013 != null ? (int)ckHydra.C013 : 0;
-                        line.C029 = ckHydra.Id == _labelInfo.c000 ? _labelInfo.Id : null;
+                        line.C029 = ckHydra.Id == _labelInfo.C000 ? _labelInfo.Id : null;
                         line.C032 = ckHydra?.Id;
                         line.C033 = item.CategoryCode;
                         line.C034 = item.CategoryName;
@@ -1476,7 +1476,7 @@ namespace SSSW
                                 C006 = itemNultiSize?.C011,
                                 C007 = itemNultiSize?.C012,
                                 C009 = 1,
-                                C012 = _labelInfo != null ? _labelInfo.c001 : null,
+                                C012 = _labelInfo != null ? _labelInfo.C001 : null,
                                 C013 = itemNultiSize?.C007,
                                 C014 = itemNultiSize?.C008,
                                 C016 = null,
@@ -1671,7 +1671,7 @@ namespace SSSW
                             return;
                         }
                     }
-                    rowSelect.C012 = _labelInfo != null ? _labelInfo.c001 : null;
+                    rowSelect.C012 = _labelInfo != null ? _labelInfo.C001 : null;
                     rowSelect.C029 = _labelInfo != null ? _labelInfo.Id : null;
                     _rowSelected = rowSelect;
                 }

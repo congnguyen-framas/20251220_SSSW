@@ -877,7 +877,7 @@ namespace SSSW.UI.WPF.ViewModels
                     ResetNewLoop();
 
                     _stepItemCodeScale = await db.FT601s
-                        .Where(x => x.C007 == stepCode.C007)
+                        .Where(x => x.C007 == stepCode.C007 &&  x.C004 == stepCode.C004)
                         .FirstOrDefaultAsync()
                         ?? throw new Exception($"Step item1 code {stepCode.C007} not found.");
 

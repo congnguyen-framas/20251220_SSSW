@@ -381,7 +381,18 @@ namespace SSSW.UI.WPF.ViewModels
         public bool ReadOnlyScale
         {
             get => _readOnlyScale;
-            set { _readOnlyScale = value; OnPropertyChanged(); }
+            set
+            {
+                _readOnlyScale = value;
+                OnPropertyChanged();
+
+                // Chế độ nhập tay (readOnly = false): mở nút Save ngay, không chờ event
+                // cân bắn ra (đối xứng với nhánh else trong OnScaleValueChanged) — nếu không
+                // nút Save bị kẹt ở trạng thái mặc định (disabled) cho tới khi có 1 lần cân
+                // thực tế xảy ra, kể cả khi config đã cho phép lưu tay.
+                if (!value)
+                    EnableBtnSaveScale = true;
+            }
         }
 
         private bool _enableBtnSaveScale = false;
@@ -1859,6 +1870,14 @@ namespace SSSW.UI.WPF.ViewModels
         {
             _labelInfo = new FT606_Label();
             _qrCodeScan = string.Empty;
+
+            // Cancel cũng xóa luôn thẻ RFID đã quét (không chỉ dữ liệu step) — buộc operator phải
+            // quét lại thẻ RFID cho lượt cân tiếp theo, tránh dùng nhầm operator của lượt đã hủy.
+            _employeeCode = string.Empty;
+            _operatorInfo = new FT029_Operator_RFID();
+            RfidName = string.Empty;
+            UserName = string.Empty;
+            ClearRfidAction?.Invoke();
 
             ClearStepComboAction?.Invoke();
             ClearBarcodeAction?.Invoke();

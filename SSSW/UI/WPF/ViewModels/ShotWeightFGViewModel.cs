@@ -1036,6 +1036,14 @@ namespace SSSW.UI.WPF.ViewModels
         {
             _labelInfo = new FT606_Label();
 
+            // Cancel cũng xóa luôn thẻ RFID đã quét (không chỉ dữ liệu FG/sample) — buộc operator
+            // phải quét lại thẻ RFID cho lượt cân tiếp theo, tránh dùng nhầm operator của lượt đã hủy.
+            _employeeCode = string.Empty;
+            _operatorInfo = new FT029_Operator_RFID();
+            RfidName = string.Empty;
+            UserName = string.Empty;
+            ClearRfidAction?.Invoke();
+
             ClearFgComboAction?.Invoke();
             ClearBarcodeAction?.Invoke();
             ResetSession();

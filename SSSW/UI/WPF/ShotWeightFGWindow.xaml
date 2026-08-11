@@ -340,11 +340,16 @@
                                                             "Clear Filter". Lọc theo cột vẫn dùng ShowAutoFilterRow (ô nhập trực tiếp
                                                             trong lưới, không phải popup) nên không mất chức năng tìm kiếm.
                                                             
-                                                            AutoWidth="False" + BestFitModeOnSourceChange="AllRows": tắt chế độ ép cột
+                                                            AutoWidth="False" + BestFitModeOnSourceChange="VisibleRows": tắt chế độ ép cột
                                                             giãn vừa khung (AutoWidth) để mỗi cột được tự động "Best Fit" theo nội dung
                                                             (giống lệnh "Best Fit (all columns)" trong menu chuột phải) mỗi khi dữ liệu/lọc
                                                             thay đổi; HorizontalScrollbarVisibility="Auto" để cuộn ngang khi tổng bề rộng
-                                                            cột vượt khung popup thay vì bị bóp chữ.
+                                                            cột vượt khung popup thay vì bị bóp chữ. Dùng "VisibleRows" thay vì "AllRows":
+                                                            "AllRows" đo lại toàn bộ danh sách FG (dữ liệu gốc, có thể vài nghìn dòng) ngay
+                                                            lần đầu ItemsSource được gán cho GridControl (do PopupContentTemplate chỉ dựng
+                                                            1 lần khi mở popup lần đầu) — gây treo/rất lâu mới hiện data ở lần mở đầu tiên
+                                                            sau khi mở app; "VisibleRows" chỉ đo các dòng đang render trong khung nhìn nên
+                                                            nhanh hơn nhiều, độ rộng cột vẫn hợp lý.
 
                                                             SearchPanelParseMode="And": chi phối cách TableView.SearchString (ô tìm kiếm tự
                                                             dựng ở trên) được tách từ theo khoảng trắng — mỗi từ AND với nhau, mỗi từ chỉ
@@ -353,7 +358,7 @@
                                                         -->
                                                         <dxg:TableView
                                                             AutoWidth="False"
-                                                            BestFitModeOnSourceChange="AllRows"
+                                                            BestFitModeOnSourceChange="VisibleRows"
                                                             ColumnFilterPopupMode="Disabled"
                                                             HorizontalScrollbarVisibility="Auto"
                                                             SearchPanelParseMode="And"

@@ -694,6 +694,11 @@ namespace SSSW.UI.WPF.ViewModels
         {
             try
             {
+                // Máy scan đôi khi trả về nội dung QR kèm ký tự Enter/xuống dòng (CR/LF) hoặc khoảng
+                // trắng thừa ở đầu/cuối chuỗi — nếu không loại bỏ, so khớp C001 trong FT606 sẽ không
+                // tìm thấy dữ liệu dù QR code thực chất đúng. Trim trước khi dùng trong câu truy vấn.
+                barcode = barcode?.Trim() ?? string.Empty;
+
                 using var db = _dbFactory.CreateDbContext();
 
                 _labelInfo = await db.FT606s.FirstOrDefaultAsync(x => x.C001 == barcode)

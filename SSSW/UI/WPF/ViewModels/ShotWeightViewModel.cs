@@ -1079,7 +1079,7 @@ namespace SSSW.UI.WPF.ViewModels
 
                     var startWith = stepCode.C005.StartsWith("Logo") ? "Logo"
                            : stepCode.C005.StartsWith("Studs") || stepCode.C005.StartsWith("Outer_Studs") || stepCode.C005.StartsWith("Inner_Studs") ? "Studs"
-                           : stepCode.C005.StartsWith("Cleat_Ring") ? "Cleaat_Ring"
+                           : stepCode.C005.StartsWith("Cleat_Ring") ? "Cleat_Ring"
                         : string.Empty;
 
                     //nếu là cân cho bước logo/studs/ring thì xóa các bước khác logo/studs/ring

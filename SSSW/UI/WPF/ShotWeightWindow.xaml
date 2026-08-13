@@ -13,6 +13,7 @@
     Background="#F0F2F5"
     ResizeMode="CanResize"
     WindowStartupLocation="CenterScreen"
+    WindowState="Maximized"
     WindowStyle="None"
     mc:Ignorable="d">
 

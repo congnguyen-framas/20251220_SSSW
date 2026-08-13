@@ -4,7 +4,6 @@
 //  Logic cân (C021/C022/C023/C024) giống 100% frmShotWeightScale.cs
 //  Namespace : SSSW.UI.WPF.ViewModels
 // ============================================================================
-using AutoUpdaterDotNET;
 using DevExpress.Mvvm.Native;
 using DevExpress.XtraRichEdit.Import.Html;
 using DevExpress.XtraSpreadsheet.Import.Xls;
@@ -47,7 +46,6 @@ namespace SSSW.UI.WPF.ViewModels
         private List<FT601> _dataHydraMultiSizeOfMold = new();
         private bool _newScale = true;
         public FT601 _stepItemCodeScale = new();
-        private bool _isUpdateClicked = false;
 
         private List<BomWinlineModel> _allStepsFG = new();
         private List<FT600> _scaledDataPreviousStep = new();
@@ -71,7 +69,6 @@ namespace SSSW.UI.WPF.ViewModels
 
         private string _employeeCode = string.Empty;
         private FT029_Operator_RFID _operatorInfo = new();
-        private List<HydraItemDetailModel> _hydraItemDetails = new();
 
         private bool _allowPartitionAdjustment = false;
         private bool _suppress = false;
@@ -104,12 +101,8 @@ namespace SSSW.UI.WPF.ViewModels
 
 
         #region Title / Header
-        private string _windowTitle = "IT – Shotweight Station";
-        public string WindowTitle
-        {
-            get => _windowTitle;
-            set { _windowTitle = value; OnPropertyChanged(); }
-        }
+        // WindowTitle không còn ở đây nữa — MainViewModel.WindowTitle là chủ sở hữu duy nhất
+        // của dòng tiêu đề header (xem MainViewModel.LoadWindowTitleAsync()).
 
         private string _userName = "";
         public string UserName
@@ -472,27 +465,14 @@ namespace SSSW.UI.WPF.ViewModels
         public Action<StepSelectModel?>? SetStepComboAction { get; set; }
         /// <summary>Code-behind gán: focus+scroll đến row trong dgTotalSteps.</summary>
         public Action<string?>? FocusGridRowAction { get; set; }
-        /// <summary>Code-behind gán: kết nối hardware (DeviceConnectionService.EnsureInitialized()).
-        /// PHẢI được gọi sau khi GlobalVariable.ConfigSystem đã load xong từ DB (xem InitializeAsync)
-        /// — gọi sớm hơn sẽ khiến driver kết nối bằng config mặc định (IP/COM sai) thay vì config
-        /// thật của máy.</summary>
-        public Action? ConnectHardwareAction { get; set; }
-        /// <summary>Code-behind gán: hủy đăng ký event hardware của cửa sổ chính, dùng khi
-        /// mở dialog ShotWeightFGWindow — tránh 1 lần scan/cân vật lý bị cả 2 cửa sổ cùng xử lý.</summary>
-        public Action? SuspendDeviceEventsAction { get; set; }
-        /// <summary>Code-behind gán: đăng ký lại event hardware của cửa sổ chính sau khi dialog
-        /// ShotWeightFGWindow đóng lại.</summary>
-        public Action? ResumeDeviceEventsAction { get; set; }
 
         // ─────────────────────────────────────────────────────────────────────
         //  COMMANDS
         // ─────────────────────────────────────────────────────────────────────
-        public RelayCommand ScaneFGCommand { get; }
         public AsyncRelayCommand ReloadCommand { get; }
         public RelayCommand HistoryViewCommand { get; }
-        public AsyncRelayCommand HydraCommand { get; }
-        public RelayCommand SettingsCommand { get; }
-        public RelayCommand UpdateCommand { get; }
+        // HydraCommand/SettingsCommand/UpdateCommand chuyển lên MainViewModel — đây là hành động
+        // cấp APP dùng chung cho cả Step/FG, không riêng gì tab này (xem Main.xaml + MainViewModel).
         public RelayCommand MinimizeCommand { get; }
         public RelayCommand MaximizeCommand { get; }
         public RelayCommand CloseCommand { get; }
@@ -518,12 +498,8 @@ namespace SSSW.UI.WPF.ViewModels
             _logger = logger;
 
             // Wire commands
-            ScaneFGCommand = new RelayCommand(OpenShotWeightFGWindow);
             ReloadCommand = new AsyncRelayCommand(() => LoadDataAsync(TimeSpan.FromSeconds(30)));
             HistoryViewCommand = new RelayCommand(OpenHistoryView);
-            HydraCommand = new AsyncRelayCommand(GetDataHydraAsync);
-            SettingsCommand = new RelayCommand(OpenSettings);
-            UpdateCommand = new RelayCommand(CheckUpdate);
             MinimizeCommand = new RelayCommand(() => System.Windows.Application.Current.MainWindow.WindowState = System.Windows.WindowState.Minimized);
             MaximizeCommand = new RelayCommand(ToggleMaximize);
             CloseCommand = new RelayCommand(() => System.Windows.Application.Current.MainWindow.Close());
@@ -546,11 +522,9 @@ namespace SSSW.UI.WPF.ViewModels
         // ─────────────────────────────────────────────────────────────────────
         public async Task InitializeAsync()
         {
-            // Auto-updater
-            AutoUpdater.RunUpdateAsAdmin = false;
-            AutoUpdater.DownloadPath = Environment.CurrentDirectory;
-            AutoUpdater.ApplicationExitEvent += AutoUpdater_ApplicationExitEvent;
-            AutoUpdater.CheckForUpdateEvent += AutoUpdater_CheckForUpdateEvent;
+            // Auto-updater (RunUpdateAsAdmin/DownloadPath + subscribe ApplicationExitEvent/
+            // CheckForUpdateEvent) đã chuyển lên MainViewModel — hạ tầng app-wide, chỉ cần hook
+            // 1 lần duy nhất, không gắn theo tab Step nữa.
 
             // Lấy mesocomp + mesoyear
             using var db = _dbFactory.CreateDbContext();
@@ -559,48 +533,14 @@ namespace SSSW.UI.WPF.ViewModels
             _mesoYear = db.Database.SqlQueryRaw<int>("sp_MaterialGetMesoyear")
                           .AsEnumerable().FirstOrDefault();
 
-            var location = _mesocomp switch
-            {
-                "VNT1" => "fVN",
-                "FKV" => "fKV",
-                "FTT1" => "fFT",
-                "05FI" => "fIN",
-                "fGE" => "fGE",
-                _ => "Unknown"
-            };
-            // Version build (đến từ <Version> trong SSSW.csproj, embed vào AssemblyVersion lúc build)
-            var appVersion = System.Reflection.Assembly.GetExecutingAssembly().GetName().Version?.ToString() ?? "N/A";
+            // WindowTitle (location + version) đã chuyển hẳn lên MainViewModel.LoadWindowTitleAsync()
+            // — Main giờ là chủ sở hữu duy nhất của dòng tiêu đề header, tính 1 lần không phụ thuộc
+            // tab active. Không tính lại ở đây nữa để tránh trùng lặp logic.
 
-            if (Enum.TryParse<EnumLocation>(location, true, out var loc))
-                WindowTitle = $"{loc} – Shotweight Station For Step Component – Ver-{appVersion}";
-
-            // Config
-            var configData = await db.FT608s
-                .FirstOrDefaultAsync(x => x.c000 == Environment.MachineName);
-            if (configData != null)
-            {
-                GlobalVariable.ConfigSystem =
-                    JsonConvert.DeserializeObject<ConfigModel>(configData.c001) ?? new ConfigModel();
-            }
-            else
-            {
-                await db.FT608s.AddAsync(new FT608_Config
-                {
-                    Id = Guid.NewGuid(),
-                    c000 = Environment.MachineName,
-                    c001 = JsonConvert.SerializeObject(new ConfigModel()),
-                    Mesoyear = _mesoYear,
-                    Mesocomp = _mesocomp,
-                    CreatedMachine = Environment.MachineName,
-                    CreatedDate = DateTime.Now
-                });
-                await db.SaveChangesAsync();
-            }
-
-            // Hardware (Barcode/RFID/Scale) do DeviceConnectionService sở hữu và khởi tạo,
-            // nhưng phải đợi tới đây (SAU khi GlobalVariable.ConfigSystem đã load xong ở trên)
-            // mới được phép kết nối — nếu không sẽ dùng nhầm config mặc định.
-            ConnectHardwareAction?.Invoke();
+            // Config (GlobalVariable.ConfigSystem) + kết nối hardware (Barcode/RFID/Scale) đã
+            // chuyển hẳn lên MainViewModel.StartupAsync() — chạy MỘT LẦN ở cấp Main trước khi
+            // tab Step này được mở, nên tới đây Config/hardware luôn đã sẵn sàng. Không load/kết
+            // nối lại ở đây nữa để tránh trùng lặp logic và tránh 2 tab đua nhau connect.
 
             // Default values
             UsagePct = GlobalVariable.ConfigSystem.PercentOfUserNonWoven.ToString();
@@ -2024,73 +1964,9 @@ namespace SSSW.UI.WPF.ViewModels
         }
 
         // ─────────────────────────────────────────────────────────────────────
-        //  HYDRA SYNC
+        //  HYDRA SYNC — chuyển hẳn lên MainViewModel.GetDataHydraAsync() (hành động cấp app,
+        //  dùng chung Step/FG — xem comment ở MainViewModel).
         // ─────────────────────────────────────────────────────────────────────
-        private async Task GetDataHydraAsync(object? _)
-        {
-            try
-            {
-                using var db = _dbFactory.CreateDbContext();
-                _hydraItemDetails = await db.Database
-                    .SqlQueryRaw<HydraItemDetailModel>("sp_GetFullStepItemHydraIsRun")
-                    .AsNoTracking().ToListAsync();
-                _hydraItemDetails = _hydraItemDetails
-                    .OrderBy(x => x.FGItemCode).ThenBy(x => x.StepIndex).ToList();
-
-                if (!_hydraItemDetails.Any()) return;
-
-                var ft601s = new List<FT601>();
-                var now = DateTime.Now;
-                var machine = Environment.MachineName;
-                var toInsert = _hydraItemDetails.Where(d =>
-                    !db.FT601s.Any(ft => ft.C004 == d.StepItemCode &&
-                                         ft.C015 == d.Machine &&
-                                         ft.C018 == d.OrderHydraNum &&
-                                         ft.Actived == true)).ToList();
-
-                foreach (var item in toInsert)
-                    ft601s.Add(new FT601
-                    {
-                        Id = Guid.NewGuid(),
-                        C000 = item.HydraOrderType,
-                        C001 = item.Location == "Sample"
-                                     ? EnumSampleLocation.Sample : EnumSampleLocation.Production,
-                        C002 = item.Size,
-                        C003 = item.MainName,
-                        C004 = item.StepItemCode,
-                        C005 = item.StepItemName,
-                        C006 = item.Artikel,
-                        C007 = item.FGItemCode,
-                        C008 = item.FGItemName,
-                        C009 = item.StepIndexHydra,
-                        C010 = item.StepIndex,
-                        C011 = item.ColorCode,
-                        C012 = item.ColorName,
-                        C013 = item.ArticlePairShot,
-                        C014 = item.MoldPairShot,
-                        C015 = item.Machine,
-                        C016 = item.MachineGroup,
-                        C017 = false,
-                        C018 = item.OrderHydraNum,
-                        C019 = item.MoldId,
-                        C020 = item.MainCode,
-                        Actived = true,
-                        CreatedMachine = machine,
-                        CreatedDate = now,
-                        Mesoyear = item.MesoYear,
-                        Mesocomp = item.MesoComp
-                    });
-
-                if (ft601s.Any())
-                {
-                    await db.FT601s.AddRangeAsync(ft601s);
-                    await db.SaveChangesAsync();
-                }
-
-                await LoadDataAsync();
-            }
-            catch (Exception ex) { _logger.LogError(ex, "GetDataHydra error"); }
-        }
 
         // ─────────────────────────────────────────────────────────────────────
         //  HISTORY REFERENCE
@@ -2298,25 +2174,6 @@ namespace SSSW.UI.WPF.ViewModels
         // ─────────────────────────────────────────────────────────────────────
         //  NAVIGATION COMMANDS
         // ─────────────────────────────────────────────────────────────────────
-        private void OpenShotWeightFGWindow()
-        {
-            var win = _serviceProvider.GetRequiredService<ShotWeightFGWindow>();
-            win.Owner = System.Windows.Application.Current.MainWindow;
-            win.WindowStartupLocation = System.Windows.WindowStartupLocation.CenterOwner;
-
-            // Tạm ngưng nhận event hardware của cửa sổ chính trong lúc dialog FG mở —
-            // dialog FG có subscription hardware riêng của chính nó (ShotWeightFGWindow.OnLoaded).
-            SuspendDeviceEventsAction?.Invoke();
-            try
-            {
-                win.ShowDialog();
-            }
-            finally
-            {
-                ResumeDeviceEventsAction?.Invoke();
-            }
-        }
-
         private void OpenHistoryView()
         {
             var nf = _serviceProvider.GetRequiredService<frmMainView>();
@@ -2344,27 +2201,8 @@ namespace SSSW.UI.WPF.ViewModels
             }
         }
 
-        private void OpenSettings()
-        {
-            var nf = _serviceProvider.GetRequiredService<frmUpdateMasterData>();
-            nf.StartPosition = System.Windows.Forms.FormStartPosition.CenterScreen;
-            nf.WindowState = System.Windows.Forms.FormWindowState.Maximized;
-            nf.ShowDialog();
-            _ = LoadDataAsync(TimeSpan.FromSeconds(30));
-        }
-
-        private void CheckUpdate()
-        {
-            try
-            {
-                _isUpdateClicked = true;
-                AutoUpdater.Start(GlobalVariable.ConfigSystem.UpdatePath);
-            }
-            catch (Exception ex)
-            {
-                System.Windows.Forms.MessageBox.Show(ex.Message, "Error", (MessageBoxButtons)MessageBoxButton.OK, (MessageBoxIcon)MessageBoxImage.Error);
-            }
-        }
+        // OpenSettings()/CheckUpdate()/AutoUpdater_* chuyển hẳn lên MainViewModel (hành động cấp
+        // app dùng chung Step/FG — xem comment ở MainViewModel).
 
         private void ToggleMaximize()
         {
@@ -2373,45 +2211,5 @@ namespace SSSW.UI.WPF.ViewModels
                 ? System.Windows.WindowState.Maximized
                 : System.Windows.WindowState.Normal;
         }
-
-        // ─────────────────────────────────────────────────────────────────────
-        //  AUTO-UPDATER
-        // ─────────────────────────────────────────────────────────────────────
-        private async void AutoUpdater_ApplicationExitEvent()
-        {
-            System.Windows.Application.Current.MainWindow.Title = "Closing…";
-            await Task.Delay(3000);
-            System.Windows.Application.Current.Shutdown();
-        }
-
-        private async void AutoUpdater_CheckForUpdateEvent(UpdateInfoEventArgs args)
-        {
-            if (args.IsUpdateAvailable)
-            {
-                var res = System.Windows.Forms.MessageBox.Show(
-                    $"New version available: {args.CurrentVersion}. Update now?",
-                    "Update", (MessageBoxButtons)MessageBoxButton.YesNo, (MessageBoxIcon)MessageBoxImage.Information);
-                if (res == DialogResult.Yes)
-                {
-                    await Task.Delay(3000);
-                    try
-                    {
-                        if (AutoUpdater.DownloadUpdate(args))
-                            System.Windows.Application.Current.Shutdown();
-                    }
-                    catch (Exception ex)
-                    {
-                        System.Windows.Forms.MessageBox.Show(ex.Message, ex.GetType().ToString(),
-                            (MessageBoxButtons)MessageBoxButton.OK, (MessageBoxIcon)MessageBoxImage.Error);
-                    }
-                }
-            }
-            else if (_isUpdateClicked)
-            {
-                System.Windows.Forms.MessageBox.Show("Already up to date.", "Information",
-                    (MessageBoxButtons)MessageBoxButton.OK, (MessageBoxIcon)MessageBoxImage.Information);
-            }
-        }
-
     }
 }

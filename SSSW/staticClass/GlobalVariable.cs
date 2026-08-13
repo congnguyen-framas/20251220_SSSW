@@ -1,6 +1,7 @@
 ﻿using Microsoft.Extensions.Logging;
 using ScanAndScale.Driver;
 using SSSW.modelss;
+using SSSW.UI.WPF.Services;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -14,6 +15,15 @@ namespace SSSW
         public static string ConStringSSSW { get; set; }
 
         public static ConfigModel ConfigSystem { get; set; } = new ConfigModel();
+
+        /// <summary>
+        /// Shared Barcode/RFID/Scale hardware connections (DeviceConnectionService singleton).
+        /// Gán MỘT LẦN bởi MainViewModel ngay khi khởi tạo (trước khi bất kỳ tab Step/FG nào
+        /// được resolve) — các ViewModel/Window khác đọc thẳng qua biến toàn cục này thay vì
+        /// phải nhận qua constructor DI, để "form khác" (kể cả code không nằm trong DI graph
+        /// của Main) vẫn lấy được kết nối RFID/Barcode/Scale đã sẵn sàng.
+        /// </summary>
+        public static DeviceConnectionService? Devices { get; set; }
 
         /// <summary>
         /// Invoke contol multi thread.

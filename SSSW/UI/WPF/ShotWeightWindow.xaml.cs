@@ -31,16 +31,13 @@ using System.Windows.Media;
 using KeyEventArgs = System.Windows.Input.KeyEventArgs;
 using TextBox = System.Windows.Controls.TextBox;
 using SelectionChangedEventArgs = System.Windows.Controls.SelectionChangedEventArgs;
+using UserControl = System.Windows.Controls.UserControl;
 using Serilog;
 
 namespace SSSW.UI.WPF
 {
-    public partial class ShotWeightWindow : Window
+    public partial class ShotWeightWindow : UserControl
     {
-        // ── Win32 – borderless drag ──────────────────────────────────────────
-        [DllImport("user32.dll")] private static extern bool ReleaseCapture();
-        [DllImport("user32.dll")] private static extern int SendMessage(IntPtr hWnd, int Msg, int wParam, int lParam);
-
         // ── ViewModel ────────────────────────────────────────────────────────
         private ShotWeightViewModel _vm = null!;
 
@@ -48,18 +45,25 @@ namespace SSSW.UI.WPF
         // liên tiếp trong popup trước khi lần chọn trước load DB xong) ──────────────
         private bool _isHandlingStepSelection;
 
-        // ── Shared hardware connections (owned by DeviceConnectionService, not this window) ──
+        // ── Shared hardware connections — Main đã kết nối (RFID/Barcode/Scale) và gán
+        // GlobalVariable.Devices trước khi tab này được mở, nên đọc thẳng biến toàn cục
+        // thay vì nhận qua constructor DI (xem MainViewModel.StartupAsync()). ─────────
         private DeviceConnectionService _deviceService = null!;
+
+        // ── Chỉ load master data (InitializeAsync) MỘT LẦN cho instance này.
+        // Control này được Main giữ lại và tái sử dụng mỗi lần chuyển tab (Step ↔ FG):
+        // Unloaded/Loaded bắn lại mỗi lần ContentControl.Content đổi, nhưng không được
+        // load lại toàn bộ dữ liệu mỗi lần — sẽ mất dữ liệu cân dở của operator. ──────
+        private bool _initialized;
 
         // ════════════════════════════════════════════════════════════════════
         //  CONSTRUCTORS
         // ════════════════════════════════════════════════════════════════════
 
         /// <summary>DI constructor – nhận ViewModel từ DI container.</summary>
-        public ShotWeightWindow(ShotWeightViewModel viewModel, DeviceConnectionService deviceService) : this()
+        public ShotWeightWindow(ShotWeightViewModel viewModel) : this()
         {
             _vm = viewModel;
-            _deviceService = deviceService;
             DataContext = viewModel;
         }
 
@@ -68,7 +72,7 @@ namespace SSSW.UI.WPF
         {
             InitializeComponent();
             Loaded += OnLoaded;
-            Closing += OnClosing;
+            Unloaded += OnUnloaded;
         }
 
         // ════════════════════════════════════════════════════════════════════
@@ -78,11 +82,23 @@ namespace SSSW.UI.WPF
         {
             if (_vm == null) return; // guard cho design-time preview
 
-            // 1. Đăng ký các event re-broadcast từ DeviceConnectionService TRƯỚC khi
-            //    EnsureInitialized() để không bỏ sót status thay đổi.
+            // 0. Lấy service dùng chung từ biến toàn cục — Main đã gán GlobalVariable.Devices
+            //    và gọi EnsureInitialized() (kết nối RFID/Barcode/Scale bằng Config thật) trước
+            //    khi tab này được mở (xem MainViewModel.StartupAsync()).
+            _deviceService = GlobalVariable.Devices!;
+
+            // 1. Đăng ký các event re-broadcast từ DeviceConnectionService TRƯỚC khi backfill
+            //    status để không bỏ sót thay đổi xảy ra đúng lúc đăng ký.
             _deviceService.BarcodeChanged += BarcodeDriver_DataValueChanged;
             _deviceService.RfidChanged += RfidDriver_DataValueChanged;
             _deviceService.ScaleChanged += ScaleDriver_DataValueChanged;
+            _deviceService.EnsureInitialized(); // no-op nếu Main đã kết nối sẵn (luôn đúng)
+
+            // Backfill trạng thái hiện tại — driver đã kết nối từ trước (do Main init) nên sẽ
+            // không có event mới nào bắn ra để cập nhật UI ở đây.
+            _vm.BarcodeStatus = _deviceService.BarcodeStatus;
+            _vm.RfidStatus = _deviceService.RfidStatus;
+            _vm.ScaleStatus = _deviceService.ScaleStatus;
 
             // 2. Cấu hình View callbacks để ViewModel gọi lại View khi cần
             //    Ghi chú: ClearBarcodeAction / ClearRfidAction đã được VM khởi tạo
@@ -93,49 +109,24 @@ namespace SSSW.UI.WPF
             _vm.SetStepComboAction = item => { cbStepName.EditValue = item?.StepItemCode; };
             _vm.FocusGridRowAction = code => FocusStepInGrid(code);
 
-            // 3. Kết nối hardware (Barcode/RFID/Scale) — VM tự gọi callback này SAU khi
-            //    GlobalVariable.ConfigSystem đã load xong từ DB (trong InitializeAsync),
-            //    không phải ngay bây giờ, để tránh connect bằng config mặc định.
-            //    No-op nếu window kia (FG) đã kết nối trước đó.
-            _vm.ConnectHardwareAction = () =>
+            // 3. Load master data CHỈ MỘT LẦN cho instance này (xem ghi chú ở _initialized).
+            //    Config/hardware không còn được load/kết nối ở đây nữa — Main lo hết.
+            if (!_initialized)
             {
-                _deviceService.EnsureInitialized();
-
-                // Backfill trạng thái hiện tại — phòng trường hợp driver đã kết nối
-                // từ trước (window kia init trước) nên sẽ không có event mới nào bắn ra.
-                _vm.BarcodeStatus = _deviceService.BarcodeStatus;
-                _vm.RfidStatus = _deviceService.RfidStatus;
-                _vm.ScaleStatus = _deviceService.ScaleStatus;
-            };
-
-            // 4. Tạm ngưng nhận event hardware khi cửa sổ FG (dialog con) đang mở, tránh
-            //    một lần scan/cân vật lý bị xử lý trùng ở cả 2 cửa sổ cùng lúc.
-            _vm.SuspendDeviceEventsAction = () =>
-            {
-                _deviceService.BarcodeChanged -= BarcodeDriver_DataValueChanged;
-                _deviceService.RfidChanged -= RfidDriver_DataValueChanged;
-                _deviceService.ScaleChanged -= ScaleDriver_DataValueChanged;
-            };
-            _vm.ResumeDeviceEventsAction = () =>
-            {
-                _deviceService.BarcodeChanged += BarcodeDriver_DataValueChanged;
-                _deviceService.RfidChanged += RfidDriver_DataValueChanged;
-                _deviceService.ScaleChanged += ScaleDriver_DataValueChanged;
-            };
-
-            // 5. Khởi tạo ViewModel (load config DB + master data; sẽ gọi ConnectHardwareAction
-            //    ở đúng thời điểm bên trong).
-            await _vm.InitializeAsync();
+                _initialized = true;
+                await _vm.InitializeAsync();
+            }
         }
 
         // ════════════════════════════════════════════════════════════════════
-        //  CLOSING
+        //  UNLOADED (control bị gỡ khỏi cây visual — Main chuyển sang tab khác)
         // ════════════════════════════════════════════════════════════════════
-        private void OnClosing(object? sender, System.ComponentModel.CancelEventArgs e)
+        private void OnUnloaded(object sender, RoutedEventArgs e)
         {
-            // Hủy đăng ký events → tránh memory leak. KHÔNG dispose driver ở đây:
-            // chúng được chia sẻ với ShotWeightFGWindow và chỉ được giải phóng một
-            // lần bởi DeviceConnectionService.Shutdown() khi ứng dụng thoát.
+            // Hủy đăng ký events → tránh 1 lần scan/cân vật lý bị xử lý trùng bởi
+            // tab đang không hiển thị. KHÔNG dispose driver ở đây: chúng được chia sẻ
+            // với ShotWeightFGWindow và chỉ được giải phóng một lần bởi
+            // DeviceConnectionService.Shutdown() khi ứng dụng thoát.
             _deviceService.BarcodeChanged -= BarcodeDriver_DataValueChanged;
             _deviceService.RfidChanged -= RfidDriver_DataValueChanged;
             _deviceService.ScaleChanged -= ScaleDriver_DataValueChanged;
@@ -284,34 +275,6 @@ namespace SSSW.UI.WPF
 
         private void HistoryHeader_Click(object sender, MouseButtonEventArgs e)
             => _vm?.ToggleHistory();
-
-        // ════════════════════════════════════════════════════════════════════
-        //  TITLE BAR
-        // ════════════════════════════════════════════════════════════════════
-
-        private void TitleBar_MouseLeftButtonDown(object sender, MouseButtonEventArgs e)
-        {
-            if (e.ChangedButton == MouseButton.Left)
-            {
-                ReleaseCapture();
-                SendMessage(
-                    new System.Windows.Interop.WindowInteropHelper(this).Handle,
-                    0x0112,   // WM_SYSCOMMAND
-                    0xF012,   // SC_DRAGMOVE
-                    0);
-            }
-        }
-
-        private void btnMinimize_Click(object sender, RoutedEventArgs e)
-            => WindowState = WindowState.Minimized;
-
-        private void btnMaximize_Click(object sender, RoutedEventArgs e)
-            => WindowState = WindowState == WindowState.Normal
-               ? WindowState.Maximized
-               : WindowState.Normal;
-
-        private void btnClose_Click(object sender, RoutedEventArgs e)
-            => Close();
 
         // ════════════════════════════════════════════════════════════════════
         //  HELPER – Focus + scroll dgTotalSteps tới row có step code tương ứng
@@ -476,15 +439,5 @@ namespace SSSW.UI.WPF
             }
         }
 
-        /// <summary>
-        /// Bấm vào tên nhân viên trên title bar → mở dialog nhập tay Employee ID
-        /// (khi không quét được thẻ RFID). Toàn bộ logic mở dialog + áp kết quả
-        /// nằm trong ViewModel (OpenRfidInputDialog) để nhất quán với pattern
-        /// điều hướng còn lại (OpenShotWeightFGWindow, OpenHistoryView, ...).
-        /// </summary>
-        private void _tbEmployee_MouseLeftButtonDown(object sender, MouseButtonEventArgs e)
-        {
-            _vm?.OpenRfidInputDialog();
-        }
     }
 }

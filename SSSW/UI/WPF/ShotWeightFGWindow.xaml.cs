@@ -28,16 +28,13 @@ using System.Windows.Media;
 using KeyEventArgs = System.Windows.Input.KeyEventArgs;
 using TextBox = System.Windows.Controls.TextBox;
 using SelectionChangedEventArgs = System.Windows.Controls.SelectionChangedEventArgs;
+using UserControl = System.Windows.Controls.UserControl;
 using Serilog;
 
 namespace SSSW.UI.WPF
 {
-    public partial class ShotWeightFGWindow : Window
+    public partial class ShotWeightFGWindow : UserControl
     {
-        // ── Win32 – borderless drag ──────────────────────────────────────────
-        [DllImport("user32.dll")] private static extern bool ReleaseCapture();
-        [DllImport("user32.dll")] private static extern int SendMessage(IntPtr hWnd, int Msg, int wParam, int lParam);
-
         // ── ViewModel (instance RIÊNG của cửa sổ này) ───────────────────────
         private ShotWeightFGViewModel _vm = null!;
 
@@ -45,18 +42,23 @@ namespace SSSW.UI.WPF
         // liên tiếp trong popup trước khi lần chọn trước load DB xong) ──────────────
         private bool _isHandlingFgSelection;
 
-        // ── Shared hardware connections (singleton, xem DeviceConnectionService) ──
+        // ── Shared hardware connections — đọc qua biến toàn cục GlobalVariable.Devices
+        // (Main đã gán + kết nối trước khi tab này được mở), xem ghi chú tương ứng trong
+        // ShotWeightWindow.xaml.cs. ─────────────────────────────────────────────────
         private DeviceConnectionService _deviceService = null!;
+
+        // ── Chỉ load master data (InitializeFgAsync) MỘT LẦN cho instance này —
+        // xem ghi chú tương ứng trong ShotWeightWindow.xaml.cs. ─────────────────
+        private bool _initialized;
 
         // ════════════════════════════════════════════════════════════════════
         //  CONSTRUCTORS
         // ════════════════════════════════════════════════════════════════════
 
-        /// <summary>DI constructor – nhận ViewModel riêng và device service dùng chung.</summary>
-        public ShotWeightFGWindow(ShotWeightFGViewModel viewModel, DeviceConnectionService deviceService) : this()
+        /// <summary>DI constructor – nhận ViewModel riêng của cửa sổ này.</summary>
+        public ShotWeightFGWindow(ShotWeightFGViewModel viewModel) : this()
         {
             _vm = viewModel;
-            _deviceService = deviceService;
             DataContext = viewModel;
         }
 
@@ -65,7 +67,7 @@ namespace SSSW.UI.WPF
         {
             InitializeComponent();
             Loaded += OnLoaded;
-            Closing += OnClosing;
+            Unloaded += OnUnloaded;
         }
 
         // ════════════════════════════════════════════════════════════════════
@@ -75,11 +77,12 @@ namespace SSSW.UI.WPF
         {
             if (_vm == null) return; // guard cho design-time preview
 
+            // 0. Lấy service dùng chung từ biến toàn cục — Main đã gán GlobalVariable.Devices
+            //    và kết nối RFID/Barcode/Scale trước khi tab nào (Step/FG) được mở.
+            _deviceService = GlobalVariable.Devices!;
+
             // 1. Đăng ký events TRƯỚC khi Initialize để không bỏ sót status thay đổi.
-            //    Lưu ý: cửa sổ FG chỉ được mở (dialog) từ ShotWeightWindow SAU khi cửa sổ đó
-            //    đã InitializeAsync() xong (config đã load) và đã tạm ngưng subscription của
-            //    chính nó — nên EnsureInitialized() ở đây luôn là no-op tái sử dụng driver đã
-            //    kết nối sẵn với config đúng.
+            //    EnsureInitialized() ở đây luôn là no-op vì Main đã kết nối sẵn với config đúng.
             _deviceService.BarcodeChanged += BarcodeDriver_DataValueChanged;
             _deviceService.RfidChanged += RfidDriver_DataValueChanged;
             _deviceService.ScaleChanged += ScaleDriver_DataValueChanged;
@@ -95,8 +98,13 @@ namespace SSSW.UI.WPF
             _vm.FocusRfidNameAction = () => tbRFIDName.Focus();
             _vm.ClearFgComboAction = () => { cbFgCode.EditValue = null; };
 
-            // 3. Khởi tạo ViewModel (bản rút gọn dành cho FG)
-            await InitializeFgAsync();
+            // 3. Khởi tạo ViewModel (bản rút gọn dành cho FG) — CHỈ MỘT LẦN cho
+            //    instance này (xem ghi chú ở _initialized).
+            if (!_initialized)
+            {
+                _initialized = true;
+                await InitializeFgAsync();
+            }
         }
 
         /// <summary>
@@ -114,11 +122,11 @@ namespace SSSW.UI.WPF
         }
 
         // ════════════════════════════════════════════════════════════════════
-        //  CLOSING
+        //  UNLOADED (control bị gỡ khỏi cây visual — Main chuyển sang tab khác)
         // ════════════════════════════════════════════════════════════════════
-        private void OnClosing(object? sender, System.ComponentModel.CancelEventArgs e)
+        private void OnUnloaded(object sender, RoutedEventArgs e)
         {
-            // Hủy đăng ký events → tránh memory leak / double-handling lần mở sau.
+            // Hủy đăng ký events → tránh double-handling khi tab này không hiển thị.
             // KHÔNG Dispose driver nào — DeviceConnectionService.Shutdown() lo việc đó,
             // gọi đúng 1 lần từ Program.cs khi thoát app.
             _deviceService.BarcodeChanged -= BarcodeDriver_DataValueChanged;
@@ -236,33 +244,6 @@ namespace SSSW.UI.WPF
         // ════════════════════════════════════════════════════════════════════
         private void HistoryHeader_Click(object sender, MouseButtonEventArgs e)
             => _vm?.ToggleHistory();
-
-        // ════════════════════════════════════════════════════════════════════
-        //  TITLE BAR – drag window (không có nút Minimize/Maximize/Close... của station)
-        // ════════════════════════════════════════════════════════════════════
-        private void TitleBar_MouseLeftButtonDown(object sender, MouseButtonEventArgs e)
-        {
-            if (e.ChangedButton == MouseButton.Left)
-            {
-                ReleaseCapture();
-                SendMessage(
-                    new System.Windows.Interop.WindowInteropHelper(this).Handle,
-                    0x0112,   // WM_SYSCOMMAND
-                    0xF012,   // SC_DRAGMOVE
-                    0);
-            }
-        }
-
-        private void btnMinimize_Click(object sender, RoutedEventArgs e)
-            => WindowState = WindowState.Minimized;
-
-        private void btnMaximize_Click(object sender, RoutedEventArgs e)
-            => WindowState = WindowState == WindowState.Normal
-               ? WindowState.Maximized
-               : WindowState.Normal;
-
-        private void btnClose_Click(object sender, RoutedEventArgs e)
-            => Close();
 
         private void _txtScale_KeyDown(object sender, KeyEventArgs e)
         {
@@ -404,13 +385,5 @@ namespace SSSW.UI.WPF
             }
         }
 
-        /// <summary>
-        /// Bấm vào tên nhân viên trên title bar → mở dialog nhập tay Employee ID,
-        /// giống ShotWeightWindow. Logic mở dialog nằm trong ViewModel.
-        /// </summary>
-        private void _tbEmployee_MouseLeftButtonDown(object sender, MouseButtonEventArgs e)
-        {
-            _vm?.OpenRfidInputDialog();
-        }
     }
 }

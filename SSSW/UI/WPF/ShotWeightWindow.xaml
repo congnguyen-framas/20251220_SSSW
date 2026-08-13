@@ -1,4 +1,4 @@
-﻿<Window
+﻿<UserControl
     x:Class="SSSW.UI.WPF.ShotWeightWindow"
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
@@ -6,175 +6,24 @@
     xmlns:dxg="http://schemas.devexpress.com/winfx/2008/xaml/grid"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     xmlns:vm="clr-namespace:SSSW.UI.WPF.ViewModels"
-    Title="IT – Shotweight Station"
-    Width="1920"
-    Height="1080"
-    AllowsTransparency="False"
     Background="#F0F2F5"
-    ResizeMode="CanResize"
-    WindowStartupLocation="CenterScreen"
-    WindowState="Maximized"
-    WindowStyle="None"
     mc:Ignorable="d">
 
     <!--  Merge style dictionary  -->
-    <Window.Resources>
+    <UserControl.Resources>
         <ResourceDictionary>
             <ResourceDictionary.MergedDictionaries>
                 <ResourceDictionary Source="/UI/WPF/Styles/ShotWeightStyles.xaml" />
             </ResourceDictionary.MergedDictionaries>
         </ResourceDictionary>
-    </Window.Resources>
+    </UserControl.Resources>
 
     <Grid>
-        <Grid.RowDefinitions>
-            <RowDefinition Height="44" />
-            <RowDefinition Height="*" />
-            <!--<RowDefinition Height="10" />-->
-        </Grid.RowDefinitions>
-
-        <!--  ═══════════════════════════════ TITLE BAR ═══════════════════════════════  -->
-        <Border
-            Grid.Row="0"
-            Background="#0D1117"
-            MouseLeftButtonDown="TitleBar_MouseLeftButtonDown">
-            <Grid>
-                <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="Auto" />
-                    <ColumnDefinition Width="Auto" />
-                    <ColumnDefinition Width="Auto" />
-                    <ColumnDefinition Width="*" />
-                    <ColumnDefinition Width="Auto" />
-                    <ColumnDefinition Width="Auto" />
-                </Grid.ColumnDefinitions>
-
-                <Image
-                    Grid.Column="1"
-                    Height="40"
-                    Margin="5,0,10,0"
-                    VerticalAlignment="Center"
-                    Source="/SSSW;component/Resources/framas_mini_white.png" />
-
-
-                <!--  Binding WindowTitle từ ViewModel  -->
-                <TextBlock
-                    Grid.Column="2"
-                    Margin="0,0,10,0"
-                    VerticalAlignment="Center"
-                    FontFamily="Segoe UI"
-                    FontSize="13"
-                    Foreground="White"
-                    Text="{Binding WindowTitle}" />
-
-                <StackPanel
-                    Grid.Column="3"
-                    Grid.ColumnSpan="2"
-                    Width="1383"
-                    Margin="0,0,196,0"
-                    HorizontalAlignment="Right" />
-
-                <!--  Binding UserName từ ViewModel  -->
-                <!--
-                <TextBlock
-                    Grid.Column="4"
-                    Margin="0,0,12,0"
-                    VerticalAlignment="Center"
-                    FontFamily="Segoe UI"
-                    FontSize="12"
-                    Foreground="#90A4AE"
-                    Text="{Binding UserName}" />-->
-                <StackPanel Grid.Column="4" Orientation="Horizontal">
-                    <!--  status dot  -->
-                    <Ellipse
-                        Width="10"
-                        Height="10"
-                        Margin="0,0,6,0"
-                        VerticalAlignment="Center"
-                        Fill="{Binding RfidStatus, Converter={StaticResource DriverStatusToColor}}" />
-
-                    <TextBlock
-                        Grid.Column="1"
-                        Padding="10"
-                        VerticalAlignment="Center"
-                        FontWeight="Bold"
-                        Foreground="White"
-                        Style="{StaticResource LabelStyle}"
-                        Text="RFID - Employee ID:" />
-
-                    <TextBlock
-                        Name="_tbEmployee"
-                        Padding="10"
-                        VerticalAlignment="Center"
-                        FontFamily="Segoe UI"
-                        FontSize="15"
-                        Foreground="White"
-                        IsEnabled="{Binding ReadonlyRfid}"
-                        MouseLeftButtonDown="_tbEmployee_MouseLeftButtonDown"
-                        Text="{Binding UserName}" />
-                </StackPanel>
-
-                <StackPanel
-                    Grid.Column="5"
-                    Margin="0,0,4,0"
-                    VerticalAlignment="Center"
-                    Orientation="Horizontal">
-                    <Button
-                        Background="White"
-                        Command="{Binding ScaneFGCommand}"
-                        Style="{StaticResource TitleIconBtn}"
-                        ToolTip="Scale shotweight for Finish Good">
-                        <Image
-                            Width="20"
-                            Height="20"
-                            Source="/SSSW;component/Resources/scale_30.png" />
-                    </Button>
-                    <Button
-                        Command="{Binding ReloadCommand}"
-                        Content="&#xE72C;"
-                        Style="{StaticResource TitleIconBtn}"
-                        ToolTip="Reload" />
-                    <Button
-                        Command="{Binding HistoryViewCommand}"
-                        Content="&#xE81C;"
-                        Style="{StaticResource TitleIconBtn}"
-                        ToolTip="History" />
-                    <Button
-                        Command="{Binding HydraCommand}"
-                        Content="&#xE895;"
-                        Style="{StaticResource TitleIconBtn}"
-                        ToolTip="Hydra" />
-                    <Button
-                        Command="{Binding SettingsCommand}"
-                        Content="&#xE713;"
-                        Style="{StaticResource TitleIconBtn}"
-                        ToolTip="Settings" />
-                    <Button
-                        Command="{Binding UpdateCommand}"
-                        Content="&#xE777;"
-                        Style="{StaticResource TitleIconBtn}"
-                        ToolTip="Update" />
-                    <Button
-                        Click="btnMinimize_Click"
-                        Content="&#xE921;"
-                        Style="{StaticResource TitleIconBtn}"
-                        ToolTip="Minimize" />
-                    <Button
-                        Click="btnMaximize_Click"
-                        Content="&#xE922;"
-                        Style="{StaticResource TitleIconBtn}"
-                        ToolTip="Maximize" />
-                    <Button
-                        Background="#C62828"
-                        Click="btnClose_Click"
-                        Content="&#xE8BB;"
-                        Style="{StaticResource TitleIconBtn}"
-                        ToolTip="Close" />
-                </StackPanel>
-            </Grid>
-        </Border>
-
         <!--  ═══════════════════════════════ MAIN CONTENT ════════════════════════════  -->
-        <Grid Grid.Row="1" Margin="6">
+        <!--  Title bar (logo/WindowTitle/RFID/icon buttons) đã chuyển lên Main.xaml —
+              Main bind trực tiếp vào ActiveContent.DataContext.* để hiển thị đúng
+              context của tab đang active (xem Main.xaml). ────────────────────────  -->
+        <Grid Margin="6">
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="*" />
                 <ColumnDefinition Width="4*" />
@@ -1819,4 +1668,4 @@
             </Border>
         </Grid>
     </Grid>
-</Window>
+</UserControl>

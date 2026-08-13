@@ -7,6 +7,27 @@
 **Author:** Cong Nguyen · cong.nguyen@framas.com  
 **Confidential:** framas Internal Use Only
 
+> **⚠ Update note (2026-08-13):** `ShotWeightWindow` is **no longer the app's
+> top-level `Window`**. A new shell window, `Main.xaml` (`SSSW.UI.WPF.Main` /
+> `MainViewModel`), is now the real top-level `Window` launched from
+> `Program.cs`. `ShotWeightWindow` and `ShotWeightFGWindow` were converted from
+> `Window` to `UserControl` so `Main`'s body (`ContentControl`) can host either
+> one — `Main`'s header has two tab buttons ("Step Component" / "Finished
+> Goods") that swap `MainViewModel.ActiveContent` between cached instances of
+> the two controls (default: Step, on startup). The old modal "Scan FG" dialog
+> flow (`ScaneFGCommand` → `ShotWeightFGWindow.ShowDialog()`, with
+> `SuspendDeviceEventsAction`/`ResumeDeviceEventsAction` to avoid double-
+> handling hardware events) has been **removed** — `UserControl.Loaded`/
+> `Unloaded`, which fire whenever `Main` swaps `ActiveContent`, now
+> subscribe/unsubscribe each view's hardware events, giving the same
+> "only the visible tab reacts to scans" guarantee without a dialog. The
+> sections below (title bar, `Window`-specific attributes, drag/minimize/
+> maximize/close in `ShotWeightWindow.xaml.cs`) describe the **pre-refactor**
+> layout where `ShotWeightWindow` was still a `Window` — chrome (drag,
+> Minimize/Maximize/Close, `WindowState`) now lives in `Main.xaml`/`Main.xaml.cs`
+> instead. See `docs/worklog/2026-08-13_main-shell-step-fg-tabs.md` for the
+> full change log.
+
 ---
 
 ## Table of Contents

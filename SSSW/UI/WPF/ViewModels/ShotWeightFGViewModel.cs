@@ -80,12 +80,8 @@ namespace SSSW.UI.WPF.ViewModels
         // ─────────────────────────────────────────────────────────────────────
 
         #region Title / Header
-        private string _windowTitle = "FG – Shotweight Station";
-        public string WindowTitle
-        {
-            get => _windowTitle;
-            set { _windowTitle = value; OnPropertyChanged(); }
-        }
+        // WindowTitle không còn ở đây nữa — MainViewModel.WindowTitle là chủ sở hữu duy nhất
+        // của dòng tiêu đề header (xem MainViewModel.LoadWindowTitleAsync()).
 
         private string _userName = string.Empty;
         public string UserName
@@ -491,21 +487,12 @@ namespace SSSW.UI.WPF.ViewModels
                 // (AddSample/OnFgSelectedAsync/OnBarcodeScannedAsync), nó được tra cứu LAZY — đúng
                 // 1 item — ngay tại thời điểm đó (xem ResolveCategoryAsync), không cần thiết phải
                 // preload cho toàn bộ master list.
-                var location = _mesocomp switch
-                {
-                    "VNT1" => "fVN",
-                    "FKV" => "fKV",
-                    "FTT1" => "fFT",
-                    "05FI" => "fIN",
-                    "fGE" => "fGE",
-                    _ => "Unknown"
-                };
-                var appVersion = System.Reflection.Assembly.GetExecutingAssembly().GetName().Version?.ToString() ?? "N/A";
-
+                // WindowTitle (location + version) đã chuyển hẳn lên MainViewModel.LoadWindowTitleAsync()
+                // — Main giờ là chủ sở hữu duy nhất của dòng tiêu đề header, tính 1 lần không phụ
+                // thuộc tab active. Không tính lại ở đây nữa để tránh trùng lặp logic.
                 System.Windows.Application.Current.Dispatcher.Invoke(() =>
                 {
                     FgCodeMaster = master;
-                    WindowTitle = $"{location} – Shotweight Station For FG – Ver-{appVersion}";
                     DeltaInformation = $"STD: Target Weight ↔ ACTUAL: Live Weight · auto colored vs. tolerance: -{GlobalVariable.ConfigSystem.DeltaLevel1}g<=Delta<={GlobalVariable.ConfigSystem.DeltaLevel1}g -->green;  -{GlobalVariable.ConfigSystem.DeltaLevel2}g<=Delta<=-{GlobalVariable.ConfigSystem.DeltaLevel1}g or {GlobalVariable.ConfigSystem.DeltaLevel1}g<=Delta<={GlobalVariable.ConfigSystem.DeltaLevel2}g -->Orange; Delta<-{GlobalVariable.ConfigSystem.DeltaLevel2}g or Delta>{GlobalVariable.ConfigSystem.DeltaLevel2}g -->Red.";
                 });
             }

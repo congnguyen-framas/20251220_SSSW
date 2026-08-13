@@ -89,6 +89,8 @@ namespace SSSW
                     services.AddTransient<ShotWeightFGWindow>(); // WPF Scan FG sample-weighing window
                     services.AddTransient<frmRfidInputViewModel>(); // Manual Employee ID entry ViewModel
                     services.AddTransient<frmRfidInput>();          // Manual Employee ID entry dialog
+                    services.AddTransient<MainViewModel>(); // Shell ViewModel (Step/FG tab switching)
+                    services.AddTransient<Main>();           // Shell window (real top-level Window)
                 })
                 .Build();
 
@@ -117,7 +119,7 @@ namespace SSSW
             wpfApp.Resources.MergedDictionaries.Add(dict);
 
 
-            var wpfWin = scope.ServiceProvider.GetRequiredService<ShotWeightWindow>();
+            var wpfWin = scope.ServiceProvider.GetRequiredService<Main>();
             wpfApp.Run(wpfWin);
 
             // Release hardware connections exactly once at process exit, regardless of

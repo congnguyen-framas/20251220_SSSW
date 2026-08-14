@@ -28,6 +28,10 @@ namespace SSSW.UI.WPF.ViewModels
         private readonly DeviceConnectionService _deviceService;
         private readonly ILogger<MainViewModel> _logger;
 
+        // RFID/operator identity dùng chung cho cả 2 tab Step/FG — xem OperatorSessionService
+        // để biết lý do gộp về đây (chuyển tab không còn làm "mất" operator đã quét).
+        public OperatorSessionService OperatorSession { get; }
+
         // Cờ đánh dấu người dùng chủ động bấm nút Update (phân biệt với auto-check ngầm) —
         // dùng để quyết định có hiện popup "Already up to date." hay im lặng. Copy nguyên vẹn
         // hành vi cũ từ ShotWeightViewModel.
@@ -89,11 +93,13 @@ namespace SSSW.UI.WPF.ViewModels
             IServiceProvider serviceProvider,
             IDbContextFactory<DbContextDogeWH> dbFactory,
             DeviceConnectionService deviceService,
+            OperatorSessionService operatorSession,
             ILogger<MainViewModel> logger)
         {
             _serviceProvider = serviceProvider;
             _dbFactory = dbFactory;
             _deviceService = deviceService;
+            OperatorSession = operatorSession;
             _logger = logger;
 
             SelectStepCommand = new RelayCommand(SelectStep);
@@ -202,6 +208,11 @@ namespace SSSW.UI.WPF.ViewModels
                 // ── Hardware — PHẢI chạy sau khi Config đã load ở trên, nếu không sẽ
                 // connect bằng config mặc định (IP/COM sai). ─────────────────────────
                 _deviceService.EnsureInitialized();
+
+                // OperatorSession phải Attach() SAU khi hardware đã EnsureInitialized() để backfill
+                // đúng RfidStatus hiện tại (không phải Unknown mặc định), rồi subscribe sự kiện quét
+                // thẻ vật lý — chạy 1 lần duy nhất ở cấp Main, dùng chung cho cả Step lẫn FG.
+                OperatorSession.Attach(_deviceService);
             }
             catch (Exception ex)
             {
@@ -346,6 +357,23 @@ namespace SSSW.UI.WPF.ViewModels
             nf.WindowState = System.Windows.Forms.FormWindowState.Maximized;
             nf.ShowDialog();
             RefreshActiveContent();
+        }
+
+        /// <summary>Mở dialog nhập tay Employee ID (frmRfidInput) khi không quét được thẻ RFID —
+        /// bấm vào label số thẻ/tên nhân viên trên header (xem Main.xaml.cs's
+        /// _tbEmployee_MouseLeftButtonDown). Dùng chung cho cả 2 tab vì OperatorSession dùng
+        /// chung; trước đây mỗi ViewModel Step/FG tự có 1 bản OpenRfidInputDialog() giống hệt
+        /// nhau, nay chỉ còn 1 bản duy nhất ở đây.</summary>
+        public void OpenRfidInputDialog()
+        {
+            var dlg = _serviceProvider.GetRequiredService<frmRfidInput>();
+            dlg.Owner = System.Windows.Application.Current.MainWindow;
+            dlg.WindowStartupLocation = System.Windows.WindowStartupLocation.CenterOwner;
+            bool? result = dlg.ShowDialog();
+            if (result == true)
+            {
+                OperatorSession.OnRfidValueChanged(dlg.ResultRfidCode);
+            }
         }
 
         private void CheckUpdate()

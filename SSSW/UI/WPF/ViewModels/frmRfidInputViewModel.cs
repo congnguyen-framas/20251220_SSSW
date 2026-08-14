@@ -1,27 +1,23 @@
-﻿using DevExpress.Data.Controls.ExpressionEditor;
-using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Logging;
-using SSSW.models;
-using SSSW.modelss;
+﻿using SSSW.UI.WPF.Services;
 using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 using System.Threading.Tasks;
-using System.Windows;
-using static System.Windows.Forms.VisualStyles.VisualStyleElement.StartPanel;
 
 namespace SSSW.UI.WPF.ViewModels
 {
+    /// <summary>
+    /// ViewModel cho dialog nhập tay Employee ID (frmRfidInput). Trước đây tự chứa 1 bản
+    /// copy gần-y-hệt logic tra cứu/đăng ký operator (trùng với ShotWeightViewModel VÀ
+    /// ShotWeightFGViewModel) — nay chỉ còn là lớp mỏng ủy quyền (delegate) toàn bộ việc
+    /// tra cứu DB cho OperatorSessionService dùng chung, rồi copy kết quả về property riêng
+    /// của dialog để hiển thị (frmRfidInput.xaml.cs đọc ResultRfidCode/ResultRfidName từ
+    /// đây sau khi ShowDialog() == true và trả về cho MainViewModel.OpenRfidInputDialog()).
+    /// </summary>
     public class frmRfidInputViewModel : BaseViewModel
     {
-        // ── DI ──────────────────────────────────────────────────────────────
-        private readonly IDbContextFactory<DbContextDogeWH> _dbFactory;
-        private readonly IServiceProvider _serviceProvider;
-        private readonly ILogger<ShotWeightViewModel> _logger;
+        private readonly OperatorSessionService _operatorSession;
 
         private string _rfidCardCode = string.Empty;
-        /// <summary>Mã thẻ RFID vừa quét (hiển thị trên UI, khác với RfidName = tên nhân viên).</summary>
+        /// <summary>Mã thẻ/Employee ID người dùng vừa gõ (hiển thị trên UI dialog).</summary>
         public string RfidCardCode
         {
             get => _rfidCardCode;
@@ -40,117 +36,49 @@ namespace SSSW.UI.WPF.ViewModels
         public string UserName
         {
             get => _userName;
-            set { _userName = value; SetProperty(ref _userName, value); }
+            set { SetProperty(ref _userName, value); }
         }
 
-        public frmRfidInputViewModel(IDbContextFactory<DbContextDogeWH> dbFactory, IServiceProvider serviceProvider, ILogger<ShotWeightViewModel> logger)
+        public frmRfidInputViewModel(OperatorSessionService operatorSession)
         {
-            _dbFactory = dbFactory;
-            _serviceProvider = serviceProvider;
-            _logger = logger;
+            _operatorSession = operatorSession;
 
             // Default: xóa các giá trị hiển thị trong VM thay vì xóa WinForms TextBox
             ClearRfidAction = () => RfidCardCode = string.Empty;
         }
 
         public Action? ClearRfidAction { get; set; }
-        /// <summary>Code-behind gán: focus vào tbRFIDName.</summary>
 
         public void OnRfidValueChanged()
         {
-            try
-            { 
-                if (string.IsNullOrEmpty(_rfidCardCode))
-                    throw new Exception("ID cannot be null.");
+            // Dùng giá trị bool trả về (không dựa vào IsOperatorSet) — IsOperatorSet có thể vẫn
+            // true từ 1 lần quét thành công TRƯỚC ĐÓ (VD trên tab Step) và không phản ánh đúng
+            // kết quả của lần tra cứu này trên dialog.
+            bool found = _operatorSession.OnRfidValueChanged(RfidCardCode);
 
-                using var db = _dbFactory.CreateDbContext();
-
-                // 1 nhân viên (C000) có thể có NHIỀU dòng FT029 — mỗi dòng ứng với 1 phòng ban/quyền (C002 → FT031).
-                // Phải duyệt tất cả các dòng của nhân viên để tìm dòng có quyền IT/QC, thay vì chỉ xét dòng đầu tiên
-                // (dòng đầu tiên trả về từ DB có thể là 1 phòng ban không có quyền, dù nhân viên có dòng khác hợp lệ).
-                var operatorRows = db.fT029_Operator_RFIDs
-                    .Where(x => x.C000.Contains(RfidCardCode))
-                    .ToList();
-
-                if (operatorRows.Count == 0)
-                {
-                    ClearRfidAction?.Invoke();
-
-                    throw new Exception(
-                        $"Employee ID {RfidCardCode} not found. " +
-                        "Please enter the name and press Enter to register.");
-                }
-
-                var allowedDepartments = db.FT031s
-                    .Where(d => d.C000 == "IT" || d.C000 == "QC")
-                    .ToList();
-
-                var operatorInfo = operatorRows.FirstOrDefault(op => allowedDepartments.Any(d => d.Id == op.C002));
-
-                if (operatorInfo == null)
-                {
-                    RfidCardCode = string.Empty;
-                    RfidName = string.Empty;
-                    ClearRfidAction?.Invoke();
-                    throw new Exception("Employee does not have permission for this function.");
-                }
-
-                operatorInfo.DepartmentInfor = allowedDepartments.First(d => d.Id == operatorInfo.C002);
-
-                RfidName = operatorInfo.C001;
-                UserName = $"{operatorInfo.C000} · {operatorInfo.C001}";
-            }
-            catch (Exception ex)
+            if (!found)
             {
-                _logger.LogError(ex, "RFID error");
-                System.Windows.Forms.MessageBox.Show(ex.Message, "ERROR",
-                    (MessageBoxButtons)(MessageBoxButtons)MessageBoxButton.OK, (MessageBoxIcon)MessageBoxImage.Error);
+                // Tra cứu thất bại (không tìm thấy/không có quyền) → đồng bộ lại field của dialog
+                // này để textbox phản ánh đúng (yêu cầu nhập lại/gõ tên để đăng ký).
+                ClearRfidAction?.Invoke();
+                RfidName = string.Empty;
+                UserName = string.Empty;
+                return;
             }
+
+            RfidCardCode = _operatorSession.RfidCardCode;
+            RfidName = _operatorSession.RfidName;
+            UserName = _operatorSession.UserName;
         }
 
         /// <summary>Người dùng nhấn Enter trong ô Employee Name để đăng ký operator mới (khi ID chưa tồn tại).</summary>
         public async Task OnRfidNameEnterAsync(string name)
         {
-            try
-            {
-                if (string.IsNullOrEmpty(RfidCardCode) || string.IsNullOrEmpty(name))
-                    throw new Exception("ID or name cannot be null.");
+            await _operatorSession.OnRfidNameEnterAsync(name);
 
-                var res = System.Windows.Forms.MessageBox.Show(
-                    $"Register operator {name} with ID {RfidCardCode}?",
-                    "Confirm", (MessageBoxButtons)MessageBoxButton.YesNo, (MessageBoxIcon)MessageBoxImage.Question);
-                if (res != DialogResult.Yes) return;
-
-                using var db = _dbFactory.CreateDbContext();
-                var dept = db.FT031s.FirstOrDefault(x => x.C000 == "QC")
-                           ?? throw new Exception("Department 'QC' not found.");
-
-                if (await db.fT029_Operator_RFIDs.AnyAsync(x => x.C000 == RfidCardCode))
-                    throw new Exception("ID already exists.");
-
-                await db.fT029_Operator_RFIDs.AddAsync(new FT029_Operator_RFID
-                {
-                    Id = Guid.NewGuid(),
-                    C000 = RfidCardCode,
-                    C001 = name,
-                    C002 = dept.Id,
-                    CreatedDate = DateTime.Now,
-                    CreatedBy = string.Empty,
-                    CreatedMachine = Environment.MachineName,
-                    Actived = true
-                });
-                await db.SaveChangesAsync();
-
-                // Đăng ký xong → tra cứu lại ngay để RfidName/UserName phản ánh operator vừa tạo,
-                // để dialog có thể trả kết quả về form chính mà không cần người dùng nhấn Enter lại ở ô ID.
-                OnRfidValueChanged();
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "RFID name enter error");
-                System.Windows.Forms.MessageBox.Show(ex.Message, "WARNING",
-                    (MessageBoxButtons)MessageBoxButton.OK, (MessageBoxIcon)(MessageBoxIcon)MessageBoxImage.Warning);
-            }
+            // Đăng ký xong → tra cứu lại ngay để RfidName/UserName phản ánh operator vừa tạo,
+            // để dialog có thể trả kết quả về form chính mà không cần người dùng nhấn Enter lại ở ô ID.
+            OnRfidValueChanged();
         }
     }
 }

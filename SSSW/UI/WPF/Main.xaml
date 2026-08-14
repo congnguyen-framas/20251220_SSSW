@@ -99,7 +99,14 @@
                         Style="{StaticResource NavTabBtn}" />
                 </StackPanel>
 
-                <!--  RFID / EMPLOYEE  -->
+                <!--
+                    RFID / EMPLOYEE.
+                    RFID dùng chung cho cả 2 tab (thẻ quét ở tab nào cũng là cùng 1 operator) nên
+                    bind thẳng vào MainViewModel.OperatorSession.* (OperatorSessionService) —
+                    KHÔNG qua ActiveContent.DataContext nữa: trước đây mỗi tab tự giữ 1 bản RFID
+                    riêng nên chuyển tab làm mất thông tin đã quét (trông như bị xóa dù không ai
+                    bấm Cancel) — xem OperatorSessionService.cs để biết chi tiết.
+                -->
                 <StackPanel
                     Grid.Column="4"
                     Margin="10,0"
@@ -109,7 +116,7 @@
                         Width="10"
                         Height="10"
                         Margin="0,0,6,0"
-                        Fill="{Binding ActiveContent.DataContext.RfidStatus, Converter={StaticResource DriverStatusToColor}}" />
+                        Fill="{Binding OperatorSession.RfidStatus, Converter={StaticResource DriverStatusToColor}}" />
                     <TextBlock
                         Margin="0,0,4,0"
                         FontWeight="Bold"
@@ -136,7 +143,7 @@
                         Foreground="White"
                         MouseLeftButtonDown="_tbEmployee_MouseLeftButtonDown"
                         Style="{StaticResource LabelStyle}"
-                        Text="{Binding ActiveContent.DataContext.UserName}" />
+                        Text="{Binding OperatorSession.UserName}" />
                 </StackPanel>
 
                 <!--

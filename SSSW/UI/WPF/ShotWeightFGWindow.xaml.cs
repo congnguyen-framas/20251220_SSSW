@@ -83,19 +83,18 @@ namespace SSSW.UI.WPF
 
             // 1. Đăng ký events TRƯỚC khi Initialize để không bỏ sót status thay đổi.
             //    EnsureInitialized() ở đây luôn là no-op vì Main đã kết nối sẵn với config đúng.
+            //    RfidChanged KHÔNG còn subscribe ở đây nữa — OperatorSessionService.Attach()
+            //    (gọi 1 lần từ MainViewModel.StartupAsync()) đã lo việc này dùng chung Step/FG.
             _deviceService.BarcodeChanged += BarcodeDriver_DataValueChanged;
-            _deviceService.RfidChanged += RfidDriver_DataValueChanged;
             _deviceService.ScaleChanged += ScaleDriver_DataValueChanged;
             _deviceService.EnsureInitialized();
 
             // Backfill trạng thái hiện tại — driver có thể đã kết nối từ trước (do cửa sổ
             // chính init), nên sẽ không có event mới nào bắn ra để cập nhật UI ở đây.
             _vm.BarcodeStatus = _deviceService.BarcodeStatus;
-            _vm.RfidStatus = _deviceService.RfidStatus;
             _vm.ScaleStatus = _deviceService.ScaleStatus;
 
             // 2. Cấu hình View callbacks để ViewModel gọi lại View khi cần
-            _vm.FocusRfidNameAction = () => tbRFIDName.Focus();
             _vm.ClearFgComboAction = () => { cbFgCode.EditValue = null; };
 
             // 3. Khởi tạo ViewModel (bản rút gọn dành cho FG) — CHỈ MỘT LẦN cho
@@ -115,7 +114,6 @@ namespace SSSW.UI.WPF
         private async Task InitializeFgAsync()
         {
             _vm.ReadOnlyScale = GlobalVariable.ConfigSystem.Scale.ReadOnly ?? true;
-            _vm.ReadOnlyRfid = GlobalVariable.ConfigSystem.RFID.ReadOnly;
             _vm.ReadOnlyScanner = GlobalVariable.ConfigSystem.Scanner.ReadOnly;
 
             await _vm.LoadDataAsync();
@@ -130,7 +128,6 @@ namespace SSSW.UI.WPF
             // KHÔNG Dispose driver nào — DeviceConnectionService.Shutdown() lo việc đó,
             // gọi đúng 1 lần từ Program.cs khi thoát app.
             _deviceService.BarcodeChanged -= BarcodeDriver_DataValueChanged;
-            _deviceService.RfidChanged -= RfidDriver_DataValueChanged;
             _deviceService.ScaleChanged -= ScaleDriver_DataValueChanged;
         }
 
@@ -156,25 +153,8 @@ namespace SSSW.UI.WPF
             });
         }
 
-        private void RfidDriver_DataValueChanged(object? sender, DataValueChangedEventArgs e)
-        {
-            Dispatcher.Invoke(() =>
-            {
-                var data = e.NewValue;
-                _vm.RfidStatus = data.DriverStatus;
-
-                if (data.IsValid)
-                {
-                    var code = data.Value?.ToString() ?? string.Empty;
-                    _vm.RfidCardCode = code;
-                    _vm.OnRfidValueChanged(code);
-                }
-                else if (data.DriverStatus == DriverStatus.Disconnected)
-                {
-                    _vm.RfidCardCode = string.Empty;
-                }
-            });
-        }
+        // RfidDriver_DataValueChanged đã chuyển hẳn lên OperatorSessionService.Device_RfidChanged
+        // — dùng chung Step/FG, không còn ở đây nữa.
 
         private void ScaleDriver_DataValueChanged(object? sender, DataValueChangedEventArgs e)
         {
@@ -225,11 +205,9 @@ namespace SSSW.UI.WPF
         // ════════════════════════════════════════════════════════════════════
         //  TEXTBOX KEYDOWN BRIDGES
         // ════════════════════════════════════════════════════════════════════
-        private async void tbRFIDName_KeyDown(object sender, KeyEventArgs e)
-        {
-            if (e.Key == Key.Enter && sender is TextBox tb && _vm != null)
-                await _vm.OnRfidNameEnterAsync(tb.Text);
-        }
+        // tbRFIDName_KeyDown đã xóa — tbRFIDName nằm trong khối RFID/Barcode đã bị xóa khỏi
+        // XAML (dead UI, Visibility="Collapsed") và logic OnRfidNameEnterAsync đã chuyển hẳn
+        // lên OperatorSessionService/frmRfidInputViewModel (dùng chung Step/FG).
 
         // ════════════════════════════════════════════════════════════════════
         //  DATAGRID EVENTS
@@ -360,30 +338,7 @@ namespace SSSW.UI.WPF
             }
         }
 
-        private void _txtRFID_KeyDown(object sender, KeyEventArgs e)
-        {
-            try
-            {
-                if (e.Key == Key.Enter)
-                {
-                    var tb = sender as TextBox;
-
-                    //force cập nhật binding
-                    tb.GetBindingExpression(TextBox.TextProperty)?.UpdateSource();
-
-                    RfidDriver_DataValueChanged(null,
-                        new DataValueChangedEventArgs(
-                            new DataValue(DriverStatus.Connected, _vm.RfidCardCode),
-                            new DataValue(DriverStatus.Connected, _vm.RfidCardCode)
-                        ));
-                }
-            }
-            catch (Exception ex)
-            {
-                System.Windows.MessageBox.Show(ex.Message, "EROR", MessageBoxButton.OK, (MessageBoxImage)MessageBoxIcon.Error);
-                Log.Error(ex.Message);
-            }
-        }
+        // _txtRFID_KeyDown đã xóa cùng với khối RFID/Barcode dead UI trong XAML.
 
     }
 }

@@ -89,10 +89,9 @@ namespace SSSW.UI.WPF
 
         /// <summary>
         /// Bấm vào label số thẻ + tên nhân viên trên sub-header → mở dialog nhập
-        /// tay Employee ID (khi không quét được thẻ RFID). Không có interface
-        /// chung giữa ShotWeightViewModel/ShotWeightFGViewModel nên dùng
-        /// pattern-matching để gọi đúng OpenRfidInputDialog() của ViewModel đang
-        /// active (tab Step hay FG).
+        /// tay Employee ID (khi không quét được thẻ RFID). RFID/operator identity giờ dùng
+        /// chung cho cả 2 tab (OperatorSessionService qua MainViewModel.OperatorSession) nên
+        /// gọi thẳng MainViewModel.OpenRfidInputDialog() — không cần biết tab nào đang active.
         /// </summary>
         private void _tbEmployee_MouseLeftButtonDown(object sender, MouseButtonEventArgs e)
         {
@@ -102,17 +101,8 @@ namespace SSSW.UI.WPF
             // chỉ để mở dialog nhập tay RFID".
             e.Handled = true;
 
-            if (DataContext is not MainViewModel vm) return;
-
-            switch ((vm.ActiveContent as FrameworkElement)?.DataContext)
-            {
-                case ShotWeightViewModel svm:
-                    svm.OpenRfidInputDialog();
-                    break;
-                case ShotWeightFGViewModel fvm:
-                    fvm.OpenRfidInputDialog();
-                    break;
-            }
+            if (DataContext is MainViewModel vm)
+                vm.OpenRfidInputDialog();
         }
     }
 }

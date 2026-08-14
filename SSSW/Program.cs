@@ -78,11 +78,10 @@ namespace SSSW
                     services.AddDbContextFactory<DbContextDogeWH>(options =>
                         options.UseSqlServer(GlobalVariable.ConStringSSSW));
                     // Đăng ký các Form để DI resolve được
-                    services.AddTransient<frmShotWeightScale>();
                     services.AddTransient<frmMainView>();
                     services.AddTransient<frmUpdateMasterData>();
-                    services.AddTransient<frmShotWeightScaleV2>();
                     services.AddSingleton<DeviceConnectionService>(); // Shared Barcode/RFID/Scale drivers
+                    services.AddSingleton<OperatorSessionService>(); // Shared RFID/operator identity (dùng chung Step/FG)
                     services.AddTransient<ShotWeightViewModel>(); // MVVM ViewModel
                     services.AddTransient<ShotWeightWindow>();   // WPF Option-A window
                     services.AddTransient<ShotWeightFGViewModel>(); // FG-only MVVM ViewModel (no step/BOM)

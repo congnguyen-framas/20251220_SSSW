@@ -16,6 +16,7 @@ using ScanAndScale.Core.Models;
 using SSSW.models;
 using SSSW.modelss;
 using SSSW.UI.WPF.Models;
+using SSSW.UI.WPF.Services;
 using System.Collections.ObjectModel;
 using System.Data;
 using System.Data.SqlClient;
@@ -67,8 +68,10 @@ namespace SSSW.UI.WPF.ViewModels
         private string _qrCodeScan = string.Empty;
         private FT606_Label _labelInfo = new();
 
-        private string _employeeCode = string.Empty;
-        private FT029_Operator_RFID _operatorInfo = new();
+        // RFID/operator identity không còn là field riêng của tab này nữa — đọc thẳng từ
+        // _operatorSession (OperatorSessionService, dùng chung với tab FG) để chuyển tab không
+        // làm "mất" operator đã quét (chỉ Cancel mới xóa, xem ExecuteCancel()).
+        private readonly OperatorSessionService _operatorSession;
 
         private bool _allowPartitionAdjustment = false;
         private bool _suppress = false;
@@ -103,13 +106,8 @@ namespace SSSW.UI.WPF.ViewModels
         #region Title / Header
         // WindowTitle không còn ở đây nữa — MainViewModel.WindowTitle là chủ sở hữu duy nhất
         // của dòng tiêu đề header (xem MainViewModel.LoadWindowTitleAsync()).
-
-        private string _userName = "";
-        public string UserName
-        {
-            get => _userName;
-            set { _userName = value; OnPropertyChanged(); }
-        }
+        // UserName cũng không còn ở đây — MainViewModel.OperatorSession.UserName là chủ sở hữu
+        // duy nhất, dùng chung cho cả Step/FG (xem OperatorSessionService.cs).
         #endregion
 
         #region Step Information Panel
@@ -245,13 +243,7 @@ namespace SSSW.UI.WPF.ViewModels
             set { _runnerText = value; OnPropertyChanged(); }
         }
 
-        // RFID name textbox
-        private string _rfidName = "";
-        public string RfidName
-        {
-            get => _rfidName;
-            set { _rfidName = value; OnPropertyChanged(); }
-        }
+        // RfidName không còn ở đây — dùng OperatorSession.RfidName (dùng chung Step/FG).
         #endregion
 
         #region Scale Card
@@ -311,28 +303,11 @@ namespace SSSW.UI.WPF.ViewModels
             set { _readOnlyScanner = value; OnPropertyChanged(); }
         }
 
-        // ── RFID ─────────────────────────────────────────────────────────────
-        private DriverStatus _rfidStatus = DriverStatus.Unknown;
-        public DriverStatus RfidStatus
-        {
-            get => _rfidStatus;
-            set { SetProperty(ref _rfidStatus, value); }
-        }
-
-        private string _rfidCardCode = string.Empty;
-        /// <summary>Mã thẻ RFID vừa quét (hiển thị trên UI, khác với RfidName = tên nhân viên).</summary>
-        public string RfidCardCode
-        {
-            get => _rfidCardCode;
-            set { SetProperty(ref _rfidCardCode, value); }
-        }
-
-        private bool _readOnlyRfid = false;
-        public bool ReadOnlyRfid
-        {
-            get => _readOnlyRfid;
-            set { _readOnlyRfid = value; OnPropertyChanged(); }
-        }
+        // RfidStatus/RfidCardCode/ReadOnlyRfid không còn ở đây — RFID giờ dùng chung cho cả
+        // Step/FG qua OperatorSessionService (đọc qua MainViewModel.OperatorSession, bind thẳng
+        // ở Main.xaml header). Việc kết nối/lắng nghe driver RFID cũng chuyển hẳn lên
+        // OperatorSessionService.Attach() — không còn RfidDriver_DataValueChanged riêng ở
+        // ShotWeightWindow.xaml.cs nữa.
 
         // ── Scale ─────────────────────────────────────────────────────────────
         private DriverStatus _scaleStatus = DriverStatus.Unknown;
@@ -455,10 +430,8 @@ namespace SSSW.UI.WPF.ViewModels
         // ─────────────────────────────────────────────────────────────────────
         /// <summary>Code-behind gán: xóa text trên BarcodeButtonEdit.</summary>
         public Action? ClearBarcodeAction { get; set; }
-        /// <summary>Code-behind gán: xóa text trên RFIDButtonEdit.</summary>
-        public Action? ClearRfidAction { get; set; }
-        /// <summary>Code-behind gán: focus vào tbRFIDName.</summary>
-        public Action? FocusRfidNameAction { get; set; }
+        // ClearRfidAction/FocusRfidNameAction không còn — RFID giờ do OperatorSessionService tự
+        // quản lý property của chính nó, không cần callback ngược vào View nữa.
         /// <summary>Code-behind gán: reset DevExpress LookUpEdit selection.</summary>
         public Action? ClearStepComboAction { get; set; }
         /// <summary>Code-behind gán: set DevExpress LookUpEdit selection.</summary>
@@ -491,10 +464,12 @@ namespace SSSW.UI.WPF.ViewModels
         public ShotWeightViewModel(
             IDbContextFactory<DbContextDogeWH> dbFactory,
             IServiceProvider serviceProvider,
+            OperatorSessionService operatorSession,
             ILogger<ShotWeightViewModel> logger)
         {
             _dbFactory = dbFactory;
             _serviceProvider = serviceProvider;
+            _operatorSession = operatorSession;
             _logger = logger;
 
             // Wire commands
@@ -514,7 +489,6 @@ namespace SSSW.UI.WPF.ViewModels
 
             // Default: xóa các giá trị hiển thị trong VM thay vì xóa WinForms TextBox
             ClearBarcodeAction = () => BarcodeScannedValue = string.Empty;
-            ClearRfidAction = () => RfidCardCode = string.Empty;
         }
 
         // ─────────────────────────────────────────────────────────────────────
@@ -548,7 +522,6 @@ namespace SSSW.UI.WPF.ViewModels
 
             DeltaInformation = $"STD: Target Weight ↔ ACTUAL: Live Weight · auto colored vs. tolerance: -{GlobalVariable.ConfigSystem.DeltaLevel1}g<=Delta<={GlobalVariable.ConfigSystem.DeltaLevel1}g -->green;  -{GlobalVariable.ConfigSystem.DeltaLevel2}g<=Delta<=-{GlobalVariable.ConfigSystem.DeltaLevel1}g or {GlobalVariable.ConfigSystem.DeltaLevel1}g<=Delta<={GlobalVariable.ConfigSystem.DeltaLevel2}g -->Orange; Delta<-{GlobalVariable.ConfigSystem.DeltaLevel2}g or Delta>{GlobalVariable.ConfigSystem.DeltaLevel2}g -->Red.";
             ReadOnlyScale = GlobalVariable.ConfigSystem.Scale.ReadOnly ?? true;
-            ReadOnlyRfid = GlobalVariable.ConfigSystem.RFID.ReadOnly;
             ReadOnlyScanner = GlobalVariable.ConfigSystem.Scanner.ReadOnly;
 
             await LoadDataAsync();
@@ -639,104 +612,8 @@ namespace SSSW.UI.WPF.ViewModels
             }
         }
 
-        /// <summary>RFID đọc được employee code.</summary>
-        public void OnRfidValueChanged(string rfidCode)
-        {
-            try
-            {
-                _employeeCode = rfidCode;
-                if (string.IsNullOrEmpty(_employeeCode))
-                    throw new Exception("ID cannot be null.");
-
-                using var db = _dbFactory.CreateDbContext();
-
-                // 1 nhân viên (C000) có thể có NHIỀU dòng FT029 — mỗi dòng ứng với 1 phòng ban/quyền (C002 → FT031).
-                // Phải duyệt tất cả các dòng của nhân viên để tìm dòng có quyền IT/QC, thay vì chỉ xét dòng đầu tiên
-                // (dòng đầu tiên trả về từ DB có thể là 1 phòng ban không có quyền, dù nhân viên có dòng khác hợp lệ).
-                var operatorRows = db.fT029_Operator_RFIDs
-                    .Where(x => x.C000.Contains(_employeeCode))
-                    .ToList();
-
-                if (operatorRows.Count == 0)
-                {
-                    ClearRfidAction?.Invoke();
-                    FocusRfidNameAction?.Invoke();
-                    throw new Exception(
-                        $"Employee ID {_employeeCode} not found. " +
-                        "Please enter the name and press Enter to register.");
-                }
-
-                var allowedDepartments = db.FT031s
-                    .Where(d => d.C000 == "IT" || d.C000 == "QC")
-                    .ToList();
-
-                _operatorInfo = operatorRows.FirstOrDefault(op => allowedDepartments.Any(d => d.Id == op.C002))
-                                 ?? new FT029_Operator_RFID();
-
-                if (_operatorInfo.Id == Guid.Empty)
-                {
-                    _employeeCode = string.Empty;
-                    RfidName = string.Empty;
-                    ClearRfidAction?.Invoke();
-                    throw new Exception("Employee does not have permission for this function.");
-                }
-
-                _operatorInfo.DepartmentInfor = allowedDepartments.First(d => d.Id == _operatorInfo.C002);
-
-                RfidName = _operatorInfo.C001;
-                UserName = $"{_operatorInfo.C000} - {_operatorInfo.C001}";
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "RFID error");
-                System.Windows.Forms.MessageBox.Show(ex.Message, "ERROR",
-                    (MessageBoxButtons)(MessageBoxButtons)MessageBoxButton.OK, (MessageBoxIcon)MessageBoxImage.Error);
-            }
-        }
-
-        /// <summary>Người dùng nhấn Enter trong ô RFID Name để đăng ký operator mới.</summary>
-        public async Task OnRfidNameEnterAsync(string name)
-        {
-            try
-            {
-                if (string.IsNullOrEmpty(_employeeCode) || string.IsNullOrEmpty(name))
-                    throw new Exception("ID or name cannot be null.");
-
-                var res = System.Windows.Forms.MessageBox.Show(
-                    $"Register operator {name} with ID {_employeeCode}?",
-                    "Confirm", (MessageBoxButtons)MessageBoxButton.YesNo, (MessageBoxIcon)MessageBoxImage.Question);
-                if (res != DialogResult.Yes) return;
-
-                using var db = _dbFactory.CreateDbContext();
-                var dept = db.FT031s.FirstOrDefault(x => x.C000 == "QC")
-                           ?? throw new Exception("Department 'QC' not found.");
-
-                if (await db.fT029_Operator_RFIDs.AnyAsync(x => x.C000 == _employeeCode))
-                    throw new Exception("ID already exists.");
-
-                await db.fT029_Operator_RFIDs.AddAsync(new FT029_Operator_RFID
-                {
-                    Id = Guid.NewGuid(),
-                    C000 = _employeeCode,
-                    C001 = name,
-                    C002 = dept.Id,
-                    CreatedDate = DateTime.Now,
-                    CreatedBy = string.Empty,
-                    CreatedMachine = Environment.MachineName,
-                    Actived = true
-                });
-                await db.SaveChangesAsync();
-                System.Windows.Forms.MessageBox.Show(
-                    $"Operator '{_employeeCode}-{name}' registered successfully.", "OK",
-                    (MessageBoxButtons)MessageBoxButton.OK, (MessageBoxIcon)(MessageBoxIcon)MessageBoxImage.Information);
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "RFID name enter error");
-                System.Windows.Forms.MessageBox.Show(ex.Message, "WARNING",
-                    (MessageBoxButtons)MessageBoxButton.OK, (MessageBoxIcon)(MessageBoxIcon)MessageBoxImage.Warning);
-            }
-        }
+        // OnRfidValueChanged/OnRfidNameEnterAsync/OpenRfidInputDialog đã chuyển hẳn lên
+        // OperatorSessionService/MainViewModel — dùng chung cho cả Step/FG, không còn ở đây nữa.
 
         /// <summary>Barcode scanner đọc được QR code.</summary>
         public async Task OnBarcodeScannedAsync(string barcode)
@@ -1511,7 +1388,7 @@ namespace SSSW.UI.WPF.ViewModels
             using var transaction = await db.Database.BeginTransactionAsync();
             try
             {
-                if (_operatorInfo == null || _operatorInfo.Id == Guid.Empty)
+                if (!_operatorSession.IsOperatorSet)
                 {
                     System.Windows.Forms.MessageBox.Show("RFID card not yet scanned.", "Warning",
                         (MessageBoxButtons)MessageBoxButton.OK, (MessageBoxIcon)MessageBoxImage.Warning);
@@ -1635,8 +1512,8 @@ namespace SSSW.UI.WPF.ViewModels
 
                 insert.ForEach(x =>
                 {
-                    x.C010 = _operatorInfo.C000;
-                    x.C011 = _operatorInfo.C001;
+                    x.C010 = _operatorSession.OperatorInfo.C000;
+                    x.C011 = _operatorSession.OperatorInfo.C001;
                     x.CreatedDate = now;
                     x.CreatedMachine = machine;
                     x.Mesocomp = _mesocomp;
@@ -1737,7 +1614,7 @@ namespace SSSW.UI.WPF.ViewModels
             if (result?.Result == true)
             {
                 var createdAt = DateTime.Now;
-                var createdBy = _operatorInfo.C001;
+                var createdBy = _operatorSession.OperatorInfo.C001;
                 var createdMachine = Environment.MachineName;
 
                 var insertFT609 = new List<FT609_ShotWeightUpToWL>();
@@ -1813,11 +1690,9 @@ namespace SSSW.UI.WPF.ViewModels
 
             // Cancel cũng xóa luôn thẻ RFID đã quét (không chỉ dữ liệu step) — buộc operator phải
             // quét lại thẻ RFID cho lượt cân tiếp theo, tránh dùng nhầm operator của lượt đã hủy.
-            _employeeCode = string.Empty;
-            _operatorInfo = new FT029_Operator_RFID();
-            RfidName = string.Empty;
-            UserName = string.Empty;
-            ClearRfidAction?.Invoke();
+            // OperatorSession dùng chung Step/FG nên Clear() ở đây ảnh hưởng CẢ 2 tab — đúng ý đồ
+            // "chuyển tab không xóa, chỉ Cancel mới xóa" (bấm Cancel ở tab nào cũng xóa chung).
+            _operatorSession.Clear();
 
             ClearStepComboAction?.Invoke();
             ClearBarcodeAction?.Invoke();
@@ -2182,24 +2057,8 @@ namespace SSSW.UI.WPF.ViewModels
             nf.ShowDialog();
         }
 
-        /// <summary>
-        /// Mở dialog nhập tay Employee ID (khi không quét được RFID). Nếu người dùng
-        /// bấm OK, áp kết quả vào form chính giống hệt như khi quét RFID thật
-        /// (set RfidCardCode rồi chạy lại OnRfidValueChanged để tra cứu/ cập nhật UserName).
-        /// </summary>
-        public void OpenRfidInputDialog()
-        {
-            var dlg = _serviceProvider.GetRequiredService<frmRfidInput>();
-            dlg.Owner = System.Windows.Application.Current.MainWindow;
-            dlg.WindowStartupLocation = System.Windows.WindowStartupLocation.CenterOwner;
-
-            bool? result = dlg.ShowDialog();
-            if (result == true)
-            {
-                RfidCardCode = dlg.ResultRfidCode;
-                OnRfidValueChanged(dlg.ResultRfidCode);
-            }
-        }
+        // OpenRfidInputDialog() chuyển hẳn lên MainViewModel (dùng chung Step/FG qua
+        // OperatorSessionService) — không còn ở đây nữa.
 
         // OpenSettings()/CheckUpdate()/AutoUpdater_* chuyển hẳn lên MainViewModel (hành động cấp
         // app dùng chung Step/FG — xem comment ở MainViewModel).

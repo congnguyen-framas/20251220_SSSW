@@ -491,7 +491,8 @@ namespace SSSW.UI.WPF.ViewModels
         /// không phải logic step.</summary>
         public void OnScaleValueChanged(double value, bool stable = false, bool tare = false, string unit = "G")
         {
-            _scaleValue = Math.Round(value * 1000, 2);
+            var gain = unit == "KG" ? 1000 : 1;
+            _scaleValue = Math.Round(value * gain, 2);
             ScaleValue = _scaleValue;
             ScaleDisplay = _scaleValue.ToString("F2");
             ScaleStable = stable;

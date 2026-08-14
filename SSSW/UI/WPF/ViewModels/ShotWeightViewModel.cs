@@ -595,7 +595,8 @@ namespace SSSW.UI.WPF.ViewModels
         /// KG - G
         public void OnScaleValueChanged(double value, bool stable = false, bool tare = false, string unit = "G")
         {
-            _scaleValue = Math.Round(value * 1000, 2);
+            var gain = unit == "KG" ? 1000 : 1;
+            _scaleValue = Math.Round(value * gain, 2);
             ScaleValue = _scaleValue;
             ScaleDisplay = _scaleValue.ToString("F2");
             ScaleStable = stable;
@@ -710,7 +711,7 @@ namespace SSSW.UI.WPF.ViewModels
                     ResetNewLoop();
 
                     _stepItemCodeScale = await db.FT601s
-                        .Where(x => x.C007 == stepCode.C007 &&  x.C004 == stepCode.C004)
+                        .Where(x => x.C007 == stepCode.C007 && x.C004 == stepCode.C004)
                         .FirstOrDefaultAsync()
                         ?? throw new Exception($"Step item1 code {stepCode.C007} not found.");
 

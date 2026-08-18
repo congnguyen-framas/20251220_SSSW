@@ -1256,7 +1256,27 @@ namespace SSSW.UI.WPF.ViewModels
                                         (x.C002 == "Z-VHXXXXXX" ||
                                          (x.C002?.StartsWith("REX") ?? false))).ToList();
 
-                        if (!_rowSelected.C003.StartsWith("Studs"))
+                         //tạm thời thêm vào để chạy đưuọc bước item có cleat nhưng ko dùng ở bước Inlay ở fVN đã, sau này khi sửa công thức BOM theo level 2 và update code xong thì bỏ phần này đi
+                        if (_rowSelected.C003.StartsWith("Inlay"))
+                        {
+                            if (previuosStep == null
+                                || !previuosStep.Any()
+                                || (previuosStep != null
+                                    && previuosStep.Any()
+                                    && previuosStep.FirstOrDefault().C003.StartsWith("Cleat")
+                                    )
+                                )
+                            {
+                                _rowSelected.C021 = _rowSelected.C023;
+                            }
+                            else
+                            {
+                                _rowSelected.C021 = _rowSelected.C023
+                                                    - previuosStep?.Sum(x => x.C021)
+                                                    - nonInjection?.Sum(x => x.C021);
+                            }
+                        }
+                        else if (!_rowSelected.C003.StartsWith("Studs"))
                         {
                             _rowSelected.C021 = _rowSelected.C023
                                                 - previuosStep?.Sum(x => x.C021)
@@ -1284,6 +1304,7 @@ namespace SSSW.UI.WPF.ViewModels
                                                     - nonInjection?.Sum(x => x.C021);
                             }
                         }
+                       
                     }
                     else
                     {

@@ -1378,7 +1378,7 @@ namespace SSSW.UI.WPF.ViewModels
             var toUpdate = _scaleDataFinal.Where(x =>
                     x.C015 >= _rowSelected.C015 && x.C024 > 0 &&
                     !x.C003!.StartsWith("Stud") && !x.C003.StartsWith("Inlay") &&
-                    !x.C003.StartsWith("Ring") &&
+                    !x.C003.StartsWith("Cleat_Ring") &&
                     !(x.C002?.StartsWith("REX") ?? false) &&
                     x.C002 != _rowSelected.C002 &&
                     GlobalVariable.PrefixUpToSecondHyphen(x.C002) != pfx2)

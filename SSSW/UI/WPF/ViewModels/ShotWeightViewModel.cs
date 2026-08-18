@@ -1809,8 +1809,13 @@ namespace SSSW.UI.WPF.ViewModels
             _rowSelected = rowSelect;
             _articlePaisShotFinaly = _rowSelected.C017 != 0 && _rowSelected.C017 == _rowSelected.C028
                 ? _rowSelected.C017 : _rowSelected.C028;
+
+            IsHistoryExpanded = true;
+            _historyExpanded = true;
+
             RefreshUI(true);
             UpdateReferencePanel();
+            _ = LoadRefHistoryAsync(_rowSelected);
         }
 
         public void OnGridDelete(FT600? rowSelect)

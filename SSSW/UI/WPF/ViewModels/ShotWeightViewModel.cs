@@ -53,6 +53,9 @@ namespace SSSW.UI.WPF.ViewModels
         private List<FT600> _scaleData = new();
         private List<FT600> _scaleDataFinal = new();
         private FT600 _rowSelected = new();
+        // Row vừa cân xong gần nhất — giữ lại riêng để ExecuteConfirmAsync (kiểm tra multi-size
+        // mold REX) vẫn hoạt động đúng sau khi _rowSelected đã tự động chuyển/xóa (xem ExecuteSave).
+        private FT600? _lastWeighedRow;
 
         private double _scaleValue = 0;
         private string _mesocomp = string.Empty;
@@ -1396,6 +1399,23 @@ namespace SSSW.UI.WPF.ViewModels
                 }
             }
 
+            // ── Step vừa cân đã hoàn tất (đủ Part Weight – 2 lần cân với item injection,
+            // 1 lần với REX/non-injection): tự động chuyển _rowSelected sang bước kế tiếp
+            // chưa cân. Nếu không còn bước nào, xóa _rowSelected để tránh trường hợp user
+            // lỡ bấm Save lần nữa sẽ ghi đè lại Part Weight của bước vừa cân xong.
+            if ((_rowSelected.C021 ?? 0) > 0)
+            {
+                _lastWeighedRow = _rowSelected;
+
+                var nextStep = _scaleDataFinal
+                    .Where(x => x.AllowScale && (x.C021 ?? 0) == 0)
+                    .OrderBy(x => x.C015).ThenBy(x => x.C004)
+                    .FirstOrDefault();
+
+                _rowSelected = nextStep ?? new FT600();
+                _articlePaisShotFinaly = _rowSelected.C028;
+            }
+
             RefreshUI(false);
             FocusGridRowAction?.Invoke(_rowSelected.C002);
             UpdateReferencePanel();
@@ -1417,12 +1437,18 @@ namespace SSSW.UI.WPF.ViewModels
                     return;
                 }
 
-                var pfx2 = GlobalVariable.PrefixUpToSecondHyphen(_rowSelected.C002);
+                // _rowSelected có thể đã tự động chuyển sang bước kế tiếp (hoặc bị xóa) ngay sau khi
+                // cân xong bước cuối (xem ExecuteSave) — dùng _lastWeighedRow (bước vừa cân xong gần
+                // nhất) làm mốc cho việc phát hiện multi-size mold REX, để hành vi không đổi so với
+                // trước khi có auto-advance.
+                var confirmRow = _lastWeighedRow ?? _rowSelected;
+
+                var pfx2 = GlobalVariable.PrefixUpToSecondHyphen(confirmRow.C002);
                 var sameMolds = _scaleDataFinal.Where(x =>
-                    x.C020 == _rowSelected.C020 && x.C004 == _rowSelected.C004 &&
-                    x.C002 != _rowSelected.C002 && x.C008 != _rowSelected.C008 &&
+                    x.C020 == confirmRow.C020 && x.C004 == confirmRow.C004 &&
+                    x.C002 != confirmRow.C002 && x.C008 != confirmRow.C008 &&
                     GlobalVariable.PrefixUpToSecondHyphen(x.C002) == pfx2 &&
-                    x.C015 == _rowSelected.C015).ToList();
+                    x.C015 == confirmRow.C015).ToList();
 
                 if (sameMolds.Count == 0)
                 {
@@ -1440,7 +1466,7 @@ namespace SSSW.UI.WPF.ViewModels
                 }
                 else
                 {
-                    var nonInjectionCheck = _scaleDataFinal.FirstOrDefault(x => x.C015 == _rowSelected.C015 && x.C002.StartsWith("REX"));
+                    var nonInjectionCheck = _scaleDataFinal.FirstOrDefault(x => x.C015 == confirmRow.C015 && x.C002.StartsWith("REX"));
 
                     var category = await db.Database
                           .SqlQueryRaw<CategoryOfItemModel>(
@@ -1452,7 +1478,7 @@ namespace SSSW.UI.WPF.ViewModels
 
                     if (catCheck != null)
                     {
-                        var sizes = _scaleDataFinal.Where(x => x.C015 == _rowSelected.C015 && !x.C002.StartsWith("REX")).ToList();
+                        var sizes = _scaleDataFinal.Where(x => x.C015 == confirmRow.C015 && !x.C002.StartsWith("REX")).ToList();
                         //nonInjectionCheck.C008 = 
 
 
@@ -2048,6 +2074,7 @@ namespace SSSW.UI.WPF.ViewModels
         private void ResetNewLoop()
         {
             _rowSelected = new FT600();
+            _lastWeighedRow = null;
             _allStepsFG = new List<BomWinlineModel>();
             _stepItemCodeScale = new FT601();
             _scaleData = new List<FT600>();

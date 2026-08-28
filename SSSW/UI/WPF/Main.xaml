@@ -80,7 +80,7 @@
                     Text="{Binding WindowTitle}" />
 
                 <!--  NAV TABS  -->
-                <StackPanel
+                <StackPanel Visibility="Hidden"
                     Grid.Column="3"
                     HorizontalAlignment="Center"
                     VerticalAlignment="Center"

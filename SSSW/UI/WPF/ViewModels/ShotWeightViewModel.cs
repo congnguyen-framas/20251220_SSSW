@@ -1,4 +1,4 @@
-// ============================================================================
+﻿// ============================================================================
 //  ShotWeightViewModel.cs
 //  MVVM ViewModel cho ShotWeightWindow – toàn bộ business logic
 //  Logic cân (C021/C022/C023/C024) giống 100% frmShotWeightScale.cs
@@ -1577,15 +1577,14 @@ namespace SSSW.UI.WPF.ViewModels
                         .SetProperty(b => b.ModifiedDate, now)
                         .SetProperty(b => b.ModifiedMachine, machine));
 
-                await db.SaveChangesAsync();
+                                await db.SaveChangesAsync();
                 await transaction.CommitAsync();
+
+                // ── Tự động gọi sp_ShotweightReport_UpsertFT609 nếu bước đang cân là bước cuối ──
+                await ProcessUpsertFT609ForFinalStepsAsync(insert);
 
                 System.Windows.Forms.MessageBox.Show("Scale shot weight saved successfully.", "Information",
                     (MessageBoxButtons)MessageBoxButton.OK, (MessageBoxIcon)MessageBoxImage.Information);
-
-                #region check update to WL
-                //await UpdateShotweightWlAsync(insert);
-                #endregion
 
                 _labelInfo = new FT606_Label();
                 ClearStepComboAction?.Invoke();
@@ -1605,126 +1604,82 @@ namespace SSSW.UI.WPF.ViewModels
             }
         }
 
-        //
-        private async Task UpdateShotweightWlAsync(List<FT600> insert)
+        /// <summary>
+        /// Kiểm tra xem với con item FG đó bước đang cân/chọn cân có phải là bước cuối hay chưa:
+        /// - Nếu chưa phải là bước cuối: bỏ qua (skip).
+        /// - Khi bước đang chọn cân là bước cuối: gọi store sp_ShotweightReport_UpsertFT609 @FGItemCode = {0}, @CreatedBy = {1}
+        ///   Store sẽ tự động chạy quy trình và xử lý trong database (thay CreatedBy bằng employName).
+        /// </summary>
+        private async Task ProcessUpsertFT609ForFinalStepsAsync(List<FT600> insert)
         {
-            using var db = _dbFactory.CreateDbContext();
-            var now = DateTime.Now;
-            var machine = Environment.MachineName;
+            if (insert == null || !insert.Any()) return;
 
-            var dt = new DataTable();
-
-            dt.Columns.Add(nameof(WeightUpdateModel.ItemCode), typeof(string));
-            dt.Columns.Add(nameof(WeightUpdateModel.PartWeight_C201), typeof(double));
-            dt.Columns.Add(nameof(WeightUpdateModel.RunnerWeight_C022), typeof(double));
-            dt.Columns.Add(nameof(WeightUpdateModel.MachineGroup_C019), typeof(string));
-            dt.Columns.Add(nameof(WeightUpdateModel.MoldId_C020), typeof(string));
-
-            var itemJoin = string.Join(",", insert
-                                .Select(x => x.C002));
-            //.Distinct());
-
-            var curentShotweight = await db.Database.SqlQueryRaw<GetShotWeightWL_DTO>("sp_Shotweight_Gets @Items = {0}", itemJoin).ToListAsync();
-
-            foreach (var item in curentShotweight)
+            try
             {
-                var itemUpdate = insert.FirstOrDefault(x => x.C002 == item.ItemCode_C016);
+                var employName = !string.IsNullOrWhiteSpace(_operatorSession?.OperatorInfo?.C001)
+                    ? _operatorSession.OperatorInfo.C001
+                    : (!string.IsNullOrWhiteSpace(_operatorSession?.OperatorInfo?.C000)
+                        ? _operatorSession.OperatorInfo.C000
+                        : Environment.UserName);
 
-                if (itemUpdate == null) continue;
+                // Nhóm các bước theo mã FG
+                var fgGroups = _scaleDataFinal
+                    .Where(x => !string.IsNullOrEmpty(x.C013) || !string.IsNullOrEmpty(_stepItemCodeScale.C007))
+                    .GroupBy(x => !string.IsNullOrEmpty(x.C013) ? x.C013! : _stepItemCodeScale.C007!)
+                    .ToList();
 
-                //só sánh nếu nằm trong ngưỡng cho phép thì update WL
-                var delta = ((itemUpdate.C021 + itemUpdate.C022) - item.ShotWeight) / item.ShotWeight * 100;
+                using var db = _dbFactory.CreateDbContext();
 
-                if (delta >= -GlobalVariable.ConfigSystem.DeltaUpWL && delta <= GlobalVariable.ConfigSystem.DeltaUpWL)
+                foreach (var fgGroup in fgGroups)
                 {
-                    dt.Rows.Add(
-                        itemUpdate.C002,
-                        itemUpdate.C021,
-                        itemUpdate.C022,
-                        itemUpdate.C019,
-                        itemUpdate.C020);
-                }
-            }
+                    var fgCode = fgGroup.Key;
+                    if (string.IsNullOrEmpty(fgCode)) continue;
 
-            var tvpParam = new SqlParameter("@Items", dt)
-            {
-                SqlDbType = SqlDbType.Structured,
-                TypeName = "dbo.WeightUpdateType"
-            };
+                    // Tìm bước cuối cùng (có ParallelSequence / C015 lớn nhất) của con FG này
+                    var maxSequence = fgGroup.Max(x => x.C015);
+                    if (maxSequence == null) continue;
 
-            var result = await db.Set<ResultModel>()
-                .FromSqlRaw(
-                    "EXEC sp_Showweight_UpdateToWinline @Items",
-                    tvpParam)
-                .AsNoTracking()
-                .FirstOrDefaultAsync();
+                    var finalStep = fgGroup.FirstOrDefault(x => x.C015 == maxSequence);
+                    if (finalStep == null) continue;
 
-            if (result?.Result == true)
-            {
-                var createdAt = DateTime.Now;
-                var createdBy = _operatorSession.OperatorInfo.C001;
-                var createdMachine = Environment.MachineName;
+                    // Kiểm tra bước đang cân/chọn cân có phải là bước cuối hay không:
+                    // 1) Bước đang chọn cân trong UI combo/grid (_stepSelected) khớp với finalStep
+                    var isSelectedStepFinal = (_stepSelected != null && !string.IsNullOrEmpty(_stepSelected.C004) && _stepSelected.C004 == finalStep.C002)
+                        || (_stepSelected?.C010 != null && _stepSelected.C010 == maxSequence);
 
-                var insertFT609 = new List<FT609_ShotWeightUpToWL>();
-                var itemSuccess = result?.Message.Split(";");
-                foreach (var item in insert)
-                {
-                    var ck = itemSuccess.Contains(item.C002);
+                    // 2) Bước cuối có nằm trong danh sách vừa cân được bấm Confirm (insert) hay không
+                    var hasFinalStepInInsert = insert.Any(x =>
+                        (!string.IsNullOrEmpty(x.C013) ? x.C013 : _stepItemCodeScale.C007) == fgCode &&
+                        x.C015 == maxSequence &&
+                        (x.C021 ?? 0) > 0);
 
-                    if (!ck) continue;
-
-                    var curentSwWl = curentShotweight.FirstOrDefault(x => x.ItemCode_C016 == item.C002);
-                    var delta = Math.Round((double)(((item.C021 + item.C022) - curentSwWl.ShotWeight) / curentSwWl.ShotWeight * 100), 2);
-
-                    insertFT609.Add(new FT609_ShotWeightUpToWL()
+                    // Nếu chưa phải là bước cuối (hoặc bước cuối chưa được cân xong) thì bỏ qua
+                    if (!isSelectedStepFinal && !hasFinalStepInInsert)
                     {
-                        Id = Guid.NewGuid(),
-                        CreatedDate = createdAt,
-                        CreatedBy = createdBy,
-                        CreatedMachine = createdMachine,
-                        Actived = true,
-                        C000 = item.C002,
-                        C001 = item.C003,
-                        C002 = item.C026,
-                        C003 = item.C027,
-                        C004 = item.C021,
-                        C005 = item.C022,
-                        C006 = Math.Round((double)(item.C021 + item.C022), 3),
-                        C007 = true,
-                        C008 = item.C019,
-                        C009 = item.C020,
-                        C010 = item.id.ToString(),
-                        C011 = curentSwWl.PartWeight_c063,
-                        C012 = curentSwWl.RunnerWeight_c064,
-                        C013 = curentSwWl.ShotWeight,
-                        C014 = delta,
-                    });
+                        _logger.LogInformation("FG {FGCode}: buoc dang can khong phai buoc cuoi (Seq: {Seq}, Max: {Max}). Bo qua.",
+                            fgCode, _stepSelected?.C010, maxSequence);
+                        continue;
+                    }
+
+                    if (!hasFinalStepInInsert)
+                    {
+                        continue;
+                    }
+
+                    _logger.LogInformation("FG {FGCode}: buoc can la buoc cuoi (Seq: {Max}). Thuc thi sp_ShotweightReport_UpsertFT609 (CreatedBy: {User})...",
+                        fgCode, maxSequence, employName);
+
+                    // Gọi store tự động xử lý quy trình và lưu vào bảng FT609
+                    await db.Database.ExecuteSqlRawAsync(
+                        "EXEC sp_ShotweightReport_UpsertFT609 @FGItemCode = {0}, @CreatedBy = {1}",
+                        fgCode, employName);
+
+                    _logger.LogInformation("Thuc thi sp_ShotweightReport_UpsertFT609 thanh cong cho FG {FGCode}.", fgCode);
                 }
-
-                //deactive giá trị cũ
-                var updateInactive = insertFT609.Select(x => x.C000).ToList();
-                await db.FT609_ShotWeightUpToWLs
-                .Where(b => updateInactive.Contains(b.C000) && b.C007 == true)
-                .ExecuteUpdateAsync(s => s
-                    .SetProperty(b => b.C007, false)
-                    .SetProperty(b => b.ModifiedDate, now)
-                    .SetProperty(b => b.ModifiedMachine, machine));
-
-                //insert thông tin shotweight mới vào.
-                await db.FT609_ShotWeightUpToWLs.AddRangeAsync(insertFT609);
-
-                await db.SaveChangesAsync();
-
-                System.Windows.Forms.MessageBox.Show("Update data to Winline saved successfully.", "Information",
-             (MessageBoxButtons)MessageBoxButton.OK, (MessageBoxIcon)MessageBoxImage.Information);
             }
-            else
+            catch (Exception ex)
             {
-                // Error
-                var msg = result?.Message;
-                System.Windows.Forms.MessageBox.Show(msg, "ERROR",
-              (MessageBoxButtons)MessageBoxButton.OK, (MessageBoxIcon)MessageBoxImage.Error);
-                _logger.LogError(msg, "Update WL error.");
+                _logger.LogError(ex, "Loi khi thuc thi sp_ShotweightReport_UpsertFT609 cho FG");
             }
         }
 

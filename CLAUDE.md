@@ -78,6 +78,14 @@ Several stored procedures are called directly rather than modeled as DbSets (BOM
 
 `GlobalVariable` maps DB-reported company code (`mesocomp`) to `EnumLocation` (`fVN`/`fKV`/`fFT`/`fIN`/`fGE`) which drives the window title and the `DeployDir` used for auto-update packaging — this repo currently targets the fFT site's share path. `DeployDir` itself lives in [SSSW/DeployConfig.props](SSSW/DeployConfig.props) (imported by `SSSW.csproj` via `<Import Project="DeployConfig.props" />`, not inlined in the csproj) — switch sites by editing the `<DeployDir>` block there (comment/uncomment fFT vs fVN), no `.csproj` edit needed. `appsettings.json`'s connection string still has its own commented `fVN`/`fFT` blocks and needs updating separately when switching target sites — the two are not linked.
 
-### Worklog
+### Documentation Hub & Vibe Coding
+
+Toàn bộ hệ sinh thái tài liệu của dự án đã được chuẩn hóa tại **[SSSW/docs/INDEX.md](SSSW/docs/INDEX.md)**:
+- **Quy chuẩn Vibe Coding**: [SSSW/docs/VIBE_CODING_GUIDELINES.md](SSSW/docs/VIBE_CODING_GUIDELINES.md) — bộ quy tắc cốt lõi bắt buộc tuân thủ khi vibe code với AI.
+- **Kiến trúc chi tiết**: [SSSW/docs/architecture/ARCHITECTURE.md](SSSW/docs/architecture/ARCHITECTURE.md) — sơ đồ tổng thể, luồng dữ liệu và vòng đời khởi động.
+- **Từ điển Database**: [SSSW/docs/tech/DATABASE_SCHEMA.md](SSSW/docs/tech/DATABASE_SCHEMA.md) — ý nghĩa các bảng `FT600`–`FT609` và stored procedures.
+- **Nghiệp vụ & Công thức**: [SSSW/docs/tech/BUSINESS_LOGIC.md](SSSW/docs/tech/BUSINESS_LOGIC.md) — chi tiết cách tính `C021`, `C022`, `C023`, `C024`, quy tắc `REX`, `Cleat_Ring`, `Inlay`.
+- **Nhật ký Sessions**: [SSSW/docs/sessions/INDEX.md](SSSW/docs/sessions/INDEX.md) — nhật ký các phiên làm việc (mới nhất lên trên). **Bắt buộc đọc entry mới nhất trước khi code.**
+- **Lịch sử cũ (Legacy Worklog)**: [SSSW/docs/worklog/INDEX.md](SSSW/docs/worklog/INDEX.md) — nhật ký giai đoạn cũ trước khi migrate sang `sessions/`.
 
 [docs/worklog/](SSSW/docs/worklog/) holds a dated, per-task log of work done on this repo (what was asked, what changed, assumptions made, open questions, build result) — separate from the architecture docs above, which describe current-state design rather than change history. **Check [docs/worklog/INDEX.md](SSSW/docs/worklog/INDEX.md) at the start of a session** (at least the most recent entry, more if continuing related work) before re-deriving context from git log/code alone. Append a new entry (don't edit old ones) after any non-trivial task — see the conventions at the bottom of `INDEX.md`.

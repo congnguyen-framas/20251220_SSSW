@@ -1,0 +1,52 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "Git: Pull Main into Current Branch",
+      "type": "shell",
+      "command": "powershell -NoProfile -ExecutionPolicy Bypass -File ./scripts/git-flow.ps1 pull",
+      "problemMatcher": [],
+      "presentation": {
+        "reveal": "always",
+        "panel": "shared"
+      },
+      "group": "none"
+    },
+    {
+      "label": "Git: Commit & Push to Current Branch",
+      "type": "shell",
+      "command": "powershell -NoProfile -ExecutionPolicy Bypass -File ./scripts/git-flow.ps1 commit-push \"${input:commitMessage}\"",
+      "problemMatcher": [],
+      "presentation": {
+        "reveal": "always",
+        "panel": "shared"
+      },
+      "group": "none"
+    },
+    {
+      "label": "Git: Create PR (Merge to Target Branch)",
+      "type": "shell",
+      "command": "powershell -NoProfile -ExecutionPolicy Bypass -File ./scripts/git-flow.ps1 merge-to \"${input:targetBranch}\"",
+      "problemMatcher": [],
+      "presentation": {
+        "reveal": "always",
+        "panel": "shared"
+      },
+      "group": "none"
+    }
+  ],
+  "inputs": [
+    {
+      "id": "commitMessage",
+      "type": "promptString",
+      "description": "Nhập nội dung commit message:",
+      "default": "feat: update changes"
+    },
+    {
+      "id": "targetBranch",
+      "type": "promptString",
+      "description": "Nhập nhánh đích muốn merge vào:",
+      "default": "main"
+    }
+  ]
+}

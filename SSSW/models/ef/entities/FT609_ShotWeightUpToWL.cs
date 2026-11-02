@@ -101,5 +101,17 @@ namespace SSSW.models
         /// The percentage deviation exceeds the allowed tolerance.
         /// </summary>
         public double? C014 { get; set; } = 0;
+
+        /// <summary>
+        /// updated to Winline.
+        /// True đã up lên Winline.
+        /// </summary>
+        public bool? C015 { get; set; } = false;
+
+        /// <summary>
+        /// This flag can indicate which system added the report:0 = SSFG; 1 = SSSW.
+        /// Chỉ những line nào có giá trị cột này là 1 thì mới cho phép đẩy lên WL
+        /// </summary>
+        public bool? C016 { get; set; } = false;
     }
 }

@@ -675,13 +675,21 @@ namespace SSSW.UI.WPF.ViewModels
             {
                 if (selected == null) { _labelInfo = new FT606_Label(); ResetNewLoop(); return; }
 
-                if (string.IsNullOrEmpty(_qrCodeScan))
+                if (string.IsNullOrEmpty(_qrCodeScan) || selected.StepItemCode?.Trim() != _stepSelected?.C004?.Trim())
                 {
                     _stepSelected = _dataHydra.FirstOrDefault(x =>
-                        x.C004 == selected.StepItemCode &&
-                        x.C015 == selected.Machine &&
+                        x.C004?.Trim() == selected.StepItemCode?.Trim() &&
+                        x.C015?.Trim() == selected.Machine?.Trim() &&
                         x.C018 == selected.HydraOrderNo)
+                        ?? _dataHydra.FirstOrDefault(x => x.C004?.Trim() == selected.StepItemCode?.Trim())
                         ?? throw new Exception("Step not found in master data.");
+
+                    if (!string.IsNullOrEmpty(_qrCodeScan) && _stepSelected.Id != _labelInfo?.C000)
+                    {
+                        _qrCodeScan = string.Empty;
+                        _labelInfo = new FT606_Label();
+                        ClearBarcodeAction?.Invoke();
+                    }
                 }
 
                 await TriggerStepSelectionAsync(selected);
@@ -728,27 +736,32 @@ namespace SSSW.UI.WPF.ViewModels
                         bool allowScale = true;
                         FT601 ckHydra = new();
 
+                        var stepCodeTrim = item.ItemStepCode?.Trim() ?? string.Empty;
+                        var fgMainCodeTrim = item.ItemFgCode?.Split('-')[0]?.Trim() ?? string.Empty;
+
                         //kiểm tra xem bước hiện tại có đúng với step đang chọn hay không
-                        ckHydra = item.ItemStepCode == _stepSelected.C004
+                        ckHydra = stepCodeTrim.Equals(_stepSelected.C004?.Trim(), StringComparison.OrdinalIgnoreCase)
                             ? _stepSelected
                             : _dataHydra.FirstOrDefault(x =>
-                                //x.C004 == item1.ItemStepCode && x.C007 == item1.ItemFgCode);
-                                x.C004 == item.ItemStepCode && x.C020 == item.ItemFgCode.Split('-')[0]);
+                                x.C004?.Trim().Equals(stepCodeTrim, StringComparison.OrdinalIgnoreCase) == true &&
+                                (x.C020?.Trim().Equals(fgMainCodeTrim, StringComparison.OrdinalIgnoreCase) == true ||
+                                 (!string.IsNullOrEmpty(fgMainCodeTrim) && x.C007?.Contains(fgMainCodeTrim) == true)));
 
                         if (ckHydra == null)
                         {
-                            if (item.ItemStepCode != "Z-VHXXXXXX" &&
-                                item.ItemStepCode.Substring(0, 3) != "REX")
+                            if (stepCodeTrim != "Z-VHXXXXXX" &&
+                                !stepCodeTrim.StartsWith("REX", StringComparison.OrdinalIgnoreCase))
                             {
-                                var mc = item.ItemFgCode.Split('-')[0];
-                                var smc = item.ItemStepCode.Split('-')[1];
+                                var mc = fgMainCodeTrim;
+                                var smc = stepCodeTrim.Contains('-') ? stepCodeTrim.Split('-')[1] : stepCodeTrim;
                                 ckHydra = _dataHydra.FirstOrDefault(x =>
-                                    x.C007.Contains($"{mc}-") || x.C004.Contains($"-{smc}-"));
-                                allowScale = false;
+                                    (!string.IsNullOrEmpty(mc) && x.C007 != null && x.C007.Contains($"{mc}-")) ||
+                                    (!string.IsNullOrEmpty(smc) && x.C004 != null && x.C004.Contains($"-{smc}-")));
+                                allowScale = ckHydra != null;
                             }
                             else
                             {
-                                var parallelInfo = _allStepsFG.FirstOrDefault(x => x.ParallelSequence == item.ParallelSequence && !x.ItemStepCode.StartsWith("REX"));
+                                var parallelInfo = _allStepsFG.FirstOrDefault(x => x.ParallelSequence == item.ParallelSequence && !x.ItemStepCode.StartsWith("REX", StringComparison.OrdinalIgnoreCase));
 
                                 ckHydra = new FT601
                                 {
@@ -1129,7 +1142,7 @@ namespace SSSW.UI.WPF.ViewModels
 
                     _scaleDataFinal = _scaleDataFinal.OrderBy(x => x.C015).ThenBy(x => x.C004).ToList();
 
-                    var stepSel = _scaleDataFinal.FirstOrDefault(x => x.C002 == _stepSelected.C004);
+                    var stepSel = _scaleDataFinal.FirstOrDefault(x => x.C002?.Trim() == _stepSelected.C004?.Trim());
                     var prevSteps = _scaleDataFinal.Where(x => x.AllowScale == true && x.C015 < stepSel?.C015).ToList();
                     if (prevSteps.Any(x => x.C021 == 0))
                     {
@@ -1139,14 +1152,16 @@ namespace SSSW.UI.WPF.ViewModels
                     }
                     else
                         _rowSelected = _scaleDataFinal
-                            .FirstOrDefault(x => x.C002 == _stepSelected.C004) ?? new FT600();
+                            .FirstOrDefault(x => x.C002?.Trim() == _stepSelected.C004?.Trim()) ?? new FT600();
                 }
                 else
                 {
+                    var stepCodeTrim = _stepSelected.C004?.Trim();
                     var rowSelect = _scaleDataFinal.FirstOrDefault(x =>
-                        x.C002 == _stepSelected.C004 &&
-                        x.C013 == _stepSelected.C007 &&
-                        x.C004 == _stepSelected.C015);
+                        x.C002?.Trim() == stepCodeTrim &&
+                        (x.C013?.Trim() == _stepSelected.C007?.Trim() || string.IsNullOrEmpty(_stepSelected.C007)) &&
+                        (x.C004?.Trim() == _stepSelected.C015?.Trim() || string.IsNullOrEmpty(_stepSelected.C015)))
+                        ?? _scaleDataFinal.FirstOrDefault(x => x.C002?.Trim() == stepCodeTrim);
 
                     if (rowSelect == null)
                     {

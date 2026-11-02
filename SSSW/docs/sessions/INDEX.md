@@ -9,6 +9,7 @@
 
 | Ngày | File Session | Tóm tắt mục tiêu & kết quả |
 |------|--------------|---------------------------|
+| **2026-10-30** | [`2026-10-30_fix-step-matching-allowscale.md`](2026-10-30_fix-step-matching-allowscale.md) | Khắc phục lỗi bước cân cuối (Step 3: Rim, machine 0126) bị vô hiệu hóa nút Scale (`AllowScale = false`) sau khi quét tem QR code hoặc khi chuyển bước. |
 | **2026-10-26** | [`2026-10-26_auto-calculate-fg-partweight-ft609.md`](2026-10-26_auto-calculate-fg-partweight-ft609.md) | Nhận diện bước cân cuối cùng của FG (`Max(C015)`), tự động gọi store `sp_ShotweightReport_UpsertFT609` với tên nhân viên cân và bỏ qua nếu chưa phải bước cuối. |
 | **2026-10-26** | [`2026-10-26_standardize-documentation-for-vibe-coding.md`](2026-10-26_standardize-documentation-for-vibe-coding.md) | Khảo sát toàn diện nhánh `feature/updateFT609`, chuẩn hóa toàn bộ tài liệu dự án (Architecture, Sessions, Tech, Plan, Brainstorm, Manual) và ban hành quy chuẩn Vibe Coding tiêu chuẩn cao. |
 | *Legacy* | [`../worklog/INDEX.md`](../worklog/INDEX.md) | Các phiên làm việc lịch sử (giai đoạn 08/2026: tối ưu hóa shell Main, tách tab Step/FG, fix cascade Cleat_Ring, cấu hình fFT). |

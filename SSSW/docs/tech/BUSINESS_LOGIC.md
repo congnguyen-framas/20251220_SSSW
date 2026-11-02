@@ -105,6 +105,87 @@ C021(step) = C023(step) − Σ over child in L2(step), child ≠ self :  Qty(chi
 - Không có L2 (SP rỗng/lỗi, `Z-VHXXXXXX`) → rơi về công thức cũ (`ApplyLegacyPartWeight`).
 - **Cascade**: khi một step đổi, các step cha đã cân có step đó trong L2 được tính lại `C021` và `C022 = C024 − C021`.
 
+**Cây BOM của FG `6112042313-A478-2801`** (Level 1 → Level 2; số = Qty):
+
+```mermaid
+graph TD
+    FG["FG 6112042313-A478-2801"]
+    FG --> S0["0-…-2706 Logo"]
+    FG --> S1["1-…-5065 Studs"]
+    FG --> S2["2-…-2801 Inlay"]
+    FG --> S3["3-…-2801 Base_FF"]
+    FG --> S4["4-…-2801 Base_HF"]
+
+    S2 -. "×8" .-> S1
+    S3 -. "×2" .-> S1
+    S3 -. "×2" .-> S2
+    S3 -. "×8 PCS" .-> R["REX00018 Receptacle"]
+    S4 -. "×2" .-> S0
+    S4 -. "×4 PCS" .-> R
+    S4 -. "×2" .-> S3
+```
+
+Nét đứt = quan hệ Level 2 (chi tiết con bị trừ khi tính `C021` của step cha). Base_HF **không** chứa Studs/Inlay trực tiếp nên không trừ chúng.
+
+**Luồng quyết định khi bấm Save (lần cân 2)**:
+
+```mermaid
+flowchart TD
+    A([Save lần cân 2: C023 = scale]) --> B{Logo hoặc Cleat_Ring?}
+    B -- Có --> B1["C021 = C023<br/>C036 = scale / C025"]
+    B -- Không --> C{"Có BOM Level 2<br/>của step?"}
+    C -- Không --> L["ApplyLegacyPartWeight<br/>(công thức cũ)"]
+    C -- Có --> D["Calculator: duyệt từng chi tiết con<br/>(bỏ dòng self)"]
+    D --> E{"Chi tiết con<br/>đã có trọng lượng?"}
+    E -- Chưa --> F["Cảnh báo + reset C023/C022<br/>KHÔNG lưu"]
+    E -- Đủ --> G["C021 = C023 − Σ Qty × UnitWeight"]
+    G --> H["CascadeLevel2:<br/>tính lại step cha đã cân"]
+    B1 --> Z([RefreshUI / chuyển step kế tiếp])
+    L --> Z
+    H --> Z
+```
+
+**Trình tự gọi (sequence)**:
+
+```mermaid
+sequenceDiagram
+    actor Op as Operator
+    participant VM as ShotWeightViewModel
+    participant BOM as IBomService
+    participant Repo as IScaleStepRepository
+    participant Calc as IPartWeightCalculator
+    participant DB as SQL Server
+
+    Op->>VM: Quét tem / chọn step
+    VM->>BOM: GetLevel1Async(FG)
+    BOM->>DB: sp_getBomWinlineOfItemFG @itemFG=FG
+    loop mỗi step ép trong danh sách
+        VM->>BOM: GetLevel2Async(stepCode)
+        BOM->>DB: sp_getBomWinlineOfItemFG @itemFG=stepCode (cache)
+    end
+    VM->>Repo: GetLatestByStepCodesAsync(mã chi tiết con)
+    Repo->>DB: SELECT FT600 mới nhất theo C002
+    Op->>VM: Save (lần cân 2)
+    VM->>Calc: Calculate(C023, stepCode, L2, FindWeighedChild)
+    Calc-->>VM: PartWeightResult (C021 hoặc MissingChildren)
+    alt thiếu chi tiết con
+        VM-->>Op: Cảnh báo, không ghi
+    else đủ
+        VM->>VM: C021 = result; CascadeLevel2()
+    end
+```
+
+**Quy đổi đơn vị `UnitWeight`**:
+
+```mermaid
+flowchart LR
+    W["FT600 của chi tiết con"] --> R{"C002 bắt đầu bằng REX?"}
+    R -- Có --> R1["UnitWeight = C036 (g/chiếc)"]
+    R -- Không --> P{"C037 = PRS?"}
+    P -- Có --> P1["UnitWeight = C021 / 2"]
+    P -- Không --> P2["UnitWeight = C021"]
+```
+
 Ví dụ (FG `6112042313-A478-2801`): Base_FF = self + Studs×2 + Inlay×2 + REX00018×8; Base_HF = self + Logo×2 + REX00018×4 + Base_FF×2.
 
 **Không đổi**: nhánh REX/Nonwoven/Mesh (§4.1), multi-size (§4.5), `C022`/`C023`/`C024`, `C036` của Logo/Cleat_Ring.

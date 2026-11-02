@@ -212,6 +212,91 @@ SSSW/
                               └──────────────────────────────────────────────┘
 ```
 
+## Sơ đồ lớp (UML) — màn cân Step
+
+```mermaid
+classDiagram
+    direction LR
+    class ShotWeightViewModel {
+        -FT600 _rowSelected
+        -List~FT600~ _scaleDataFinal
+        -Dictionary _level2ByStep
+        +SaveCommand
+        +ConfirmCommand
+        -ExecuteSave()
+        -ApplyLevel2PartWeight() PartWeightApply
+        -CascadeLevel2()
+        -ApplyLegacyPartWeight()
+        -PreloadLevel2Async()
+    }
+    class IDialogService {
+        <<interface>>
+        +Info(msg)
+        +Warn(msg)
+        +Error(msg)
+    }
+    class IBomService {
+        <<interface>>
+        +GetLevel1Async(fg) List~BomWinlineModel~
+        +GetLevel2Async(step) IReadOnlyList~BomWinlineModel~
+        +ClearCache()
+    }
+    class IPartWeightCalculator {
+        <<interface>>
+        +Calculate(c023, stepCode, level2, findWeighed) PartWeightResult
+    }
+    class IScaleStepRepository {
+        <<interface>>
+        +GetLatestByStepCodesAsync(codes) Dictionary
+    }
+    class PartWeightResult {
+        +double? PartWeight
+        +MissingChildren
+        +TotalDeduction
+        +IsComplete
+    }
+    class MessageBoxDialogService
+    class BomService
+    class PartWeightCalculator
+    class ScaleStepRepository
+    class DbContextDogeWH
+
+    ShotWeightViewModel --> IDialogService
+    ShotWeightViewModel --> IBomService
+    ShotWeightViewModel --> IPartWeightCalculator
+    ShotWeightViewModel --> IScaleStepRepository
+    IDialogService <|.. MessageBoxDialogService
+    IBomService <|.. BomService
+    IPartWeightCalculator <|.. PartWeightCalculator
+    IScaleStepRepository <|.. ScaleStepRepository
+    IPartWeightCalculator ..> PartWeightResult
+    BomService --> DbContextDogeWH : IDbContextFactory
+    ScaleStepRepository --> DbContextDogeWH : IDbContextFactory
+```
+
+## Sơ đồ phụ thuộc DI
+
+```mermaid
+graph LR
+    Program["Program.cs (Host + DI)"] --> Main
+    Main --> MainViewModel
+    Main --> StepWin["ShotWeightWindow"]
+    Main --> FGWin["ShotWeightFGWindow"]
+    StepWin --> SVM["ShotWeightViewModel"]
+    FGWin --> FVM["ShotWeightFGViewModel"]
+    SVM --> Dialog["IDialogService (S)"]
+    SVM --> Bom["IBomService (S)"]
+    SVM --> Calc["IPartWeightCalculator (S)"]
+    SVM --> Repo["IScaleStepRepository (S)"]
+    SVM --> Op["OperatorSessionService (S)"]
+    FVM --> Op
+    MainViewModel --> Dev["DeviceConnectionService (S)"]
+    Bom --> Factory["IDbContextFactory"]
+    Repo --> Factory
+```
+
+(S) = Singleton.
+
 ## DI Container (Program.cs)
 
 | Service | Lifetime | Mô tả |

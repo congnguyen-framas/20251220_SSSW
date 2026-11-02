@@ -134,6 +134,30 @@ Chứa danh sách kế hoạch sản xuất và trạng thái đã cân:
 
 ---
 
+### 2.6. Quan hệ giữa các bảng chính
+
+```mermaid
+erDiagram
+    FT601 ||--o{ FT600 : "C017 hoàn tất khi Confirm (theo C004+C007)"
+    FT606_Label ||--o{ FT600 : "C012/C029 (tem QR)"
+    FT029_Operator_RFID ||--o{ FT600 : "C010/C011 (người cân)"
+    FT608_Config ||--|| MAY_TRAM : "MachineName"
+    FT600 }o--o{ FT609_ShotWeightUpToWL : "FT600.Id (chuỗi) → upsert ở bước cuối"
+    FT600 {
+        guid id PK
+        string C002 "mã step"
+        int C015 "thứ tự step"
+        double C021 "Part g/prs"
+        double C022 "Runner"
+        double C023 "Total PW"
+        double C024 "Total W_injection"
+        double C036 "g/piece"
+        string C037 "Unit (PRS/PCS/G)"
+    }
+```
+
+> Lưu ý: nhánh `feature/use-bom-level-2` tạm trỏ entity `FT600` sang bảng `FT600_dev` để test.
+
 ## 3. Danh sách Stored Procedures (SP) trọng yếu
 
 1. **`sp_MaterialGetCompanyName`**: Trả về `mesocomp` (VNT1, FTT1...) để xác định site hiện tại.

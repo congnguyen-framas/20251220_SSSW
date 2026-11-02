@@ -53,9 +53,6 @@ namespace SSSW
             var cfgForDb = config.GetSection("ConnectionStrings")["SSSW"];
             GlobalVariable.ConStringSSSW = EncodeMD5.DecryptString(cfgForDb, "ITFramasBDVN");
 
-            // Chế độ test: dùng bảng FT600_dev (xem scripts/sql/FT600_dev.sql)
-            GlobalVariable.UseDevTables = config.GetValue<bool>("Dev:UseDevTables");
-
             // Định dạng tên file: yyyyMMdd_OMS_KerryAPI_Service_Log_.txt
             Log.Logger = new LoggerConfiguration()
                 .MinimumLevel.Information()
@@ -85,6 +82,10 @@ namespace SSSW
                     services.AddTransient<frmUpdateMasterData>();
                     services.AddSingleton<DeviceConnectionService>(); // Shared Barcode/RFID/Scale drivers
                     services.AddSingleton<OperatorSessionService>(); // Shared RFID/operator identity (dùng chung Step/FG)
+                    services.AddSingleton<IDialogService, MessageBoxDialogService>(); // Hộp thoại cho ViewModel
+                    services.AddSingleton<IBomService, BomService>(); // BOM Level 1/2 (+cache)
+                    services.AddSingleton<IPartWeightCalculator, PartWeightCalculator>(); // C021 theo BOM Level 2
+                    services.AddSingleton<IScaleStepRepository, ScaleStepRepository>(); // FT600 access
                     services.AddTransient<ShotWeightViewModel>(); // MVVM ViewModel
                     services.AddTransient<ShotWeightWindow>();   // WPF Option-A window
                     services.AddTransient<ShotWeightFGViewModel>(); // FG-only MVVM ViewModel (no step/BOM)

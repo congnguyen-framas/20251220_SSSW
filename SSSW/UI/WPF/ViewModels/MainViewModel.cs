@@ -180,8 +180,7 @@ namespace SSSW.UI.WPF.ViewModels
                 var appVersion = System.Reflection.Assembly.GetExecutingAssembly().GetName().Version?.ToString() ?? "N/A";
 
                 if (Enum.TryParse<EnumLocation>(location, true, out var loc))
-                    WindowTitle = $"{loc} – Scan and Scale Shot Weight (SSSW) – Ver-{appVersion}"
-                                  + (GlobalVariable.UseDevTables ? " [DEV: FT600_dev]" : string.Empty);
+                    WindowTitle = $"{loc} – Scan and Scale Shot Weight (SSSW) – Ver-{appVersion}";
 
                 // ── Config (moved verbatim from ShotWeightViewModel.InitializeAsync()) ──
                 var configData = await db.FT608s

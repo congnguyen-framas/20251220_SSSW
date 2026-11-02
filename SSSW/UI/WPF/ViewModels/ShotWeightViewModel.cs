@@ -36,6 +36,14 @@ namespace SSSW.UI.WPF.ViewModels
         private readonly IDbContextFactory<DbContextDogeWH> _dbFactory;
         private readonly IServiceProvider _serviceProvider;
         private readonly ILogger<ShotWeightViewModel> _logger;
+        private readonly IDialogService _dialog;
+        private readonly IBomService _bom;
+        private readonly IPartWeightCalculator _partWeightCalculator;
+        private readonly IScaleStepRepository _scaleRepo;
+
+        // BOM Level 2 của từng step đang cân (key = ItemStepCode đã Trim) + FT600 đã lưu của các chi tiết con
+        private Dictionary<string, IReadOnlyList<BomWinlineModel>> _level2ByStep = new(StringComparer.OrdinalIgnoreCase);
+        private Dictionary<string, FT600> _weighedChildrenFromDb = new(StringComparer.OrdinalIgnoreCase);
 
         // ── Cancellation ────────────────────────────────────────────────────
         private CancellationTokenSource? _loadCts;
@@ -468,8 +476,16 @@ namespace SSSW.UI.WPF.ViewModels
             IDbContextFactory<DbContextDogeWH> dbFactory,
             IServiceProvider serviceProvider,
             OperatorSessionService operatorSession,
+            IDialogService dialog,
+            IBomService bom,
+            IPartWeightCalculator partWeightCalculator,
+            IScaleStepRepository scaleRepo,
             ILogger<ShotWeightViewModel> logger)
         {
+            _dialog = dialog;
+            _bom = bom;
+            _partWeightCalculator = partWeightCalculator;
+            _scaleRepo = scaleRepo;
             _dbFactory = dbFactory;
             _serviceProvider = serviceProvider;
             _operatorSession = operatorSession;
@@ -580,8 +596,7 @@ namespace SSSW.UI.WPF.ViewModels
             catch (OperationCanceledException) { }
             catch (Exception ex)
             {
-                System.Windows.Forms.MessageBox.Show($"Load data failure:\n{ex.Message}", "Load data",
-                    (MessageBoxButtons)MessageBoxButton.OK, (MessageBoxIcon)MessageBoxImage.Error);
+                _dialog.Error($"Load data failure:\n{ex.Message}", "Load data");
             }
             finally
             {
@@ -644,8 +659,7 @@ namespace SSSW.UI.WPF.ViewModels
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Barcode scan error");
-                System.Windows.Forms.MessageBox.Show(ex.Message, "WARNING",
-                    (MessageBoxButtons)MessageBoxButton.OK, (MessageBoxIcon)(MessageBoxIcon)MessageBoxImage.Warning);
+                _dialog.Warn(ex.Message, "WARNING");
             }
         }
 
@@ -663,8 +677,7 @@ namespace SSSW.UI.WPF.ViewModels
                 _ = TriggerStepSelectionAsync(item);
             }
             else
-                System.Windows.Forms.MessageBox.Show("No matching data found!", "WARNING",
-                    (MessageBoxButtons)MessageBoxButton.OK, (MessageBoxIcon)(MessageBoxIcon)MessageBoxImage.Warning);
+                _dialog.Warn("No matching data found!", "WARNING");
         }
 
         /// <summary>Gọi từ code-behind khi DevExpress LookUpEdit thay đổi selection.</summary>
@@ -697,8 +710,7 @@ namespace SSSW.UI.WPF.ViewModels
             catch (Exception ex)
             {
                 _logger.LogError(ex, "OnStepSelectedAsync");
-                System.Windows.Forms.MessageBox.Show(ex.Message, "WARNING",
-                    (MessageBoxButtons)MessageBoxButton.OK, (MessageBoxIcon)(MessageBoxIcon)MessageBoxImage.Warning);
+                _dialog.Warn(ex.Message, "WARNING");
             }
         }
 
@@ -726,10 +738,7 @@ namespace SSSW.UI.WPF.ViewModels
                         .FirstOrDefaultAsync()
                         ?? throw new Exception($"Step item1 code {stepCode.C007} not found.");
 
-                    _allStepsFG = await db.Database
-                        .SqlQueryRaw<BomWinlineModel>(
-                            "sp_getBomWinlineOfItemFG @itemFG = {0}", stepCode.C007)
-                        .AsNoTracking().ToListAsync();
+                    _allStepsFG = await _bom.GetLevel1Async(stepCode.C007);
 
                     foreach (var item in _allStepsFG)
                     {
@@ -1142,13 +1151,14 @@ namespace SSSW.UI.WPF.ViewModels
 
                     _scaleDataFinal = _scaleDataFinal.OrderBy(x => x.C015).ThenBy(x => x.C004).ToList();
 
+                    await PreloadLevel2Async();
+
                     var stepSel = _scaleDataFinal.FirstOrDefault(x => x.C002?.Trim() == _stepSelected.C004?.Trim());
                     var prevSteps = _scaleDataFinal.Where(x => x.AllowScale == true && x.C015 < stepSel?.C015).ToList();
                     if (prevSteps.Any(x => x.C021 == 0))
                     {
                         _rowSelected = prevSteps.Where(x => x.C021 == 0).OrderBy(od => od.C015).FirstOrDefault();
-                        System.Windows.Forms.MessageBox.Show("The previous step has not been weighed.", "Warning",
-                            (MessageBoxButtons)MessageBoxButton.OK, (MessageBoxIcon)(MessageBoxIcon)MessageBoxImage.Warning);
+                        _dialog.Warn("The previous step has not been weighed.", "Warning");
                     }
                     else
                         _rowSelected = _scaleDataFinal
@@ -1165,23 +1175,19 @@ namespace SSSW.UI.WPF.ViewModels
 
                     if (rowSelect == null)
                     {
-                        System.Windows.Forms.MessageBox.Show(
-                            $"Label does not match the item1 being weighed.\n{_stepSelected.C004}|{_stepSelected.C005}",
-                            "WARNING", (MessageBoxButtons)MessageBoxButton.OK, (MessageBoxIcon)MessageBoxImage.Warning);
+                        _dialog.Warn($"Label does not match the item1 being weighed.\n{_stepSelected.C004}|{_stepSelected.C005}", "WARNING");
                         return;
                     }
                     if (!rowSelect.AllowScale)
                     {
-                        System.Windows.Forms.MessageBox.Show("Do not allow to scale this step.", "Warning",
-                            (MessageBoxButtons)MessageBoxButton.OK, (MessageBoxIcon)(MessageBoxIcon)MessageBoxImage.Information);
+                        _dialog.Info("Do not allow to scale this step.", "Warning");
                         return;
                     }
                     foreach (var step in _scaleDataFinal.Where(x => x.C015 < rowSelect.C015))
                     {
                         if (step.C021 == 0)
                         {
-                            System.Windows.Forms.MessageBox.Show("The previous step has not been weighed.", "Warning",
-                                (MessageBoxButtons)MessageBoxButton.OK, (MessageBoxIcon)MessageBoxImage.Warning);
+                            _dialog.Warn("The previous step has not been weighed.", "Warning");
                             return;
                         }
                     }
@@ -1202,8 +1208,7 @@ namespace SSSW.UI.WPF.ViewModels
             catch (Exception ex)
             {
                 _logger.LogError(ex, "GetDataAsync error");
-                System.Windows.Forms.MessageBox.Show(ex.Message, "WARNING",
-                    (MessageBoxButtons)MessageBoxButton.OK, (MessageBoxIcon)MessageBoxImage.Warning);
+                _dialog.Warn(ex.Message, "WARNING");
             }
         }
 
@@ -1216,8 +1221,7 @@ namespace SSSW.UI.WPF.ViewModels
 
             if (!_rowSelected.AllowScale)
             {
-                System.Windows.Forms.MessageBox.Show("Cannot scale this step.", "Warning",
-                    (MessageBoxButtons)MessageBoxButton.OK, (MessageBoxIcon)MessageBoxImage.Warning);
+                _dialog.Warn("Cannot scale this step.", "Warning");
                 return;
             }
 
@@ -1231,10 +1235,8 @@ namespace SSSW.UI.WPF.ViewModels
                 var detail = string.Join(Environment.NewLine, unweighedPrevSteps.Select((x, i) =>
                     $"{i + 1}. Step {x.C015} [{x.C002}]: {x.C003} (Size:{x.C008})"));
 
-                System.Windows.Forms.MessageBox.Show(
-                    $"{unweighedPrevSteps.Count} previous step(s) are missing Part Weight and must be weighed first:" +
-                    $"{Environment.NewLine}{Environment.NewLine}{detail}",
-                    "Warning", (MessageBoxButtons)MessageBoxButton.OK, (MessageBoxIcon)MessageBoxImage.Warning);
+                _dialog.Warn($"{unweighedPrevSteps.Count} previous step(s) are missing Part Weight and must be weighed first:" +
+                    $"{Environment.NewLine}{Environment.NewLine}{detail}", "Warning");
                 return;
             }
 
@@ -1264,65 +1266,10 @@ namespace SSSW.UI.WPF.ViewModels
                     if (!_rowSelected.C003.StartsWith("Logo") &&
                         !_rowSelected.C003.StartsWith("Cleat_Ring"))
                     {
-                        // C021 = Part weight thực tế (g/prs)
-                        // = C023(bước này) − ∑C023(bước trước) − ∑C023(non-injection cùng bước)
-                        var previuosStep = _scaleDataFinal
-                            .Where(x => x.C015 <= _rowSelected.C015 - 1).ToList();
-
-                        var nonInjection = _scaleDataFinal
-                            .Where(x => x.C015 == _rowSelected.C015 &&
-                                        (x.C002 == "Z-VHXXXXXX" ||
-                                         (x.C002?.StartsWith("REX") ?? false))).ToList();
-
-                         //tạm thời thêm vào để chạy đưuọc bước item có cleat nhưng ko dùng ở bước Inlay ở fVN đã, sau này khi sửa công thức BOM theo level 2 và update code xong thì bỏ phần này đi
-                        if (_rowSelected.C003.StartsWith("Inlay"))
-                        {
-                            if (previuosStep == null
-                                || !previuosStep.Any()
-                                || (previuosStep != null
-                                    && previuosStep.Any()
-                                    && previuosStep.FirstOrDefault().C003.StartsWith("Cleat")
-                                    )
-                                )
-                            {
-                                _rowSelected.C021 = _rowSelected.C023;
-                            }
-                            else
-                            {
-                                _rowSelected.C021 = _rowSelected.C023
-                                                    - previuosStep?.Sum(x => x.C021)
-                                                    - nonInjection?.Sum(x => x.C021);
-                            }
-                        }
-                        else if (!_rowSelected.C003.StartsWith("Studs"))
-                        {
-                            _rowSelected.C021 = _rowSelected.C023
-                                                - previuosStep?.Sum(x => x.C021)
-                                                - nonInjection?.Sum(x => x.C021);
-                        }
-                        else if (_rowSelected.C003.StartsWith("Studs"))
-                        {
-                            if (previuosStep == null
-                                || !previuosStep.Any()
-                                || (previuosStep != null
-                                    && previuosStep.Any()
-                                    && (previuosStep.FirstOrDefault().C003.StartsWith("Logo")
-                                        || previuosStep.FirstOrDefault().C003.StartsWith("Cleat_Ring")
-                                        || previuosStep.FirstOrDefault().C003.StartsWith("Inlay")
-                                        )
-                                    )
-                                )
-                            {
-                                _rowSelected.C021 = _rowSelected.C023;
-                            }
-                            else
-                            {
-                                _rowSelected.C021 = _rowSelected.C023
-                                                    - previuosStep?.Sum(x => x.C021)
-                                                    - nonInjection?.Sum(x => x.C021);
-                            }
-                        }
-                       
+                        // BOM Level 2: C021 = C023 − Σ(Qty × trọng lượng chi tiết con). Không có Level 2 → công thức cũ.
+                        var l2 = ApplyLevel2PartWeight();
+                        if (l2 == PartWeightApply.Blocked) return;
+                        if (l2 == PartWeightApply.Unavailable) ApplyLegacyPartWeight();
                     }
                     else
                     {
@@ -1390,28 +1337,34 @@ namespace SSSW.UI.WPF.ViewModels
             }
 
             // ── Cascade: cập nhật C021/C022 cho các bước sau ────────────────
-            var toUpdate = _scaleDataFinal.Where(x =>
-                    x.C015 >= _rowSelected.C015 && x.C024 > 0 &&
-                    !x.C003!.StartsWith("Stud") && !x.C003.StartsWith("Inlay") &&
-                    !x.C003.StartsWith("Cleat_Ring") &&
-                    !(x.C002?.StartsWith("REX") ?? false) &&
-                    x.C002 != _rowSelected.C002 &&
-                    GlobalVariable.PrefixUpToSecondHyphen(x.C002) != pfx2)
-                .OrderBy(x => x.C015).ToList();
-
-            foreach (var item in toUpdate)
+            if (_level2ByStep.Count > 0)
+                CascadeLevel2();
+            else
             {
-                if (item.C015 == _rowSelected.C015)
+                var toUpdate = _scaleDataFinal.Where(x =>
+                        x.C015 >= _rowSelected.C015 && x.C024 > 0 &&
+                        !x.C003!.StartsWith("Stud") && !x.C003.StartsWith("Inlay") &&
+                        !x.C003.StartsWith("Cleat_Ring") &&
+                        !(x.C002?.StartsWith("REX") ?? false) &&
+                        x.C002 != _rowSelected.C002 &&
+                        GlobalVariable.PrefixUpToSecondHyphen(x.C002) != pfx2)
+                    .OrderBy(x => x.C015).ToList();
+
+                foreach (var item in toUpdate)
                 {
-                    item.C021 = item.C023 - _rowSelected.C023;
-                    item.C022 = item.C024 - item.C021;
+                    if (item.C015 == _rowSelected.C015)
+                    {
+                        item.C021 = item.C023 - _rowSelected.C023;
+                        item.C022 = item.C024 - item.C021;
+                    }
+                    else
+                    {
+                        var prev = toUpdate.FirstOrDefault(x => x.C015 < item.C015 - 1);
+                        item.C021 = item.C023 - prev?.C023;
+                        item.C022 = item.C024 - item.C021;
+                    }
                 }
-                else
-                {
-                    var prev = toUpdate.FirstOrDefault(x => x.C015 < item.C015 - 1);
-                    item.C021 = item.C023 - prev?.C023;
-                    item.C022 = item.C024 - item.C021;
-                }
+
             }
 
             // ── Step vừa cân đã hoàn tất (đủ Part Weight – 2 lần cân với item injection,
@@ -1436,6 +1389,168 @@ namespace SSSW.UI.WPF.ViewModels
             UpdateReferencePanel();
         }
 
+
+        // ─────────────────────────────────────────────────────────────────────
+        //  PART WEIGHT THEO BOM LEVEL 2
+        // ─────────────────────────────────────────────────────────────────────
+        /// <summary>Nạp BOM Level 2 của các step ép trong danh sách + FT600 đã lưu của chi tiết con (để Save tính đồng bộ).</summary>
+        private async Task PreloadLevel2Async()
+        {
+            try
+            {
+                foreach (var row in _scaleDataFinal)
+                {
+                    var code = row.C002?.Trim();
+                    if (string.IsNullOrEmpty(code) || code == "Z-VHXXXXXX" ||
+                        code.StartsWith("REX", StringComparison.OrdinalIgnoreCase)) continue;
+
+                    _level2ByStep[code] = await _bom.GetLevel2Async(code);
+                }
+
+                var childCodes = _level2ByStep
+                    .SelectMany(kv => kv.Value.Where(c => !PartWeightCalculator.IsSelfRow(c, kv.Key)))
+                    .Select(c => c.ItemStepCode!.Trim())
+                    .Distinct().ToList();
+
+                _weighedChildrenFromDb = new Dictionary<string, FT600>(
+                    await _scaleRepo.GetLatestByStepCodesAsync(childCodes), StringComparer.OrdinalIgnoreCase);
+            }
+            catch (Exception ex)
+            {
+                // Không có Level 2 → ExecuteSave tự rơi về công thức cũ
+                _logger.LogError(ex, "PreloadLevel2Async error");
+                _level2ByStep.Clear();
+            }
+        }
+
+        private enum PartWeightApply { Applied, Unavailable, Blocked }
+
+        /// <summary>Level 2 (các chi tiết cấu thành) của step, null nếu SP không trả dữ liệu.</summary>
+        private IReadOnlyList<BomWinlineModel>? GetLevel2(FT600 row)
+        {
+            var code = row.C002?.Trim();
+            return code != null && _level2ByStep.TryGetValue(code, out var l2) && l2.Count > 0 ? l2 : null;
+        }
+
+        /// <summary>Tìm FT600 đã cân của chi tiết con: ưu tiên dòng trong phiên hiện tại, sau đó bản ghi đã lưu.</summary>
+        private FT600? FindWeighedChild(string code)
+        {
+            var inSession = _scaleDataFinal.FirstOrDefault(x =>
+                x.C002?.Trim().Equals(code, StringComparison.OrdinalIgnoreCase) == true &&
+                PartWeightCalculator.UnitWeightPerPiece(x) != null);
+            if (inSession != null) return inSession;
+            return _weighedChildrenFromDb.TryGetValue(code, out var saved) ? saved : null;
+        }
+
+        private PartWeightApply ApplyLevel2PartWeight()
+        {
+            var l2 = GetLevel2(_rowSelected);
+            if (l2 == null) return PartWeightApply.Unavailable;
+
+            var result = _partWeightCalculator.Calculate(_rowSelected.C023 ?? 0, _rowSelected.C002!, l2, FindWeighedChild);
+            if (!result.IsComplete)
+            {
+                _dialog.Warn(
+                    "Component step(s) of this step (BOM level 2) have no weight yet and must be weighed first:" +
+                    $"{Environment.NewLine}{Environment.NewLine}{string.Join(Environment.NewLine, result.MissingChildren)}");
+                _rowSelected.C023 = 0;
+                _rowSelected.C022 = 0;
+                return PartWeightApply.Blocked;
+            }
+
+            _rowSelected.C021 = result.PartWeight;
+            _logger.LogInformation("PartWeight L2 {Step}: C023={C023} - deduction={Ded} => C021={C021}",
+                _rowSelected.C002, _rowSelected.C023, result.TotalDeduction, result.PartWeight);
+            return PartWeightApply.Applied;
+        }
+
+        /// <summary>Tính lại C021/C022 của các step đã cân có dùng step vừa cân làm chi tiết con (Level 2).</summary>
+        private void CascadeLevel2()
+        {
+            var changed = _rowSelected.C002?.Trim();
+            if (string.IsNullOrEmpty(changed)) return;
+
+            foreach (var parent in _scaleDataFinal.Where(x =>
+                         x != _rowSelected && (x.C023 ?? 0) > 0 && (x.C021 ?? 0) > 0 &&
+                         !(x.C002?.StartsWith("REX") ?? false)))
+            {
+                var l2 = GetLevel2(parent);
+                if (l2 == null || !l2.Any(c => !PartWeightCalculator.IsSelfRow(c, parent.C002!) &&
+                        string.Equals(c.ItemStepCode?.Trim(), changed, StringComparison.OrdinalIgnoreCase))) continue;
+
+                var r = _partWeightCalculator.Calculate(parent.C023 ?? 0, parent.C002!, l2, FindWeighedChild);
+                if (!r.IsComplete) continue;
+
+                parent.C021 = r.PartWeight;
+                parent.C022 = parent.C024 - parent.C021;
+            }
+        }
+
+        /// <summary>Công thức cũ (trừ Part Weight các bước trước) — chỉ dùng khi không có BOM Level 2.</summary>
+        private void ApplyLegacyPartWeight()
+        {
+                    {
+                        // C021 = Part weight thực tế (g/prs)
+                        // = C023(bước này) − ∑C023(bước trước) − ∑C023(non-injection cùng bước)
+                        var previuosStep = _scaleDataFinal
+                            .Where(x => x.C015 <= _rowSelected.C015 - 1).ToList();
+
+                        var nonInjection = _scaleDataFinal
+                            .Where(x => x.C015 == _rowSelected.C015 &&
+                                        (x.C002 == "Z-VHXXXXXX" ||
+                                         (x.C002?.StartsWith("REX") ?? false))).ToList();
+
+                         //tạm thời thêm vào để chạy đưuọc bước item có cleat nhưng ko dùng ở bước Inlay ở fVN đã, sau này khi sửa công thức BOM theo level 2 và update code xong thì bỏ phần này đi
+                        if (_rowSelected.C003.StartsWith("Inlay"))
+                        {
+                            if (previuosStep == null
+                                || !previuosStep.Any()
+                                || (previuosStep != null
+                                    && previuosStep.Any()
+                                    && previuosStep.FirstOrDefault().C003.StartsWith("Cleat")
+                                    )
+                                )
+                            {
+                                _rowSelected.C021 = _rowSelected.C023;
+                            }
+                            else
+                            {
+                                _rowSelected.C021 = _rowSelected.C023
+                                                    - previuosStep?.Sum(x => x.C021)
+                                                    - nonInjection?.Sum(x => x.C021);
+                            }
+                        }
+                        else if (!_rowSelected.C003.StartsWith("Studs"))
+                        {
+                            _rowSelected.C021 = _rowSelected.C023
+                                                - previuosStep?.Sum(x => x.C021)
+                                                - nonInjection?.Sum(x => x.C021);
+                        }
+                        else if (_rowSelected.C003.StartsWith("Studs"))
+                        {
+                            if (previuosStep == null
+                                || !previuosStep.Any()
+                                || (previuosStep != null
+                                    && previuosStep.Any()
+                                    && (previuosStep.FirstOrDefault().C003.StartsWith("Logo")
+                                        || previuosStep.FirstOrDefault().C003.StartsWith("Cleat_Ring")
+                                        || previuosStep.FirstOrDefault().C003.StartsWith("Inlay")
+                                        )
+                                    )
+                                )
+                            {
+                                _rowSelected.C021 = _rowSelected.C023;
+                            }
+                            else
+                            {
+                                _rowSelected.C021 = _rowSelected.C023
+                                                    - previuosStep?.Sum(x => x.C021)
+                                                    - nonInjection?.Sum(x => x.C021);
+                            }
+                        }
+                       
+                    }
+        }
         // ─────────────────────────────────────────────────────────────────────
         //  CONFIRM (lưu DB)
         // ─────────────────────────────────────────────────────────────────────
@@ -1447,8 +1562,7 @@ namespace SSSW.UI.WPF.ViewModels
             {
                 if (!_operatorSession.IsOperatorSet)
                 {
-                    System.Windows.Forms.MessageBox.Show("RFID card not yet scanned.", "Warning",
-                        (MessageBoxButtons)MessageBoxButton.OK, (MessageBoxIcon)MessageBoxImage.Warning);
+                    _dialog.Warn("RFID card not yet scanned.", "Warning");
                     return;
                 }
 
@@ -1472,9 +1586,7 @@ namespace SSSW.UI.WPF.ViewModels
                         if (item.AllowScale && item.C023 == 0 &&
                             (item.C024 == 0 && (item.C002?.StartsWith("REX") ?? false)))
                         {
-                            System.Windows.Forms.MessageBox.Show(
-                                $"Scale not completed for step: {item.C002}.", "Warning",
-                                (MessageBoxButtons)MessageBoxButton.OK, (MessageBoxIcon)MessageBoxImage.Warning);
+                            _dialog.Warn($"Scale not completed for step: {item.C002}.", "Warning");
                             return;
                         }
                     }
@@ -1598,8 +1710,7 @@ namespace SSSW.UI.WPF.ViewModels
                 // ── Tự động gọi sp_ShotweightReport_UpsertFT609 nếu bước đang cân là bước cuối ──
                 await ProcessUpsertFT609ForFinalStepsAsync(insert);
 
-                System.Windows.Forms.MessageBox.Show("Scale shot weight saved successfully.", "Information",
-                    (MessageBoxButtons)MessageBoxButton.OK, (MessageBoxIcon)MessageBoxImage.Information);
+                _dialog.Info("Scale shot weight saved successfully.", "Information");
 
                 _labelInfo = new FT606_Label();
                 ClearStepComboAction?.Invoke();
@@ -1613,9 +1724,7 @@ namespace SSSW.UI.WPF.ViewModels
             {
                 await transaction.RollbackAsync();
                 _logger.LogError(ex, "Confirm error");
-                System.Windows.Forms.MessageBox.Show(
-                    $"Transaction error: {ex.Message}\n{ex.InnerException?.Message}",
-                    "ERROR", (MessageBoxButtons)MessageBoxButton.OK, (MessageBoxIcon)MessageBoxImage.Error);
+                _dialog.Error($"Transaction error: {ex.Message}\n{ex.InnerException?.Message}", "ERROR");
             }
         }
 
@@ -1628,13 +1737,6 @@ namespace SSSW.UI.WPF.ViewModels
         private async Task ProcessUpsertFT609ForFinalStepsAsync(List<FT600> insert)
         {
             if (insert == null || !insert.Any()) return;
-
-            // sp_ShotweightReport_UpsertFT609 đọc thẳng FT600 production → không gọi khi test trên FT600_dev
-            if (GlobalVariable.UseDevTables)
-            {
-                _logger.LogInformation("Dev mode (FT600_dev): bo qua sp_ShotweightReport_UpsertFT609.");
-                return;
-            }
 
             try
             {
@@ -1734,16 +1836,14 @@ namespace SSSW.UI.WPF.ViewModels
 
             if (!rowSelect.AllowScale)
             {
-                System.Windows.Forms.MessageBox.Show("Do not allow to scale this step.", "Warning",
-                    (MessageBoxButtons)MessageBoxButton.OK, (MessageBoxIcon)MessageBoxImage.Warning);
+                _dialog.Warn("Do not allow to scale this step.", "Warning");
                 return;
             }
             foreach (var step in _scaleDataFinal.Where(x => x.C015 < rowSelect.C015))
             {
                 if (step.C021 == 0)
                 {
-                    System.Windows.Forms.MessageBox.Show("The previous step has not been weighed.", "Warning",
-                        (MessageBoxButtons)MessageBoxButton.OK, (MessageBoxIcon)MessageBoxImage.Warning);
+                    _dialog.Warn("The previous step has not been weighed.", "Warning");
                     return;
                 }
             }
@@ -1767,8 +1867,7 @@ namespace SSSW.UI.WPF.ViewModels
                 x.AllowScale && x.C002 == rowSelect.C002);
             if (rowReset == null)
             {
-                System.Windows.Forms.MessageBox.Show("Cannot reset this line.", "Warning",
-                    (MessageBoxButtons)MessageBoxButton.OK, (MessageBoxIcon)MessageBoxImage.Information);
+                _dialog.Info("Cannot reset this line.", "Warning");
                 return;
             }
 
@@ -1803,8 +1902,7 @@ namespace SSSW.UI.WPF.ViewModels
                 x.AllowScale && x.C002 == rowSelect.C002);
             if (rowReset == null)
             {
-                System.Windows.Forms.MessageBox.Show("Cannot reset this line.", "Warning",
-                    (MessageBoxButtons)MessageBoxButton.OK, (MessageBoxIcon)MessageBoxImage.Information);
+                _dialog.Info("Cannot reset this line.", "Warning");
                 return;
             }
 
@@ -2058,6 +2156,9 @@ namespace SSSW.UI.WPF.ViewModels
             _rowSelected = new FT600();
             _lastWeighedRow = null;
             _allStepsFG = new List<BomWinlineModel>();
+            _level2ByStep = new(StringComparer.OrdinalIgnoreCase);
+            _weighedChildrenFromDb = new(StringComparer.OrdinalIgnoreCase);
+            _bom.ClearCache();
             _stepItemCodeScale = new FT601();
             _scaleData = new List<FT600>();
             _scaleDataFinal = new List<FT600>();

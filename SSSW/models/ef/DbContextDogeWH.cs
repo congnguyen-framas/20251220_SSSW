@@ -45,7 +45,7 @@ namespace SSSW.modelss
             base.OnModelCreating(modelBuilder);
 
             modelBuilder.ApplyConfigurationsFromAssembly(typeof(DbContextDogeWH).Assembly);
-            modelBuilder.Entity<FT600>().ToTable(GlobalVariable.Ft600TableName);
+            modelBuilder.Entity<FT600>();
             modelBuilder.Entity<FT601>();
             modelBuilder.Entity<FT602>();
             modelBuilder.Entity<FT605>();

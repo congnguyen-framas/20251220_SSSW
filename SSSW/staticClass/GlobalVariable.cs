@@ -17,6 +17,14 @@ namespace SSSW
         public static ConfigModel ConfigSystem { get; set; } = new ConfigModel();
 
         /// <summary>
+        /// Bật bằng appsettings.json "Dev:UseDevTables" — màn cân đọc/ghi bảng FT600_dev thay vì FT600
+        /// để test mà không đụng dữ liệu production. Gán MỘT LẦN trong Program.Main trước khi dựng DbContext.
+        /// </summary>
+        public static bool UseDevTables { get; set; }
+
+        public static string Ft600TableName => UseDevTables ? "FT600_dev" : "FT600";
+
+        /// <summary>
         /// Shared Barcode/RFID/Scale hardware connections (DeviceConnectionService singleton).
         /// Gán MỘT LẦN bởi MainViewModel ngay khi khởi tạo (trước khi bất kỳ tab Step/FG nào
         /// được resolve) — các ViewModel/Window khác đọc thẳng qua biến toàn cục này thay vì

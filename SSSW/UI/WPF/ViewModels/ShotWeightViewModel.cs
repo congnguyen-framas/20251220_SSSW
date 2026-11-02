@@ -1629,6 +1629,13 @@ namespace SSSW.UI.WPF.ViewModels
         {
             if (insert == null || !insert.Any()) return;
 
+            // sp_ShotweightReport_UpsertFT609 đọc thẳng FT600 production → không gọi khi test trên FT600_dev
+            if (GlobalVariable.UseDevTables)
+            {
+                _logger.LogInformation("Dev mode (FT600_dev): bo qua sp_ShotweightReport_UpsertFT609.");
+                return;
+            }
+
             try
             {
                 var employName = !string.IsNullOrWhiteSpace(_operatorSession?.OperatorInfo?.C001)

@@ -53,6 +53,9 @@ namespace SSSW
             var cfgForDb = config.GetSection("ConnectionStrings")["SSSW"];
             GlobalVariable.ConStringSSSW = EncodeMD5.DecryptString(cfgForDb, "ITFramasBDVN");
 
+            // Chế độ test: dùng bảng FT600_dev (xem scripts/sql/FT600_dev.sql)
+            GlobalVariable.UseDevTables = config.GetValue<bool>("Dev:UseDevTables");
+
             // Định dạng tên file: yyyyMMdd_OMS_KerryAPI_Service_Log_.txt
             Log.Logger = new LoggerConfiguration()
                 .MinimumLevel.Information()

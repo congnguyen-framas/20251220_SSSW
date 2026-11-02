@@ -23,3 +23,4 @@
 5. **Vibe Coding & Documentation**:
    - Consult [`SSSW/docs/INDEX.md`](SSSW/docs/INDEX.md) and [`SSSW/docs/sessions/INDEX.md`](SSSW/docs/sessions/INDEX.md) before implementing changes.
    - Log all non-trivial sessions in `SSSW/docs/sessions/YYYY-MM-DD_slug.md`.
+   - **Docs-Sync**: after completing every task, always review and fully update all related docs (sessions + INDEX, `tech/BUSINESS_LOGIC.md`, `tech/DATABASE_SCHEMA.md`, `architecture/ARCHITECTURE.md`, Mermaid/UML diagrams, `CLAUDE.md`/`AGENTS.md`, plan status) before committing. Checklist: `SSSW/docs/VIBE_CODING_GUIDELINES.md` §1.5.

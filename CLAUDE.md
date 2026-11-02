@@ -93,3 +93,5 @@ Toàn bộ hệ sinh thái tài liệu của dự án đã được chuẩn hóa
 - **Lịch sử cũ (Legacy Worklog)**: [SSSW/docs/worklog/INDEX.md](SSSW/docs/worklog/INDEX.md) — nhật ký giai đoạn cũ trước khi migrate sang `sessions/`.
 
 [docs/worklog/](SSSW/docs/worklog/) holds a dated, per-task log of work done on this repo (what was asked, what changed, assumptions made, open questions, build result) — separate from the architecture docs above, which describe current-state design rather than change history. **Check [docs/worklog/INDEX.md](SSSW/docs/worklog/INDEX.md) at the start of a session** (at least the most recent entry, more if continuing related work) before re-deriving context from git log/code alone. Append a new entry (don't edit old ones) after any non-trivial task — see the conventions at the bottom of `INDEX.md`.
+
+**Docs-Sync rule:** after finishing every task, review and update all related docs (session log + index, `tech/`, `architecture/`, Mermaid diagrams, `CLAUDE.md`/`AGENTS.md`, plan status) before committing — checklist in [SSSW/docs/VIBE_CODING_GUIDELINES.md](SSSW/docs/VIBE_CODING_GUIDELINES.md) §1.5.

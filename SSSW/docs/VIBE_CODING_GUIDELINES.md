@@ -22,6 +22,20 @@
 
 ---
 
+5. **Luôn Cập Nhật Đầy Đủ Docs Sau Mỗi Task (Docs-Sync Rule)**:
+   - Sau khi hoàn thành **mỗi task** (kể cả task nhỏ có đổi hành vi, cấu trúc, DI, DB, công thức), **bắt buộc** rà soát và cập nhật mọi file docs liên quan **trước khi commit/kết thúc**, không để docs lệch với code.
+   - Checklist tối thiểu:
+     - `docs/sessions/` — file session mới + dòng mới trong `sessions/INDEX.md`.
+     - `docs/tech/BUSINESS_LOGIC.md` — khi đổi công thức/quy tắc nghiệp vụ.
+     - `docs/tech/DATABASE_SCHEMA.md` — khi đổi bảng, cột, stored procedure.
+     - `docs/architecture/ARCHITECTURE.md` — khi thêm/đổi service, DI, cấu trúc thư mục, luồng dữ liệu.
+     - `ShotWeightWindow_Documentation_EN.md`, `CLAUDE.md`, `AGENTS.md` — khi ảnh hưởng đến mô tả màn cân hoặc quy tắc làm việc.
+     - `docs/plan/`, `docs/brainstorm/` — đánh dấu trạng thái (đã duyệt/hoàn thành) nếu task bám theo plan.
+   - Sơ đồ Mermaid/UML trong docs phải được cập nhật cùng lúc nếu luồng hoặc cấu trúc thay đổi.
+   - Mục "Chưa làm / lưu ý" của session phải nêu rõ phần docs nào cố ý chưa cập nhật (nếu có).
+
+---
+
 ## 2. Quy Trình Vibe Coding 5 Bước (The 5-Step Workflow)
 
 ```
@@ -56,6 +70,7 @@
 │ 5. Ghi nhận Session mới (Session Logging & Commit)     │
 │    • Tạo file docs/sessions/YYYY-MM-DD_slug.md         │
 │    • Cập nhật bảng docs/sessions/INDEX.md              │
+│    • Docs-Sync: cập nhật MỌI docs liên quan (§1.5)     │
 │    • Commit git với message rõ ràng, chuẩn semantic    │
 └────────────────────────────────────────────────────────┘
 ```

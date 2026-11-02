@@ -19,4 +19,4 @@
 - Test chưa chạy được trên máy này: `dotnet restore` timeout vì NuGet source nội bộ `10.40.10.4:5860` không truy cập được.
 - `sp_ShotweightReport_UpsertFT609` vẫn đọc bảng FT600 thật khi cân bước cuối trong lúc test trên FT600_dev.
 - Quy ước đơn vị (PRS = 2 chiếc) cần đối chiếu với số liệu cân thật.
-- Build Debug: 0 error.
+- Build Debug: 0 error. Docs đã cập nhật: BUSINESS_LOGIC §4.8, ShotWeightWindow_Documentation_EN §4.2/4.6, ARCHITECTURE, DATABASE_SCHEMA, CLAUDE.md, AGENTS.md, VIBE_CODING_GUIDELINES.

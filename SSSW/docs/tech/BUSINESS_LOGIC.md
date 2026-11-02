@@ -44,7 +44,7 @@ Dành cho các linh kiện thông thường ép nhựa:
        ├─► Bấm nút [SCALE]
        ├─► Ghi nhận: C022 = Weight_Scale2 (Runner)
        ├─► Tự động tính C023: C023 = C024 - C022
-       └─► Tự động tính C021: C021 = C023 / PairsPerShot (có xét hệ số size / tỉ lệ)
+       └─► Tự động tính C021: xem §4.8 (Logo/Cleat_Ring: C021 = C023; step ghép: C023 − Σ chi tiết con theo BOM Level 2)
        │
        ▼
 [Hoàn tất 1 Step]
@@ -73,8 +73,7 @@ Dành cho các linh kiện thông thường ép nhựa:
   Filter phải khớp đúng chuỗi `StartsWith("Cleat_Ring")` để tránh ghi đè nhầm hoặc tính ra giá trị âm (`C021 < 0`).
 
 ### 4.3. Linh kiện `Inlay`
-- Tương tự như insert kim loại/vải chèn trong lòng khuôn:
-  - Khối lượng Part của Inlay được khấu trừ hoặc tính đặc thù theo cấu hình khuôn.
+- Tương tự như insert kim loại/vải chèn trong lòng khuôn. Kể từ 2026-11-02, Part Weight của Inlay (và Studs/Base) được tính theo **BOM Level 2** (xem §4.8), không còn nhánh đặc cách theo tên step.
 
 ### 4.4. Kiểm tra thứ tự tuần tự (Sequential Step Validation)
 - Nếu một sản phẩm có nhiều bước (`Step 1`, `Step 2`, `Step 3`):
@@ -85,6 +84,31 @@ Dành cho các linh kiện thông thường ép nhựa:
 ### 4.5. Khuôn nhiều Size trên cùng 1 Shot (Multi-size Molds)
 - Cùng 1 khuôn ép ra nhiều cỡ giày khác nhau trong 1 lần ép:
   - Hệ thống gom nhóm theo tiền tố mã hàng (`PrefixUpToThirdHyphen`), tính tổng số đôi và phân bổ trọng lượng theo tỉ lệ định mức BOM tương ứng từng size.
+
+---
+
+### 4.8. Part Weight theo BOM Level 2 (từ 2026-11-02)
+
+Thay cho cơ chế cũ "trừ Part Weight của mọi bước trước". Áp dụng cho injection step ở **lần cân thứ hai** (trừ Logo/Cleat_Ring vẫn `C021 = C023`).
+
+```
+C021(step) = C023(step) − Σ over child in L2(step), child ≠ self :  Qty(child) × UnitWeight(child)
+```
+
+- `L2(step)` = `sp_getBomWinlineOfItemFG @itemFG = <ItemStepCode của step>` (cache theo phiên, `IBomService`).
+- Dòng **self**: mã kết thúc `-0000` / đơn vị `G` / trùng mã step → không trừ.
+- `Qty` ở L2 hiểu là **số chiếc (PCS)**. `UnitWeight` (g/chiếc):
+  - REX: `C036`.
+  - Còn lại: `C021` (g/prs) ÷ 2 nếu `C037 == "PRS"`, giữ nguyên nếu PCS.
+- Chi tiết con lấy từ dòng cùng phiên (`_scaleDataFinal`) trước, nếu không có thì FT600 mới nhất theo `C002`.
+- Chi tiết con chưa cân (hoặc trọng lượng ≤ 0) → cảnh báo, **không ghi** `C023`/`C021`.
+- Không có L2 (SP rỗng/lỗi, `Z-VHXXXXXX`) → rơi về công thức cũ (`ApplyLegacyPartWeight`).
+- **Cascade**: khi một step đổi, các step cha đã cân có step đó trong L2 được tính lại `C021` và `C022 = C024 − C021`.
+
+Ví dụ (FG `6112042313-A478-2801`): Base_FF = self + Studs×2 + Inlay×2 + REX00018×8; Base_HF = self + Logo×2 + REX00018×4 + Base_FF×2.
+
+**Không đổi**: nhánh REX/Nonwoven/Mesh (§4.1), multi-size (§4.5), `C022`/`C023`/`C024`, `C036` của Logo/Cleat_Ring.
+Code: `UI/WPF/Services/PartWeightCalculator.cs`, test: `tests/SSSW.Tests`.
 
 ---
 

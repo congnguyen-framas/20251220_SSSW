@@ -120,7 +120,11 @@ SSSW/
 │   │   │   └── ScaleConverters.cs      # Tolerance → Color converters
 │   │   ├── Services/
 │   │   │   ├── DeviceConnectionService.cs  # Hardware singleton
-│   │   │   └── OperatorSessionService.cs   # RFID/operator singleton
+│   │   │   ├── OperatorSessionService.cs   # RFID/operator singleton
+│   │   │   ├── IDialogService.cs           # Thông báo cho ViewModel (MessageBox)
+│   │   │   ├── BomService.cs               # BOM Level 1/2 + cache
+│   │   │   ├── PartWeightCalculator.cs     # C021 theo BOM Level 2 (hàm thuần)
+│   │   │   └── ScaleStepRepository.cs      # Truy cập FT600
 │   │   └── Styles/
 │   │       └── ShotWeightStyles.xaml    # Global WPF styles
 │   │
@@ -215,6 +219,10 @@ SSSW/
 | `IDbContextFactory<DbContextDogeWH>` | Scoped | EF Core factory (thread-safe) |
 | `DeviceConnectionService` | **Singleton** | Barcode/RFID/Scale hardware |
 | `OperatorSessionService` | **Singleton** | RFID/operator identity chung Step/FG |
+| `IDialogService` | **Singleton** | Hộp thoại thông báo cho ViewModel |
+| `IBomService` | **Singleton** | `sp_getBomWinlineOfItemFG` Level 1/2 + cache Level 2 |
+| `IPartWeightCalculator` | **Singleton** | Tính `C021` theo BOM Level 2 |
+| `IScaleStepRepository` | **Singleton** | Đọc FT600 (bản ghi mới nhất theo mã step) |
 | `MainViewModel` | Transient | Shell window ViewModel |
 | `Main` | Transient | Shell window (real top-level Window) |
 | `ShotWeightViewModel` | Transient | Step weighing ViewModel |

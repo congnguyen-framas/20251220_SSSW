@@ -65,6 +65,10 @@ Note the doc is dated 2026-06-01 (v1.1); the ViewModel's step-filtering / `Allow
 
 `FT600` has a `[NotMapped]` partial extension ([models/ef/entities/FT600.partial.cs](SSSW/models/ef/entities/FT600.partial.cs)) adding UI-only fields (`AllowScale`, `StatusText`, `StatusDotColor`, `StatusBarColor`) — these live only in memory/UI, never persisted.
 
+> **Test tạm thời (nhánh `feature/use-bom-level-2`)**: entity `FT600` đang trỏ `[Table("FT600_dev")]`. Phải đổi lại `"FT600"` trước khi release.
+
+`C021` của injection step tính theo BOM Level 2 qua `PartWeightCalculator` / `IBomService` ([UI/WPF/Services/](SSSW/UI/WPF/Services/)); xem `docs/tech/BUSINESS_LOGIC.md` §4.8. Unit test ở `tests/SSSW.Tests`.
+
 Several stored procedures are called directly rather than modeled as DbSets (BOM lookup, Hydra sync, company/year lookup, category lookup) — see doc §11 for the full list and parameters.
 
 ### Models directory conventions

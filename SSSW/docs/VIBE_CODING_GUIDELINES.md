@@ -18,6 +18,7 @@
    - Toàn bộ các công thức tính toán (`C021`, `C022`, `C023`, `C024`), luồng cân, điều kiện kiểm tra tuần tự (sequential check), logic xử lý ngoại lệ (`REX`, `Cleat_Ring`, `Inlay`, Multi-size mold...) đã được căn chỉnh chính xác theo nghiệp vụ nhà máy và kiểm chứng trong thực tế sản xuất.
    - **Mọi hành động tối ưu hóa, tái cấu trúc (refactor) hoặc dọn dẹp mã nguồn**: bắt buộc phải bảo đảm **giữ nguyên 100% kết quả đầu ra như logic hiện tại, tuyệt đối không được phép thay đổi**.
    - Tuyệt đối không tự ý thay đổi, đơn giản hóa, hoặc viết lại cách tính toán nếu không có yêu cầu rõ ràng từ người dùng.
+   - Ngoại lệ đã được yêu cầu rõ (2026-11-02): `C021` của injection step tính theo BOM Level 2 — xem `tech/BUSINESS_LOGIC.md` §4.8; công thức cũ giữ làm fallback.
 
 ---
 

@@ -5,6 +5,7 @@
 1. **Zero Logic Mutation**:
    - Maintain 100% numerical and logical equivalence with existing business rules in `ShotWeightViewModel.cs` and `ShotWeightFGViewModel.cs`.
    - Never alter the formulas for `C021`, `C022`, `C023`, `C024`.
+   - Exception (explicit user request, 2026-11-02): injection-step `C021` is computed from BOM Level 2 (`PartWeightCalculator`, see `SSSW/docs/tech/BUSINESS_LOGIC.md` §4.8); the legacy formula remains as fallback.
    - Preserve edge case handlers (`REX`, `Cleat_Ring` cascade subtraction, `Inlay`, Multi-size mold allocation).
 
 2. **Database Integrity**:

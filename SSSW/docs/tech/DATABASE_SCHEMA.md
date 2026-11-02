@@ -138,7 +138,7 @@ Chứa danh sách kế hoạch sản xuất và trạng thái đã cân:
 
 1. **`sp_MaterialGetCompanyName`**: Trả về `mesocomp` (VNT1, FTT1...) để xác định site hiện tại.
 2. **`sp_MaterialGetMesoyear`**: Trả về năm làm việc (`mesoyear`) hiện hành trong Winline.
-3. **`sp_getBomWinlineOfItemFG`**: Truy vấn định mức BOM từ Winline cho mã thành phẩm (Finished Goods).
+3. **`sp_getBomWinlineOfItemFG`**: Truy vấn định mức BOM từ Winline. Truyền mã **FG** → Level 1 (các step); truyền mã **step** (vd. `3-VB042313-A123-2801`) → Level 2 (chi tiết cấu thành: dòng self `-0000` đơn vị G, các step con, REX). Level 2 dùng để tính `C021` (xem `BUSINESS_LOGIC.md` §4.8).
 4. **`sp_GetFullStepItemHydraIsRun`**: Lấy danh sách các lệnh sản xuất / khuôn đang chạy trên máy ép từ Hydra MES.
 5. **`sp_GetCategorryOfItem`**: Lấy danh mục nhóm linh kiện.
 6. **`sp_Shotweight_Gets`**: Lấy thông tin tiêu chuẩn shotweight từ Winline để đối chiếu.

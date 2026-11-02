@@ -233,8 +233,10 @@ Remove the runner, keep only the part on the scale:
 C023 = ScaleValue
 C022 (Runner=YES) = Round( (C024 − C023 × prsShot) / prsShot, 3 )
 C022 (Runner=NO)  = 0
-C021 = C023 − Σ C023_prev − Σ C023_non-inj
+C021 = C023 − Σ ( Qty × UnitWeight ) over BOM Level-2 children (self row excluded)
 ```
+
+> Since 2026-11-02. If no Level-2 data is available the legacy formula `C021 = C023 − Σ C021_prev − Σ C021_non-inj` is used. See `docs/tech/BUSINESS_LOGIC.md` §4.8.
 
 Where:
 - `prsShot` = `_articlePaisShotFinaly` (C028)
@@ -279,7 +281,14 @@ C022[each size] = (C024 − sumPW) / pairShot  // if C023 > 0, else 0
 
 ### 4.6 Cascade Update (recalculate subsequent steps)
 
-After Save, subsequent steps with `C024 > 0` are recalculated:
+After Save (since 2026-11-02), every already-weighed parent step whose BOM Level-2 contains the saved step is recalculated:
+
+```
+C021 = C023 − Σ ( Qty × UnitWeight )   (Level 2)
+C022 = C024 − C021
+```
+
+Legacy cascade (only when no Level-2 data is available):
 
 ```
 Same sequence:   C021 = C023 − _rowSelected.C023

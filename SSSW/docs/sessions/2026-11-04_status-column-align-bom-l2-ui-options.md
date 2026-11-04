@@ -14,7 +14,7 @@
 - Hiểu "gạch chân đều nhau" là căn thẳng hàng theo chiều dọc của ô STATUS với các cột còn lại; nếu ý khác (đường kẻ ngang giữa các dòng) cần ảnh rõ hơn.
 
 ## Đã làm (tiếp) — UI BOM Level 2 (phương án A v3)
-- Mockup v6 (`docs/image/bom_level2_option_A_v6_detail_within_step_col.png`, thay v3–v5: vẽ đủ cột của lưới thật; giữ 8 cột như v3, cột 1–4 căn theo lưới chính, cột 5–8 (Unit, Weighed, g / piece, Deduct) chia nhau bề rộng cột STEP / STEP CODE). Code hiện có vẫn theo v3 — chờ duyệt v6 mới sửa: cột chi tiết sắp lại theo thứ tự xanh và căn cùng đường dọc với cột lưới chính (bảng map ở `brainstorm/BOM_LEVEL2_UI_OPTIONS.md`).
+- Mockup v7 (`docs/image/bom_level2_option_A_v7_qty_shifted.png`, thay v3–v6: vẽ đủ cột của lưới thật; giữ 8 cột như v3, cột 1–5 căn theo Actions / STATUS / MACHINE / MAIN / Step No. (Qty dời sang trái 1 cột, Unit dịch theo), cột 6–8 (Weighed, g / piece, Deduct) chia đều bề rộng cột STEP / STEP CODE). Code hiện có vẫn theo v3 — chờ duyệt v7 mới sửa: cột chi tiết sắp lại theo thứ tự xanh và căn cùng đường dọc với cột lưới chính (bảng map ở `brainstorm/BOM_LEVEL2_UI_OPTIONS.md`).
 - Code: `models/Level2DetailItem.cs` (mới); `FT600.partial.cs` (+`Level2Items`, `Level2Formula`, `Level2HasMissing`); `ShotWeightViewModel.RefreshLevel2Details()` gọi trong `RefreshStepsGridCore`; `ShotWeightStyles.xaml` (`StepRowStyle`, `Level2DetailsTemplate`, converter `NullToCollapsed`); `ScaleConverters.cs` (`NullToCollapsedConverter`); `ShotWeightWindow.xaml` (+ thuộc tính `dgTotalSteps`); `ShotWeightWindow.xaml.cs` (làm mờ dòng, click lại để bỏ chọn).
 - Hành vi: chọn step → viền nổi + xổ chi tiết, dòng khác mờ; click lại → bỏ chọn; sau Save/Reset lưới được dựng lại và step đang cân tự được chọn lại (xổ chi tiết cập nhật trạng thái cân).
 

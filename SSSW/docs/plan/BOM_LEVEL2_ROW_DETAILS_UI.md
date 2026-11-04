@@ -1,7 +1,7 @@
 # Thiết kế UI: BOM Level 2 Row Details trong TOTAL STEPS
 
 - **Ngày**: 2026-11-04 · **Nhánh**: `feature/use-bom-level-2`
-- **Trạng thái**: ⏳ **Chờ review** hình v6 (giữ 8 cột như v3; Unit + Weighed + g / piece + Deduct xếp chung trong bề rộng cột STEP / STEP CODE). Code hiện có trên nhánh còn theo v3 (cả 8 cột bám cột lưới) — nếu duyệt v6 thì phải sửa `Level2DetailsTemplate`; chưa code thêm gì theo yêu cầu này
+- **Trạng thái**: ⏳ **Chờ review** hình v7 (giữ 8 cột như v3; Qty dời sang trái 1 cột; Weighed + g / piece + Deduct xếp chung trong bề rộng cột STEP / STEP CODE). Code hiện có trên nhánh còn theo v3 (cả 8 cột bám cột lưới) — nếu duyệt v7 thì phải sửa `Level2DetailsTemplate`; chưa code thêm gì theo yêu cầu này
 - **Liên quan**: [`brainstorm/BOM_LEVEL2_UI_OPTIONS.md`](../brainstorm/BOM_LEVEL2_UI_OPTIONS.md) (các phương án), [`tech/BUSINESS_LOGIC.md`](../tech/BUSINESS_LOGIC.md) §4.8 (công thức `C021`), session [`2026-11-04`](../sessions/2026-11-04_status-column-align-bom-l2-ui-options.md)
 
 ## 1. Yêu cầu
@@ -11,14 +11,15 @@
 3. Chuyển toàn bộ cột và mô tả sang tiếng Anh.
 4. Sắp lại thứ tự cột chi tiết (số xanh) và căn cùng đường dọc với cột lưới chính (số đỏ).
 5. Giữ 8 cột như v3, nhưng chỉ cần trùng vị trí với các cột đầu của lưới; các cột sau không cần căn.
-6. **3 cột cuối (Weighed, g / piece, Deduct) xếp chung trong bề rộng cột STEP / STEP CODE cùng cột Unit, để bảng chi tiết kết thúc đúng mép phải cột STEP / STEP CODE.**
+6. 3 cột cuối (Weighed, g / piece, Deduct) xếp chung trong bề rộng cột STEP / STEP CODE, để bảng chi tiết kết thúc đúng mép phải cột STEP / STEP CODE.
+7. **Dời cột Qty sang trái 1 cột (xuống dưới MAIN / MAIN CODE) để không còn khoảng trống; Unit dịch theo xuống dưới Step No.**
 
-## 2. Hình thiết kế (v6 — theo đúng lưới thật, bảng chi tiết nằm gọn trong 6 cột đầu)
+## 2. Hình thiết kế (v7 — theo đúng lưới thật, bảng chi tiết nằm gọn trong 6 cột đầu, không còn khoảng trống)
 
-![Option A v6](../image/bom_level2_option_A_v6_detail_within_step_col.png)
+![Option A v7](../image/bom_level2_option_A_v7_qty_shifted.png)
 
 - Lưới TOTAL STEPS thật có **nhiều cột** (hơn 20, kéo ngang bằng thanh cuộn): Actions, STATUS, MACHINE, MAIN / MAIN CODE, Step No., STEP / STEP CODE, SIZE, TOTAL WEIGHT, TOTAL PART, PART, RUNNER / EXCESS MAT., Actual Partitioning, PPIC Partitioning, Mold Pairs Shot, Quantity, … Hình v4 vẽ đủ các cột này (đường kẻ ngang cắt ở Quantity giống màn hình thật).
-- Đường gióng đỏ nét đứt = ranh giới cột lưới chính. **Cột chi tiết 1–4 (Component, Status, Step, Qty) nằm đúng dưới Actions, STATUS, MACHINE, Step No.** Cột 5–8 (Unit, Weighed, g / piece, Deduct) chia nhau bề rộng 300px của cột STEP / STEP CODE (60 + 90 + 75 + 75), nên bảng chi tiết kết thúc đúng mép phải cột STEP / STEP CODE.
+- Đường gióng đỏ nét đứt = ranh giới cột lưới chính. **Cột chi tiết 1–5 (Component, Status, Step, Qty, Unit) nằm đúng dưới Actions, STATUS, MACHINE, MAIN / MAIN CODE, Step No.** Cột 6–8 (Weighed, g / piece, Deduct) chia đều bề rộng 300px của cột STEP / STEP CODE (100 + 100 + 100), nên bảng chi tiết liền mạch, không có khoảng trống, và kết thúc đúng mép phải cột STEP / STEP CODE.
 - Dải chi tiết rộng bằng cả lưới và **cuộn ngang cùng lưới**; mọi vùng bên phải cột STEP / STEP CODE (từ SIZE trở đi) để trống.
 - Dữ liệu trong hình là minh họa (bố cục lấy từ ảnh chụp lưới thật, FG `6112042502`; Qty/trọng lượng chi tiết do mình đặt ví dụ).
 
@@ -31,26 +32,25 @@
 | 1 | Component | Actions (0) | 125 | `ItemStepName` của BOM L2 |
 | 2 | Status | STATUS (1) | 65 | đã cân / chưa cân |
 | 3 | Step | MACHINE (2) | 75 | `C015` của chi tiết con, `REX` nếu non-injection |
-| — | *(trống)* | MAIN / MAIN CODE (3) | 150 | — |
-| 4 | Qty (PCS) | Step No. (4) | 80 | `Quantity` BOM L2 |
-| 5 | Unit | STEP / STEP CODE (5) — phần 1/4 | 60 | `Unit` BOM L2 |
-| 6 | Weighed (g/prs) | STEP / STEP CODE (5) — phần 2/4 | 90 | `C021` đã cân |
-| 7 | g / piece | STEP / STEP CODE (5) — phần 3/4 | 75 | `UnitWeightPerPiece` |
-| 8 | Deduct (g) | STEP / STEP CODE (5) — phần 4/4 | 75 | `Qty × g/piece` |
+| 4 | Qty (PCS) | MAIN / MAIN CODE (3) | 150 | `Quantity` BOM L2 |
+| 5 | Unit | Step No. (4) | 80 | `Unit` BOM L2 |
+| 6 | Weighed (g/prs) | STEP / STEP CODE (5) — phần 1/3 | 100 | `C021` đã cân |
+| 7 | g / piece | STEP / STEP CODE (5) — phần 2/3 | 100 | `UnitWeightPerPiece` |
+| 8 | Deduct (g) | STEP / STEP CODE (5) — phần 3/3 | 100 | `Qty × g/piece` |
 
-Quy tắc căn: cột chi tiết 1–4 thẳng hàng với cột lưới 0, 1, 2, 4. Cột chi tiết 5–8 cộng lại **đúng bằng** `Columns[5].ActualWidth` (300px): Unit có bề rộng cố định 60px, 3 cột số chia phần còn lại — nên mép phải của bảng chi tiết trùng mép phải cột STEP / STEP CODE. Không còn cột chi tiết nào nằm dưới SIZE / TOTAL WEIGHT / TOTAL PART / PART.
+Quy tắc căn: cột chi tiết 1–5 thẳng hàng với cột lưới 0–4. Cột chi tiết 6–8 chia đều `Columns[5].ActualWidth` (300px ÷ 3) nên mép phải bảng chi tiết trùng mép phải cột STEP / STEP CODE. Không còn cột chi tiết nào nằm dưới SIZE trở đi, và không còn cột lưới trống ở giữa.
 
 > Lưu ý: lưới thật đã có sẵn các cột **Quantity (14)**, **Weight per Unit (15)**, **Unit (16)** nằm xa bên phải. Phương án này không dùng chúng cho chi tiết con vì chúng thuộc về chính step đang cân; chi tiết con dùng Qty/Unit riêng của BOM Level 2 đặt ở các cột nhìn thấy ngay (Step No., STEP / STEP CODE).
 
 ## 4. Tính khả thi
 
-**Khả thi.** Lý do và điểm cần lưu ý (code hiện có là bản v3 — cả 8 cột bám cột lưới; v6 cần đổi 4 ô cuối (Unit, Weighed, g / piece, Deduct) thành các ô nhỏ nằm trong bề rộng cột 5):
+**Khả thi.** Lý do và điểm cần lưu ý (code hiện có là bản v3 — cả 8 cột bám cột lưới; v7 cần đổi: Qty → cột 3, Unit → cột 4, và 3 ô số (Weighed, g / piece, Deduct) thành các ô chia đều trong bề rộng cột 5):
 
 | Vấn đề | Giải pháp | Ghi chú |
 |--------|-----------|---------|
-| 4 cột chi tiết đầu phải thẳng hàng với cột lưới | Mỗi ô là `Border` có `Width` bind `Columns[i].ActualWidth` của `DataGrid` (`RelativeSource AncestorType=DataGrid`) cho cột lưới 0–4 | Kéo đổi độ rộng cột vẫn thẳng hàng. Không dùng `ColumnDefinition` vì `RelativeSource` không hoạt động ở đó |
-| 4 cột chi tiết cuối nằm trong cột STEP / STEP CODE | Một `Grid` con rộng bằng `Columns[5].ActualWidth`: Unit 60px cố định, 3 cột số chia phần còn lại (tỉ lệ 90 : 75 : 75) | Co giãn theo khi kéo đổi độ rộng cột STEP / STEP CODE; không phụ thuộc các cột phía sau |
-| Lưới thật có nhiều cột hơn các mockup trước (v1–v3 đã lược bớt) | v4–v6 vẽ đủ bộ cột thật; cột MAIN / MAIN CODE để trống | Nếu đổi thứ tự 6 cột đầu của lưới thì phải sửa chỉ số trong `Level2DetailsTemplate` |
+| 5 cột chi tiết đầu phải thẳng hàng với cột lưới | Mỗi ô là `Border` có `Width` bind `Columns[i].ActualWidth` của `DataGrid` (`RelativeSource AncestorType=DataGrid`) cho cột lưới 0–4 | Kéo đổi độ rộng cột vẫn thẳng hàng. Không dùng `ColumnDefinition` vì `RelativeSource` không hoạt động ở đó |
+| 3 cột số cuối nằm trong cột STEP / STEP CODE | Một `Grid` con rộng bằng `Columns[5].ActualWidth` chia 3 phần đều (`*`, `*`, `*`) | Co giãn theo khi kéo đổi độ rộng cột STEP / STEP CODE; không phụ thuộc các cột phía sau |
+| Lưới thật có nhiều cột hơn các mockup trước (v1–v3 đã lược bớt) | v4–v7 vẽ đủ bộ cột thật; v7 dùng luôn cột MAIN / MAIN CODE (cho Qty) nên không còn ô trống ở giữa | Nếu đổi thứ tự 6 cột đầu của lưới thì phải sửa chỉ số trong `Level2DetailsTemplate` |
 | Lưới có thanh cuộn ngang | Dải chi tiết là một phần của `RowDetailsTemplate` nên cuộn cùng lưới; không dùng `AreRowDetailsFrozen` | Cần kiểm tra khi cuộn ở app thật |
 | Cột Component hẹp (125px) | Cắt chữ + tooltip hiện mã chi tiết | Có thể nới cột Actions nếu cần |
 | Chip Status trong 65px | Chữ ngắn "✔ done" / "✖ missing" | Có thể nới nhẹ cột STATUS |
@@ -100,7 +100,7 @@ flowchart LR
 
 ## 8. Checklist review trên app thật
 
-- [ ] Component / Status / Step / Qty thẳng hàng với Actions / STATUS / MACHINE / Step No.; Unit, Weighed, g / piece, Deduct nằm gọn trong cột STEP / STEP CODE (đọc rõ, không bị cắt, header "Weighed (g/prs)" xuống dòng chấp nhận được).
+- [ ] Component / Status / Step / Qty / Unit thẳng hàng với Actions / STATUS / MACHINE / MAIN / MAIN CODE / Step No.; Weighed, g / piece, Deduct nằm gọn trong cột STEP / STEP CODE (đọc rõ, không bị cắt, header "Weighed (g/prs)" xuống dòng chấp nhận được).
 - [ ] Cuộn ngang lưới (nhiều cột): phần chi tiết cuộn cùng lưới, không lệch.
 - [ ] Chọn step → viền nổi, chi tiết xổ ra, dòng khác mờ; click lại → về bình thường.
 - [ ] Nút Scale/Reset/Delete ở dòng mờ vẫn bấm được.

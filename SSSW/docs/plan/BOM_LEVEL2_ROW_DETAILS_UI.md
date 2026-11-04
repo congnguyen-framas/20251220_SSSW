@@ -13,7 +13,9 @@
 5. Giữ 8 cột như v3, nhưng chỉ cần trùng vị trí với các cột đầu của lưới; các cột sau không cần căn.
 6. 3 cột cuối (Weighed, g / piece, Deduct) xếp chung trong bề rộng cột STEP / STEP CODE, để bảng chi tiết kết thúc đúng mép phải cột STEP / STEP CODE.
 7. Dời cột Qty sang trái 1 cột (xuống dưới MAIN / MAIN CODE) để không còn khoảng trống; Unit dịch theo xuống dưới Step No.
-8. **Nới cột Actions để 3 nút Scale / Reset / Delete nằm trên 1 hàng như ban đầu; chỉ khi user kéo hẹp cột thì nút mới tự rớt xuống dòng.**
+8. Nới cột Actions để 3 nút Scale / Reset / Delete nằm trên 1 hàng như ban đầu; chỉ khi user kéo hẹp cột thì nút mới tự rớt xuống dòng.
+9. **Viền highlight của step được chọn phải hiển thị đầy đủ 4 cạnh (trước đó mất cạnh trái và phải).**
+10. **Bảng chi tiết có viền mờ, ăn sát theo đúng số cột chi tiết (8 cột), không kéo dài ra phần lưới phía sau.**
 
 ## 2. Hình thiết kế (v8 — theo đúng lưới thật, bảng chi tiết nằm gọn trong 6 cột đầu, Actions đủ rộng cho 3 nút)
 
@@ -22,6 +24,8 @@
 - Lưới TOTAL STEPS thật có **nhiều cột** (hơn 20, kéo ngang bằng thanh cuộn): Actions, STATUS, MACHINE, MAIN / MAIN CODE, Step No., STEP / STEP CODE, SIZE, TOTAL WEIGHT, TOTAL PART, PART, RUNNER / EXCESS MAT., Actual Partitioning, PPIC Partitioning, Mold Pairs Shot, Quantity, … Hình v4 vẽ đủ các cột này (đường kẻ ngang cắt ở Quantity giống màn hình thật).
 - Đường gióng đỏ nét đứt = ranh giới cột lưới chính. **Cột chi tiết 1–5 (Component, Status, Step, Qty, Unit) nằm đúng dưới Actions, STATUS, MACHINE, MAIN / MAIN CODE, Step No.** Cột 6–8 (Weighed, g / piece, Deduct) chia đều bề rộng 300px của cột STEP / STEP CODE (100 + 100 + 100), nên bảng chi tiết liền mạch, không có khoảng trống, và kết thúc đúng mép phải cột STEP / STEP CODE.
 - Dải chi tiết rộng bằng cả lưới và **cuộn ngang cùng lưới**; mọi vùng bên phải cột STEP / STEP CODE (từ SIZE trở đi) để trống.
+- **Viền chọn**: khung bo góc, xám xanh `#90A4AE`, đủ 4 cạnh quanh dòng step + bảng chi tiết.
+- **Viền bảng chi tiết**: lưới viền mờ (`#90A4AE` ~35% độ đậm) chỉ bao đúng 8 cột chi tiết (từ Actions đến hết STEP / STEP CODE); khung công thức bên dưới cũng rộng bằng bảng.
 - Dữ liệu trong hình là minh họa (bố cục lấy từ ảnh chụp lưới thật, FG `6112042502`; Qty/trọng lượng chi tiết do mình đặt ví dụ).
 
 ## 3. Ánh xạ cột chi tiết → cột lưới chính
@@ -56,6 +60,8 @@ Quy tắc căn: cột chi tiết 1–5 thẳng hàng với cột lưới 0–4. 
 | Lưới thật có nhiều cột hơn các mockup trước (v1–v3 đã lược bớt) | v4–v7 vẽ đủ bộ cột thật; v7 dùng luôn cột MAIN / MAIN CODE (cho Qty) nên không còn ô trống ở giữa | Nếu đổi thứ tự 6 cột đầu của lưới thì phải sửa chỉ số trong `Level2DetailsTemplate` |
 | Lưới có thanh cuộn ngang | Dải chi tiết là một phần của `RowDetailsTemplate` nên cuộn cùng lưới; không dùng `AreRowDetailsFrozen` | Cần kiểm tra khi cuộn ở app thật |
 | Cột Component hẹp (140px sau khi nới) | Cắt chữ + tooltip hiện mã chi tiết | Nới cột Actions thêm nếu vẫn chật |
+| Viền chọn đủ 4 cạnh | Hình vẽ khung theo bề rộng vùng nhìn thấy của lưới. Trong `DataGridRow`, viền `BorderThickness=2` vẽ cả 4 cạnh nhưng trải theo **bề rộng toàn bộ các cột**, nên cạnh phải chỉ thấy khi cuộn ngang tới cuối | **Cần chốt cách làm** — (1) giữ viền của `DataGridRow` (cạnh phải ở cuối lưới); hoặc (2) vẽ khung phủ theo viewport (phải thêm lớp phủ tính theo vị trí dòng và `ScrollViewer`) để cạnh phải luôn thấy |
+| Viền mờ bảng chi tiết | Mỗi ô chi tiết có `BorderBrush` mờ (`#5990A4AE`), `BorderThickness` 1; không vẽ viền cho phần còn lại của dải | Dễ làm trong `Level2DetailsTemplate`; khung công thức đặt `HorizontalAlignment=Left` và rộng bằng tổng 8 cột |
 | 3 nút Actions bị rớt dòng ở độ rộng cũ (125px) | Nới cột 0 lên 140px + `WrapPanel` trong ô Actions | Ở 140px nằm 1 hàng; kéo hẹp hơn thì tự xuống dòng, không bị cắt |
 | Chip Status trong 65px | Chữ ngắn "✔ done" / "✖ missing" | Có thể nới nhẹ cột STATUS |
 | `FT600` không có `INotifyPropertyChanged` | `RefreshStepsGridCore()` dựng lại lưới, kèm dựng lại `Level2Items` | Selection bị reset mỗi lần dựng lại → `FocusGridRowAction` chọn lại step đang cân |
@@ -112,4 +118,6 @@ flowchart LR
 - [ ] Step không có chi tiết con (Logo, Studs đầu chuỗi) hiện "No components".
 - [ ] Màu viền dòng được chọn, tên Component dài, chip "✖ missing" trong cột 65px có chấp nhận được.
 - [ ] Cột STATUS (đã căn lại 2026-11-04) thẳng hàng với MACHINE / Step No.
+- [ ] Viền chọn đủ 4 cạnh (kể cả khi cuộn ngang) — chọn cách (1) hay (2) ở §4.
+- [ ] Viền mờ bảng chi tiết ăn sát 8 cột, không tràn ra phía sau cột STEP / STEP CODE.
 - [ ] Cột Actions 140px: 3 nút Scale / Reset / Delete nằm 1 hàng; kéo hẹp cột thì nút tự rớt dòng, không bị cắt; chiều cao dòng step không phình thêm.

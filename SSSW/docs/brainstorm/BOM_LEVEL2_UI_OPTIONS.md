@@ -37,7 +37,8 @@ Theo yêu cầu: chọn step thì highlight, làm mờ các dòng còn lại; b�
 | Click lại chính dòng đó | Thu gọn, mọi dòng về bình thường |
 | Click dòng khác | Highlight chuyển sang dòng đó |
 | Nút Scale/Reset/Delete | Vẫn bấm được ở cả dòng mờ (hành vi cũ) |
-| Step không có chi tiết con | Khung chỉ hiện dòng self |
+| Dòng self (phần nhựa của chính step) | Ẩn — không bị trừ, trùng với dòng step phía trên |
+| Step không có chi tiết con | Khung hiện "Không có chi tiết con" |
 
 Gợi ý triển khai (nếu duyệt): `DataGrid.RowDetailsVisibilityMode="VisibleWhenSelected"` + `RowDetailsTemplate` (bảng con bind `Level2Items` trên `FT600` partial `[NotMapped]`); mờ dòng khác bằng `DataTrigger` trên cờ `IsDimmed` ở VM; click lại để bỏ chọn xử lý trong code-behind `PreviewMouseLeftButtonUp` (set `SelectedItem = null`). `Level2Items` lấy từ `_level2ByStep` + `FindWeighedChild` đã có.
 

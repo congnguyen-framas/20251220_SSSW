@@ -43,6 +43,14 @@
 - Tìm nguyên nhân Inlay `2-VB042313-A123-2801` có giá trị cân dù FT600 không có: truy vấn nạp "lần cân trước" khớp theo mã model + cùng size + cùng `C015` nên mượn bản ghi khác (và Confirm sẽ ghi lại bản ghi đó dưới mã step này). Ghi ở [`plan/QTY_WEIGHT_PER_PIECE_LEVEL2.md`](../plan/QTY_WEIGHT_PER_PIECE_LEVEL2.md) §1 kèm SQL kiểm tra và 3 cách sửa.
 - Đề xuất gộp `Quantity` theo BOM Level 2 và tính `Weight per Unit = C021 ÷ Quantity` (cùng file, §2). **Chưa code, chờ duyệt.**
 
+## Quantity gộp theo BOM Level 2 (`C039`) + khớp trọng lượng cũ theo đúng mã step (code)
+- Quyết định (chi tiết ở [`plan/QTY_WEIGHT_PER_PIECE_LEVEL2.md`](../plan/QTY_WEIGHT_PER_PIECE_LEVEL2.md) §4): khớp đúng `C002`; cột mới `C039` (số chiếc / 1 đôi), `C025` giữ nguyên; step cuối cũng tính; cân đủ số lượng 1 đôi.
+- [`FT600.cs`](../../models/ef/entities/FT600.cs): thêm `C039` (`double?`). **Người dùng tự tạo cột trong DB** (`ALTER TABLE FT600/FT600_dev ADD C039 float NULL`).
+- Mới `UI/WPF/Services/ComponentQuantityAggregator.cs` (gộp `Σ qty(p→c)`, `PiecesFor`); `PartWeightCalculator.UnitWeightPerPiece` dùng `C036`, dự phòng `C021 ÷ C039` (bỏ giả định PRS = 2 chiếc).
+- `ShotWeightViewModel`: `ApplyPieceQuantities()` (gán `C039`, tính `C036`, chuẩn hóa bản ghi cũ), `UpdateWeightPerPiece()`, `PiecesOf()`; cập nhật `C036` khi Save / Cascade; vòng nạp "lần cân trước" chỉ khớp đúng `C002`.
+- Test: `tests/SSSW.Tests` viết lại theo nghĩa mới + `ComponentQuantityAggregatorTests` (chưa chạy được vì NuGet nội bộ không truy cập).
+- Docs: BUSINESS_LOGIC §4.8, DATABASE_SCHEMA, ShotWeightWindow_Documentation_EN. Build `SSSW.csproj` 0 error; chưa chạy app thật (cần tạo cột `C039` trước khi chạy).
+
 ## Việc còn mở
 - Người dùng chọn phương án A; đã vẽ bản thiết kế lại `docs/image/bom_level2_option_A_v2_highlight.png` (highlight + mờ dòng khác, click lại để bỏ chọn, bỏ tiêu đề). Đã bỏ dòng self trong bảng chi tiết theo phản hồi (giữ hàng tiêu đề cột). Mockup v2 đã chuyển toàn bộ cột và phần mô tả sang tiếng Anh. **Chờ duyệt** rồi mới code.
 - Chưa chạy app để xác nhận bằng mắt: căn lề cột STATUS và Row Details (cột chi tiết thẳng hàng, mờ dòng, click lại bỏ chọn). Build `SSSW.csproj` 0 error (build ra thư mục tạm vì `SSSW.exe` đang chạy).

@@ -243,16 +243,16 @@ Where:
 - `Σ C023_prev` = sum of C023 for all steps with `C015 = current_C015 − 1`
 - `Σ C023_non-inj` = sum of C023 for REX / Z-VHXXXXXX steps at the same C015
 
-For Studs, Logo, Cleat_Ring:
+For Studs, Logo, Cleat_Ring and every other injection step (since 2026-11-04):
 ```
-C036 = Round( ScaleValue / prsShot, 2 )
+C036 = Round( C021 / C039, 3 )      // C039 = pieces per pair aggregated from BOM level 2
 ```
 
 ### 4.3 Non-Injection (REX) — Receptacle (catCheck == null)
 
 ```
 C024 = C023 = C021 = ScaleValue
-C036 = Round( ScaleValue / C025, 2 )        // C025 = quantity
+C036 = Round( ScaleValue / C039, 2 )        // C039 = pieces per pair (falls back to C025 when empty)
 ```
 
 ### 4.4 Non-Injection (REX) — Nonwoven / Mesh (catCheck != null)
@@ -502,6 +502,7 @@ The **Select Step** LookUpEdit popup shows these columns: Machine, Step Code, St
 | C036 | double? | Weight per Unit (g/unit) — Studs, Logo, Cleat_Ring, REX |
 | C037 | string | Unit |
 | C038 | string | Remarks |
+| C039 | double? | Pieces (PCS) of the item in 1 pair, aggregated from BOM level 2 (`Σ qty(parent → item)`); `C036 = C021 / C039` (new 2026-11-04; `C025` unchanged) |
 | AllowScale | bool | Whether step can be weighed |
 | CreateDate | DateTime | DB save timestamp |
 | Mesocomp | string | Company code (VNT1, FKV, FTT1…) |

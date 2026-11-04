@@ -82,17 +82,19 @@ namespace SSSW.UI.WPF.Services
         }
 
         /// <summary>
-        /// Trọng lượng 1 chiếc của chi tiết đã cân; null nếu chưa có giá trị.
-        /// REX (đơn vị PCS): C036 (g/piece). Còn lại: C021 (g/prs) chia 2 khi đơn vị là PRS.
+        /// Trọng lượng 1 chiếc (g/pcs) của chi tiết đã cân; null nếu chưa có giá trị.
+        /// Ưu tiên <c>C036</c> đã lưu (REX: scale / số chiếc; chi tiết khác: C021 / C039); nếu chưa có thì
+        /// (không phải REX) tính <c>C021 / C039</c>. Không còn giả định "1 đôi = 2 chiếc".
         /// </summary>
         public static double? UnitWeightPerPiece(FT600 weighed)
         {
-            bool isRex = weighed.C002?.Trim().StartsWith("REX", StringComparison.OrdinalIgnoreCase) ?? false;
-            var perUnit = isRex ? weighed.C036 : weighed.C021;
-            if (perUnit == null || perUnit <= 0) return null;
+            if (weighed.C036 is > 0) return weighed.C036;
 
-            bool isPair = !isRex && string.Equals(weighed.C037?.Trim(), "PRS", StringComparison.OrdinalIgnoreCase);
-            return isPair ? perUnit.Value / PiecesPerPair : perUnit.Value;
+            bool isRex = weighed.C002?.Trim().StartsWith("REX", StringComparison.OrdinalIgnoreCase) ?? false;
+            if (!isRex && weighed.C021 is > 0 && weighed.C039 is > 0)
+                return weighed.C021 / weighed.C039;
+
+            return null;
         }
     }
 }

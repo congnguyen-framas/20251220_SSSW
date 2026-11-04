@@ -1,7 +1,7 @@
 # Đề xuất: Quantity / Weight per Unit theo BOM Level 2 + lỗi nạp trọng lượng "mờ"
 
 - **Ngày**: 2026-11-04 · **Nhánh**: `feature/use-bom-level-2`
-- **Trạng thái**: ⏳ **Chờ bạn duyệt** — tài liệu đề xuất, **chưa sửa code** (riêng lỗi dòng Active bị mờ đã sửa xong, xem §0)
+- **Trạng thái**: ✅ **Đã duyệt và triển khai (2026-11-04)** — xem **§4 Quyết định và triển khai**; §1–§3 giữ lại làm lịch sử phân tích
 - **Liên quan**: [BUSINESS_LOGIC.md](../tech/BUSINESS_LOGIC.md) §4.8, [ALLOWSCALE_LOGIC_REVIEW.md](../tech/ALLOWSCALE_LOGIC_REVIEW.md)
 
 ## 0. Lỗi dòng Active bị mờ khi vào lần đầu — đã sửa
@@ -123,3 +123,30 @@ flowchart LR
 3. Cột Unit hiển thị `PCS` cho các chi tiết đã gộp; step cuối (Base_HF) giữ `PRS`/`1`?
 4. REX: khi cân REX, người dùng cân tất cả `Quantity gộp` chiếc (12) cùng lúc?
 5. Có báo cáo / stored procedure ngoài ứng dụng đọc `FT600.C025` mà đổi nghĩa sẽ ảnh hưởng không?
+
+## 4. Quyết định và triển khai (2026-11-04)
+
+| # | Câu hỏi | Quyết định | Đã làm |
+|---|---------|------------|--------|
+| 1 | Sửa lỗi nạp "mờ" (§1) | **Cách 1: chỉ khớp đúng `C002`**. Trọng lượng vẫn dùng chung giữa các màu vì mã step (vd. `2-VB042313-A123-2801`) không chứa màu FG | Vòng "Đọc dữ liệu các bước đã cân trước đó": `Where(x => x.C002 == item1.C002)`, bỏ điều kiện `C015` và `Contains(model)` |
+| 2 | Lưu Quantity gộp ở đâu | **Cột mới `C039`** trong `FT600`; cột `C025` (Quantity) **giữ nguyên** | `FT600.C039` (`double?`, mặc định 0); người dùng tự tạo cột trong DB (script bên dưới) |
+| 3 | Step cuối | Cũng tính Quantity và g/pcs | `ComponentQuantityAggregator.PiecesFor()`: step không là chi tiết của step nào → Quantity Level 1 quy ra chiếc (`PRS` = 2 chiếc, `PCS` giữ nguyên) |
+| 4 | REX / Ring / Logo / Studs | Cân **đủ số lượng của 1 đôi** như hiện tại | `C036 = scale ÷ C039` (REX Receptacle, giữ làm tròn 2 số); Logo/Cleat_Ring/Studs/Inlay/Base: `C036 = C021 ÷ C039` (làm tròn 3 số) |
+| 5 | Ảnh hưởng ngoài app | Không (cột mới đã/ sẽ tạo riêng) | `C025` không đổi nghĩa |
+
+**Công thức đã triển khai**
+- `C039(c) = Σ qty(p → c)` trên các step `p` thuộc FG đang cân (`_allStepsFG`), bỏ dòng self; không là chi tiết của step nào → Quantity Level 1 quy ra chiếc.
+- `C036(c) [g/pcs] = C021(c) ÷ C039(c)`; phần trừ ở step cha = `qty(p → c) × C036(c)`.
+- `PartWeightCalculator.UnitWeightPerPiece`: ưu tiên `C036` đã lưu; nếu chưa có (không phải REX) thì `C021 ÷ C039`. **Bỏ giả định "PRS = 2 chiếc".**
+- Bản ghi cũ nạp từ DB (chưa có `C039`): gán `C039` theo FG hiện tại; `C036` cũ (nghĩa cũ) bị bỏ và tính lại từ `C021 ÷ C039`; REX giữ `C036` cũ.
+- Cascade (`CascadeLevel2`) và Save đều cập nhật `C036` sau khi tính lại `C021`.
+- Code: `ComponentQuantityAggregator`, `ShotWeightViewModel.ApplyPieceQuantities()`, `UpdateWeightPerPiece()`, `PiecesOf()`; test: `ComponentQuantityAggregatorTests`, `PartWeightCalculatorTests`.
+
+**Script tạo cột trong DB** (chạy tay cho cả hai bảng):
+
+```sql
+ALTER TABLE dbo.FT600     ADD C039 float NULL;
+ALTER TABLE dbo.FT600_dev ADD C039 float NULL;   -- bảng test
+```
+
+**Lưu ý**: lưới `TOTAL STEPS` vẫn hiển thị cột `Quantity` (`C025`) và `Weight per Unit` (`C036`); cột `C039` (số chiếc gộp) chưa có cột hiển thị riêng — cần bổ sung nếu bạn muốn xem trực tiếp.

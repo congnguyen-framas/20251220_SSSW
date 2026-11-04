@@ -45,6 +45,9 @@ namespace SSSW.UI.WPF.ViewModels
         private Dictionary<string, IReadOnlyList<BomWinlineModel>> _level2ByStep = new(StringComparer.OrdinalIgnoreCase);
         private Dictionary<string, FT600> _weighedChildrenFromDb = new(StringComparer.OrdinalIgnoreCase);
 
+        // Số chiếc / 1 đôi gộp theo BOM Level 2 của các step thuộc FG đang cân (xem ComponentQuantityAggregator)
+        private Dictionary<string, double> _pieceQtyByCode = new(StringComparer.OrdinalIgnoreCase);
+
         // ── Cancellation ────────────────────────────────────────────────────
         private CancellationTokenSource? _loadCts;
 
@@ -947,11 +950,10 @@ namespace SSSW.UI.WPF.ViewModels
                         FT600? stepPrevious;
                         if (item1.C002 != "Z-VHXXXXXX" && item1.C002.Substring(0, 3) != "REX")
                         {
-                            var mainCode = item1.C002.Split('-')[1];
+                            // Chỉ khớp ĐÚNG mã step (trước đây khớp "mờ" theo model + size + C015 nên mượn nhầm bản ghi khác).
+                            // Mã step không chứa màu FG nên trọng lượng vẫn dùng chung giữa các FG/màu.
                             stepPrevious = await db.FT600s
-                                .Where(x => x.C015 == item1.C015 &&
-                                    (x.C002 == item1.C002 ||
-                                     (x.C002!.Contains(mainCode) && x.C008 == item1.C008)))
+                                .Where(x => x.C002 == item1.C002)
                                 .OrderByDescending(x => x.CreatedDate).FirstOrDefaultAsync();
                         }
                         else
@@ -989,7 +991,8 @@ namespace SSSW.UI.WPF.ViewModels
                                 item1.C024 = stepPrevious.C024;
                                 item1.C028 = stepPrevious.C028;
                                 item1.C035 = stepPrevious.C035;
-                                item1.C036 = stepPrevious?.C036;
+                                // C036 cũ (chưa có C039) theo nghĩa cũ → bỏ, tính lại từ C021 / C039 ở ApplyPieceQuantities()
+                                item1.C036 = (stepPrevious.C039 ?? 0) > 0 ? stepPrevious.C036 : 0;
                             }
                         }
                     }
@@ -997,6 +1000,7 @@ namespace SSSW.UI.WPF.ViewModels
                     _scaleDataFinal = _scaleDataFinal.OrderBy(x => x.C015).ThenBy(x => x.C004).ToList();
 
                     await PreloadLevel2Async();
+                    ApplyPieceQuantities();
 
                     var stepSel = _scaleDataFinal.FirstOrDefault(x => x.C002?.Trim() == _stepSelected.C004?.Trim());
                     var prevSteps = stepSel == null ? new List<FT600>() : PreviousStepsToCheck(stepSel).ToList();
@@ -1121,9 +1125,10 @@ namespace SSSW.UI.WPF.ViewModels
                     else
                     {
                         _rowSelected.C021 = _rowSelected.C023;
-                        // C036 = trọng lượng/piece (Studs, Logo, Cleat_Ring)
-                        _rowSelected.C036 = Math.Round(_scaleValue / _rowSelected.C025 ?? 1.0, 2);
                     }
+
+                    // C036 = trọng lượng/chiếc = C021 / C039 (số chiếc trong 1 đôi gộp theo BOM Level 2)
+                    UpdateWeightPerPiece(_rowSelected);
                     //// C036 = trọng lượng/piece (Studs, Logo, Cleat_Ring)
                     //_rowSelected.C036 =
                     //    (_rowSelected.C003?.StartsWith("Studs") ?? false) ||
@@ -1145,7 +1150,7 @@ namespace SSSW.UI.WPF.ViewModels
                     _rowSelected.C024 = _scaleValue;
                     _rowSelected.C023 = _scaleValue;
                     _rowSelected.C021 = _scaleValue;
-                    _rowSelected.C036 = Math.Round(_scaleValue / (_rowSelected.C025 ?? 1), 2);
+                    _rowSelected.C036 = Math.Round(_scaleValue / PiecesOf(_rowSelected), 2);
                 }
                 else
                 {
@@ -1267,6 +1272,65 @@ namespace SSSW.UI.WPF.ViewModels
                 // Không có Level 2 → ExecuteSave tự rơi về công thức cũ
                 _logger.LogError(ex, "PreloadLevel2Async error");
                 _level2ByStep.Clear();
+            }
+        }
+
+        // ─────────────────────────────────────────────────────────────────────
+        //  SỐ CHIẾC / 1 ĐÔI (C039) VÀ TRỌNG LƯỢNG / CHIẾC (C036)
+        // ─────────────────────────────────────────────────────────────────────
+
+        private double PiecesFor(FT600 row)
+            => ComponentQuantityAggregator.PiecesFor(row.C002, _pieceQtyByCode, row.C025, row.C037);
+
+        /// <summary>Số chiếc dùng để chia trọng lượng: C039 nếu đã có, ngược lại C025 (Quantity), tối thiểu 1.</summary>
+        private static double PiecesOf(FT600 row)
+            => (row.C039 ?? 0) > 0 ? row.C039!.Value : ((row.C025 ?? 0) > 0 ? row.C025!.Value : 1);
+
+        /// <summary>C036 (g/chiếc) = C021 / số chiếc. REX giữ công thức riêng khi cân (scale / số chiếc).</summary>
+        private static void UpdateWeightPerPiece(FT600 row)
+        {
+            if (row.C002?.StartsWith("REX") ?? false) return;
+            if ((row.C021 ?? 0) <= 0) return;
+            row.C036 = Math.Round(row.C021!.Value / PiecesOf(row), 3);
+        }
+
+        /// <summary>
+        /// Gộp số chiếc theo BOM Level 2 (chỉ tính các step thuộc FG đang cân) rồi gán C039 cho từng dòng;
+        /// tính C036 cho các dòng đã có C021 mà chưa có g/chiếc; chuẩn hóa bản ghi cũ (chưa có C039) nạp từ DB.
+        /// </summary>
+        private void ApplyPieceQuantities()
+        {
+            try
+            {
+                var fgSteps = _allStepsFG
+                    .Select(x => x.ItemStepCode?.Trim())
+                    .Where(x => !string.IsNullOrEmpty(x))
+                    .ToHashSet(StringComparer.OrdinalIgnoreCase);
+
+                var scoped = _level2ByStep
+                    .Where(kv => fgSteps.Contains(kv.Key))
+                    .ToDictionary(kv => kv.Key, kv => kv.Value, StringComparer.OrdinalIgnoreCase);
+
+                _pieceQtyByCode = ComponentQuantityAggregator.Aggregate(scoped);
+
+                foreach (var row in _scaleDataFinal)
+                {
+                    row.C039 = PiecesFor(row);
+                    if ((row.C036 ?? 0) <= 0) UpdateWeightPerPiece(row);
+                }
+
+                foreach (var saved in _weighedChildrenFromDb.Values)
+                {
+                    if ((saved.C039 ?? 0) > 0) continue;
+
+                    // Bản ghi cũ chưa có C039: dùng số chiếc của FG hiện tại; C036 cũ theo nghĩa cũ (trừ REX) → tính lại
+                    saved.C039 = PiecesFor(saved);
+                    if (!(saved.C002?.StartsWith("REX") ?? false)) saved.C036 = 0;
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "ApplyPieceQuantities error");
             }
         }
 
@@ -1406,6 +1470,7 @@ namespace SSSW.UI.WPF.ViewModels
                 if (!r.IsComplete) continue;
 
                 parent.C021 = r.PartWeight;
+                UpdateWeightPerPiece(parent);
                 parent.C022 = parent.C024 - parent.C021;
             }
         }
@@ -2092,6 +2157,7 @@ namespace SSSW.UI.WPF.ViewModels
             _allStepsFG = new List<BomWinlineModel>();
             _level2ByStep = new(StringComparer.OrdinalIgnoreCase);
             _weighedChildrenFromDb = new(StringComparer.OrdinalIgnoreCase);
+            _pieceQtyByCode = new(StringComparer.OrdinalIgnoreCase);
             _bom.ClearCache();
             _stepItemCodeScale = new FT601();
             _scaleData = new List<FT600>();

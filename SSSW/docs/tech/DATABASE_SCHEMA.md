@@ -72,6 +72,7 @@ Mỗi lần công nhân hoàn tất quy trình cân một sản phẩm/bộ linh
 | `C035` | `double?` | Tỉ lệ sử dụng (%) `_percentOfUsage` |
 | `C036` | `double?` | Trọng lượng lệch so với tiêu chuẩn (Tolerance Delta) |
 | `C037` | `string` | Đơn vị tính (g, kg) |
+| `C039` | `double?` | **Cột mới (2026-11-04)**: số chiếc (PCS) của chi tiết trong 1 đôi, gộp theo BOM Level 2. `C036 = C021 ÷ C039` (g/chiếc). Cột `C025` giữ nguyên. Tạo bằng `ALTER TABLE FT600 ADD C039 float NULL` |
 | `AllowScale` | `bool` | Cờ cho phép cân bước này — luôn `true` từ 2026-11-04 (đã bỏ khóa) |
 | `IsReusedFromHistory` | `bool` | Dòng nạp lại từ lần cân trước; khi Confirm đổi `C013`/`C014` theo FG đang scan (UI only) |
 | `CreatedDate` | `DateTime` | Ngày giờ cân |
@@ -154,6 +155,7 @@ erDiagram
         double C024 "Total W_injection"
         double C036 "g/piece"
         string C037 "Unit (PRS/PCS/G)"
+        double C039 "Pieces per pair (L2 aggregated)"
     }
 ```
 

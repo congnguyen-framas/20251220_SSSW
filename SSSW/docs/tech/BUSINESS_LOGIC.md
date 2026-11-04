@@ -99,9 +99,12 @@ C021(step) = C023(step) − Σ over child in L2(step), child ≠ self :  Qty(chi
 
 - `L2(step)` = `sp_getBomWinlineOfItemFG @itemFG = <ItemStepCode của step>` (cache theo phiên, `IBomService`).
 - Dòng **self**: mã kết thúc `-0000` / đơn vị `G` / trùng mã step → không trừ.
-- `Qty` ở L2 hiểu là **số chiếc (PCS)**. `UnitWeight` (g/chiếc):
-  - REX: `C036`.
-  - Còn lại: `C021` (g/prs) ÷ 2 nếu `C037 == "PRS"`, giữ nguyên nếu PCS.
+- `Qty` ở L2 là **số chiếc (PCS)** của chi tiết con trong 1 đôi của step cha. `UnitWeight` (g/chiếc) = `C036` đã lưu của chi tiết con;
+  nếu chưa có (không phải REX) thì `C021 ÷ C039`. `C039` = **số chiếc của chi tiết đó trong 1 đôi, gộp theo toàn FG**:
+  `C039(c) = Σ qty(step cha → c)` (bỏ dòng self); step không là chi tiết của step nào (vd. step cuối) thì lấy Quantity Level 1 quy ra chiếc (1 PRS = 2 PCS).
+  Ví dụ FG `6112042313-A478-2801`: Studs = 8 (Inlay) + 2 (Base_FF) = **10 chiếc** → cân 22.10 g/prs ⇒ **2.21 g/chiếc**; Logo = 2; Inlay = 2; Base_FF = 2; REX00018 = 8 + 4 = 12.
+  Cột `C025` (Quantity, Level 1) giữ nguyên; `C039` là cột mới.
+- Trọng lượng/chiếc `C036` được cập nhật mỗi lần cân/tính lại `C021`: `C036 = C021 ÷ C039` (REX Receptacle: `scale ÷ C039`).
 - Chi tiết con lấy từ dòng cùng phiên (`_scaleDataFinal`) trước, nếu không có thì FT600 mới nhất theo `C002`.
 - Chi tiết con chưa cân (hoặc trọng lượng ≤ 0) → cảnh báo, **không ghi** `C023`/`C021`.
 - Không có L2 (SP rỗng/lỗi, `Z-VHXXXXXX`) → rơi về công thức cũ (`ApplyLegacyPartWeight`).
@@ -177,15 +180,17 @@ sequenceDiagram
     end
 ```
 
-**Quy đổi đơn vị `UnitWeight`**:
+**Trọng lượng 1 chiếc `UnitWeight`** (không còn giả định 1 đôi = 2 chiếc):
 
 ```mermaid
 flowchart LR
-    W["FT600 của chi tiết con"] --> R{"C002 bắt đầu bằng REX?"}
-    R -- Có --> R1["UnitWeight = C036 (g/chiếc)"]
-    R -- Không --> P{"C037 = PRS?"}
-    P -- Có --> P1["UnitWeight = C021 / 2"]
-    P -- Không --> P2["UnitWeight = C021"]
+    W["FT600 của chi tiết con"] --> S{"C036 > 0?"}
+    S -- Có --> S1["UnitWeight = C036 (g/chiếc)"]
+    S -- Không --> R{"REX?"}
+    R -- Có --> R1["Chưa có trọng lượng → thiếu chi tiết"]
+    R -- Không --> P{"C021 > 0 và C039 > 0?"}
+    P -- Có --> P1["UnitWeight = C021 / C039"]
+    P -- Không --> P2["Chưa có trọng lượng → thiếu chi tiết"]
 ```
 
 Ví dụ (FG `6112042313-A478-2801`): Base_FF = self + Studs×2 + Inlay×2 + REX00018×8; Base_HF = self + Logo×2 + REX00018×4 + Base_FF×2.

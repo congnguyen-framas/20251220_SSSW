@@ -402,8 +402,10 @@
             <!--  ────────────────── RIGHT AREA ──────────────────  -->
             <Grid Grid.Column="1">
                 <Grid.RowDefinitions>
-                    <RowDefinition Height="428" />
-                    <RowDefinition Height="*" />
+                    <!--  TOTAL STEPS lấy phần không gian còn lại; 2 card Reference/History + Reference Values
+                          thu về chiều cao cố định (đã bỏ khối ghi chú, ghi chú nằm trong tooltip icon "i")  -->
+                    <RowDefinition Height="*" MinHeight="320" />
+                    <RowDefinition Height="520" />
                 </Grid.RowDefinitions>
 
                 <!--  TOTAL STEPS  -->
@@ -431,6 +433,7 @@
                         <DataGrid
                             x:Name="dgTotalSteps"
                             Grid.Row="1"
+                            GridLinesVisibility="None"
                             Padding="10"
                             ItemsSource="{Binding StepsCollection}"
                             LoadingRow="dgTotalSteps_LoadingRow"
@@ -1178,6 +1181,40 @@
                                                 Foreground="White"
                                                 Text="REFERENCE VALUES" />
                                         </StackPanel>
+
+                                        <!--  Icon "i": hover để xem ghi chú STD / ACTUAL / dung sai (trước đây là khối chữ đỏ dưới bảng)  -->
+                                        <Border
+                                            Grid.Column="1"
+                                            Width="24"
+                                            Height="24"
+                                            HorizontalAlignment="Right"
+                                            VerticalAlignment="Center"
+                                            Background="Transparent"
+                                            BorderBrush="#B0BEC5"
+                                            BorderThickness="1.5"
+                                            CornerRadius="12"
+                                            Cursor="Help"
+                                            ToolTipService.InitialShowDelay="0"
+                                            ToolTipService.ShowDuration="60000">
+                                            <Border.ToolTip>
+                                                <ToolTip>
+                                                    <TextBlock
+                                                        MaxWidth="460"
+                                                        FontSize="13"
+                                                        Text="{Binding PlacementTarget.DataContext.DeltaInformation, RelativeSource={RelativeSource AncestorType=ToolTip}}"
+                                                        TextWrapping="Wrap" />
+                                                </ToolTip>
+                                            </Border.ToolTip>
+                                            <TextBlock
+                                                HorizontalAlignment="Center"
+                                                VerticalAlignment="Center"
+                                                FontFamily="Segoe UI"
+                                                FontSize="14"
+                                                FontStyle="Italic"
+                                                FontWeight="Bold"
+                                                Foreground="White"
+                                                Text="i" />
+                                        </Border>
                                     </Grid>
                                 </Border>
 
@@ -1482,19 +1519,6 @@
                                             </DataGrid.Columns>
                                         </DataGrid>
 
-                                        <StackPanel
-                                            Grid.Row="1"
-                                            Margin="10,0,0,0"
-                                            VerticalAlignment="Center"
-                                            Grid.IsSharedSizeScope="True">
-                                            <TextBlock
-                                                Margin="0,0,0,0"
-                                                FontSize="16"
-                                                Foreground="#B0BEC5"
-                                                Style="{StaticResource LabelStyle}"
-                                                Text="{Binding DeltaInformation}"
-                                                TextWrapping="WrapWithOverflow" />
-                                        </StackPanel>
                                     </Grid>
 
                                 </Border>

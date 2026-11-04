@@ -301,6 +301,10 @@ Later sequence:  C021 = C023 − prev.C023
 
 Selecting a row in TOTAL STEPS outlines it and expands a Level-2 detail table directly below (columns aligned under the main grid columns: Component→Actions, Status→STATUS, Step→MACHINE, Qty→Step No., Unit→STEP / STEP CODE, Weighed→TOTAL WEIGHT, g/piece→TOTAL PART, Deduct→PART). Other rows are dimmed (opacity 0.35); clicking the selected row again clears the selection. A formula line `C021 = C023 − (…)` is shown under the table (red when a component is not weighed yet). Data comes from `FT600.Level2Items` built by `ShotWeightViewModel.RefreshLevel2Details()`. See `docs/brainstorm/BOM_LEVEL2_UI_OPTIONS.md`.
 
+### 4.6.2 REFERENCE VALUES – note as tooltip
+
+The STD / ACTUAL / tolerance note (`DeltaInformation`) is no longer printed under the table; it is shown as a tooltip on the "i" icon in the REFERENCE VALUES header (hover, no delay). The two lower cards (REFERENCE / HISTORY and REFERENCE VALUES) use a fixed height (520) so TOTAL STEPS gets the remaining vertical space. TOTAL STEPS has no horizontal grid lines (`GridLinesVisibility="None"`).
+
 ### 4.7 Tolerance System
 
 ```

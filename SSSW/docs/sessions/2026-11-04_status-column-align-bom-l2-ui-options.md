@@ -20,6 +20,13 @@
 
 - Tài liệu thiết kế riêng: [`plan/BOM_LEVEL2_ROW_DETAILS_UI.md`](../plan/BOM_LEVEL2_ROW_DETAILS_UI.md) (ảnh thiết kế, bảng map cột, khả thi, mermaid, checklist review).
 
+## Đã làm (tiếp) — dọn giao diện màn cân (code)
+- [`ShotWeightWindow.xaml`](../../UI/WPF/ShotWeightWindow.xaml) — `dgTotalSteps`: `GridLinesVisibility="None"` để bỏ các đường gạch chân lệch nhau dưới từng ô (do `DataGridCell` có `VerticalAlignment=Center` nên đường kẻ của ô nằm sát dưới nội dung, không nằm ở đáy dòng).
+- [`ShotWeightStyles.xaml`](../../UI/WPF/Styles/ShotWeightStyles.xaml) — `DataGridCell`: `FocusVisualStyle=null` (bỏ khung nét đứt ở ô được focus).
+- REFERENCE VALUES: bỏ khối ghi chú chữ (`DeltaInformation`) dưới bảng; chuyển vào **tooltip của icon "i"** ở góc phải tiêu đề card (hover là hiện, không delay, `MaxWidth` 460 tự xuống dòng).
+- Bố cục cột phải: `RowDefinition` TOTAL STEPS `428` → `*` (`MinHeight=320`), hai card REFERENCE / HISTORY và REFERENCE VALUES về chiều cao cố định `520` → card TOTAL STEPS rộng thêm ~70px ở màn hình ~1080px.
+- Row Details: cột **Component tự xuống dòng theo từ** khi dài (bỏ cắt "…"), chiều cao dòng chi tiết `MinHeight=30` tự giãn; dòng công thức cũng tự xuống dòng.
+
 ## Việc còn mở
 - Người dùng chọn phương án A; đã vẽ bản thiết kế lại `docs/image/bom_level2_option_A_v2_highlight.png` (highlight + mờ dòng khác, click lại để bỏ chọn, bỏ tiêu đề). Đã bỏ dòng self trong bảng chi tiết theo phản hồi (giữ hàng tiêu đề cột). Mockup v2 đã chuyển toàn bộ cột và phần mô tả sang tiếng Anh. **Chờ duyệt** rồi mới code.
 - Chưa chạy app để xác nhận bằng mắt: căn lề cột STATUS và Row Details (cột chi tiết thẳng hàng, mờ dòng, click lại bỏ chọn). Build `SSSW.csproj` 0 error (build ra thư mục tạm vì `SSSW.exe` đang chạy).

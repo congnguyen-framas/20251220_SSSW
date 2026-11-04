@@ -173,6 +173,7 @@
     </Style>
 
     <Style TargetType="DataGridCell">
+        <Setter Property="FocusVisualStyle" Value="{x:Null}" />
         <Setter Property="BorderThickness" Value="0" />
         <Setter Property="Padding" Value="0" />
         <Setter Property="VerticalAlignment" Value="Center" />
@@ -224,10 +225,10 @@
         <ItemsControl ItemsSource="{Binding Level2Items}">
             <ItemsControl.ItemTemplate>
                 <DataTemplate>
-                    <Border Height="30" BorderBrush="#ECEFF1" BorderThickness="0,0,0,1">
+                    <Border MinHeight="30" BorderBrush="#ECEFF1" BorderThickness="0,0,0,1">
                     <StackPanel Orientation="Horizontal">
                         <Border Width="{Binding Columns[0].ActualWidth, RelativeSource={RelativeSource AncestorType=DataGrid}}">
-                            <TextBlock Margin="6,0,0,0" HorizontalAlignment="Left" VerticalAlignment="Center" FontSize="12" Text="{Binding Component}" TextTrimming="CharacterEllipsis" ToolTip="{Binding ComponentCode}" />
+                            <TextBlock Margin="6,3,4,3" HorizontalAlignment="Left" VerticalAlignment="Center" FontSize="12" Text="{Binding Component}" TextWrapping="Wrap" ToolTip="{Binding ComponentCode}" />
                         </Border>
                             <Border Width="{Binding Columns[1].ActualWidth, RelativeSource={RelativeSource AncestorType=DataGrid}}">
                                 <Border HorizontalAlignment="Center" VerticalAlignment="Center" Padding="5,1" CornerRadius="9" BorderThickness="1">
@@ -290,7 +291,7 @@
                 BorderThickness="1"
                 CornerRadius="4"
                 Visibility="{Binding Level2Formula, Converter={StaticResource NullToCollapsed}}">
-                <TextBlock FontFamily="Consolas" FontSize="12" Text="{Binding Level2Formula}" TextAlignment="Center">
+                <TextBlock FontFamily="Consolas" FontSize="12" Text="{Binding Level2Formula}" TextAlignment="Center" TextWrapping="Wrap">
                     <TextBlock.Style>
                         <Style TargetType="TextBlock">
                             <Setter Property="Foreground" Value="#37474F" />

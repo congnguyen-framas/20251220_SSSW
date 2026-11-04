@@ -27,6 +27,9 @@
 - Bố cục cột phải: `RowDefinition` TOTAL STEPS `428` → `*` (`MinHeight=320`), hai card REFERENCE / HISTORY và REFERENCE VALUES về chiều cao cố định `520` → card TOTAL STEPS rộng thêm ~70px ở màn hình ~1080px.
 - Row Details: cột **Component tự xuống dòng theo từ** khi dài (bỏ cắt "…"), chiều cao dòng chi tiết `MinHeight=30` tự giãn; dòng công thức cũng tự xuống dòng.
 
+## Review logic khóa nút cân (`AllowScale`)
+- Người dùng yêu cầu rà lại logic khóa nút Scale/Reset/Delete (ảnh: Logo và Studs bị mờ). Kết quả phân tích ghi ở [`tech/ALLOWSCALE_LOGIC_REVIEW.md`](../tech/ALLOWSCALE_LOGIC_REVIEW.md): cách tính, 4 chỗ kiểm tra "bước trước phải cân" không thống nhất, 7 nhận xét (N1–N7), 5 đề xuất (A–E), 5 câu hỏi. **Chưa sửa code, chờ review.**
+
 ## Việc còn mở
 - Người dùng chọn phương án A; đã vẽ bản thiết kế lại `docs/image/bom_level2_option_A_v2_highlight.png` (highlight + mờ dòng khác, click lại để bỏ chọn, bỏ tiêu đề). Đã bỏ dòng self trong bảng chi tiết theo phản hồi (giữ hàng tiêu đề cột). Mockup v2 đã chuyển toàn bộ cột và phần mô tả sang tiếng Anh. **Chờ duyệt** rồi mới code.
 - Chưa chạy app để xác nhận bằng mắt: căn lề cột STATUS và Row Details (cột chi tiết thẳng hàng, mờ dòng, click lại bỏ chọn). Build `SSSW.csproj` 0 error (build ra thư mục tạm vì `SSSW.exe` đang chạy).

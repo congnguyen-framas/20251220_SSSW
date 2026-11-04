@@ -244,6 +244,9 @@ namespace SSSW.UI.WPF
             // Hành động Scale/Reset đi qua Command (XAML). Ở đây chỉ làm mờ các dòng không được chọn
             // (thuần hiển thị): dòng đang chọn được xổ Row Details BOM Level 2 và viền nổi.
             ApplyRowDimming();
+
+            // Dòng mới được tạo lại (RefreshStepsGridCore) có thể chưa sinh container ngay lúc chọn → áp dụng lại sau khi layout xong
+            Dispatcher.BeginInvoke(new Action(ApplyRowDimming), System.Windows.Threading.DispatcherPriority.Loaded);
         }
 
         private const double DimmedRowOpacity = 0.35;
@@ -256,8 +259,15 @@ namespace SSSW.UI.WPF
                     row.Opacity = RowOpacity(row);
         }
 
+        /// <summary>
+        /// So khớp theo Item (không dùng row.IsSelected): ở LoadingRow cờ IsSelected chưa được gán nên
+        /// dòng đang chọn từng bị làm mờ nhầm khi vào màn hình lần đầu.
+        /// </summary>
         private double RowOpacity(DataGridRow row)
-            => dgTotalSteps.SelectedItem != null && !row.IsSelected ? DimmedRowOpacity : 1.0;
+        {
+            var selected = dgTotalSteps.SelectedItem;
+            return selected != null && !ReferenceEquals(row.Item, selected) ? DimmedRowOpacity : 1.0;
+        }
 
         private void dgTotalSteps_LoadingRow(object sender, DataGridRowEventArgs e)
             => e.Row.Opacity = RowOpacity(e.Row);

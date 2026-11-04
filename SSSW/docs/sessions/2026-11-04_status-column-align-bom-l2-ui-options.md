@@ -38,6 +38,11 @@
 - Docs: BUSINESS_LOGIC §4.4 và §6, DATABASE_SCHEMA, ShotWeightWindow_Documentation_EN §4.6.3.
 - Build `SSSW.csproj` 0 error (lần build đầu thường lỗi file tạm WPF `wpftmp`, build lại thì sạch); chưa chạy app thật.
 
+## Sửa mờ dòng Active + đề xuất Quantity / Weight per Unit
+- Sửa lỗi dòng Active bị mờ khi vào màn hình lần đầu: `RowOpacity` so khớp theo `row.Item` thay vì `IsSelected` (cờ chưa gán lúc `LoadingRow`) và áp dụng lại độ mờ sau layout (`ShotWeightWindow.xaml.cs`).
+- Tìm nguyên nhân Inlay `2-VB042313-A123-2801` có giá trị cân dù FT600 không có: truy vấn nạp "lần cân trước" khớp theo mã model + cùng size + cùng `C015` nên mượn bản ghi khác (và Confirm sẽ ghi lại bản ghi đó dưới mã step này). Ghi ở [`plan/QTY_WEIGHT_PER_PIECE_LEVEL2.md`](../plan/QTY_WEIGHT_PER_PIECE_LEVEL2.md) §1 kèm SQL kiểm tra và 3 cách sửa.
+- Đề xuất gộp `Quantity` theo BOM Level 2 và tính `Weight per Unit = C021 ÷ Quantity` (cùng file, §2). **Chưa code, chờ duyệt.**
+
 ## Việc còn mở
 - Người dùng chọn phương án A; đã vẽ bản thiết kế lại `docs/image/bom_level2_option_A_v2_highlight.png` (highlight + mờ dòng khác, click lại để bỏ chọn, bỏ tiêu đề). Đã bỏ dòng self trong bảng chi tiết theo phản hồi (giữ hàng tiêu đề cột). Mockup v2 đã chuyển toàn bộ cột và phần mô tả sang tiếng Anh. **Chờ duyệt** rồi mới code.
 - Chưa chạy app để xác nhận bằng mắt: căn lề cột STATUS và Row Details (cột chi tiết thẳng hàng, mờ dòng, click lại bỏ chọn). Build `SSSW.csproj` 0 error (build ra thư mục tạm vì `SSSW.exe` đang chạy).

@@ -14,5 +14,5 @@
 - Hiểu "gạch chân đều nhau" là căn thẳng hàng theo chiều dọc của ô STATUS với các cột còn lại; nếu ý khác (đường kẻ ngang giữa các dòng) cần ảnh rõ hơn.
 
 ## Việc còn mở
-- Chờ chốt phương án hiển thị BOM level 2 (đề xuất C + B).
+- Người dùng chọn phương án A; đã vẽ bản thiết kế lại `docs/image/bom_level2_option_A_v2_highlight.png` (highlight + mờ dòng khác, click lại để bỏ chọn, bỏ tiêu đề). **Chờ duyệt** rồi mới code.
 - Chưa chạy app để xác nhận căn lề bằng mắt.

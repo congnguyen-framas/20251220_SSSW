@@ -9,6 +9,7 @@
 
 | Ngày | File Session | Tóm tắt mục tiêu & kết quả |
 |------|--------------|---------------------------|
+| **2026-11-04** | [`2026-11-04_status-column-align-bom-l2-ui-options.md`](2026-11-04_status-column-align-bom-l2-ui-options.md) | Căn cột STATUS trong TOTAL STEPS; 3 mockup hiển thị BOM Level 2 (`docs/image`, `brainstorm/BOM_LEVEL2_UI_OPTIONS.md`) chờ chốt. |
 | **2026-11-02** | [`2026-11-02_bom-level2-partweight.md`](2026-11-02_bom-level2-partweight.md) | Tính `C021` theo BOM Level 2 (`PartWeightCalculator`), tách service MVVM (Dialog/Bom/Repository), thêm test xUnit; entity tạm trỏ `FT600_dev`. |
 | **2026-10-30** | [`2026-10-30_fix-step-matching-allowscale.md`](2026-10-30_fix-step-matching-allowscale.md) | Khắc phục lỗi bước cân cuối (Step 3: Rim, machine 0126) bị vô hiệu hóa nút Scale (`AllowScale = false`) sau khi quét tem QR code hoặc khi chuyển bước. |
 | **2026-10-26** | [`2026-10-26_auto-calculate-fg-partweight-ft609.md`](2026-10-26_auto-calculate-fg-partweight-ft609.md) | Nhận diện bước cân cuối cùng của FG (`Max(C015)`), tự động gọi store `sp_ShotweightReport_UpsertFT609` với tên nhân viên cân và bỏ qua nếu chưa phải bước cuối. |

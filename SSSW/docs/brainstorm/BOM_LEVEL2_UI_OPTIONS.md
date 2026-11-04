@@ -1,7 +1,7 @@
 # Brainstorm: Hiển thị BOM Level 2 trên màn cân Step
 
 - **Ngày**: 2026-11-04 · **Nhánh**: `feature/use-bom-level-2`
-- **Trạng thái**: ✅ Đã chọn **phương án A** (2026-11-04) → thiết kế v8 (giữ 8 cột như v3; Qty dời sang trái 1 cột; Weighed + g / piece + Deduct xếp chung trong bề rộng cột STEP / STEP CODE; cột Actions nới 140px cho 3 nút 1 hàng; vẽ theo đúng bộ cột thật) **chờ review**; chi tiết ở [`plan/BOM_LEVEL2_ROW_DETAILS_UI.md`](../plan/BOM_LEVEL2_ROW_DETAILS_UI.md)
+- **Trạng thái**: ✅ Đã chọn **phương án A** (2026-11-04) → thiết kế v8 — **đã cài đặt 2026-11-04, chờ review trên app thật** (giữ 8 cột như v3; Qty dời sang trái 1 cột; Weighed + g / piece + Deduct xếp chung trong bề rộng cột STEP / STEP CODE; cột Actions nới 140px cho 3 nút 1 hàng; vẽ theo đúng bộ cột thật) **chờ review**; chi tiết ở [`plan/BOM_LEVEL2_ROW_DETAILS_UI.md`](../plan/BOM_LEVEL2_ROW_DETAILS_UI.md)
 - **Bối cảnh**: `C021` giờ tính theo BOM Level 2 ([BUSINESS_LOGIC.md](../tech/BUSINESS_LOGIC.md) §4.8). Công nhân cần thấy step đang dùng chi tiết con nào, đã cân chưa, và phần bị trừ là bao nhiêu. Số liệu trong ảnh là minh họa (FG `6112042313-A478-2801`).
 
 ## Phương án A — Mở rộng dòng (Row Details)
@@ -65,9 +65,9 @@ Cột Actions được nới 125 → 140px để 3 nút Scale / Reset / Delete n
 
 Lưới thật còn nhiều cột khác (MAIN / MAIN CODE, SIZE, RUNNER, Actual/PPIC Partitioning, Mold Pairs Shot, Quantity, …) — hình v7 vẽ đủ; vùng bên phải cột STEP / STEP CODE để trống.
 
-**Cài đặt** (xem session 2026-11-04):
-- `ShotWeightStyles.xaml`: `StepRowStyle` (viền nổi khi chọn) + `Level2DetailsTemplate` — mỗi ô là `Border` có `Width` bind `Columns[i].ActualWidth` của `DataGrid` (kéo đổi cột vẫn thẳng hàng).
-- `dgTotalSteps`: `RowDetailsVisibilityMode="VisibleWhenSelected"`.
+**Cài đặt** (đã làm theo v8; xem worklog [`2026-11-04_bom-level2-row-details-v8.md`](../worklog/2026-11-04_bom-level2-row-details-v8.md)):
+- `ShotWeightStyles.xaml`: `StepRowStyle` (viền nổi khi chọn) + `Level2DetailsTemplate` — cột 0–4 là `Border` có `Width` bind `Columns[i].ActualWidth` của `DataGrid`; cột 5 là `Grid` 3 phần đều chứa Weighed / g per piece / Deduct (kéo đổi cột vẫn thẳng hàng).
+- `dgTotalSteps`: `RowDetailsVisibilityMode="VisibleWhenSelected"`; cột Actions 140px + `WrapPanel`.
 - Code-behind (thuần hiển thị): làm mờ dòng không chọn (opacity 0.35), click lại dòng đang chọn để bỏ chọn; click nút hoặc vùng chi tiết thì không bỏ chọn.
 - Dữ liệu: `FT600.Level2Items/Level2Formula/Level2HasMissing` (`[NotMapped]`) do `ShotWeightViewModel.RefreshLevel2Details()` dựng mỗi lần làm mới lưới.
 

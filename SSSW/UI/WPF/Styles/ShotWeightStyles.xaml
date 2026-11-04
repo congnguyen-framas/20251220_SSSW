@@ -188,8 +188,9 @@
         ════════════════════════════════════════════════════════════════
         TOTAL STEPS – dòng step + Row Details BOM Level 2
         Cột của Row Details bám theo ActualWidth của cột lưới chính (cùng đường dọc):
-        Component→Actions, Status→STATUS, Step→MACHINE, Qty→Step No., Unit→STEP / STEP CODE,
-        Weighed→TOTAL WEIGHT, g/piece→TOTAL PART, Deduct→PART. Chỉ số = thứ tự cột trong dgTotalSteps.
+        Component→Actions(0), Status→STATUS(1), Step→MACHINE(2), Qty→MAIN / MAIN CODE(3), Unit→Step No.(4);
+        Weighed / g per piece / Deduct chia đều 3 phần trong bề rộng cột STEP / STEP CODE(5).
+        Chỉ số = thứ tự cột trong dgTotalSteps.
         ════════════════════════════════════════════════════════════════
     -->
     <Style x:Key="StepRowStyle" TargetType="DataGridRow">
@@ -203,43 +204,31 @@
         </Style.Triggers>
     </Style>
 
-    <DataTemplate x:Key="Level2DetailsTemplate">
-        <StackPanel Margin="0,0,0,6" Background="White">
-            <StackPanel Height="28" Background="#EAF1F8" Orientation="Horizontal">
-                    <Border Width="{Binding Columns[0].ActualWidth, RelativeSource={RelativeSource AncestorType=DataGrid}}">
-                        <TextBlock Margin="6,0,0,0" HorizontalAlignment="Left" VerticalAlignment="Center" FontSize="11" FontWeight="Bold" Foreground="#37474F" Text="Component" />
-                    </Border>
-                    <Border Width="{Binding Columns[1].ActualWidth, RelativeSource={RelativeSource AncestorType=DataGrid}}">
-                        <TextBlock HorizontalAlignment="Center" VerticalAlignment="Center" FontSize="11" FontWeight="Bold" Foreground="#37474F" Text="Status" TextAlignment="Center" TextWrapping="Wrap" />
-                    </Border>
-                    <Border Width="{Binding Columns[2].ActualWidth, RelativeSource={RelativeSource AncestorType=DataGrid}}">
-                        <TextBlock HorizontalAlignment="Center" VerticalAlignment="Center" FontSize="11" FontWeight="Bold" Foreground="#37474F" Text="Step" TextAlignment="Center" TextWrapping="Wrap" />
-                    </Border>
-                    <Border Width="{Binding Columns[3].ActualWidth, RelativeSource={RelativeSource AncestorType=DataGrid}}" />
-                    <Border Width="{Binding Columns[4].ActualWidth, RelativeSource={RelativeSource AncestorType=DataGrid}}">
-                        <TextBlock HorizontalAlignment="Center" VerticalAlignment="Center" FontSize="11" FontWeight="Bold" Foreground="#37474F" Text="Qty (PCS)" TextAlignment="Center" TextWrapping="Wrap" />
-                    </Border>
-                    <Border Width="{Binding Columns[5].ActualWidth, RelativeSource={RelativeSource AncestorType=DataGrid}}">
-                        <TextBlock HorizontalAlignment="Center" VerticalAlignment="Center" FontSize="11" FontWeight="Bold" Foreground="#37474F" Text="Unit" TextAlignment="Center" TextWrapping="Wrap" />
-                    </Border>
-                    <Border Width="{Binding Columns[6].ActualWidth, RelativeSource={RelativeSource AncestorType=DataGrid}}" />
-                    <Border Width="{Binding Columns[7].ActualWidth, RelativeSource={RelativeSource AncestorType=DataGrid}}">
-                        <TextBlock HorizontalAlignment="Center" VerticalAlignment="Center" FontSize="11" FontWeight="Bold" Foreground="#37474F" Text="Weighed (g/prs)" TextAlignment="Center" TextWrapping="Wrap" />
-                    </Border>
-                    <Border Width="{Binding Columns[8].ActualWidth, RelativeSource={RelativeSource AncestorType=DataGrid}}">
-                        <TextBlock HorizontalAlignment="Center" VerticalAlignment="Center" FontSize="11" FontWeight="Bold" Foreground="#37474F" Text="g / piece" TextAlignment="Center" TextWrapping="Wrap" />
-                    </Border>
-                    <Border Width="{Binding Columns[9].ActualWidth, RelativeSource={RelativeSource AncestorType=DataGrid}}">
-                        <TextBlock HorizontalAlignment="Center" VerticalAlignment="Center" FontSize="11" FontWeight="Bold" Foreground="#37474F" Text="Deduct (g)" TextAlignment="Center" TextWrapping="Wrap" />
-                    </Border>
-            </StackPanel>
-            <ItemsControl ItemsSource="{Binding Level2Items}">
-                <ItemsControl.ItemTemplate>
-                    <DataTemplate>
-                        <StackPanel Height="30" Orientation="Horizontal">
-                            <Border Width="{Binding Columns[0].ActualWidth, RelativeSource={RelativeSource AncestorType=DataGrid}}">
-                                <TextBlock Margin="6,0,0,0" HorizontalAlignment="Left" VerticalAlignment="Center" FontSize="12" Text="{Binding Component}" TextTrimming="CharacterEllipsis" ToolTip="{Binding ComponentCode}" />
-                            </Border>
+<DataTemplate x:Key="Level2DetailsTemplate">
+    <StackPanel Margin="0,0,0,6" HorizontalAlignment="Left" Background="White">
+        <StackPanel Height="28" Background="#EAF1F8" Orientation="Horizontal">
+            <Border Width="{Binding Columns[0].ActualWidth, RelativeSource={RelativeSource AncestorType=DataGrid}}">
+                <TextBlock Margin="6,0,0,0" HorizontalAlignment="Left" VerticalAlignment="Center" FontSize="11" FontWeight="Bold" Foreground="#37474F" Text="Component" />
+            </Border>
+            <Border Width="{Binding Columns[1].ActualWidth, RelativeSource={RelativeSource AncestorType=DataGrid}}"><TextBlock HorizontalAlignment="Center" VerticalAlignment="Center" FontSize="11" FontWeight="Bold" Foreground="#37474F" Text="Status" TextAlignment="Center" TextWrapping="Wrap" /></Border>
+            <Border Width="{Binding Columns[2].ActualWidth, RelativeSource={RelativeSource AncestorType=DataGrid}}"><TextBlock HorizontalAlignment="Center" VerticalAlignment="Center" FontSize="11" FontWeight="Bold" Foreground="#37474F" Text="Step" TextAlignment="Center" TextWrapping="Wrap" /></Border>
+            <Border Width="{Binding Columns[3].ActualWidth, RelativeSource={RelativeSource AncestorType=DataGrid}}"><TextBlock HorizontalAlignment="Center" VerticalAlignment="Center" FontSize="11" FontWeight="Bold" Foreground="#37474F" Text="Qty (PCS)" TextAlignment="Center" TextWrapping="Wrap" /></Border>
+            <Border Width="{Binding Columns[4].ActualWidth, RelativeSource={RelativeSource AncestorType=DataGrid}}"><TextBlock HorizontalAlignment="Center" VerticalAlignment="Center" FontSize="11" FontWeight="Bold" Foreground="#37474F" Text="Unit" TextAlignment="Center" TextWrapping="Wrap" /></Border>
+            <Grid Width="{Binding Columns[5].ActualWidth, RelativeSource={RelativeSource AncestorType=DataGrid}}">
+                <Grid.ColumnDefinitions><ColumnDefinition Width="*" /><ColumnDefinition Width="*" /><ColumnDefinition Width="*" /></Grid.ColumnDefinitions>
+                <Border Grid.Column="0"><TextBlock HorizontalAlignment="Center" VerticalAlignment="Center" FontSize="11" FontWeight="Bold" Foreground="#37474F" Text="Weighed (g/prs)" TextAlignment="Center" TextWrapping="Wrap" /></Border>
+                <Border Grid.Column="1"><TextBlock HorizontalAlignment="Center" VerticalAlignment="Center" FontSize="11" FontWeight="Bold" Foreground="#37474F" Text="g / piece" TextAlignment="Center" TextWrapping="Wrap" /></Border>
+                <Border Grid.Column="2"><TextBlock HorizontalAlignment="Center" VerticalAlignment="Center" FontSize="11" FontWeight="Bold" Foreground="#37474F" Text="Deduct (g)" TextAlignment="Center" TextWrapping="Wrap" /></Border>
+            </Grid>
+        </StackPanel>
+        <ItemsControl ItemsSource="{Binding Level2Items}">
+            <ItemsControl.ItemTemplate>
+                <DataTemplate>
+                    <Border Height="30" BorderBrush="#ECEFF1" BorderThickness="0,0,0,1">
+                    <StackPanel Orientation="Horizontal">
+                        <Border Width="{Binding Columns[0].ActualWidth, RelativeSource={RelativeSource AncestorType=DataGrid}}">
+                            <TextBlock Margin="6,0,0,0" HorizontalAlignment="Left" VerticalAlignment="Center" FontSize="12" Text="{Binding Component}" TextTrimming="CharacterEllipsis" ToolTip="{Binding ComponentCode}" />
+                        </Border>
                             <Border Width="{Binding Columns[1].ActualWidth, RelativeSource={RelativeSource AncestorType=DataGrid}}">
                                 <Border HorizontalAlignment="Center" VerticalAlignment="Center" Padding="5,1" CornerRadius="9" BorderThickness="1">
                                 <Border.Style>
@@ -268,30 +257,20 @@
                                 </TextBlock>
                             </Border>
                             </Border>
-                            <Border Width="{Binding Columns[2].ActualWidth, RelativeSource={RelativeSource AncestorType=DataGrid}}">
-                                <TextBlock HorizontalAlignment="Center" VerticalAlignment="Center" FontSize="12" Text="{Binding Step}" />
-                            </Border>
-                            <Border Width="{Binding Columns[3].ActualWidth, RelativeSource={RelativeSource AncestorType=DataGrid}}" />
-                            <Border Width="{Binding Columns[4].ActualWidth, RelativeSource={RelativeSource AncestorType=DataGrid}}">
-                                <TextBlock HorizontalAlignment="Center" VerticalAlignment="Center" FontSize="12" Text="{Binding Qty, StringFormat=0.##}" />
-                            </Border>
-                            <Border Width="{Binding Columns[5].ActualWidth, RelativeSource={RelativeSource AncestorType=DataGrid}}">
-                                <TextBlock HorizontalAlignment="Center" VerticalAlignment="Center" FontSize="12" Text="{Binding Unit}" />
-                            </Border>
-                            <Border Width="{Binding Columns[6].ActualWidth, RelativeSource={RelativeSource AncestorType=DataGrid}}" />
-                            <Border Width="{Binding Columns[7].ActualWidth, RelativeSource={RelativeSource AncestorType=DataGrid}}">
-                                <TextBlock HorizontalAlignment="Center" VerticalAlignment="Center" FontSize="12" Text="{Binding Weighed, StringFormat=F2, TargetNullValue='—'}" />
-                            </Border>
-                            <Border Width="{Binding Columns[8].ActualWidth, RelativeSource={RelativeSource AncestorType=DataGrid}}">
-                                <TextBlock HorizontalAlignment="Center" VerticalAlignment="Center" FontSize="12" Text="{Binding PerPiece, StringFormat=F2, TargetNullValue='—'}" />
-                            </Border>
-                            <Border Width="{Binding Columns[9].ActualWidth, RelativeSource={RelativeSource AncestorType=DataGrid}}">
-                                <TextBlock HorizontalAlignment="Center" VerticalAlignment="Center" FontSize="12" Text="{Binding Deduct, StringFormat=F2, TargetNullValue='—'}" />
-                            </Border>
-                        </StackPanel>
-                    </DataTemplate>
-                </ItemsControl.ItemTemplate>
-            </ItemsControl>
+<Border Width="{Binding Columns[2].ActualWidth, RelativeSource={RelativeSource AncestorType=DataGrid}}"><TextBlock HorizontalAlignment="Center" VerticalAlignment="Center" FontSize="12" Text="{Binding Step}" /></Border>
+<Border Width="{Binding Columns[3].ActualWidth, RelativeSource={RelativeSource AncestorType=DataGrid}}"><TextBlock HorizontalAlignment="Center" VerticalAlignment="Center" FontSize="12" Text="{Binding Qty, StringFormat=0.##}" /></Border>
+<Border Width="{Binding Columns[4].ActualWidth, RelativeSource={RelativeSource AncestorType=DataGrid}}"><TextBlock HorizontalAlignment="Center" VerticalAlignment="Center" FontSize="12" Text="{Binding Unit}" /></Border>
+                        <Grid Width="{Binding Columns[5].ActualWidth, RelativeSource={RelativeSource AncestorType=DataGrid}}">
+                            <Grid.ColumnDefinitions><ColumnDefinition Width="*" /><ColumnDefinition Width="*" /><ColumnDefinition Width="*" /></Grid.ColumnDefinitions>
+                            <TextBlock Grid.Column="0" HorizontalAlignment="Center" VerticalAlignment="Center" FontSize="12" Text="{Binding Weighed, StringFormat=F2, TargetNullValue='—'}" />
+                            <TextBlock Grid.Column="1" HorizontalAlignment="Center" VerticalAlignment="Center" FontSize="12" Text="{Binding PerPiece, StringFormat=F2, TargetNullValue='—'}" />
+                            <TextBlock Grid.Column="2" HorizontalAlignment="Center" VerticalAlignment="Center" FontSize="12" Text="{Binding Deduct, StringFormat=F2, TargetNullValue='—'}" />
+                        </Grid>
+                    </StackPanel>
+                    </Border>
+                </DataTemplate>
+            </ItemsControl.ItemTemplate>
+        </ItemsControl>
             <TextBlock Margin="6,6,0,2" FontSize="12" Foreground="#78909C" Text="No components">
                 <TextBlock.Style>
                     <Style TargetType="TextBlock">

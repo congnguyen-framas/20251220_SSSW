@@ -444,7 +444,7 @@
                             <DataGrid.Columns>
 
                                 <!--  Action buttons – Command binding lên Window DataContext  -->
-                                <DataGridTemplateColumn Width="125" IsReadOnly="False">
+                                <DataGridTemplateColumn Width="140" IsReadOnly="False">
                                     <!--  HEADER TEMPLATE  -->
                                     <DataGridTemplateColumn.HeaderTemplate>
                                         <DataTemplate>
@@ -459,7 +459,7 @@
                                     <!--  CELL TEMPLATE  -->
                                     <DataGridTemplateColumn.CellTemplate>
                                         <DataTemplate>
-                                            <StackPanel
+                                            <WrapPanel
                                                 HorizontalAlignment="Center"
                                                 VerticalAlignment="Center"
                                                 Orientation="Horizontal">
@@ -484,7 +484,7 @@
                                                     IsEnabled="{Binding AllowScale}"
                                                     Style="{StaticResource DangerButton}"
                                                     Tag="{Binding}" />
-                                            </StackPanel>
+                                            </WrapPanel>
                                         </DataTemplate>
                                     </DataGridTemplateColumn.CellTemplate>
                                 </DataGridTemplateColumn>

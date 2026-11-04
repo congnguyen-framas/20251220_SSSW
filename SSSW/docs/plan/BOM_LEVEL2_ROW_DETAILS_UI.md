@@ -1,7 +1,7 @@
 # Thiết kế UI: BOM Level 2 Row Details trong TOTAL STEPS
 
 - **Ngày**: 2026-11-04 · **Nhánh**: `feature/use-bom-level-2`
-- **Trạng thái**: ⏳ **Chờ review** hình v8 (v7 + cột Actions nới 125 → 140px để 3 nút nằm 1 hàng, chỉ tự xuống dòng khi user kéo hẹp cột). Code hiện có trên nhánh còn theo v3 — nếu duyệt v8 thì phải sửa `Level2DetailsTemplate` và cột Actions của `dgTotalSteps`; chưa code thêm gì theo yêu cầu này
+- **Trạng thái**: ✅ **Đã cài đặt v8** (2026-11-04) — `Level2DetailsTemplate` 8 cột theo v8, cột Actions 140px + `WrapPanel`; **chờ review trên app thật** (checklist §8). Build đầy đủ chưa chạy được trên máy này (thiếu package `ScanAndScale.Driver`); XAML đã kiểm tra well-formed
 - **Liên quan**: [`brainstorm/BOM_LEVEL2_UI_OPTIONS.md`](../brainstorm/BOM_LEVEL2_UI_OPTIONS.md) (các phương án), [`tech/BUSINESS_LOGIC.md`](../tech/BUSINESS_LOGIC.md) §4.8 (công thức `C021`), session [`2026-11-04`](../sessions/2026-11-04_status-column-align-bom-l2-ui-options.md)
 
 ## 1. Yêu cầu
@@ -54,7 +54,7 @@ Quy tắc căn: cột chi tiết 1–5 thẳng hàng với cột lưới 0–4. 
 
 ## 4. Tính khả thi
 
-**Khả thi.** Lý do và điểm cần lưu ý (code hiện có là bản v3 — cả 8 cột bám cột lưới; v8 cần đổi: Actions 125 → 140 + `WrapPanel`, Qty → cột 3, Unit → cột 4, và 3 ô số (Weighed, g / piece, Deduct) thành các ô chia đều trong bề rộng cột 5):
+**Khả thi và đã cài đặt (v8).** Lý do và điểm cần lưu ý (đã đổi so với v3: Actions 125 → 140 + `WrapPanel`, Qty → cột 3, Unit → cột 4, 3 ô số (Weighed, g / piece, Deduct) là `Grid` 3 phần đều trong bề rộng cột 5):
 
 | Vấn đề | Giải pháp | Ghi chú |
 |--------|-----------|---------|
@@ -63,7 +63,7 @@ Quy tắc căn: cột chi tiết 1–5 thẳng hàng với cột lưới 0–4. 
 | Lưới thật có nhiều cột hơn các mockup trước (v1–v3 đã lược bớt) | v4–v7 vẽ đủ bộ cột thật; v7 dùng luôn cột MAIN / MAIN CODE (cho Qty) nên không còn ô trống ở giữa | Nếu đổi thứ tự 6 cột đầu của lưới thì phải sửa chỉ số trong `Level2DetailsTemplate` |
 | Lưới có thanh cuộn ngang | Dải chi tiết là một phần của `RowDetailsTemplate` nên cuộn cùng lưới; không dùng `AreRowDetailsFrozen` | Cần kiểm tra khi cuộn ở app thật |
 | Cột Component hẹp (140px sau khi nới) | Cắt chữ + tooltip hiện mã chi tiết | Nới cột Actions thêm nếu vẫn chật |
-| Viền chọn đủ 4 cạnh | Hình vẽ khung theo bề rộng vùng nhìn thấy của lưới. Trong `DataGridRow`, viền `BorderThickness=2` vẽ cả 4 cạnh nhưng trải theo **bề rộng toàn bộ các cột**, nên cạnh phải chỉ thấy khi cuộn ngang tới cuối | **Cần chốt cách làm** — (1) giữ viền của `DataGridRow` (cạnh phải ở cuối lưới); hoặc (2) vẽ khung phủ theo viewport (phải thêm lớp phủ tính theo vị trí dòng và `ScrollViewer`) để cạnh phải luôn thấy |
+| Viền chọn đủ 4 cạnh | Hình vẽ khung theo bề rộng vùng nhìn thấy của lưới. Trong `DataGridRow`, viền `BorderThickness=2` vẽ cả 4 cạnh nhưng trải theo **bề rộng toàn bộ các cột**, nên cạnh phải chỉ thấy khi cuộn ngang tới cuối | **Đã chọn (1)**: giữ viền `BorderThickness=2` của `StepRowStyle` trên `DataGridRow`; cạnh phải ở cuối lưới (chỉ thấy khi cuộn ngang tới cuối). Nếu review thấy bất tiện thì chuyển sang (2) khung phủ theo viewport |
 | Lưới chi tiết chỉ có đường kẻ ngang | Mỗi dòng chi tiết là một `StackPanel` có `Border` dưới (`BorderThickness="0,0,0,1"`, `#ECEFF1`); các ô không có viền dọc | Dễ làm trong `Level2DetailsTemplate`; khung công thức đặt `HorizontalAlignment=Left` và rộng bằng tổng 8 cột |
 | 3 nút Actions bị rớt dòng ở độ rộng cũ (125px) | Nới cột 0 lên 140px + `WrapPanel` trong ô Actions | Ở 140px nằm 1 hàng; kéo hẹp hơn thì tự xuống dòng, không bị cắt |
 | Chip Status trong 65px | Chữ ngắn "✔ done" / "✖ missing" | Có thể nới nhẹ cột STATUS |
@@ -125,3 +125,10 @@ flowchart LR
 - [ ] Dòng được chọn hiện Active (chấm xanh), dòng Active cũ trở về Pending.
 - [ ] Lưới chi tiết giống ảnh mẫu: chỉ có đường kẻ ngang giữa các dòng (không đường dọc), ăn sát 8 cột, không tràn ra phía sau cột STEP / STEP CODE.
 - [ ] Cột Actions 140px: 3 nút Scale / Reset / Delete nằm 1 hàng; kéo hẹp cột thì nút tự rớt dòng, không bị cắt; chiều cao dòng step không phình thêm.
+
+## 9. Ghi chú cài đặt (v8)
+
+- `Level2DetailsTemplate` (`UI/WPF/Styles/ShotWeightStyles.xaml`): `StackPanel` `HorizontalAlignment=Left` nên rộng đúng tổng cột 0–5; hàng tiêu đề nền `#EAF1F8`; mỗi dòng chi tiết là `Border` có `BorderThickness="0,0,0,1"` màu `#ECEFF1` (chỉ kẻ ngang). Cột 0–4 là `Border` có `Width` bind `Columns[i].ActualWidth`; cột 5 là `Grid` 3 phần `*` cùng bề rộng `Columns[5].ActualWidth` chứa Weighed / g per piece / Deduct. Khung công thức rộng bằng bảng do nằm chung `StackPanel`.
+- `dgTotalSteps` (`UI/WPF/ShotWeightWindow.xaml`): cột Actions `Width` 125 → 140, `StackPanel` → `WrapPanel`.
+- **Trạng thái Active (yêu cầu 12)**: giữ nguyên logic hiện có của `UpdateStepStatuses()` — Active = step đang cân (`_rowSelected`), không phải dòng vừa click. Click chọn dòng chỉ để xem chi tiết, không đổi `_rowSelected`; bấm **Scale** mới chuyển Active. Hình mockup minh họa trường hợp chọn step đang cân. Nếu muốn click là đổi Active luôn thì cần nối `SelectionChanged` → ViewModel (chưa làm).
+- Không đổi VM / model / converter / code-behind so với bản v3 (dữ liệu `Level2Items` và mờ dòng / bỏ chọn giữ nguyên).

@@ -16,7 +16,8 @@
 8. Nới cột Actions để 3 nút Scale / Reset / Delete nằm trên 1 hàng như ban đầu; chỉ khi user kéo hẹp cột thì nút mới tự rớt xuống dòng.
 9. **Viền highlight của step được chọn phải hiển thị đầy đủ 4 cạnh (trước đó mất cạnh trái và phải).**
 10. Bảng chi tiết ăn sát theo đúng số cột chi tiết (8 cột), không kéo dài ra phần lưới phía sau.
-11. **Lưới chi tiết kiểu giống ảnh mẫu: tiêu đề nền xanh nhạt, chỉ có đường kẻ ngang giữa các dòng, không có đường kẻ dọc.**
+11. Lưới chi tiết kiểu giống ảnh mẫu: tiêu đề nền xanh nhạt, chỉ có đường kẻ ngang giữa các dòng, không có đường kẻ dọc.
+12. **Dòng đang được chọn phải có trạng thái Active (chấm xanh), không phải Pending.**
 
 ## 2. Hình thiết kế (v8 — theo đúng lưới thật, bảng chi tiết nằm gọn trong 6 cột đầu, Actions đủ rộng cho 3 nút)
 
@@ -26,6 +27,7 @@
 - Đường gióng đỏ nét đứt = ranh giới cột lưới chính. **Cột chi tiết 1–5 (Component, Status, Step, Qty, Unit) nằm đúng dưới Actions, STATUS, MACHINE, MAIN / MAIN CODE, Step No.** Cột 6–8 (Weighed, g / piece, Deduct) chia đều bề rộng 300px của cột STEP / STEP CODE (100 + 100 + 100), nên bảng chi tiết liền mạch, không có khoảng trống, và kết thúc đúng mép phải cột STEP / STEP CODE.
 - Dải chi tiết rộng bằng cả lưới và **cuộn ngang cùng lưới**; mọi vùng bên phải cột STEP / STEP CODE (từ SIZE trở đi) để trống.
 - **Viền chọn**: khung bo góc, xám xanh `#90A4AE`, đủ 4 cạnh quanh dòng step + bảng chi tiết.
+- **Trạng thái**: dòng được chọn = step đang cân nên hiện **Active** (chấm xanh); các dòng khác Pending/Done. Tại một thời điểm chỉ có một dòng Active (khớp `UpdateStepStatuses()` — `_rowSelected` là step Active), nên khi chọn step 4 thì step 3 trở về Pending trong hình.
 - **Lưới bảng chi tiết**: hàng tiêu đề nền xanh nhạt (`#EAF1F8`); chỉ có đường kẻ ngang mảnh (`#ECEFF1`) giữa các dòng, **không có đường kẻ dọc**; bảng chỉ rộng đúng 8 cột chi tiết (từ Actions đến hết STEP / STEP CODE); khung công thức bên dưới rộng bằng bảng.
 - Dữ liệu trong hình là minh họa (bố cục lấy từ ảnh chụp lưới thật, FG `6112042502`; Qty/trọng lượng chi tiết do mình đặt ví dụ).
 
@@ -120,5 +122,6 @@ flowchart LR
 - [ ] Màu viền dòng được chọn, tên Component dài, chip "✖ missing" trong cột 65px có chấp nhận được.
 - [ ] Cột STATUS (đã căn lại 2026-11-04) thẳng hàng với MACHINE / Step No.
 - [ ] Viền chọn đủ 4 cạnh (kể cả khi cuộn ngang) — chọn cách (1) hay (2) ở §4.
+- [ ] Dòng được chọn hiện Active (chấm xanh), dòng Active cũ trở về Pending.
 - [ ] Lưới chi tiết giống ảnh mẫu: chỉ có đường kẻ ngang giữa các dòng (không đường dọc), ăn sát 8 cột, không tràn ra phía sau cột STEP / STEP CODE.
 - [ ] Cột Actions 140px: 3 nút Scale / Reset / Delete nằm 1 hàng; kéo hẹp cột thì nút tự rớt dòng, không bị cắt; chiều cao dòng step không phình thêm.

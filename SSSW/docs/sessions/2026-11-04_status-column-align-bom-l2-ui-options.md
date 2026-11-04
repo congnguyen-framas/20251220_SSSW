@@ -30,6 +30,14 @@
 ## Review logic khóa nút cân (`AllowScale`)
 - Người dùng yêu cầu rà lại logic khóa nút Scale/Reset/Delete (ảnh: Logo và Studs bị mờ). Kết quả phân tích ghi ở [`tech/ALLOWSCALE_LOGIC_REVIEW.md`](../tech/ALLOWSCALE_LOGIC_REVIEW.md): cách tính, 4 chỗ kiểm tra "bước trước phải cân" không thống nhất, 7 nhận xét (N1–N7), 5 đề xuất (A–E), 5 câu hỏi. **Chưa sửa code, chờ review.**
 
+## Bỏ khóa nút cân + insert lại có đổi FG + icon mô tả card (code)
+- Quyết định (chi tiết ở [`tech/ALLOWSCALE_LOGIC_REVIEW.md`](../tech/ALLOWSCALE_LOGIC_REVIEW.md) §0): A = chỉ chặn theo chi tiết con Level 2; Studs cân tại chỗ; insert lại dòng cũ nhưng đổi FG code/name; bỏ khóa hoàn toàn.
+- [`ShotWeightViewModel.cs`](../../UI/WPF/ViewModels/ShotWeightViewModel.cs): xóa vùng khóa/lọc theo loại step (và `allowScale = ckHydra != null`); thêm `RequiresPreviousStepsWeighed()` / `PreviousStepsToCheck()` thay 4 chỗ kiểm tra "mọi bước trước"; đánh dấu `IsReusedFromHistory` khi nạp dòng cũ; Confirm đổi `C013`/`C014` cho các dòng đó.
+- [`FT600.partial.cs`](../../models/ef/entities/FT600.partial.cs): thêm `IsReusedFromHistory` (`[NotMapped]`).
+- UI: style `InfoIcon` (ShotWeightStyles.xaml) + icon "i" với tooltip mô tả ở STEP INFORMATION, TOTAL STEPS, REFERENCE / HISTORY; REFERENCE VALUES dùng chung style.
+- Docs: BUSINESS_LOGIC §4.4 và §6, DATABASE_SCHEMA, ShotWeightWindow_Documentation_EN §4.6.3.
+- Build `SSSW.csproj` 0 error (lần build đầu thường lỗi file tạm WPF `wpftmp`, build lại thì sạch); chưa chạy app thật.
+
 ## Việc còn mở
 - Người dùng chọn phương án A; đã vẽ bản thiết kế lại `docs/image/bom_level2_option_A_v2_highlight.png` (highlight + mờ dòng khác, click lại để bỏ chọn, bỏ tiêu đề). Đã bỏ dòng self trong bảng chi tiết theo phản hồi (giữ hàng tiêu đề cột). Mockup v2 đã chuyển toàn bộ cột và phần mô tả sang tiếng Anh. **Chờ duyệt** rồi mới code.
 - Chưa chạy app để xác nhận bằng mắt: căn lề cột STATUS và Row Details (cột chi tiết thẳng hàng, mờ dòng, click lại bỏ chọn). Build `SSSW.csproj` 0 error (build ra thư mục tạm vì `SSSW.exe` đang chạy).

@@ -47,12 +47,29 @@
                             Padding="12,8"
                             Background="#0D1117"
                             CornerRadius="4,4,0,0">
-                            <TextBlock
-                                FontFamily="Segoe UI"
-                                FontSize="20"
-                                FontWeight="Bold"
-                                Foreground="White"
-                                Text="STEP INFORMATION" />
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="Auto" />
+                                </Grid.ColumnDefinitions>
+                                <TextBlock
+                                    FontFamily="Segoe UI"
+                                    FontSize="20"
+                                    FontWeight="Bold"
+                                    Foreground="White"
+                                    Text="STEP INFORMATION" />
+                                <ContentControl Grid.Column="1" Style="{StaticResource InfoIcon}">
+                                    <ContentControl.ToolTip>
+                                        <ToolTip>
+                                            <TextBlock
+                                                MaxWidth="460"
+                                                FontSize="13"
+                                                Text="Details of the step currently selected for weighing: step code, machine, quantity, partitioning, runner (YES/NO), usage %, size, FG description and remark. Scan the step's QR label or choose it in 'Select Step' to load it."
+                                                TextWrapping="Wrap" />
+                                        </ToolTip>
+                                    </ContentControl.ToolTip>
+                                </ContentControl>
+                            </Grid>
                         </Border>
 
                         <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto">
@@ -421,12 +438,29 @@
                             Padding="12,8"
                             Background="#0D1117"
                             CornerRadius="4,4,0,0">
-                            <TextBlock
-                                FontFamily="Segoe UI"
-                                FontSize="20"
-                                FontWeight="Bold"
-                                Foreground="White"
-                                Text="TOTAL STEPS" />
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="Auto" />
+                                </Grid.ColumnDefinitions>
+                                <TextBlock
+                                    FontFamily="Segoe UI"
+                                    FontSize="20"
+                                    FontWeight="Bold"
+                                    Foreground="White"
+                                    Text="TOTAL STEPS" />
+                                <ContentControl Grid.Column="1" Style="{StaticResource InfoIcon}">
+                                    <ContentControl.ToolTip>
+                                        <ToolTip>
+                                            <TextBlock
+                                                MaxWidth="460"
+                                                FontSize="13"
+                                                Text="All steps of the selected FG. Every step can be weighed. Click a row to highlight it and see its BOM level 2 components (weighed status and the weight deducted from the step's Total Part Weight); click it again to collapse. Scale / Reset / Delete act on that step; the Active step is the one being weighed."
+                                                TextWrapping="Wrap" />
+                                        </ToolTip>
+                                    </ContentControl.ToolTip>
+                                </ContentControl>
+                            </Grid>
                         </Border>
 
                         <!--  ItemsSource binding từ ViewModel  -->
@@ -1026,15 +1060,32 @@
                                     CornerRadius="4,4,0,0"
                                     Cursor="Hand"
                                     MouseLeftButtonDown="HistoryHeader_Click">
-                                    <StackPanel VerticalAlignment="Center" Orientation="Vertical">
-                                        <TextBlock
-                                            FontFamily="Segoe UI"
-                                            FontSize="20"
-                                            FontWeight="Bold"
-                                            Foreground="White"
-                                            Text="{Binding HistoryToggleText}"
-                                            TextWrapping="WrapWithOverflow" />
-                                    </StackPanel>
+                                    <Grid>
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="*" />
+                                            <ColumnDefinition Width="Auto" />
+                                        </Grid.ColumnDefinitions>
+                                        <StackPanel VerticalAlignment="Center" Orientation="Vertical">
+                                            <TextBlock
+                                                FontFamily="Segoe UI"
+                                                FontSize="20"
+                                                FontWeight="Bold"
+                                                Foreground="White"
+                                                Text="{Binding HistoryToggleText}"
+                                                TextWrapping="WrapWithOverflow" />
+                                        </StackPanel>
+                                        <ContentControl Grid.Column="1" Style="{StaticResource InfoIcon}">
+                                            <ContentControl.ToolTip>
+                                                <ToolTip>
+                                                    <TextBlock
+                                                        MaxWidth="460"
+                                                        FontSize="13"
+                                                        Text="Reference for the selected step: the step being weighed and its recent weighings (date, total weight, total part weight, part weight, runner / excess material, operator). Click the title to show or hide the history table."
+                                                        TextWrapping="Wrap" />
+                                                </ToolTip>
+                                            </ContentControl.ToolTip>
+                                        </ContentControl>
+                                    </Grid>
 
                                 </Border>
                                 <Border
@@ -1182,21 +1233,9 @@
                                                 Text="REFERENCE VALUES" />
                                         </StackPanel>
 
-                                        <!--  Icon "i": hover để xem ghi chú STD / ACTUAL / dung sai (trước đây là khối chữ đỏ dưới bảng)  -->
-                                        <Border
-                                            Grid.Column="1"
-                                            Width="24"
-                                            Height="24"
-                                            HorizontalAlignment="Right"
-                                            VerticalAlignment="Center"
-                                            Background="Transparent"
-                                            BorderBrush="#B0BEC5"
-                                            BorderThickness="1.5"
-                                            CornerRadius="12"
-                                            Cursor="Help"
-                                            ToolTipService.InitialShowDelay="0"
-                                            ToolTipService.ShowDuration="60000">
-                                            <Border.ToolTip>
+                                        <!--  Icon "i": hover để xem ghi chú STD / ACTUAL / dung sai  -->
+                                        <ContentControl Grid.Column="1" Style="{StaticResource InfoIcon}">
+                                            <ContentControl.ToolTip>
                                                 <ToolTip>
                                                     <TextBlock
                                                         MaxWidth="460"
@@ -1204,17 +1243,8 @@
                                                         Text="{Binding PlacementTarget.DataContext.DeltaInformation, RelativeSource={RelativeSource AncestorType=ToolTip}}"
                                                         TextWrapping="Wrap" />
                                                 </ToolTip>
-                                            </Border.ToolTip>
-                                            <TextBlock
-                                                HorizontalAlignment="Center"
-                                                VerticalAlignment="Center"
-                                                FontFamily="Segoe UI"
-                                                FontSize="14"
-                                                FontStyle="Italic"
-                                                FontWeight="Bold"
-                                                Foreground="White"
-                                                Text="i" />
-                                        </Border>
+                                            </ContentControl.ToolTip>
+                                        </ContentControl>
                                     </Grid>
                                 </Border>
 

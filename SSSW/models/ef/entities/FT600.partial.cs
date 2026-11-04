@@ -26,6 +26,14 @@ namespace SSSW.models
         [Browsable(false)]
         public string? Level2Formula { get; set; }
 
+        /// <summary>
+        /// true khi dòng được nạp lại từ lần cân trước (FT600 cũ) chứ không cân trong phiên này.
+        /// Khi Confirm vẫn được insert lại nhưng đổi FG code/name theo FG của step đang scan/chọn. UI only.
+        /// </summary>
+        [NotMapped]
+        [Browsable(false)]
+        public bool IsReusedFromHistory { get; set; }
+
         /// <summary>true khi còn chi tiết con chưa cân. UI only.</summary>
         [NotMapped]
         [Browsable(false)]

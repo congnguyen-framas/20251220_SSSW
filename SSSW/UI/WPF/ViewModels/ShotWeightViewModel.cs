@@ -766,7 +766,7 @@ namespace SSSW.UI.WPF.ViewModels
                                 ckHydra = _dataHydra.FirstOrDefault(x =>
                                     (!string.IsNullOrEmpty(mc) && x.C007 != null && x.C007.Contains($"{mc}-")) ||
                                     (!string.IsNullOrEmpty(smc) && x.C004 != null && x.C004.Contains($"-{smc}-")));
-                                allowScale = ckHydra != null;
+                                // Không còn khóa theo lệnh đang chạy: mọi step đều cho phép cân (xem docs/tech/ALLOWSCALE_LOGIC_REVIEW.md)
                             }
                             else
                             {
@@ -904,164 +904,8 @@ namespace SSSW.UI.WPF.ViewModels
 
                     _scaleDataFinal = _scaleData.OrderBy(x => x.C015).ThenBy(x => x.C027).ToList();
 
-                    #region Lọc lại để cho phép cân hay là không các bước không được lấy ra theo step đọc từ QR/selected Lookup
-                    /*
-                     * Nếu là Logo/Cleat_Ring/Studs(có stepNo ko đứng sau bước Base)/Inlay(chung machine và MoldId) thì chỉ cho phép cân các bước Logo/Cleat_Ring/Studs/Inlay tương ứng, các bước khác sẽ bị xóa khỏi danh sách cân.
-                     * Khi quét tem chọn can các bước khác Logo/Cleat_Ring/Studs/Inlay thì sẽ set bit AllowScale = False cho các bước Logo/Cleat_Ring/Studs/Inlay theo các điều kiện như trên ra để không cho phép cân. còn ngaoif ra thì cho phép cân bình thường.
-                     * Nếu chọn cân bước cuối mà có các bước trước đó chưa có giá trị cân thì cần phải cân các bước đó trước rồi mới cân bước cuối. Nếu không thì sẽ báo lỗi và không cho phép cân bước cuối.
-                     */
-
-                    //var stepAll = _allStepsFG.Select(x => x.ItemStepCode).ToList();
-                    var stepAll = _allStepsFG
-                                .Select(x => x.ItemStepCode)
-                                .ToHashSet();
-                    var checkMultiSize = _scaleDataFinal
-                                .GroupBy(x => (x.C004, x.C020))
-                                .Where(g => g.Count() > 1)
-                                .ToDictionary(g => g.Key, g => g.ToList());
-
-                    var startWith = stepCode.C005.StartsWith("Logo") ? "Logo"
-                           : stepCode.C005.StartsWith("Studs") || stepCode.C005.StartsWith("Outer_Studs") || stepCode.C005.StartsWith("Inner_Studs") ? "Studs"
-                           : stepCode.C005.StartsWith("Cleat_Ring") ? "Cleat_Ring"
-                        : string.Empty;
-
-                    //nếu là cân cho bước logo/studs/ring thì xóa các bước khác logo/studs/ring
-                    if (stepCode.C005.StartsWith("Logo ")
-                        || stepCode.C005.StartsWith("Cleat_Ring")
-                      //|| stepCode.C005.StartsWith("Studs ")
-                      )
-                    {
-                        //var previousStep = _allStepsFG.FirstOrDefault(x => x.ParallelSequence == stepCode.C010 - 1);
-
-                        //if (startWith != "Studs"
-                        //    || (startWith == "Studs"
-                        //        && (previousStep == null
-                        //            || (previousStep != null && !previousStep.ItemStepName.StartsWith("Base"))
-                        //            )
-                        //        )
-                        //    )
-                        {
-                            _scaleDataFinal.RemoveAll(x =>
-                            {
-                                bool isStartWith = x.C003.StartsWith(startWith);
-
-                                return (!isStartWith);
-                                //|| duplicatedSize;
-                            });
-                        }
-                    }
-                    //nếu là cân cho bước khác logo/studs/ring thì xóa các bước logo/studs/ring mà không có trong BOM
-                    else
-                    {
-                        //lọc lại nếu bước được chọn cân mà ko phải là Stud hoặc Inlay (nhiều size/1 mold) thì khóa ko cho cân Stud và Inlay
-                        //bắt buộc phải cân Stud và Inlay riêng
-
-                        var logosStep = _scaleDataFinal.Where(x => x.C003.StartsWith("Logo")).ToList();
-
-                        if (logosStep.Any() && !stepCode.C005.StartsWith("Logo"))
-                        {
-                            logosStep.ForEach(x => x.AllowScale = false);
-                        }
-
-                        var cleat_RingStep = _scaleDataFinal.FirstOrDefault(x => x.C003.StartsWith("Cleat_Ring"));
-
-                        if (cleat_RingStep != null && !stepCode.C005.StartsWith("Cleat_Ring"))
-                        {
-                            cleat_RingStep.AllowScale = false;
-                        }
-
-                        var studsSteps = _scaleDataFinal
-                            .Where(x => x.C003.StartsWith("Studs")
-                                || x.C003.StartsWith("Outer_Studs")
-                                || x.C003.StartsWith("Inner_Studs")
-                            )
-                            .ToList();
-
-                        var inlaySteps = _scaleDataFinal.Where(x => x.C003.StartsWith("Inlay")).ToList();
-
-                        var previousStep = _allStepsFG.FirstOrDefault(x => x.ParallelSequence == stepCode.C010 - 1);
-
-                        if (!stepCode.C005.StartsWith("Inlay")
-                            && (startWith != "Studs"
-                                || (startWith == "Studs" && previousStep != null && (previousStep.ItemStepName.StartsWith("Base") || previousStep.ItemStepName.StartsWith("Outer_Studs")))
-                                )
-                            )
-                        {
-                            if (inlaySteps.Count() > 1)
-                                inlaySteps.ForEach(x => x.AllowScale = false);
-
-                            //check allow scle for studs
-                            if (studsSteps != null)
-                            {
-                                //lấy ra bước trước của nước studs để check xem có phải là base hay không, nếu là base thì cho phép cân studs, nếu ko phải base thì ko cho phép cân studs
-                                //nếu ở fVN thì nếu bước trước là Studs thì cho phép cân bước studs này luôn, và sẽ trừ số lượng cân của bước Studs trước đó ra khỏi số lượng cân của bước Studs hiện tại. Ex: 6112042502-C134-2801 - item code:3-VB042502-C136-5065
-
-                                //var previousStepBse = _allStepsFG.FirstOrDefault(x => x.ParallelSequence == studsSteps.FirstOrDefault(x => x.C002 == stepCode.C004)?.C015 - 1);
-
-                                //var allowStudsScale = !(previousStepBse == null
-                                //                            || (previousStepBse != null
-                                //                                    && !previousStepBse.ItemStepName.StartsWith("Base")
-                                //                                    && !previousStepBse.ItemStepName.StartsWith("Studs")
-                                //                                    && !previousStepBse.ItemStepName.StartsWith("Outer_Studs")
-                                //                                    && !previousStepBse.ItemStepName.StartsWith("Inner_Studs")
-                                //                                )
-                                //                         );
-                                //studsSteps.ForEach(x => x.AllowScale = allowStudsScale);
-
-                                foreach (var itemStud in studsSteps)
-                                {
-                                    var previousStepS = _allStepsFG.FirstOrDefault(x => x.ParallelSequence == itemStud.C015 - 1);
-
-                                    itemStud.AllowScale = !(previousStepS == null
-                                                                || (previousStepS != null
-                                                                        && !previousStepS.ItemStepName.StartsWith("Base")
-                                                                        && !previousStepS.ItemStepName.StartsWith("Studs")
-                                                                        && !previousStepS.ItemStepName.StartsWith("Outer_Studs")
-                                                                        && !previousStepS.ItemStepName.StartsWith("Inner_Studs")
-                                                                    ));
-
-                                }
-                            }
-
-                            //xóa những step ko có trong BOM ra
-                            _scaleDataFinal.RemoveAll(x =>
-                            {
-                                bool isLogo = x.C003.StartsWith("Logo");
-                                bool isStuds = x.C003.StartsWith("Studs") || x.C003.StartsWith("Outer_Studs") || x.C003.StartsWith("Inner_Studs");
-                                bool isRing = x.C003.StartsWith("Cleat_Ring");
-                                bool isInlay = x.C003.StartsWith("Inlay");
-
-                                bool hasC002 = stepAll.Contains(x.C002);
-
-                                bool duplicatedSize = checkMultiSize.ContainsKey((x.C004, x.C020));
-
-                                return (isLogo || isStuds || isRing || isInlay) && !hasC002;
-                                //|| duplicatedSize;
-                            });
-                        }
-                        else if (stepCode.C005.StartsWith("Inlay")
-                                || (startWith == "Studs"
-                                    && (previousStep == null
-                                        || (previousStep != null && !previousStep.ItemStepName.StartsWith("Base"))
-                                        )
-                                   )
-                                )
-                        {
-                            var startWith1 = stepCode.C005.StartsWith("Studs") || stepCode.C005.StartsWith("Outer_Studs") || stepCode.C005.StartsWith("Inner_Studs") ? "Studs"
-                                : stepCode.C005.StartsWith("Outer_Studs") ? "Outer_Studs"
-                                    : stepCode.C005.StartsWith("Inner_Studs") ? "Inner_Studs"
-                                        : "Inlay";
-
-                            _scaleDataFinal.RemoveAll(x =>
-                            {
-                                bool isStartWith = x.C003.StartsWith(startWith1);
-
-                                return (!isStartWith);
-                                //|| duplicatedSize;
-                            });
-                        }
-                    }
-                    #endregion
+                    // Đã bỏ toàn bộ khóa / lọc step theo loại (Logo, Cleat_Ring, Studs, Inlay): mọi step đều cân được,
+                    // phần trừ chi tiết con lấy theo BOM Level 2 (PartWeightCalculator). Xem docs/tech/ALLOWSCALE_LOGIC_REVIEW.md.
 
                     // Đọc dữ liệu các bước đã cân trước đó
                     foreach (var item1 in _scaleDataFinal)
@@ -1119,6 +963,7 @@ namespace SSSW.UI.WPF.ViewModels
 
                         if (stepPrevious != null)
                         {
+                            item1.IsReusedFromHistory = true;
                             _percentOfUsage = (double)stepPrevious.C035!;
                             if (item1.C002.StartsWith("REX"))
                             {
@@ -1154,7 +999,7 @@ namespace SSSW.UI.WPF.ViewModels
                     await PreloadLevel2Async();
 
                     var stepSel = _scaleDataFinal.FirstOrDefault(x => x.C002?.Trim() == _stepSelected.C004?.Trim());
-                    var prevSteps = _scaleDataFinal.Where(x => x.AllowScale == true && x.C015 < stepSel?.C015).ToList();
+                    var prevSteps = stepSel == null ? new List<FT600>() : PreviousStepsToCheck(stepSel).ToList();
                     if (prevSteps.Any(x => x.C021 == 0))
                     {
                         _rowSelected = prevSteps.Where(x => x.C021 == 0).OrderBy(od => od.C015).FirstOrDefault();
@@ -1183,7 +1028,7 @@ namespace SSSW.UI.WPF.ViewModels
                         _dialog.Info("Do not allow to scale this step.", "Warning");
                         return;
                     }
-                    foreach (var step in _scaleDataFinal.Where(x => x.C015 < rowSelect.C015))
+                    foreach (var step in PreviousStepsToCheck(rowSelect))
                     {
                         if (step.C021 == 0)
                         {
@@ -1225,8 +1070,8 @@ namespace SSSW.UI.WPF.ViewModels
                 return;
             }
 
-            var unweighedPrevSteps = _scaleDataFinal
-                .Where(x => x.C015 < _rowSelected.C015 && (x.C021 ?? 0) == 0)
+            var unweighedPrevSteps = PreviousStepsToCheck(_rowSelected)
+                .Where(x => (x.C021 ?? 0) == 0)
                 .OrderBy(x => x.C015)
                 .ToList();
 
@@ -1239,6 +1084,8 @@ namespace SSSW.UI.WPF.ViewModels
                     $"{Environment.NewLine}{Environment.NewLine}{detail}", "Warning");
                 return;
             }
+
+            _rowSelected.IsReusedFromHistory = false; // cân lại trong phiên này
 
             if (!(_rowSelected.C002?.StartsWith("REX") ?? false))
             {
@@ -1431,6 +1278,19 @@ namespace SSSW.UI.WPF.ViewModels
             var code = row.C002?.Trim();
             return code != null && _level2ByStep.TryGetValue(code, out var l2) && l2.Count > 0 ? l2 : null;
         }
+
+        /// <summary>
+        /// Điều kiện cũ "mọi step trước phải cân xong" chỉ còn áp dụng cho step injection KHÔNG có BOM Level 2.
+        /// Có Level 2 thì chặn theo chi tiết con (ApplyLevel2PartWeight báo danh sách chi tiết chưa cân khi tính C021);
+        /// REX / non-injection không phụ thuộc step trước.
+        /// </summary>
+        private bool RequiresPreviousStepsWeighed(FT600 row)
+            => !(row.C002?.StartsWith("REX") ?? false) && GetLevel2(row) == null;
+
+        private IEnumerable<FT600> PreviousStepsToCheck(FT600 row)
+            => RequiresPreviousStepsWeighed(row)
+                ? _scaleDataFinal.Where(x => x.C015 < row.C015)
+                : Enumerable.Empty<FT600>();
 
         /// <summary>Tìm FT600 đã cân của chi tiết con: ưu tiên dòng trong phiên hiện tại, sau đó bản ghi đã lưu.</summary>
         private FT600? FindWeighedChild(string code)
@@ -1757,6 +1617,13 @@ namespace SSSW.UI.WPF.ViewModels
                     x.CreatedMachine = machine;
                     x.Mesocomp = _mesocomp;
                     x.Mesoyear = _mesoYear;
+
+                    // Dòng nạp lại từ lần cân trước: vẫn insert lại nhưng thay FG code / FG name theo FG của step đang scan/chọn
+                    if (x.IsReusedFromHistory)
+                    {
+                        x.C013 = _stepItemCodeScale.C007;
+                        x.C014 = _stepItemCodeScale.C008;
+                    }
                 });
 
                 await db.FT600s.AddRangeAsync(insert);
@@ -1903,7 +1770,7 @@ namespace SSSW.UI.WPF.ViewModels
                 _dialog.Warn("Do not allow to scale this step.", "Warning");
                 return;
             }
-            foreach (var step in _scaleDataFinal.Where(x => x.C015 < rowSelect.C015))
+            foreach (var step in PreviousStepsToCheck(rowSelect))
             {
                 if (step.C021 == 0)
                 {

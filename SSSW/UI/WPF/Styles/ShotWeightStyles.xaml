@@ -56,6 +56,39 @@
         CARD BORDER
         ════════════════════════════════════════════════════════════════
     -->
+    <!--  Icon "i" ở tiêu đề card: hover để xem mô tả card (ToolTip khai báo tại nơi dùng)  -->
+    <Style x:Key="InfoIcon" TargetType="ContentControl">
+        <Setter Property="Width" Value="24" />
+        <Setter Property="Height" Value="24" />
+        <Setter Property="HorizontalAlignment" Value="Right" />
+        <Setter Property="VerticalAlignment" Value="Center" />
+        <Setter Property="Focusable" Value="False" />
+        <Setter Property="Cursor" Value="Help" />
+        <Setter Property="ToolTipService.InitialShowDelay" Value="0" />
+        <Setter Property="ToolTipService.ShowDuration" Value="60000" />
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="ContentControl">
+                    <Border
+                        Background="Transparent"
+                        BorderBrush="#B0BEC5"
+                        BorderThickness="1.5"
+                        CornerRadius="12">
+                        <TextBlock
+                            HorizontalAlignment="Center"
+                            VerticalAlignment="Center"
+                            FontFamily="Segoe UI"
+                            FontSize="14"
+                            FontStyle="Italic"
+                            FontWeight="Bold"
+                            Foreground="White"
+                            Text="i" />
+                    </Border>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
     <Style x:Key="CardStyle" TargetType="Border">
         <Setter Property="Background" Value="White" />
         <Setter Property="BorderBrush" Value="#CFD8DC" />

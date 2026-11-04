@@ -1,9 +1,39 @@
 # Review logic khóa nút cân (`AllowScale`) — TOTAL STEPS
 
 - **Ngày**: 2026-11-04 · **Nhánh**: `feature/use-bom-level-2`
-- **Trạng thái**: ⏳ **Chờ bạn review** — tài liệu này chỉ mô tả logic hiện tại và các điểm nghi vấn; **chưa sửa code**.
+- **Trạng thái**: ✅ **Đã chốt và triển khai (2026-11-04)** — §1–§5 mô tả logic **trước khi sửa** (giữ lại để đối chiếu); kết quả quyết định và code mới ở **§0** bên dưới.
 - **Phạm vi**: nút **Scale / Reset / Delete** ở từng dòng TOTAL STEPS bị mờ (disabled) khi `FT600.AllowScale == false` ([ShotWeightWindow.xaml](../../UI/WPF/ShotWeightWindow.xaml) `IsEnabled="{Binding AllowScale}"`).
 - **Liên quan**: [BUSINESS_LOGIC.md](BUSINESS_LOGIC.md) §4.4, session [2026-10-30 fix step matching / AllowScale](../sessions/2026-10-30_fix-step-matching-allowscale.md).
+
+## 0. Quyết định và triển khai (2026-11-04)
+
+| # | Câu hỏi | Quyết định | Đã làm trong code |
+|---|---------|------------|-------------------|
+| 1 | N1 — Logo chặn nhầm Base_FF | Làm theo **đề xuất A**: chỉ chặn theo chi tiết con BOM Level 2 | `PreviousStepsToCheck()`: điều kiện cũ "mọi step seq nhỏ hơn phải cân" chỉ còn cho step injection **không có** Level 2; REX không phụ thuộc step trước. Có Level 2 thì `ApplyLevel2PartWeight()` báo danh sách chi tiết con chưa cân khi Save |
+| 2 | N2 — Studs bị khóa | **Cân tại chỗ** | Bỏ khóa (xem dòng 4–5) nên Studs/Logo/Inlay bấm Scale được ngay trong phiên |
+| 3 | N6 — Confirm insert lại dòng cũ | Vẫn insert lại, nhưng **thay FG code / FG name** theo FG của step đang scan/chọn | `FT600.IsReusedFromHistory` đánh dấu dòng nạp từ lần cân trước; khi Confirm: `C013 = _stepItemCodeScale.C007`, `C014 = _stepItemCodeScale.C008`. Dòng cân lại trong phiên thì cờ về `false` |
+| 4 | Quy tắc khóa Studs theo tên/vị trí | **Bỏ khóa**; mọi step cân theo Level 2: chọn cân step nào thì vào Level 2 lấy chi tiết, lấy thông tin cân của từng chi tiết để trừ | Đã xóa toàn bộ vùng lọc/khóa theo loại step trong `GetDataAsync` (Logo, Cleat_Ring, Studs, Inlay + `RemoveAll`) |
+| 5 | Khóa khi step không có lệnh đang chạy | **Bỏ khóa luôn** | Bỏ `allowScale = ckHydra != null`; mọi dòng `AllowScale = true` |
+
+**Hành vi mới**
+- Mọi nút Scale / Reset / Delete đều bấm được (`AllowScale` luôn `true`; thuộc tính giữ lại để tương thích).
+- Chọn cân một step → `ApplyLevel2PartWeight()` lấy chi tiết con từ BOM Level 2; trọng lượng 1 chiếc của từng chi tiết lấy từ dòng cân trong phiên, nếu không có thì lấy FT600 mới nhất theo mã chi tiết; thiếu thì cảnh báo, không ghi.
+- Step không có dữ liệu Level 2 (SP rỗng/lỗi) vẫn dùng điều kiện cũ "step trước phải cân" + công thức cũ (fallback).
+
+**Rủi ro cần để ý**
+- Step không có lệnh đang chạy trong `_dataHydra` giờ cũng cân được; dòng của step đó có thể thiếu thông tin máy / lệnh Hydra (cột `C000`, `C004`…). Hãy kiểm tra khi lưu.
+- Chi tiết con **không có dòng trong lưới** (vd. REX chỉ xuất hiện ở Level 2) không thể cân tại chỗ; chỉ dùng được nếu đã có FT600 trước đó. Nếu chưa, Save báo thiếu chi tiết đó.
+
+```mermaid
+flowchart TD
+    A["Bấm Scale / Save một step"] --> B{"Step có BOM Level 2?"}
+    B -- Không --> L["Fallback cũ: mọi step trước phải cân (trừ REX)<br/>+ công thức cũ"]
+    B -- Có --> C["Lấy chi tiết con từ Level 2 (bỏ dòng self)"]
+    C --> D{"Mỗi chi tiết con có<br/>trọng lượng? (phiên hoặc FT600 cũ)"}
+    D -- Thiếu --> E["Cảnh báo danh sách chi tiết thiếu, không ghi"]
+    D -- Đủ --> F["C021 = C023 − Σ Qty × g/chiếc"]
+    F --> G["Confirm: insert dòng cân trong phiên<br/>+ dòng nạp lại từ lần cân trước<br/>(đổi FG code / FG name theo step đang scan)"]
+```
 
 ## 1. Trường hợp trong ảnh
 

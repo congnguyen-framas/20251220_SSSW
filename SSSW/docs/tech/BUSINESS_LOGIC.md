@@ -76,10 +76,12 @@ Dành cho các linh kiện thông thường ép nhựa:
 - Tương tự như insert kim loại/vải chèn trong lòng khuôn. Kể từ 2026-11-02, Part Weight của Inlay (và Studs/Base) được tính theo **BOM Level 2** (xem §4.8), không còn nhánh đặc cách theo tên step.
 
 ### 4.4. Kiểm tra thứ tự tuần tự (Sequential Step Validation)
-- Nếu một sản phẩm có nhiều bước (`Step 1`, `Step 2`, `Step 3`):
-  - Người dùng **bắt buộc phải cân xong các bước trước** (`C015 < current.C015` và `C021 > 0`).
-  - Nếu cố tình cân bước sau khi bước trước chưa có trọng lượng, hệ thống bật popup cảnh báo:
-    `"Previous step(s) are missing Part Weight and must be weighed first."` và từ chối lưu.
+- Từ 2026-11-04: **không còn khóa nút cân theo loại step** (`AllowScale` luôn `true`) và **không còn bắt cân hết mọi bước trước**.
+- Step có BOM Level 2: chỉ cần các **chi tiết con** (§4.8) đã có trọng lượng. Thiếu chi tiết nào, lúc Save hệ thống cảnh báo
+  `"Component step(s) of this step (BOM level 2) have no weight yet and must be weighed first"` kèm danh sách và từ chối ghi.
+- Step **không có** Level 2 (SP rỗng/lỗi) và không phải REX: vẫn dùng điều kiện cũ (mọi bước trước phải có `C021 > 0`, popup
+  `"Previous step(s) are missing Part Weight and must be weighed first."`). REX không phụ thuộc bước trước.
+- Chi tiết: [`ALLOWSCALE_LOGIC_REVIEW.md`](ALLOWSCALE_LOGIC_REVIEW.md).
 
 ### 4.5. Khuôn nhiều Size trên cùng 1 Shot (Multi-size Molds)
 - Cùng 1 khuôn ép ra nhiều cỡ giày khác nhau trong 1 lần ép:
@@ -208,12 +210,12 @@ Code: `UI/WPF/Services/PartWeightCalculator.cs`, test: `tests/SSSW.Tests`.
 ## 6. Luồng Lưu & Commit Transaction (`ExecuteSave`)
 
 1. **Validate**:
-   - Kiểm tra `AllowScale == true`.
+   - ~~Kiểm tra `AllowScale == true`~~ (đã bỏ khóa 2026-11-04; `AllowScale` luôn `true`).
    - Kiểm tra các bước trước đã hoàn tất.
    - Kiểm tra đã có thẻ RFID.
 2. **Database Transaction**:
    - Mở Transaction EF Core: `await db.Database.BeginTransactionAsync()`.
-   - `INSERT` danh sách dòng hợp lệ (`AllowScale == true && C021 > 0`) vào bảng `FT600`.
+   - `INSERT` danh sách dòng hợp lệ (`C021 > 0`) vào bảng `FT600`. Dòng **nạp lại từ lần cân trước** (`IsReusedFromHistory`) vẫn được insert lại nhưng **thay `C013` (FG code) và `C014` (FG name) theo FG của step đang scan/chọn**.
    - `UPDATE` cờ hoàn tất trên `FT601`: `C017 = true` cho các lệnh tương ứng.
    - `COMMIT` transaction.
 3. **Đồng bộ Winline (Background Task / Optional)**:

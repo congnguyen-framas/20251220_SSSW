@@ -72,7 +72,8 @@ Mỗi lần công nhân hoàn tất quy trình cân một sản phẩm/bộ linh
 | `C035` | `double?` | Tỉ lệ sử dụng (%) `_percentOfUsage` |
 | `C036` | `double?` | Trọng lượng lệch so với tiêu chuẩn (Tolerance Delta) |
 | `C037` | `string` | Đơn vị tính (g, kg) |
-| `AllowScale` | `bool` | Cờ cho phép cân bước này |
+| `AllowScale` | `bool` | Cờ cho phép cân bước này — luôn `true` từ 2026-11-04 (đã bỏ khóa) |
+| `IsReusedFromHistory` | `bool` | Dòng nạp lại từ lần cân trước; khi Confirm đổi `C013`/`C014` theo FG đang scan (UI only) |
 | `CreatedDate` | `DateTime` | Ngày giờ cân |
 | `CreatedMachine` | `string` | Tên máy trạm thực hiện cân (`Environment.MachineName`) |
 | `Mesocomp` | `string` | Mã công ty / Site (`VNT1`, `FTT1`, v.v.) |

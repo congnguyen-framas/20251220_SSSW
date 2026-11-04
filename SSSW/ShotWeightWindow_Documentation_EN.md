@@ -301,6 +301,10 @@ Later sequence:  C021 = C023 − prev.C023
 
 Selecting a row in TOTAL STEPS outlines it and expands a Level-2 detail table directly below (columns aligned under the main grid columns: Component→Actions, Status→STATUS, Step→MACHINE, Qty→Step No., Unit→STEP / STEP CODE, Weighed→TOTAL WEIGHT, g/piece→TOTAL PART, Deduct→PART). Other rows are dimmed (opacity 0.35); clicking the selected row again clears the selection. A formula line `C021 = C023 − (…)` is shown under the table (red when a component is not weighed yet). Data comes from `FT600.Level2Items` built by `ShotWeightViewModel.RefreshLevel2Details()`. See `docs/brainstorm/BOM_LEVEL2_UI_OPTIONS.md`.
 
+### 4.6.3 No step lock (2026-11-04)
+
+All steps can be weighed (`AllowScale` is always `true`; the Logo / Cleat_Ring / Studs / Inlay lock and the "no running order" lock were removed). Part Weight of an injection step is computed from its BOM level 2 components; Save is refused only when a component has no weight yet (the dialog lists them). Steps without level 2 data fall back to the old "all previous steps weighed" rule. On Confirm, rows reloaded from a previous weighing (`IsReusedFromHistory`) are inserted again with `C013` / `C014` replaced by the FG code / name of the step being scanned or selected. Each card header (STEP INFORMATION, TOTAL STEPS, REFERENCE / HISTORY, REFERENCE VALUES) has an "i" icon with a description tooltip.
+
 ### 4.6.2 REFERENCE VALUES – note as tooltip
 
 The STD / ACTUAL / tolerance note (`DeltaInformation`) is no longer printed under the table; it is shown as a tooltip on the "i" icon in the REFERENCE VALUES header (hover, no delay). The two lower cards (REFERENCE / HISTORY and REFERENCE VALUES) use a fixed height (520) so TOTAL STEPS gets the remaining vertical space. TOTAL STEPS has no horizontal grid lines (`GridLinesVisibility="None"`).
@@ -329,7 +333,7 @@ ScaleCard border/background = **worst** ToleranceCategory among 4 Reference rows
 
 1. Check `_operatorInfo.Id != Guid.Empty` — RFID must have been scanned and validated.
 2. Check multi-size molds (`sameMolds`): if > 0, skip completeness check.
-3. For each row with `AllowScale=true`: `C023 == 0 AND C024 == 0` → warn "Scale not completed for step: XXX".
+3. For each row (all rows are weighable since 2026-11-04): `C023 == 0 AND C024 == 0` → warn "Scale not completed for step: XXX".
 4. Filter: `insert = _scaleDataFinal WHERE AllowScale=true AND C021 > 0`.
 5. Set metadata: `C010=EmployeeCode`, `C011=EmployeeName`, `CreatedDate=now`, `CreatedMachine`, `Mesocomp`, `Mesoyear`.
 6. Transaction: `db.FT600s.AddRangeAsync(insert)`.

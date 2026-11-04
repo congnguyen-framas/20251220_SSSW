@@ -59,7 +59,7 @@ Giữ 8 cột như v3 (đỏ = lưới chính, xanh = chi tiết). Cột 1–5 n
 | 7 | g / piece | STEP / STEP CODE (2/3) | 100 |
 | 8 | Deduct (g) | STEP / STEP CODE (3/3) | 100 |
 
-Viền chọn vẽ đủ 4 cạnh; bảng chi tiết có viền mờ ăn sát 8 cột (không tràn ra phần lưới phía sau).
+Viền chọn vẽ đủ 4 cạnh; lưới bảng chi tiết kiểu giống ảnh mẫu — tiêu đề nền xanh nhạt, chỉ có đường kẻ ngang giữa các dòng, ăn sát 8 cột (không tràn ra phần lưới phía sau).
 
 Cột Actions được nới 125 → 140px để 3 nút Scale / Reset / Delete nằm 1 hàng (ô Actions dùng `WrapPanel`: kéo hẹp cột thì nút tự rớt dòng).
 

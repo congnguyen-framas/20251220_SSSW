@@ -1,7 +1,7 @@
 # Thiết kế UI: BOM Level 2 Row Details trong TOTAL STEPS
 
 - **Ngày**: 2026-11-04 · **Nhánh**: `feature/use-bom-level-2`
-- **Trạng thái**: ⏳ **Chờ review** hình v7 (giữ 8 cột như v3; Qty dời sang trái 1 cột; Weighed + g / piece + Deduct xếp chung trong bề rộng cột STEP / STEP CODE). Code hiện có trên nhánh còn theo v3 (cả 8 cột bám cột lưới) — nếu duyệt v7 thì phải sửa `Level2DetailsTemplate`; chưa code thêm gì theo yêu cầu này
+- **Trạng thái**: ⏳ **Chờ review** hình v8 (v7 + cột Actions nới 125 → 140px để 3 nút nằm 1 hàng, chỉ tự xuống dòng khi user kéo hẹp cột). Code hiện có trên nhánh còn theo v3 — nếu duyệt v8 thì phải sửa `Level2DetailsTemplate` và cột Actions của `dgTotalSteps`; chưa code thêm gì theo yêu cầu này
 - **Liên quan**: [`brainstorm/BOM_LEVEL2_UI_OPTIONS.md`](../brainstorm/BOM_LEVEL2_UI_OPTIONS.md) (các phương án), [`tech/BUSINESS_LOGIC.md`](../tech/BUSINESS_LOGIC.md) §4.8 (công thức `C021`), session [`2026-11-04`](../sessions/2026-11-04_status-column-align-bom-l2-ui-options.md)
 
 ## 1. Yêu cầu
@@ -12,11 +12,12 @@
 4. Sắp lại thứ tự cột chi tiết (số xanh) và căn cùng đường dọc với cột lưới chính (số đỏ).
 5. Giữ 8 cột như v3, nhưng chỉ cần trùng vị trí với các cột đầu của lưới; các cột sau không cần căn.
 6. 3 cột cuối (Weighed, g / piece, Deduct) xếp chung trong bề rộng cột STEP / STEP CODE, để bảng chi tiết kết thúc đúng mép phải cột STEP / STEP CODE.
-7. **Dời cột Qty sang trái 1 cột (xuống dưới MAIN / MAIN CODE) để không còn khoảng trống; Unit dịch theo xuống dưới Step No.**
+7. Dời cột Qty sang trái 1 cột (xuống dưới MAIN / MAIN CODE) để không còn khoảng trống; Unit dịch theo xuống dưới Step No.
+8. **Nới cột Actions để 3 nút Scale / Reset / Delete nằm trên 1 hàng như ban đầu; chỉ khi user kéo hẹp cột thì nút mới tự rớt xuống dòng.**
 
-## 2. Hình thiết kế (v7 — theo đúng lưới thật, bảng chi tiết nằm gọn trong 6 cột đầu, không còn khoảng trống)
+## 2. Hình thiết kế (v8 — theo đúng lưới thật, bảng chi tiết nằm gọn trong 6 cột đầu, Actions đủ rộng cho 3 nút)
 
-![Option A v7](../image/bom_level2_option_A_v7_qty_shifted.png)
+![Option A v8](../image/bom_level2_option_A_v8_actions_wide.png)
 
 - Lưới TOTAL STEPS thật có **nhiều cột** (hơn 20, kéo ngang bằng thanh cuộn): Actions, STATUS, MACHINE, MAIN / MAIN CODE, Step No., STEP / STEP CODE, SIZE, TOTAL WEIGHT, TOTAL PART, PART, RUNNER / EXCESS MAT., Actual Partitioning, PPIC Partitioning, Mold Pairs Shot, Quantity, … Hình v4 vẽ đủ các cột này (đường kẻ ngang cắt ở Quantity giống màn hình thật).
 - Đường gióng đỏ nét đứt = ranh giới cột lưới chính. **Cột chi tiết 1–5 (Component, Status, Step, Qty, Unit) nằm đúng dưới Actions, STATUS, MACHINE, MAIN / MAIN CODE, Step No.** Cột 6–8 (Weighed, g / piece, Deduct) chia đều bề rộng 300px của cột STEP / STEP CODE (100 + 100 + 100), nên bảng chi tiết liền mạch, không có khoảng trống, và kết thúc đúng mép phải cột STEP / STEP CODE.
@@ -29,7 +30,7 @@
 
 | # | Cột chi tiết | Vị trí trong lưới chính (index trong `dgTotalSteps`) | Rộng (px) | Nguồn dữ liệu |
 |---|--------------|------------------------------------------------------|-----------|---------------|
-| 1 | Component | Actions (0) | 125 | `ItemStepName` của BOM L2 |
+| 1 | Component | Actions (0) | **140** (nới từ 125) | `ItemStepName` của BOM L2 |
 | 2 | Status | STATUS (1) | 65 | đã cân / chưa cân |
 | 3 | Step | MACHINE (2) | 75 | `C015` của chi tiết con, `REX` nếu non-injection |
 | 4 | Qty (PCS) | MAIN / MAIN CODE (3) | 150 | `Quantity` BOM L2 |
@@ -38,13 +39,15 @@
 | 7 | g / piece | STEP / STEP CODE (5) — phần 2/3 | 100 | `UnitWeightPerPiece` |
 | 8 | Deduct (g) | STEP / STEP CODE (5) — phần 3/3 | 100 | `Qty × g/piece` |
 
+**Cột Actions**: nới từ 125 → **140px** để Scale / Reset / Delete nằm trên 1 hàng như ban đầu. Trong ô Actions đổi `StackPanel` ngang thành `WrapPanel` — đủ rộng thì 1 hàng, user kéo hẹp cột thì nút tự rớt dòng (không bị cắt). Cột chi tiết Component (cùng cột 0) rộng thêm 15px nên tên dài ít bị cắt hơn.
+
 Quy tắc căn: cột chi tiết 1–5 thẳng hàng với cột lưới 0–4. Cột chi tiết 6–8 chia đều `Columns[5].ActualWidth` (300px ÷ 3) nên mép phải bảng chi tiết trùng mép phải cột STEP / STEP CODE. Không còn cột chi tiết nào nằm dưới SIZE trở đi, và không còn cột lưới trống ở giữa.
 
 > Lưu ý: lưới thật đã có sẵn các cột **Quantity (14)**, **Weight per Unit (15)**, **Unit (16)** nằm xa bên phải. Phương án này không dùng chúng cho chi tiết con vì chúng thuộc về chính step đang cân; chi tiết con dùng Qty/Unit riêng của BOM Level 2 đặt ở các cột nhìn thấy ngay (Step No., STEP / STEP CODE).
 
 ## 4. Tính khả thi
 
-**Khả thi.** Lý do và điểm cần lưu ý (code hiện có là bản v3 — cả 8 cột bám cột lưới; v7 cần đổi: Qty → cột 3, Unit → cột 4, và 3 ô số (Weighed, g / piece, Deduct) thành các ô chia đều trong bề rộng cột 5):
+**Khả thi.** Lý do và điểm cần lưu ý (code hiện có là bản v3 — cả 8 cột bám cột lưới; v8 cần đổi: Actions 125 → 140 + `WrapPanel`, Qty → cột 3, Unit → cột 4, và 3 ô số (Weighed, g / piece, Deduct) thành các ô chia đều trong bề rộng cột 5):
 
 | Vấn đề | Giải pháp | Ghi chú |
 |--------|-----------|---------|
@@ -52,7 +55,8 @@ Quy tắc căn: cột chi tiết 1–5 thẳng hàng với cột lưới 0–4. 
 | 3 cột số cuối nằm trong cột STEP / STEP CODE | Một `Grid` con rộng bằng `Columns[5].ActualWidth` chia 3 phần đều (`*`, `*`, `*`) | Co giãn theo khi kéo đổi độ rộng cột STEP / STEP CODE; không phụ thuộc các cột phía sau |
 | Lưới thật có nhiều cột hơn các mockup trước (v1–v3 đã lược bớt) | v4–v7 vẽ đủ bộ cột thật; v7 dùng luôn cột MAIN / MAIN CODE (cho Qty) nên không còn ô trống ở giữa | Nếu đổi thứ tự 6 cột đầu của lưới thì phải sửa chỉ số trong `Level2DetailsTemplate` |
 | Lưới có thanh cuộn ngang | Dải chi tiết là một phần của `RowDetailsTemplate` nên cuộn cùng lưới; không dùng `AreRowDetailsFrozen` | Cần kiểm tra khi cuộn ở app thật |
-| Cột Component hẹp (125px) | Cắt chữ + tooltip hiện mã chi tiết | Có thể nới cột Actions nếu cần |
+| Cột Component hẹp (140px sau khi nới) | Cắt chữ + tooltip hiện mã chi tiết | Nới cột Actions thêm nếu vẫn chật |
+| 3 nút Actions bị rớt dòng ở độ rộng cũ (125px) | Nới cột 0 lên 140px + `WrapPanel` trong ô Actions | Ở 140px nằm 1 hàng; kéo hẹp hơn thì tự xuống dòng, không bị cắt |
 | Chip Status trong 65px | Chữ ngắn "✔ done" / "✖ missing" | Có thể nới nhẹ cột STATUS |
 | `FT600` không có `INotifyPropertyChanged` | `RefreshStepsGridCore()` dựng lại lưới, kèm dựng lại `Level2Items` | Selection bị reset mỗi lần dựng lại → `FocusGridRowAction` chọn lại step đang cân |
 | Mờ dòng / bỏ chọn khi click lại | Code-behind thuần hiển thị (`ShotWeightWindow.xaml.cs`) | Đúng quy ước: code-behind chỉ làm việc không bind được |
@@ -108,3 +112,4 @@ flowchart LR
 - [ ] Step không có chi tiết con (Logo, Studs đầu chuỗi) hiện "No components".
 - [ ] Màu viền dòng được chọn, tên Component dài, chip "✖ missing" trong cột 65px có chấp nhận được.
 - [ ] Cột STATUS (đã căn lại 2026-11-04) thẳng hàng với MACHINE / Step No.
+- [ ] Cột Actions 140px: 3 nút Scale / Reset / Delete nằm 1 hàng; kéo hẹp cột thì nút tự rớt dòng, không bị cắt; chiều cao dòng step không phình thêm.

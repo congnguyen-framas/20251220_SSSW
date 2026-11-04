@@ -241,7 +241,67 @@ namespace SSSW.UI.WPF
         /// </summary>
         private void dgTotalSteps_SelectionChanged(object sender, SelectionChangedEventArgs e)
         {
-            // No-op: hành động qua GridScaleCommand / GridResetCommand (XAML)
+            // Hành động Scale/Reset đi qua Command (XAML). Ở đây chỉ làm mờ các dòng không được chọn
+            // (thuần hiển thị): dòng đang chọn được xổ Row Details BOM Level 2 và viền nổi.
+            ApplyRowDimming();
+        }
+
+        private const double DimmedRowOpacity = 0.35;
+
+        /// <summary>Có step được chọn → các dòng còn lại mờ đi; không chọn → mọi dòng rõ nét.</summary>
+        private void ApplyRowDimming()
+        {
+            foreach (var item in dgTotalSteps.Items)
+                if (dgTotalSteps.ItemContainerGenerator.ContainerFromItem(item) is DataGridRow row)
+                    row.Opacity = RowOpacity(row);
+        }
+
+        private double RowOpacity(DataGridRow row)
+            => dgTotalSteps.SelectedItem != null && !row.IsSelected ? DimmedRowOpacity : 1.0;
+
+        private void dgTotalSteps_LoadingRow(object sender, DataGridRowEventArgs e)
+            => e.Row.Opacity = RowOpacity(e.Row);
+
+        private DataGridRow? _rowPressed;
+        private bool _rowWasSelectedOnPress;
+
+        /// <summary>Ghi nhớ dòng đang nhấn và dòng đó đã được chọn trước khi nhấn hay chưa.</summary>
+        private void dgTotalSteps_PreviewMouseLeftButtonDown(object sender, MouseButtonEventArgs e)
+        {
+            _rowPressed = null;
+            if (e.OriginalSource is not DependencyObject src || IsInsideButtonOrDetails(src)) return;
+
+            _rowPressed = FindAncestor<DataGridRow>(src);
+            _rowWasSelectedOnPress = _rowPressed?.IsSelected == true;
+        }
+
+        /// <summary>Click lại đúng dòng đang chọn → bỏ chọn (thu gọn chi tiết, hết mờ).</summary>
+        private void dgTotalSteps_PreviewMouseLeftButtonUp(object sender, MouseButtonEventArgs e)
+        {
+            var pressed = _rowPressed;
+            _rowPressed = null;
+            if (pressed == null || !_rowWasSelectedOnPress) return;
+            if (e.OriginalSource is not DependencyObject src || FindAncestor<DataGridRow>(src) != pressed) return;
+
+            // Chạy sau khi DataGrid xử lý xong selection của lần nhấn này
+            Dispatcher.BeginInvoke(new Action(() => dgTotalSteps.SelectedItem = null),
+                System.Windows.Threading.DispatcherPriority.Background);
+        }
+
+        private static bool IsInsideButtonOrDetails(DependencyObject src)
+        {
+            for (var cur = src; cur != null; cur = VisualTreeHelper.GetParent(cur))
+                if (cur is System.Windows.Controls.Primitives.ButtonBase || cur is DataGridDetailsPresenter)
+                    return true;
+                else if (cur is DataGridRow) return false;
+            return false;
+        }
+
+        private static T? FindAncestor<T>(DependencyObject? start) where T : DependencyObject
+        {
+            for (var cur = start; cur != null; cur = VisualTreeHelper.GetParent(cur))
+                if (cur is T t) return t;
+            return null;
         }
 
         // ════════════════════════════════════════════════════════════════════

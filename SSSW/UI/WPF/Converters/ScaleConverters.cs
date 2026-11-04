@@ -14,6 +14,17 @@ using Color   = System.Windows.Media.Color;
 
 namespace SSSW.UI.WPF.Converters
 {
+
+    /// <summary>null / chuỗi rỗng → Collapsed, ngược lại Visible.</summary>
+    public class NullToCollapsedConverter : IValueConverter
+    {
+        public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
+            => string.IsNullOrWhiteSpace(value as string) ? Visibility.Collapsed : Visibility.Visible;
+
+        public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
+            => throw new NotSupportedException();
+    }
+
     /// <summary>Maps ToleranceCategory → background Brush cho DataGridRow.</summary>
     public class ToleranceToBrushConverter : IValueConverter
     {

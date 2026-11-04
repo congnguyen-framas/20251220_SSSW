@@ -433,6 +433,12 @@
                             Grid.Row="1"
                             Padding="10"
                             ItemsSource="{Binding StepsCollection}"
+                            LoadingRow="dgTotalSteps_LoadingRow"
+                            PreviewMouseLeftButtonDown="dgTotalSteps_PreviewMouseLeftButtonDown"
+                            PreviewMouseLeftButtonUp="dgTotalSteps_PreviewMouseLeftButtonUp"
+                            RowDetailsTemplate="{StaticResource Level2DetailsTemplate}"
+                            RowDetailsVisibilityMode="VisibleWhenSelected"
+                            RowStyle="{StaticResource StepRowStyle}"
                             SelectionChanged="dgTotalSteps_SelectionChanged"
                             Style="{StaticResource GridStyle}">
                             <DataGrid.Columns>

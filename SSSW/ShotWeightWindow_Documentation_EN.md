@@ -297,6 +297,10 @@ Later sequence:  C021 = C023 − prev.C023
                  C022 = C024 − C021
 ```
 
+### 4.6.1 TOTAL STEPS – BOM Level 2 Row Details (UI)
+
+Selecting a row in TOTAL STEPS outlines it and expands a Level-2 detail table directly below (columns aligned under the main grid columns: Component→Actions, Status→STATUS, Step→MACHINE, Qty→Step No., Unit→STEP / STEP CODE, Weighed→TOTAL WEIGHT, g/piece→TOTAL PART, Deduct→PART). Other rows are dimmed (opacity 0.35); clicking the selected row again clears the selection. A formula line `C021 = C023 − (…)` is shown under the table (red when a component is not weighed yet). Data comes from `FT600.Level2Items` built by `ShotWeightViewModel.RefreshLevel2Details()`. See `docs/brainstorm/BOM_LEVEL2_UI_OPTIONS.md`.
+
 ### 4.7 Tolerance System
 
 ```

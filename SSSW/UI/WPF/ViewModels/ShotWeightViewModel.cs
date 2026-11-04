@@ -1442,6 +1442,70 @@ namespace SSSW.UI.WPF.ViewModels
             return _weighedChildrenFromDb.TryGetValue(code, out var saved) ? saved : null;
         }
 
+        /// <summary>Dựng dữ liệu hiển thị Row Details (BOM Level 2) cho 1 step: chi tiết con, trạng thái cân, phần trừ, công thức.</summary>
+        private void RefreshLevel2Details(FT600 row)
+        {
+            var l2 = GetLevel2(row);
+            if (l2 == null)
+            {
+                row.Level2Items = Array.Empty<Level2DetailItem>();
+                row.Level2Formula = null;
+                row.Level2HasMissing = false;
+                return;
+            }
+
+            var items = new List<Level2DetailItem>();
+            var terms = new List<string>();
+            var missing = new List<string>();
+            double total = 0;
+
+            foreach (var child in l2)
+            {
+                if (PartWeightCalculator.IsSelfRow(child, row.C002!)) continue;
+
+                var qty = child.Quantity ?? 0;
+                if (qty <= 0) continue;
+
+                var code = child.ItemStepCode!.Trim();
+                var weighed = FindWeighedChild(code);
+                var perPiece = weighed == null ? null : PartWeightCalculator.UnitWeightPerPiece(weighed);
+                double? deduct = perPiece == null ? null : qty * perPiece;
+
+                items.Add(new Level2DetailItem
+                {
+                    Component = child.ItemStepName?.Trim() ?? code,
+                    ComponentCode = code,
+                    Step = code.StartsWith("REX", StringComparison.OrdinalIgnoreCase)
+                        ? "REX" : (weighed?.C015?.ToString() ?? "—"),
+                    Qty = qty,
+                    Unit = child.Unit?.Trim(),
+                    Weighed = perPiece == null ? null : weighed!.C021,
+                    PerPiece = perPiece,
+                    Deduct = deduct,
+                    IsWeighed = perPiece != null
+                });
+
+                if (deduct != null)
+                {
+                    total += deduct.Value;
+                    terms.Add(deduct.Value.ToString("F2"));
+                }
+                else
+                {
+                    missing.Add(code);
+                    terms.Add($"{code} ?");
+                }
+            }
+
+            row.Level2Items = items;
+            row.Level2HasMissing = missing.Count > 0;
+            row.Level2Formula = items.Count == 0 ? null
+                : $"C021 = C023 − ({string.Join(" + ", terms)})" +
+                  (missing.Count > 0
+                      ? $"  →  Weigh {string.Join(", ", missing)} before saving this step"
+                      : $" = C023 − {total:F2}");
+        }
+
         private PartWeightApply ApplyLevel2PartWeight()
         {
             var l2 = GetLevel2(_rowSelected);
@@ -2130,7 +2194,10 @@ namespace SSSW.UI.WPF.ViewModels
             StepsCollection.Clear();
             if (_scaleDataFinal != null)
                 foreach (var item in _scaleDataFinal)
+                {
+                    RefreshLevel2Details(item);
                     StepsCollection.Add(item);
+                }
         }
 
         private void UpdateStepStatuses()

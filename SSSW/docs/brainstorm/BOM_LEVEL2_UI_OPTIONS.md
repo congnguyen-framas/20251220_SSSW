@@ -1,7 +1,7 @@
 # Brainstorm: Hiển thị BOM Level 2 trên màn cân Step
 
 - **Ngày**: 2026-11-04 · **Nhánh**: `feature/use-bom-level-2`
-- **Trạng thái**: ✅ Đã chọn **phương án A** (2026-11-04) → thiết kế v3 (cột chi tiết căn thẳng cột lưới chính) **đã code**, chờ review trên app thật
+- **Trạng thái**: ✅ Đã chọn **phương án A** (2026-11-04) → thiết kế v4 (cột chi tiết căn thẳng cột lưới chính, vẽ theo đúng bộ cột thật) **chờ review**; chi tiết ở [`plan/BOM_LEVEL2_ROW_DETAILS_UI.md`](../plan/BOM_LEVEL2_ROW_DETAILS_UI.md)
 - **Bối cảnh**: `C021` giờ tính theo BOM Level 2 ([BUSINESS_LOGIC.md](../tech/BUSINESS_LOGIC.md) §4.8). Công nhân cần thấy step đang dùng chi tiết con nào, đã cân chưa, và phần bị trừ là bao nhiêu. Số liệu trong ảnh là minh họa (FG `6112042313-A478-2801`).
 
 ## Phương án A — Mở rộng dòng (Row Details)
@@ -43,8 +43,8 @@ Theo yêu cầu: chọn step thì highlight, làm mờ các dòng còn lại; b�
 Gợi ý triển khai (nếu duyệt): `DataGrid.RowDetailsVisibilityMode="VisibleWhenSelected"` + `RowDetailsTemplate` (bảng con bind `Level2Items` trên `FT600` partial `[NotMapped]`); mờ dòng khác bằng `DataTrigger` trên cờ `IsDimmed` ở VM; click lại để bỏ chọn xử lý trong code-behind `PreviewMouseLeftButtonUp` (set `SelectedItem = null`). `Level2Items` lấy từ `_level2ByStep` + `FindWeighedChild` đã có.
 
 
-## ✅ Phương án A — v3: cột chi tiết căn theo cột lưới chính (đã code)
-![A v3](../image/bom_level2_option_A_v3_aligned.png)
+## ✅ Phương án A — v4: cột chi tiết căn theo cột lưới chính (theo đúng lưới thật)
+![A v4](../image/bom_level2_option_A_v4_real_columns.png)
 
 Cột chi tiết được sắp lại và nằm đúng đường dọc của cột lưới chính (đỏ = lưới chính, xanh = chi tiết):
 
@@ -61,7 +61,7 @@ Cột chi tiết được sắp lại và nằm đúng đường dọc của c�
 | 7 | g / piece | TOTAL PART (g/prs) | 60 |
 | 8 | Deduct (g) | PART (g/prs) | 60 |
 
-Lưới thật có thêm 2 cột (MAIN / MAIN CODE, SIZE) so với mockup v2 nên 2 vị trí đó để trống.
+Lưới thật còn nhiều cột khác (MAIN / MAIN CODE, SIZE, RUNNER, Actual/PPIC Partitioning, Mold Pairs Shot, Quantity, …) — hình v4 vẽ đủ; các cột đó để trống trong dải chi tiết.
 
 **Cài đặt** (xem session 2026-11-04):
 - `ShotWeightStyles.xaml`: `StepRowStyle` (viền nổi khi chọn) + `Level2DetailsTemplate` — mỗi ô là `Border` có `Width` bind `Columns[i].ActualWidth` của `DataGrid` (kéo đổi cột vẫn thẳng hàng).

@@ -14,7 +14,7 @@
 - Hiểu "gạch chân đều nhau" là căn thẳng hàng theo chiều dọc của ô STATUS với các cột còn lại; nếu ý khác (đường kẻ ngang giữa các dòng) cần ảnh rõ hơn.
 
 ## Đã làm (tiếp) — UI BOM Level 2 (phương án A v3)
-- Mockup v3 (`docs/image/bom_level2_option_A_v3_aligned.png`): cột chi tiết sắp lại theo thứ tự xanh và căn cùng đường dọc với cột lưới chính (bảng map ở `brainstorm/BOM_LEVEL2_UI_OPTIONS.md`).
+- Mockup v4 (`docs/image/bom_level2_option_A_v4_real_columns.png`, thay v3 vì v3 lược bớt cột của lưới thật): cột chi tiết sắp lại theo thứ tự xanh và căn cùng đường dọc với cột lưới chính (bảng map ở `brainstorm/BOM_LEVEL2_UI_OPTIONS.md`).
 - Code: `models/Level2DetailItem.cs` (mới); `FT600.partial.cs` (+`Level2Items`, `Level2Formula`, `Level2HasMissing`); `ShotWeightViewModel.RefreshLevel2Details()` gọi trong `RefreshStepsGridCore`; `ShotWeightStyles.xaml` (`StepRowStyle`, `Level2DetailsTemplate`, converter `NullToCollapsed`); `ScaleConverters.cs` (`NullToCollapsedConverter`); `ShotWeightWindow.xaml` (+ thuộc tính `dgTotalSteps`); `ShotWeightWindow.xaml.cs` (làm mờ dòng, click lại để bỏ chọn).
 - Hành vi: chọn step → viền nổi + xổ chi tiết, dòng khác mờ; click lại → bỏ chọn; sau Save/Reset lưới được dựng lại và step đang cân tự được chọn lại (xổ chi tiết cập nhật trạng thái cân).
 

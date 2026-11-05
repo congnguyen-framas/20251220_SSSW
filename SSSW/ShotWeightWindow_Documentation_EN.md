@@ -202,7 +202,7 @@ Uses a `CancellationTokenSource` linked with a timeout (default 30 s). Cancels a
 3. Check `DepartmentInfor`: must belong to IT or QC (FT031). If not → reject, clear RFID.
 4. If valid: `RfidName = C001`, `UserName = "Code · Name"` (displayed in title bar with status dot).
 5. If not in DB: Focus `tbRFIDName` → type name + Enter → `OnRfidNameEnterAsync` → INSERT into FT029.
-6. Clicking the employee name in the title bar opens `frmRfidInput` dialog for manual RFID entry.
+6. Clicking the employee name in the title bar opens `frmRfidInput` dialog for manual RFID entry. The dialog closes automatically once the employee is found (or a new operator is registered).
 
 ### 3.5 Barcode — Find Step from QR
 
@@ -420,7 +420,7 @@ The **Select Step** LookUpEdit popup shows these columns: Machine, Step Code, St
 | Actual Partitioning (prs) | 100 | `C028` `F2` | — |
 | Actual Pairs Shot (prs) | 80 | `C017` `F2` | — |
 | Mold Pairs Shot (prs) | 80 | `C018` `F2` | — |
-| Quantity | 70 | `C025` `F2` | — |
+| Pieces Qty (PCS) | 80 | `C039` `F2` | Pieces of the item in 1 pair, aggregated from BOM level 2 (replaces Quantity at this position); tooltip on header |
 | Weight per Unit (g/unit) | 80 | `C036` `F2` | — |
 | Unit | 50 | `C037` `F2` | — |
 | FG / FG CODE | 763 | `C014` (bold) / `C013` (grey sub) | Two-line stacked; `TextWrapping` |
@@ -432,6 +432,7 @@ The **Select Step** LookUpEdit popup shows these columns: Machine, Step Code, St
 | CATEGORY / CATEGORY CODE | 200 | `C034` (bold) / `C033` (grey sub) | Two-line stacked |
 | PERCENT OF USAGE (%) | 90 | `C035` | Centered |
 | QR CODE | 90 | `C012` | Centered |
+| Quantity | 70 | `C025` `F2` | Level-1 BOM quantity; moved to the last column (2026-11-04) |
 
 #### 6.3.2 History Panel (bottom-left)
 

@@ -106,7 +106,7 @@ SSSW/
 │   │   ├── Main.xaml / .cs             # Shell window (tab switching)
 │   │   ├── ShotWeightWindow.xaml / .cs # Step Component weighing (UserControl)
 │   │   ├── ShotWeightFGWindow.xaml/.cs # FG sample weighing (UserControl)
-│   │   ├── frmRfidInput.xaml / .cs     # Manual RFID entry dialog
+│   │   ├── frmRfidInput.xaml / .cs     # Manual RFID entry dialog (auto-closes when the employee is found)
 │   │   ├── ViewModels/
 │   │   │   ├── BaseViewModel.cs        # INotifyPropertyChanged base
 │   │   │   ├── RelayCommand.cs         # ICommand implementations

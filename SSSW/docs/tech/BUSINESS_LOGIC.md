@@ -105,6 +105,7 @@ C021(step) = C023(step) − Σ over child in L2(step), child ≠ self :  Qty(chi
   Ví dụ FG `6112042313-A478-2801`: Studs = 8 (Inlay) + 2 (Base_FF) = **10 chiếc** → cân 22.10 g/prs ⇒ **2.21 g/chiếc**; Logo = 2; Inlay = 2; Base_FF = 2; REX00018 = 8 + 4 = 12.
   Cột `C025` (Quantity, Level 1) giữ nguyên; `C039` là cột mới.
 - Trọng lượng/chiếc `C036` được cập nhật mỗi lần cân/tính lại `C021`: `C036 = C021 ÷ C039` (REX Receptacle: `scale ÷ C039`).
+- REX chỉ có trong Level 2 (không có dòng ở Level 1) được đưa ra lưới thành dòng riêng để cân: một dòng cho mỗi mã REX, `C015 = 0` (REX có thể thuộc nhiều step), đặt đầu danh sách, `C025 = 1`, cân đủ số chiếc của 1 đôi = tổng qua các step (`C039`).
 - Chi tiết con lấy từ dòng cùng phiên (`_scaleDataFinal`) trước, nếu không có thì FT600 mới nhất theo `C002`.
 - Chi tiết con chưa cân (hoặc trọng lượng ≤ 0) → cảnh báo, **không ghi** `C023`/`C021`.
 - Không có L2 (SP rỗng/lỗi, `Z-VHXXXXXX`) → rơi về công thức cũ (`ApplyLegacyPartWeight`).
@@ -220,7 +221,7 @@ Code: `UI/WPF/Services/PartWeightCalculator.cs`, test: `tests/SSSW.Tests`.
    - Kiểm tra đã có thẻ RFID.
 2. **Database Transaction**:
    - Mở Transaction EF Core: `await db.Database.BeginTransactionAsync()`.
-   - `INSERT` danh sách dòng hợp lệ (`C021 > 0`) vào bảng `FT600`. Dòng **nạp lại từ lần cân trước** (`IsReusedFromHistory`) vẫn được insert lại nhưng **thay `C013` (FG code) và `C014` (FG name) theo FG của step đang scan/chọn**.
+   - `INSERT` danh sách dòng hợp lệ (`C021 > 0`) vào bảng `FT600`. **Mọi dòng insert** (trừ dòng cùng khuôn khác size) **thay `C013` (FG code) và `C014` (FG name) theo FG của step đang scan/chọn** (dòng khớp Hydra mờ không còn mang FG của lệnh khác). Step không có dòng Hydra đúng mã: `C005` (article) = mã step bỏ đoạn màu, `C027` trống = tên step bỏ loại step và màu.
    - `UPDATE` cờ hoàn tất trên `FT601`: `C017 = true` cho các lệnh tương ứng.
    - `COMMIT` transaction.
 3. **Đồng bộ Winline (Background Task / Optional)**:

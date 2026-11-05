@@ -51,7 +51,29 @@
 - Test: `tests/SSSW.Tests` viết lại theo nghĩa mới + `ComponentQuantityAggregatorTests` (chưa chạy được vì NuGet nội bộ không truy cập).
 - Docs: BUSINESS_LOGIC §4.8, DATABASE_SCHEMA, ShotWeightWindow_Documentation_EN. Build `SSSW.csproj` 0 error; chưa chạy app thật (cần tạo cột `C039` trước khi chạy).
 
+## Cột `C039` trên lưới TOTAL STEPS
+- `ShotWeightWindow.xaml` — `dgTotalSteps`: thêm cột `Pieces Qty (PCS)` (`C039`, rộng 80, có tooltip ở tiêu đề) vào đúng vị trí cột `Quantity` cũ; cột `Quantity` (`C025`) dời xuống cuối lưới. Docs: `ShotWeightWindow_Documentation_EN.md` §6.3.1, plan `QTY_WEIGHT_PER_PIECE_LEVEL2.md` §4. Build 0 error; **chưa commit/push** (theo yêu cầu mới của người dùng).
+
+## Reference/History tự chuyển + REX chỉ có ở Level 2 + đổi chữ công thức (code, chưa commit)
+- Sau khi cân xong, hệ thống tự chuyển sang step kế tiếp nhưng Reference / History không đổi theo (chỉ cập nhật khi bấm nút Scale trong lưới). `ExecuteSave` giờ mở panel và gọi `LoadRefHistoryAsync` cho step mới (`AllowPartitionAdj = false`, `IsHistoryExpanded = true`, giống `OnGridScale`).
+- REX chỉ thấy trong BOM Level 2 nay được đưa ra lưới để cân: `AddLevel2OnlyRexRows()` tạo **một dòng cho mỗi mã REX**, `C015` bằng step chứa nó (nhiều step cùng chứa thì lấy step có thứ tự nhỏ nhất), đặt ngay trước step đó; thông tin lệnh/máy/FG lấy từ step chứa nó, mã/tên/category/đơn vị/số lượng lấy từ Level 2. Số chiếc cân = `C039` gộp (vd. REX00018 = 8 + 4 = 12). Nếu mã REX đã có trong FT600 thì điền sẵn trọng lượng như cách nạp REX Level 1 (`PrefillRexFromHistory`). Giả định mình đặt: một dòng cho mỗi mã REX (không tách theo từng step) để khỏi cân trùng.
+- Công thức hiển thị dưới bảng chi tiết đổi chữ: `Part Weight = Total Part Weight − (…)` (trước là `C021 = C023 − (…)`).
+
+## Đề xuất quản lý version qua DB
+- Người dùng yêu cầu version `x.y.z` (bắt đầu 1.2.0), quản lý theo từng máy trong bảng DB, release ghi vào DB để các máy tự cập nhật, revert được, migration tự tạo bảng. Vì chạm vào luồng tự cập nhật và pipeline build Release nên chỉ viết đề xuất: [`plan/APP_VERSIONING_DB_UPDATE.md`](../plan/APP_VERSIONING_DB_UPDATE.md) (bảng `FT610_AppRelease` / `FT611_AppMachine`, migration bằng `AppVersionDbContext` riêng, luồng cập nhật/revert, rủi ro, 7 câu hỏi). **Chưa code, chờ duyệt.**
+
 ## Việc còn mở
 - Người dùng chọn phương án A; đã vẽ bản thiết kế lại `docs/image/bom_level2_option_A_v2_highlight.png` (highlight + mờ dòng khác, click lại để bỏ chọn, bỏ tiêu đề). Đã bỏ dòng self trong bảng chi tiết theo phản hồi (giữ hàng tiêu đề cột). Mockup v2 đã chuyển toàn bộ cột và phần mô tả sang tiếng Anh. **Chờ duyệt** rồi mới code.
 - Chưa chạy app để xác nhận bằng mắt: căn lề cột STATUS và Row Details (cột chi tiết thẳng hàng, mờ dòng, click lại bỏ chọn). Build `SSSW.csproj` 0 error (build ra thư mục tạm vì `SSSW.exe` đang chạy).
 - Cột Component chỉ rộng 125px (cột Actions): tên dài bị cắt, tooltip hiện mã chi tiết; chip Status 65px.
+
+## 2026-11-05: form RFID tay, article/FG khi lưu FT600, viền card
+- **Form nhập RFID tay** (`frmRfidInput`): tra cứu thấy nhân viên (hoặc đăng ký tên mới xong) thì tự đóng, không cần bấm OK (`frmRfidInputViewModel.OnRfidValueChanged/OnRfidNameEnterAsync` trả `bool`).
+- **Article / Main Item Name trống**: step không có dòng Hydra riêng (chỉ khớp "mờ" theo model/size) trước đây mượn article của lệnh khác (cùng một article `2-VB042313-2801` cho mọi step). Nay: khớp không đúng mã step -> `C005` = mã step bỏ đoạn màu (`4-VB042313-A123-2801` -> `4-VB042313-2801`); `C027` trống -> tên step bỏ loại step và màu. Step chọn từ master FT601 hoặc khớp đúng mã giữ nguyên. REX trống lấy theo step cùng thứ tự.
+- **FG code sai khi lưu**: nguyên nhân là `ckHydra` khớp mờ (`C007` chứa mã main, hoặc `C004` chứa `-smc-`) lấy FG của lệnh khác (B915) cho dòng của step đang cân (A478). Nay khi Confirm, mọi dòng insert (trừ dòng cùng khuôn khác size, `_sameMoldRowIds`) lưu FG code/name của step đang scan/chọn; trước đây chỉ dòng nạp lại từ lịch sử.
+- **Viền đáy card**: 2 card dưới (Reference/History, Reference Values) đặt `Margin` đáy 0 nên thấp hơn card Step Information 4px -> đổi thành 4.
+- Chưa chạy app thật; build 0 error.
+
+### Bổ sung 2026-11-05 (lần 2)
+- **Form RFID không tự đóng**: `OperatorSessionService.OnRfidValueChanged` không set lại `RfidCardCode` khi thành công nên VM gán chuỗi rỗng (ô ID bị xóa, điều kiện đóng sai). Nay giữ mã vừa gõ -> form tự đóng.
+- **REX chỉ có ở Level 2**: dòng đưa ra lưới có `C015 = 0` (REX có thể thuộc nhiều step), đặt đầu danh sách, `C025 = 1`, số chiếc gộp theo Level 2 nằm ở `C039`.

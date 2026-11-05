@@ -149,4 +149,4 @@ ALTER TABLE dbo.FT600     ADD C039 float NULL;
 ALTER TABLE dbo.FT600_dev ADD C039 float NULL;   -- bảng test
 ```
 
-**Lưu ý**: lưới `TOTAL STEPS` vẫn hiển thị cột `Quantity` (`C025`) và `Weight per Unit` (`C036`); cột `C039` (số chiếc gộp) chưa có cột hiển thị riêng — cần bổ sung nếu bạn muốn xem trực tiếp.
+**Hiển thị trên lưới** (2026-11-04): cột `Pieces Qty (PCS)` (`C039`) thay vào vị trí cột `Quantity` cũ (sau `Mold Pairs Shot`, trước `Weight per Unit`); cột `Quantity` (`C025`) được dời xuống **cuối cùng** của lưới. Các cột đầu (0–5) không đổi nên Row Details vẫn thẳng hàng.

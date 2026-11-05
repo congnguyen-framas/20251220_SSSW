@@ -817,21 +817,21 @@
                                 </DataGridTextColumn>
 
                                 <DataGridTextColumn
-                                    Width="70"
-                                    Binding="{Binding C025, StringFormat=F2}"
+                                    Width="80"
+                                    Binding="{Binding C039, StringFormat=F2}"
                                     ElementStyle="{StaticResource CenterCell}">
                                     <DataGridTextColumn.HeaderTemplate>
                                         <DataTemplate>
                                             <TextBlock
-                                                Text="Quantity"
+                                                Text="Pieces Qty (PCS)"
                                                 TextAlignment="Center"
                                                 TextWrapping="WrapWithOverflow"
                                                 ToolTipService.ShowDuration="20000">
-                                                <!--<TextBlock.ToolTip>
-    <TextBlock Width="250" TextWrapping="Wrap">
-        Runner weight of the current step. Calculation = (TOTAL WEIGHT INJECTION - TOTAL PART WEIGHT) / pairs per shot
-    </TextBlock>
-</TextBlock.ToolTip>-->
+                                                <TextBlock.ToolTip>
+                                                    <TextBlock Width="250" TextWrapping="Wrap">
+                                                        Pieces of this item in 1 pair, aggregated from BOM level 2 (sum of the quantities of every step that uses it). Weight per Unit = Part Weight / this value.
+                                                    </TextBlock>
+                                                </TextBlock.ToolTip>
                                             </TextBlock>
                                         </DataTemplate>
                                     </DataGridTextColumn.HeaderTemplate>
@@ -1027,6 +1027,27 @@
                                     </DataGridTextColumn.Header>
                                 </DataGridTextColumn>
 
+
+                                <DataGridTextColumn
+                                    Width="70"
+                                    Binding="{Binding C025, StringFormat=F2}"
+                                    ElementStyle="{StaticResource CenterCell}">
+                                    <DataGridTextColumn.HeaderTemplate>
+                                        <DataTemplate>
+                                            <TextBlock
+                                                Text="Quantity"
+                                                TextAlignment="Center"
+                                                TextWrapping="WrapWithOverflow"
+                                                ToolTipService.ShowDuration="20000">
+                                                <!--<TextBlock.ToolTip>
+    <TextBlock Width="250" TextWrapping="Wrap">
+        Runner weight of the current step. Calculation = (TOTAL WEIGHT INJECTION - TOTAL PART WEIGHT) / pairs per shot
+    </TextBlock>
+</TextBlock.ToolTip>-->
+                                            </TextBlock>
+                                        </DataTemplate>
+                                    </DataGridTextColumn.HeaderTemplate>
+                                </DataGridTextColumn>
                             </DataGrid.Columns>
                         </DataGrid>
                     </Grid>
@@ -1043,7 +1064,7 @@
                         <!--  History panel  -->
                         <Border
                             Grid.Column="0"
-                            Margin="6,0,6,0"
+                            Margin="6,0,6,4"
                             Style="{StaticResource CardStyle}">
                             <Grid>
                                 <Grid.RowDefinitions>
@@ -1201,7 +1222,7 @@
                         <!--  Scale Card + Reference Values (Combined)  -->
                         <Border
                             Grid.Column="1"
-                            Margin="0,0,6,0"
+                            Margin="0,0,6,4"
                             Style="{StaticResource CardStyle}">
                             <Grid>
                                 <Grid.RowDefinitions>

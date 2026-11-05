@@ -58,6 +58,7 @@ namespace SSSW.UI.WPF.ViewModels
         private List<FT601> _dataHydraMultiSizeOfMold = new();
         private bool _newScale = true;
         public FT601 _stepItemCodeScale = new();
+        private readonly HashSet<Guid> _sameMoldRowIds = new();
 
         private List<BomWinlineModel> _allStepsFG = new();
         private List<FT600> _scaledDataPreviousStep = new();
@@ -829,11 +830,19 @@ namespace SSSW.UI.WPF.ViewModels
                             C037 = item.Unit,
                             AllowScale = allowScale
                         };
+
+                        // Step không có dòng Hydra riêng (chỉ khớp "mờ" theo model/size) thì article của lệnh khác không đúng cho step này
+                        // → tự lấy từ mã step bỏ phần màu. (Step chọn từ master FT601 / khớp đúng mã step giữ nguyên.)
+                        bool exactHydra = ckHydra != null &&
+                            string.Equals(ckHydra.C004?.Trim(), stepCodeTrim, StringComparison.OrdinalIgnoreCase);
+                        if (!exactHydra && !stepCodeTrim.StartsWith("REX", StringComparison.OrdinalIgnoreCase))
+                            line.C005 = RemoveColorFromStepCode(stepCodeTrim);
                         _scaleData.Add(line);
                     }
 
                     // Trường hợp nhiều size trên 1 khuôn
                     var dataSize = new List<FT600>();
+                    _sameMoldRowIds.Clear();
                     foreach (var item in _scaleData)
                     {
                         //var pfx2 = GlobalVariable.PrefixUpToSecondHyphen(item1.C002);
@@ -902,9 +911,12 @@ namespace SSSW.UI.WPF.ViewModels
                         }
                     }
 
-                    _scaleData.AddRange(dataSize.Where(ds =>
-                        !_scaleData.Any(sd => sd.C002 == ds.C002 && sd.C015 == ds.C015)));
+                    var newSameMold = dataSize.Where(ds =>
+                        !_scaleData.Any(sd => sd.C002 == ds.C002 && sd.C015 == ds.C015)).ToList();
+                    foreach (var ds in newSameMold) _sameMoldRowIds.Add(ds.id);
+                    _scaleData.AddRange(newSameMold);
 
+                    FillMissingArticleInfo(_scaleData);
                     _scaleDataFinal = _scaleData.OrderBy(x => x.C015).ThenBy(x => x.C027).ToList();
 
                     // Đã bỏ toàn bộ khóa / lọc step theo loại (Logo, Cleat_Ring, Studs, Inlay): mọi step đều cân được,
@@ -1000,7 +1012,9 @@ namespace SSSW.UI.WPF.ViewModels
                     _scaleDataFinal = _scaleDataFinal.OrderBy(x => x.C015).ThenBy(x => x.C004).ToList();
 
                     await PreloadLevel2Async();
+                    var level2RexRows = AddLevel2OnlyRexRows();
                     ApplyPieceQuantities();
+                    PrefillRexFromHistory(level2RexRows);
 
                     var stepSel = _scaleDataFinal.FirstOrDefault(x => x.C002?.Trim() == _stepSelected.C004?.Trim());
                     var prevSteps = stepSel == null ? new List<FT600>() : PreviousStepsToCheck(stepSel).ToList();
@@ -1223,6 +1237,7 @@ namespace SSSW.UI.WPF.ViewModels
             // 1 lần với REX/non-injection): tự động chuyển _rowSelected sang bước kế tiếp
             // chưa cân. Nếu không còn bước nào, xóa _rowSelected để tránh trường hợp user
             // lỡ bấm Save lần nữa sẽ ghi đè lại Part Weight của bước vừa cân xong.
+            bool advancedToNextStep = false;
             if ((_rowSelected.C021 ?? 0) > 0)
             {
                 _lastWeighedRow = _rowSelected;
@@ -1234,11 +1249,23 @@ namespace SSSW.UI.WPF.ViewModels
 
                 _rowSelected = nextStep ?? new FT600();
                 _articlePaisShotFinaly = _rowSelected.C028;
+                advancedToNextStep = nextStep != null;
+
+                if (advancedToNextStep)
+                {
+                    // Giống OnGridScale: step mới được chọn thì mở panel Reference / History
+                    AllowPartitionAdj = false;
+                    IsHistoryExpanded = true;
+                    _historyExpanded = true;
+                }
             }
 
             RefreshUI(false);
             FocusGridRowAction?.Invoke(_rowSelected.C002);
             UpdateReferencePanel();
+
+            // Reference / History theo step vừa được tự động chuyển sang (trước đây chỉ cập nhật khi bấm nút Scale trong lưới)
+            if (advancedToNextStep) _ = LoadRefHistoryAsync(_rowSelected);
         }
 
 
@@ -1334,6 +1361,171 @@ namespace SSSW.UI.WPF.ViewModels
             }
         }
 
+        // ─────────────────────────────────────────────────────────────────────
+        //  REX CHỈ XUẤT HIỆN Ở BOM LEVEL 2 → ĐƯA RA LƯỚI ĐỂ CÂN
+        // ─────────────────────────────────────────────────────────────────────
+
+        /// <summary>
+        /// Các mã REX có trong BOM Level 2 của một step nhưng không có dòng riêng trong lưới (Level 1) →
+        /// tạo dòng mới để cân: mỗi mã REX một dòng, số thứ tự step (C015) = 0 (vì có thể thuộc nhiều step),
+        /// đặt đầu danh sách; C025 = 1; số chiếc cân = tổng số chiếc của 1 đôi (C039 gộp theo Level 2).
+        /// </summary>
+        private List<FT600> AddLevel2OnlyRexRows()
+        {
+            var created = new List<FT600>();
+            try
+            {
+                var fgSteps = _allStepsFG
+                    .Select(x => x.ItemStepCode?.Trim())
+                    .Where(x => !string.IsNullOrEmpty(x))
+                    .ToHashSet(StringComparer.OrdinalIgnoreCase);
+
+                var seen = _scaleDataFinal
+                    .Where(x => x.C002?.StartsWith("REX", StringComparison.OrdinalIgnoreCase) ?? false)
+                    .Select(x => x.C002!.Trim())
+                    .ToHashSet(StringComparer.OrdinalIgnoreCase);
+
+                var parents = _scaleDataFinal
+                    .Where(x => !(x.C002?.StartsWith("REX", StringComparison.OrdinalIgnoreCase) ?? false)
+                                && x.C002 != null && fgSteps.Contains(x.C002.Trim()) && GetLevel2(x) != null)
+                    .OrderBy(x => x.C015).ToList();
+
+                foreach (var parent in parents)
+                {
+                    foreach (var child in GetLevel2(parent)!)
+                    {
+                        var code = child.ItemStepCode?.Trim();
+                        if (string.IsNullOrEmpty(code) || !code.StartsWith("REX", StringComparison.OrdinalIgnoreCase)) continue;
+                        if ((child.Quantity ?? 0) <= 0 || !seen.Add(code)) continue;
+
+                        var row = CreateLevel2RexRow(parent, child, code);
+                        _scaleDataFinal.Insert(created.Count, row);   // step thứ tự 0 → đầu danh sách
+                        created.Add(row);
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "AddLevel2OnlyRexRows error");
+            }
+
+            return created;
+        }
+
+        /// <summary>Dòng REX mới: thông tin lệnh / máy / FG lấy từ step chứa nó; mã, tên, category, đơn vị, số lượng lấy từ BOM Level 2.</summary>
+        private FT600 CreateLevel2RexRow(FT600 parent, BomWinlineModel child, string code) => new()
+        {
+            id = Guid.NewGuid(),
+            C000 = parent.C000,
+            C001 = parent.C001,
+            C002 = code,
+            C003 = child.ItemStepName?.Trim(),
+            C004 = parent.C004,
+            C005 = parent.C005,
+            C006 = parent.C006,
+            C007 = parent.C007,
+            C008 = parent.C008,
+            C009 = parent.C009,
+            C012 = parent.C012,
+            C013 = parent.C013,
+            C014 = parent.C014,
+            C015 = 0,                           // REX có thể nằm ở nhiều step → không theo step nào, thứ tự 0
+            C017 = parent.C017,
+            C018 = parent.C018,
+            C019 = parent.C019,
+            C020 = parent.C020,
+            C021 = 0,
+            C022 = 0,
+            C023 = 0,
+            C024 = 0,
+            C025 = 1,                           // Quantity giữ 1; tổng số chiếc/đôi nằm ở C039 (gộp Level 2)
+            C026 = parent.C026,
+            C027 = parent.C027,
+            C028 = parent.C028,
+            C029 = parent.C029,
+            C032 = parent.C032,
+            C033 = child.CategoryCode,
+            C034 = child.CategoryName,
+            C035 = _percentOfUsage,
+            C036 = 0,
+            C037 = child.Unit,
+            C038 = parent.C038,
+            AllowScale = true
+        };
+
+        /// <summary>
+        /// Giống cách nạp REX từ lần cân trước ở Level 1: nếu mã REX đã có trong FT600 (bản ghi mới nhất) thì
+        /// điền sẵn trọng lượng = g/chiếc × số chiếc của 1 đôi (C039); nếu chưa có thì để trống chờ cân.
+        /// </summary>
+        private void PrefillRexFromHistory(IEnumerable<FT600> rows)
+        {
+            foreach (var row in rows)
+            {
+                if (!_weighedChildrenFromDb.TryGetValue(row.C002!.Trim(), out var saved) || (saved.C036 ?? 0) <= 0) continue;
+
+                var catCheck = GlobalVariable.ConfigSystem.CategoryOfNonInjectionUsagePartial?
+                    .FirstOrDefault(x => x.CategoryCode == row.C033);
+                var percent = (saved.C035 ?? 0) > 0 ? saved.C035!.Value : _percentOfUsage;
+                var pairs = (row.C028 ?? 0) > 0 ? row.C028!.Value : 1;
+
+                double total = catCheck == null ? saved.C036!.Value * PiecesOf(row) : saved.C036!.Value;
+                var usage = (double)Math.Round((decimal)(total * percent / 100), 3);
+                var unusage = total - usage;
+
+                row.C021 = catCheck == null ? usage : usage / pairs;
+                row.C022 = catCheck == null ? unusage : unusage / pairs;
+                row.C023 = catCheck == null ? usage : usage / pairs;
+                row.C024 = total;
+                row.C035 = percent;
+                row.C036 = saved.C036;
+                row.IsReusedFromHistory = true;
+            }
+        }
+
+        // ─────────────────────────────────────────────────────────────────────
+        //  ARTICLE / MAIN ITEM NAME KHI STEP KHÔNG CÓ THÔNG TIN
+        // ─────────────────────────────────────────────────────────────────────
+
+        /// <summary>"4-VB042313-A123-2801" → "4-VB042313-2801" (bỏ đoạn màu ở vị trí thứ 3).</summary>
+        internal static string? RemoveColorFromStepCode(string? stepCode)
+        {
+            var code = stepCode?.Trim();
+            if (string.IsNullOrEmpty(code)) return code;
+            var parts = code.Split('-');
+            if (parts.Length < 4) return code;
+            return string.Join("-", parts.Where((_, i) => i != 2));
+        }
+
+        /// <summary>"Base_HF Outsole Future MxSG #FB1167 Color:Any color Size:8" → "Outsole Future MxSG #FB1167" (bỏ loại step + màu/size).</summary>
+        internal static string? MainNameFromStepName(string? stepName)
+        {
+            var name = stepName?.Trim();
+            if (string.IsNullOrEmpty(name)) return name;
+            var colorAt = name.IndexOf(" Color:", StringComparison.OrdinalIgnoreCase);
+            if (colorAt > 0) name = name[..colorAt].Trim();
+            var firstSpace = name.IndexOf(' ');
+            return firstSpace > 0 ? name[(firstSpace + 1)..].Trim() : name;
+        }
+
+        /// <summary>Điền article / main item name còn trống: step thường lấy từ mã/tên step bỏ màu, REX lấy theo step cùng thứ tự.</summary>
+        private static void FillMissingArticleInfo(List<FT600> rows)
+        {
+            foreach (var r in rows)
+            {
+                bool isRex = r.C002?.StartsWith("REX", StringComparison.OrdinalIgnoreCase) == true;
+                if (isRex)
+                {
+                    var sib = rows.FirstOrDefault(x => x != r && x.C015 == r.C015 &&
+                        x.C002?.StartsWith("REX", StringComparison.OrdinalIgnoreCase) != true);
+                    if (string.IsNullOrWhiteSpace(r.C005)) r.C005 = sib?.C005;
+                    if (string.IsNullOrWhiteSpace(r.C027)) r.C027 = sib?.C027;
+                    continue;
+                }
+                if (string.IsNullOrWhiteSpace(r.C005)) r.C005 = RemoveColorFromStepCode(r.C002);
+                if (string.IsNullOrWhiteSpace(r.C027)) r.C027 = MainNameFromStepName(r.C003);
+            }
+        }
+
         private enum PartWeightApply { Applied, Unavailable, Blocked }
 
         /// <summary>Level 2 (các chi tiết cấu thành) của step, null nếu SP không trả dữ liệu.</summary>
@@ -1424,10 +1616,10 @@ namespace SSSW.UI.WPF.ViewModels
             row.Level2Items = items;
             row.Level2HasMissing = missing.Count > 0;
             row.Level2Formula = items.Count == 0 ? null
-                : $"C021 = C023 − ({string.Join(" + ", terms)})" +
+                : $"Part Weight = Total Part Weight − ({string.Join(" + ", terms)})" +
                   (missing.Count > 0
                       ? $"  →  Weigh {string.Join(", ", missing)} before saving this step"
-                      : $" = C023 − {total:F2}");
+                      : $" = Total Part Weight − {total:F2}");
         }
 
         private PartWeightApply ApplyLevel2PartWeight()
@@ -1683,8 +1875,9 @@ namespace SSSW.UI.WPF.ViewModels
                     x.Mesocomp = _mesocomp;
                     x.Mesoyear = _mesoYear;
 
-                    // Dòng nạp lại từ lần cân trước: vẫn insert lại nhưng thay FG code / FG name theo FG của step đang scan/chọn
-                    if (x.IsReusedFromHistory)
+                    // FG code / FG name lưu theo FG của step đang scan/chọn cân (trọng lượng step dùng chung giữa các FG/màu).
+                    // Không áp cho dòng cùng khuôn khác size (mỗi size có FG riêng).
+                    if (!string.IsNullOrEmpty(_stepItemCodeScale.C007) && !_sameMoldRowIds.Contains(x.id))
                     {
                         x.C013 = _stepItemCodeScale.C007;
                         x.C014 = _stepItemCodeScale.C008;

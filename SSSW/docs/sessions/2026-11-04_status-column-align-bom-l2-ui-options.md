@@ -77,3 +77,15 @@
 ### Bổ sung 2026-11-05 (lần 2)
 - **Form RFID không tự đóng**: `OperatorSessionService.OnRfidValueChanged` không set lại `RfidCardCode` khi thành công nên VM gán chuỗi rỗng (ô ID bị xóa, điều kiện đóng sai). Nay giữ mã vừa gõ -> form tự đóng.
 - **REX chỉ có ở Level 2**: dòng đưa ra lưới có `C015 = 0` (REX có thể thuộc nhiều step), đặt đầu danh sách, `C025 = 1`, số chiếc gộp theo Level 2 nằm ở `C039`.
+
+### Bổ sung 2026-11-05 (lần 3): Part Weight cho 1 khuôn nhiều size / nonwoven
+- **Đã rút lại phần "nhiều size"** (xem lần 5 bên dưới): chỉ còn nonwoven/mesh dùng công thức cũ.
+- Luồng cân và chặn cân theo BOM Level 2 giữ nguyên. Chỉ riêng cách **tính Part Weight (C021)** của step thuộc nhóm 1 khuôn nhiều size (`IsMultiSizeMold`) hoặc có vải nonwoven/mesh (`HasNonwovenRex`) dùng lại công thức cũ (`UsesLegacyPartWeight` → `ApplyLegacyPartWeight`: C023 − Σ C021 các bước trước − Σ C021 non-injection cùng step; REX nonwoven chỉ có ở Level 2 (dòng C015 = 0) vẫn được trừ). Cascade Level 2 bỏ qua các step này để không ghi đè. Các step này cũng phải cân xong mọi step trước (`RequiresPreviousStepsWeighed`) vì công thức cũ cần Part Weight các bước trước.
+- Confirm: thêm kiểm tra null khi không có dòng REX cùng step cho nhóm nhiều size.
+
+### Bổ sung 2026-11-05 (lần 4): 1 khuôn nhiều đôi cùng size (Actual Partitioning N)
+- Số cân lần 2 (S) là tổng part của cả N đôi. Công thức mới: **`C023 = S` (không chia N)**, `C021 = C023 / N − Σ level 2` (= S/N − D, D tính cho 1 đôi; helper `PartPerPair`), `C022 = (C024 − S) / N` (Runner = YES). N = Actual Partitioning (C028, theo giá trị đã chỉnh), N rỗng/0 coi là 1. Trước đây part weight chưa chia N nên runner ra âm (vd. W=100, S=80, N=2: cũ −30, mới 10). Với nhiều size, S của từng size là tổng N đôi của size đó; phần chia lại runner giữa các size nay là `(C024 − Σ C023) / Σ C028` (C023 là tổng của N đôi).
+
+### Bổ sung 2026-11-05 (lần 5): nhiều size không còn trừ bước trước
+- Step 8.5-9 (cùng step 2, cùng máy/khuôn với step 10.5-11) bị trừ Part Weight bước trước dù Level 2 "No components": do `UsesLegacyPartWeight` gồm cả `IsMultiSizeMold` (thêm ở lần 3). Đã bỏ: nhiều size tính theo Level 2 như mọi step; chỉ nonwoven/mesh còn dùng công thức cũ. `IsMultiSizeMold` vẫn dùng cho phân bổ runner giữa các size khi Save.
+- Quy tắc chốt (đã khôi phục 1 khuôn nhiều size theo yêu cầu: không đụng vào): 1 khuôn nhiều size và nonwoven/mesh -> công thức cũ (kèm cascade cũ và điều kiện cân xong các bước trước); còn lại theo BOM Level 2; không có Level 2 (hoặc không có chi tiết con) -> Part Weight = chính nó (`C023/N`), không trừ bước trước, không chặn theo bước trước. Đã bỏ cascade cũ (trừ bước trước khi không nạp được Level 2) và nhánh công thức cũ khi không có Level 2.

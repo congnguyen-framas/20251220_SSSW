@@ -79,8 +79,11 @@ Dành cho các linh kiện thông thường ép nhựa:
 - Từ 2026-11-04: **không còn khóa nút cân theo loại step** (`AllowScale` luôn `true`) và **không còn bắt cân hết mọi bước trước**.
 - Step có BOM Level 2: chỉ cần các **chi tiết con** (§4.8) đã có trọng lượng. Thiếu chi tiết nào, lúc Save hệ thống cảnh báo
   `"Component step(s) of this step (BOM level 2) have no weight yet and must be weighed first"` kèm danh sách và từ chối ghi.
-- Step **không có** Level 2 (SP rỗng/lỗi) và không phải REX: vẫn dùng điều kiện cũ (mọi bước trước phải có `C021 > 0`, popup
-  `"Previous step(s) are missing Part Weight and must be weighed first."`). REX không phụ thuộc bước trước.
+- Step **không có** Level 2 (SP rỗng/lỗi) và không phải nonwoven: **Part Weight = chính nó** (`C023 / N`), không trừ bước nào và không phụ thuộc bước trước. Step có Level 2 mà không có chi tiết con thì cũng bằng chính nó.
+
+> **Nhiều đôi cùng size trong 1 shot (Actual Partitioning N)**: số cân lần 2 S là tổng part của N đôi → `C023 = S` (giữ nguyên, không chia N), `C021 = C023/N − Σ level 2` (D tính cho 1 đôi), `C022 = (C024 − S)/N` (Runner = YES, ngược lại 0); N rỗng/0 coi là 1. Ví dụ W=100, S=80, N=2 → C023=80, C021=40, C022=10.
+
+> **Ngoại lệ cách tính Part Weight**: chỉ step thuộc 1 khuôn nhiều size hoặc có vải nonwoven/mesh dùng công thức cũ (C023/N − Σ C021 các bước trước − Σ C021 REX non-injection cùng step), và phải cân xong mọi bước trước (popup `"Previous step(s) are missing Part Weight and must be weighed first."`). Cascade các bước sau của nhóm này cũng theo cách cũ; phần chia lại runner giữa các size khi Save giữ nguyên. REX không phụ thuộc bước trước.
 - Chi tiết: [`ALLOWSCALE_LOGIC_REVIEW.md`](ALLOWSCALE_LOGIC_REVIEW.md).
 
 ### 4.5. Khuôn nhiều Size trên cùng 1 Shot (Multi-size Molds)

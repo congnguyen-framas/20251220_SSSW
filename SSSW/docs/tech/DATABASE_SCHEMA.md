@@ -170,3 +170,4 @@ erDiagram
 5. **`sp_GetCategorryOfItem`**: Lấy danh mục nhóm linh kiện.
 6. **`sp_Shotweight_Gets`**: Lấy thông tin tiêu chuẩn shotweight từ Winline để đối chiếu.
 7. **`sp_Showweight_UpdateToWinline`**: Cập nhật kết quả shotweight đã cân ngược lại database Winline.
+8. **`sp_sssw_getGroupSize`**: `@ItemCode` = phần đầu mã item (vd. `1-VB042502-B660`, SP tự thêm `-%`), `@MesoYear` (mặc định 1512). Trả `ItemCode, ItemName, SizeCode, SizeName, C063, C064, ShotWeight (= C063 + C064)` theo từng size của nhóm. Script: `docs/sql/sp_sssw_getGroupSize.sql`; model: `GroupSizeModel`.

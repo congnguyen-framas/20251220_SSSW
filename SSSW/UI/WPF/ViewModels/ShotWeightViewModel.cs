@@ -1115,30 +1115,33 @@ namespace SSSW.UI.WPF.ViewModels
                 }
                 else
                 {
-                    // Lần cân thứ hai: ghi khối lượng part weight (g/prs)
+                    // Lần cân thứ hai: số cân = tổng part của cả N đôi trong 1 shot (N = Actual Partitioning)
+                    var prsShot = (_articlePaisShotFinaly ?? 0) > 0 ? _articlePaisShotFinaly!.Value : 1;
+
+                    // C023 = Total Part Weight = S (không chia N); Part Weight C021 = C023 / N − Σ level 2 (xem PartPerPair)
                     _rowSelected.C023 = _scaleValue;
 
-                    var prsShot = _articlePaisShotFinaly;
-
-                    // C022 = Runner weight (g/prs)
-                    // = (TotalWeight – PartWeight×pairs) / pairs
+                    // C022 = Runner weight (g/prs) = (Total Weight − S) / N
                     _rowSelected.C022 = RunnerText == "YES"
-                        ? Math.Round(
-                            ((_rowSelected.C024 - (_rowSelected.C023 * (double?)prsShot)) /
-                             (double?)prsShot) ?? 0, 3)
+                        ? Math.Round((_rowSelected.C024 - _scaleValue) / prsShot ?? 0, 3)
                         : 0;
 
                     if (!_rowSelected.C003.StartsWith("Logo") &&
                         !_rowSelected.C003.StartsWith("Cleat_Ring"))
                     {
                         // BOM Level 2: C021 = C023 − Σ(Qty × trọng lượng chi tiết con). Không có Level 2 → công thức cũ.
-                        var l2 = ApplyLevel2PartWeight();
+                        var l2 = UsesLegacyPartWeight(_rowSelected) ? PartWeightApply.Unavailable : ApplyLevel2PartWeight();
                         if (l2 == PartWeightApply.Blocked) return;
-                        if (l2 == PartWeightApply.Unavailable) ApplyLegacyPartWeight();
+                        if (l2 == PartWeightApply.Unavailable)
+                        {
+                            // 1 khuôn nhiều size / nonwoven / mesh: công thức riêng (cũ). Còn lại không có BOM Level 2 → Part Weight = chính nó (C023 / N)
+                            if (UsesLegacyPartWeight(_rowSelected)) ApplyLegacyPartWeight();
+                            else _rowSelected.C021 = PartPerPair(_rowSelected);
+                        }
                     }
                     else
                     {
-                        _rowSelected.C021 = _rowSelected.C023;
+                        _rowSelected.C021 = PartPerPair(_rowSelected);
                     }
 
                     // C036 = trọng lượng/chiếc = C021 / C039 (số chiếc trong 1 đôi gộp theo BOM Level 2)
@@ -1193,7 +1196,7 @@ namespace SSSW.UI.WPF.ViewModels
 
             if (sameMolds.Count > 1)
             {
-                var sumPW = sameMolds.Sum(x => x.C023 * x.C028);
+                var sumPW = sameMolds.Sum(x => x.C023);   // C023 = tổng part của N đôi của từng size
                 var pairShot = sameMolds.Sum(x => x.C028);
                 foreach (var s in sameMolds)
                 {
@@ -1203,11 +1206,14 @@ namespace SSSW.UI.WPF.ViewModels
             }
 
             // ── Cascade: cập nhật C021/C022 cho các bước sau ────────────────
+            // Step thường: tính lại theo BOM Level 2 (không có Level 2 thì Part Weight = chính nó).
             if (_level2ByStep.Count > 0)
                 CascadeLevel2();
-            else
+
+            // Step 1 khuôn nhiều size / nonwoven: cascade theo cách cũ (giữ nguyên như trước)
             {
                 var toUpdate = _scaleDataFinal.Where(x =>
+                        UsesLegacyPartWeight(x) &&
                         x.C015 >= _rowSelected.C015 && x.C024 > 0 &&
                         !x.C003!.StartsWith("Stud") && !x.C003.StartsWith("Inlay") &&
                         !x.C003.StartsWith("Cleat_Ring") &&
@@ -1220,17 +1226,16 @@ namespace SSSW.UI.WPF.ViewModels
                 {
                     if (item.C015 == _rowSelected.C015)
                     {
-                        item.C021 = item.C023 - _rowSelected.C023;
+                        item.C021 = PartPerPair(item) - PartPerPair(_rowSelected);
                         item.C022 = item.C024 - item.C021;
                     }
                     else
                     {
                         var prev = toUpdate.FirstOrDefault(x => x.C015 < item.C015 - 1);
-                        item.C021 = item.C023 - prev?.C023;
+                        item.C021 = PartPerPair(item) - (prev == null ? null : PartPerPair(prev));
                         item.C022 = item.C024 - item.C021;
                     }
                 }
-
             }
 
             // ── Step vừa cân đã hoàn tất (đủ Part Weight – 2 lần cân với item injection,
@@ -1528,6 +1533,42 @@ namespace SSSW.UI.WPF.ViewModels
 
         private enum PartWeightApply { Applied, Unavailable, Blocked }
 
+        /// <summary>
+        /// Step thuộc nhóm 1 khuôn nhiều size: cùng máy, khuôn, thứ tự step và tiền tố mã step (cùng điều kiện phân bổ C024/C022 khi Save).
+        /// </summary>
+        private bool IsMultiSizeMold(FT600 row)
+        {
+            if (row.C002?.StartsWith("REX", StringComparison.OrdinalIgnoreCase) ?? false) return false;
+            var pfx2 = GlobalVariable.PrefixUpToSecondHyphen(row.C002);
+            return _scaleDataFinal.Count(x =>
+                x.C020 == row.C020 && x.C004 == row.C004 && x.C015 == row.C015 &&
+                GlobalVariable.PrefixUpToSecondHyphen(x.C002) == pfx2) > 1;
+        }
+
+        private static bool IsNonwovenCategory(int? categoryCode)
+            => categoryCode != null &&
+               (GlobalVariable.ConfigSystem.CategoryOfNonInjectionUsagePartial?.Any(c => c.CategoryCode == categoryCode) ?? false);
+
+        /// <summary>Step có chi tiết REX loại nonwoven / mesh (chỉ dùng một phần theo %) trong cùng step hoặc trong BOM Level 2.</summary>
+        private bool HasNonwovenRex(FT600 row)
+        {
+            if (_scaleDataFinal.Any(x => x != row && x.C015 == row.C015 && (x.C002?.StartsWith("REX", StringComparison.OrdinalIgnoreCase) ?? false)
+                                         && IsNonwovenCategory(x.C033))) return true;
+            var code = row.C002?.Trim();
+            return code != null && _level2ByStep.TryGetValue(code, out var l2) &&
+                   l2.Any(c => (c.ItemStepCode?.StartsWith("REX", StringComparison.OrdinalIgnoreCase) ?? false) && IsNonwovenCategory(c.CategoryCode));
+        }
+
+        /// <summary>
+        /// Chỉ riêng cách TÍNH Part Weight (C021) dùng công thức cũ (C023 − Σ C021 các bước trước − Σ C021 non-injection cùng step) cho:
+        /// 1 khuôn nhiều size, và step có vải nonwoven / mesh. Việc chặn cân / hiển thị theo BOM Level 2 giữ nguyên.
+        /// </summary>
+        /// <summary>Total Part Weight của 1 đôi = C023 / N (N = Actual Partitioning C028, rỗng/0 coi là 1). C023 giữ nguyên là số cân của cả N đôi.</summary>
+        private static double PartPerPair(FT600 row)
+            => Math.Round((row.C023 ?? 0) / ((row.C028 ?? 0) > 0 ? row.C028!.Value : 1), 3);
+
+        private bool UsesLegacyPartWeight(FT600 row) => IsMultiSizeMold(row) || HasNonwovenRex(row);
+
         /// <summary>Level 2 (các chi tiết cấu thành) của step, null nếu SP không trả dữ liệu.</summary>
         private IReadOnlyList<BomWinlineModel>? GetLevel2(FT600 row)
         {
@@ -1536,12 +1577,12 @@ namespace SSSW.UI.WPF.ViewModels
         }
 
         /// <summary>
-        /// Điều kiện cũ "mọi step trước phải cân xong" chỉ còn áp dụng cho step injection KHÔNG có BOM Level 2.
+        /// Điều kiện cũ "mọi step trước phải cân xong" chỉ còn áp dụng cho step tính Part Weight theo công thức cũ (1 khuôn nhiều size, nonwoven / mesh).
         /// Có Level 2 thì chặn theo chi tiết con (ApplyLevel2PartWeight báo danh sách chi tiết chưa cân khi tính C021);
-        /// REX / non-injection không phụ thuộc step trước.
+        /// không có Level 2 thì Part Weight = chính nó nên không phụ thuộc step trước; REX / non-injection cũng vậy.
         /// </summary>
         private bool RequiresPreviousStepsWeighed(FT600 row)
-            => !(row.C002?.StartsWith("REX") ?? false) && GetLevel2(row) == null;
+            => !(row.C002?.StartsWith("REX") ?? false) && UsesLegacyPartWeight(row);
 
         private IEnumerable<FT600> PreviousStepsToCheck(FT600 row)
             => RequiresPreviousStepsWeighed(row)
@@ -1627,7 +1668,7 @@ namespace SSSW.UI.WPF.ViewModels
             var l2 = GetLevel2(_rowSelected);
             if (l2 == null) return PartWeightApply.Unavailable;
 
-            var result = _partWeightCalculator.Calculate(_rowSelected.C023 ?? 0, _rowSelected.C002!, l2, FindWeighedChild);
+            var result = _partWeightCalculator.Calculate(PartPerPair(_rowSelected), _rowSelected.C002!, l2, FindWeighedChild);
             if (!result.IsComplete)
             {
                 _dialog.Warn(
@@ -1655,10 +1696,10 @@ namespace SSSW.UI.WPF.ViewModels
                          !(x.C002?.StartsWith("REX") ?? false)))
             {
                 var l2 = GetLevel2(parent);
-                if (l2 == null || !l2.Any(c => !PartWeightCalculator.IsSelfRow(c, parent.C002!) &&
+                if (l2 == null || UsesLegacyPartWeight(parent) || !l2.Any(c => !PartWeightCalculator.IsSelfRow(c, parent.C002!) &&
                         string.Equals(c.ItemStepCode?.Trim(), changed, StringComparison.OrdinalIgnoreCase))) continue;
 
-                var r = _partWeightCalculator.Calculate(parent.C023 ?? 0, parent.C002!, l2, FindWeighedChild);
+                var r = _partWeightCalculator.Calculate(PartPerPair(parent), parent.C002!, l2, FindWeighedChild);
                 if (!r.IsComplete) continue;
 
                 parent.C021 = r.PartWeight;
@@ -1676,10 +1717,15 @@ namespace SSSW.UI.WPF.ViewModels
                         var previuosStep = _scaleDataFinal
                             .Where(x => x.C015 <= _rowSelected.C015 - 1).ToList();
 
+                        // REX nonwoven chỉ có ở Level 2 (dòng C015 = 0) vẫn được trừ như REX cùng step
+                        var l2Codes = _level2ByStep.TryGetValue(_rowSelected.C002?.Trim() ?? "", out var l2c)
+                            ? l2c.Select(c => c.ItemStepCode?.Trim()).ToHashSet(StringComparer.OrdinalIgnoreCase)
+                            : new HashSet<string?>();
                         var nonInjection = _scaleDataFinal
-                            .Where(x => x.C015 == _rowSelected.C015 &&
+                            .Where(x => (x.C015 == _rowSelected.C015 &&
                                         (x.C002 == "Z-VHXXXXXX" ||
-                                         (x.C002?.StartsWith("REX") ?? false))).ToList();
+                                         (x.C002?.StartsWith("REX") ?? false)))
+                                        || ((x.C015 ?? 0) == 0 && IsNonwovenCategory(x.C033) && l2Codes.Contains(x.C002?.Trim()))).ToList();
 
                          //tạm thời thêm vào để chạy đưuọc bước item có cleat nhưng ko dùng ở bước Inlay ở fVN đã, sau này khi sửa công thức BOM theo level 2 và update code xong thì bỏ phần này đi
                         if (_rowSelected.C003.StartsWith("Inlay"))
@@ -1692,18 +1738,18 @@ namespace SSSW.UI.WPF.ViewModels
                                     )
                                 )
                             {
-                                _rowSelected.C021 = _rowSelected.C023;
+                                _rowSelected.C021 = PartPerPair(_rowSelected);
                             }
                             else
                             {
-                                _rowSelected.C021 = _rowSelected.C023
+                                _rowSelected.C021 = PartPerPair(_rowSelected)
                                                     - previuosStep?.Sum(x => x.C021)
                                                     - nonInjection?.Sum(x => x.C021);
                             }
                         }
                         else if (!_rowSelected.C003.StartsWith("Studs"))
                         {
-                            _rowSelected.C021 = _rowSelected.C023
+                            _rowSelected.C021 = PartPerPair(_rowSelected)
                                                 - previuosStep?.Sum(x => x.C021)
                                                 - nonInjection?.Sum(x => x.C021);
                         }
@@ -1720,11 +1766,11 @@ namespace SSSW.UI.WPF.ViewModels
                                     )
                                 )
                             {
-                                _rowSelected.C021 = _rowSelected.C023;
+                                _rowSelected.C021 = PartPerPair(_rowSelected);
                             }
                             else
                             {
-                                _rowSelected.C021 = _rowSelected.C023
+                                _rowSelected.C021 = PartPerPair(_rowSelected)
                                                     - previuosStep?.Sum(x => x.C021)
                                                     - nonInjection?.Sum(x => x.C021);
                             }
@@ -1782,9 +1828,9 @@ namespace SSSW.UI.WPF.ViewModels
                           .AsNoTracking().ToListAsync();
 
                     var catCheck = GlobalVariable.ConfigSystem.CategoryOfNonInjectionUsagePartial?
-                          .FirstOrDefault(x => x.CategoryCode == category?.FirstOrDefault().CategoryCode);
+                          .FirstOrDefault(x => x.CategoryCode == category?.FirstOrDefault()?.CategoryCode);
 
-                    if (catCheck != null)
+                    if (catCheck != null && nonInjectionCheck != null)
                     {
                         var sizes = _scaleDataFinal.Where(x => x.C015 == confirmRow.C015 && !x.C002.StartsWith("REX")).ToList();
                         //nonInjectionCheck.C008 = 

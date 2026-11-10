@@ -432,6 +432,14 @@ namespace SSSW.UI.WPF.ViewModels
             set { _isOverlayVisible = value; OnPropertyChanged(); }
         }
 
+        private string _overlayMessage = "Loading…";
+        /// <summary>Nội dung hiển thị trên lớp phủ chờ (Loading… / Saving data…).</summary>
+        public string OverlayMessage
+        {
+            get => _overlayMessage;
+            set { _overlayMessage = value; OnPropertyChanged(); }
+        }
+
         private bool _isCancelLoadEnabled = false;
         public bool IsCancelLoadEnabled
         {
@@ -919,8 +927,171 @@ namespace SSSW.UI.WPF.ViewModels
                     FillMissingArticleInfo(_scaleData);
                     _scaleDataFinal = _scaleData.OrderBy(x => x.C015).ThenBy(x => x.C027).ToList();
 
-                    // Đã bỏ toàn bộ khóa / lọc step theo loại (Logo, Cleat_Ring, Studs, Inlay): mọi step đều cân được,
-                    // phần trừ chi tiết con lấy theo BOM Level 2 (PartWeightCalculator). Xem docs/tech/ALLOWSCALE_LOGIC_REVIEW.md.
+                    // Khôi phục logic khóa / lọc nút cân như bản gốc (2026-11-05): Logo, Cleat_Ring, Studs, Inlay (1 khuôn nhiều size, group size)
+                    // phải cân riêng — các step không thuộc nhóm đang cân bị khóa (AllowScale = false) hoặc bị loại khỏi danh sách.
+                    // Phần trừ chi tiết con của từng step vẫn lấy theo BOM Level 2. Xem docs/tech/ALLOWSCALE_LOGIC_REVIEW.md.
+                    #region Lọc lại để cho phép cân hay là không các bước không được lấy ra theo step đọc từ QR/selected Lookup
+                    /*
+                     * Nếu là Logo/Cleat_Ring/Studs(có stepNo ko đứng sau bước Base)/Inlay(chung machine và MoldId) thì chỉ cho phép cân các bước Logo/Cleat_Ring/Studs/Inlay tương ứng, các bước khác sẽ bị xóa khỏi danh sách cân.
+                     * Khi quét tem chọn can các bước khác Logo/Cleat_Ring/Studs/Inlay thì sẽ set bit AllowScale = False cho các bước Logo/Cleat_Ring/Studs/Inlay theo các điều kiện như trên ra để không cho phép cân. còn ngaoif ra thì cho phép cân bình thường.
+                     * Nếu chọn cân bước cuối mà có các bước trước đó chưa có giá trị cân thì cần phải cân các bước đó trước rồi mới cân bước cuối. Nếu không thì sẽ báo lỗi và không cho phép cân bước cuối.
+                     */
+
+                    //var stepAll = _allStepsFG.Select(x => x.ItemStepCode).ToList();
+                    var stepAll = _allStepsFG
+                                .Select(x => x.ItemStepCode)
+                                .ToHashSet();
+                    var checkMultiSize = _scaleDataFinal
+                                .GroupBy(x => (x.C004, x.C020))
+                                .Where(g => g.Count() > 1)
+                                .ToDictionary(g => g.Key, g => g.ToList());
+
+                    var startWith = stepCode.C005.StartsWith("Logo") ? "Logo"
+                           : stepCode.C005.StartsWith("Studs") || stepCode.C005.StartsWith("Outer_Studs") || stepCode.C005.StartsWith("Inner_Studs") ? "Studs"
+                           : stepCode.C005.StartsWith("Cleat_Ring") ? "Cleat_Ring"
+                        : string.Empty;
+
+                    //nếu là cân cho bước logo/studs/ring thì xóa các bước khác logo/studs/ring
+                    if (stepCode.C005.StartsWith("Logo ")
+                        || stepCode.C005.StartsWith("Cleat_Ring")
+                      //|| stepCode.C005.StartsWith("Studs ")
+                      )
+                    {
+                        //var previousStep = _allStepsFG.FirstOrDefault(x => x.ParallelSequence == stepCode.C010 - 1);
+
+                        //if (startWith != "Studs"
+                        //    || (startWith == "Studs"
+                        //        && (previousStep == null
+                        //            || (previousStep != null && !previousStep.ItemStepName.StartsWith("Base"))
+                        //            )
+                        //        )
+                        //    )
+                        {
+                            _scaleDataFinal.RemoveAll(x =>
+                            {
+                                bool isStartWith = x.C003.StartsWith(startWith);
+
+                                return (!isStartWith);
+                                //|| duplicatedSize;
+                            });
+
+                            // Logo: lấy thêm các size cùng nhóm (sp_sssw_getGroupSize) và đưa vào lưới như 1 khuôn nhiều size
+                            if (startWith == "Logo")
+                                await AddLogoGroupSizesAsync(db, stepCode);
+                        }
+                    }
+                    //nếu là cân cho bước khác logo/studs/ring thì xóa các bước logo/studs/ring mà không có trong BOM
+                    else
+                    {
+                        //lọc lại nếu bước được chọn cân mà ko phải là Stud hoặc Inlay (nhiều size/1 mold) thì khóa ko cho cân Stud và Inlay
+                        //bắt buộc phải cân Stud và Inlay riêng
+
+                        var logosStep = _scaleDataFinal.Where(x => x.C003.StartsWith("Logo")).ToList();
+
+                        if (logosStep.Any() && !stepCode.C005.StartsWith("Logo"))
+                        {
+                            logosStep.ForEach(x => x.AllowScale = false);
+                        }
+
+                        var cleat_RingStep = _scaleDataFinal.FirstOrDefault(x => x.C003.StartsWith("Cleat_Ring"));
+
+                        if (cleat_RingStep != null && !stepCode.C005.StartsWith("Cleat_Ring"))
+                        {
+                            cleat_RingStep.AllowScale = false;
+                        }
+
+                        var studsSteps = _scaleDataFinal
+                            .Where(x => x.C003.StartsWith("Studs")
+                                || x.C003.StartsWith("Outer_Studs")
+                                || x.C003.StartsWith("Inner_Studs")
+                            )
+                            .ToList();
+
+                        var inlaySteps = _scaleDataFinal.Where(x => x.C003.StartsWith("Inlay")).ToList();
+
+                        var previousStep = _allStepsFG.FirstOrDefault(x => x.ParallelSequence == stepCode.C010 - 1);
+
+                        if (!stepCode.C005.StartsWith("Inlay")
+                            && (startWith != "Studs"
+                                || (startWith == "Studs" && previousStep != null && (previousStep.ItemStepName.StartsWith("Base") || previousStep.ItemStepName.StartsWith("Outer_Studs")))
+                                )
+                            )
+                        {
+                            if (inlaySteps.Count() > 1)
+                                inlaySteps.ForEach(x => x.AllowScale = false);
+
+                            //check allow scle for studs
+                            if (studsSteps != null)
+                            {
+                                //lấy ra bước trước của nước studs để check xem có phải là base hay không, nếu là base thì cho phép cân studs, nếu ko phải base thì ko cho phép cân studs
+                                //nếu ở fVN thì nếu bước trước là Studs thì cho phép cân bước studs này luôn, và sẽ trừ số lượng cân của bước Studs trước đó ra khỏi số lượng cân của bước Studs hiện tại. Ex: 6112042502-C134-2801 - item code:3-VB042502-C136-5065
+
+                                //var previousStepBse = _allStepsFG.FirstOrDefault(x => x.ParallelSequence == studsSteps.FirstOrDefault(x => x.C002 == stepCode.C004)?.C015 - 1);
+
+                                //var allowStudsScale = !(previousStepBse == null
+                                //                            || (previousStepBse != null
+                                //                                    && !previousStepBse.ItemStepName.StartsWith("Base")
+                                //                                    && !previousStepBse.ItemStepName.StartsWith("Studs")
+                                //                                    && !previousStepBse.ItemStepName.StartsWith("Outer_Studs")
+                                //                                    && !previousStepBse.ItemStepName.StartsWith("Inner_Studs")
+                                //                                )
+                                //                         );
+                                //studsSteps.ForEach(x => x.AllowScale = allowStudsScale);
+
+                                foreach (var itemStud in studsSteps)
+                                {
+                                    var previousStepS = _allStepsFG.FirstOrDefault(x => x.ParallelSequence == itemStud.C015 - 1);
+
+                                    itemStud.AllowScale = !(previousStepS == null
+                                                                || (previousStepS != null
+                                                                        && !previousStepS.ItemStepName.StartsWith("Base")
+                                                                        && !previousStepS.ItemStepName.StartsWith("Studs")
+                                                                        && !previousStepS.ItemStepName.StartsWith("Outer_Studs")
+                                                                        && !previousStepS.ItemStepName.StartsWith("Inner_Studs")
+                                                                    ));
+
+                                }
+                            }
+
+                            //xóa những step ko có trong BOM ra
+                            _scaleDataFinal.RemoveAll(x =>
+                            {
+                                bool isLogo = x.C003.StartsWith("Logo");
+                                bool isStuds = x.C003.StartsWith("Studs") || x.C003.StartsWith("Outer_Studs") || x.C003.StartsWith("Inner_Studs");
+                                bool isRing = x.C003.StartsWith("Cleat_Ring");
+                                bool isInlay = x.C003.StartsWith("Inlay");
+
+                                bool hasC002 = stepAll.Contains(x.C002);
+
+                                bool duplicatedSize = checkMultiSize.ContainsKey((x.C004, x.C020));
+
+                                return (isLogo || isStuds || isRing || isInlay) && !hasC002;
+                                //|| duplicatedSize;
+                            });
+                        }
+                        else if (stepCode.C005.StartsWith("Inlay")
+                                || (startWith == "Studs"
+                                    && (previousStep == null
+                                        || (previousStep != null && !previousStep.ItemStepName.StartsWith("Base"))
+                                        )
+                                   )
+                                )
+                        {
+                            var startWith1 = stepCode.C005.StartsWith("Studs") || stepCode.C005.StartsWith("Outer_Studs") || stepCode.C005.StartsWith("Inner_Studs") ? "Studs"
+                                : stepCode.C005.StartsWith("Outer_Studs") ? "Outer_Studs"
+                                    : stepCode.C005.StartsWith("Inner_Studs") ? "Inner_Studs"
+                                        : "Inlay";
+
+                            _scaleDataFinal.RemoveAll(x =>
+                            {
+                                bool isStartWith = x.C003.StartsWith(startWith1);
+
+                                return (!isStartWith);
+                                //|| duplicatedSize;
+                            });
+                        }
+                    }
+                    #endregion
 
                     // Đọc dữ liệu các bước đã cân trước đó
                     foreach (var item1 in _scaleDataFinal)
@@ -1167,7 +1338,8 @@ namespace SSSW.UI.WPF.ViewModels
                     _rowSelected.C024 = _scaleValue;
                     _rowSelected.C023 = _scaleValue;
                     _rowSelected.C021 = _scaleValue;
-                    _rowSelected.C036 = Math.Round(_scaleValue / PiecesOf(_rowSelected), 2);
+                    _rowSelected.C036 = PiecesStrict(_rowSelected) > 0
+                        ? Math.Round(_scaleValue / PiecesStrict(_rowSelected), 2) : 0;
                 }
                 else
                 {
@@ -1265,6 +1437,8 @@ namespace SSSW.UI.WPF.ViewModels
                 }
             }
 
+            _scaleDataFinal.ForEach(RoundDoubles);   // hiển thị và lưu cùng giá trị đã làm tròn 3 số lẻ
+
             RefreshUI(false);
             FocusGridRowAction?.Invoke(_rowSelected.C002);
             UpdateReferencePanel();
@@ -1311,19 +1485,30 @@ namespace SSSW.UI.WPF.ViewModels
         //  SỐ CHIẾC / 1 ĐÔI (C039) VÀ TRỌNG LƯỢNG / CHIẾC (C036)
         // ─────────────────────────────────────────────────────────────────────
 
+        /// <summary>
+        /// C039 = số chiếc của chi tiết trong 1 đôi, gộp theo BOM Level 2 (REX / studs / logo / ring...).
+        /// Không có trong Level 2 của step nào (hoặc là step "chain" chỉ dồn vào step kế tiếp) → 0.
+        /// </summary>
         private double PiecesFor(FT600 row)
-            => ComponentQuantityAggregator.PiecesFor(row.C002, _pieceQtyByCode, row.C025, row.C037);
+        {
+            var code = row.C002?.Trim();
+            return code != null && _pieceQtyByCode.TryGetValue(code, out var q) ? q : 0;
+        }
 
         /// <summary>Số chiếc dùng để chia trọng lượng: C039 nếu đã có, ngược lại C025 (Quantity), tối thiểu 1.</summary>
         private static double PiecesOf(FT600 row)
             => (row.C039 ?? 0) > 0 ? row.C039!.Value : ((row.C025 ?? 0) > 0 ? row.C025!.Value : 1);
 
-        /// <summary>C036 (g/chiếc) = C021 / số chiếc. REX giữ công thức riêng khi cân (scale / số chiếc).</summary>
+        /// <summary>Số chiếc theo C039 (không fallback): 0 nếu chưa có trong Level 2.</summary>
+        private static double PiecesStrict(FT600 row) => (row.C039 ?? 0) > 0 ? row.C039!.Value : 0;
+
+        /// <summary>C036 (g/chiếc) = C021 / C039; C039 = 0 (không có trong Level 2) → C036 = 0. REX giữ công thức riêng khi cân (scale / C039).</summary>
         private static void UpdateWeightPerPiece(FT600 row)
         {
             if (row.C002?.StartsWith("REX") ?? false) return;
             if ((row.C021 ?? 0) <= 0) return;
-            row.C036 = Math.Round(row.C021!.Value / PiecesOf(row), 3);
+            var pcs = PiecesStrict(row);
+            row.C036 = pcs > 0 ? Math.Round(row.C021!.Value / pcs, 3) : 0;
         }
 
         /// <summary>
@@ -1344,6 +1529,11 @@ namespace SSSW.UI.WPF.ViewModels
                     .ToDictionary(kv => kv.Key, kv => kv.Value, StringComparer.OrdinalIgnoreCase);
 
                 _pieceQtyByCode = ComponentQuantityAggregator.Aggregate(scoped);
+
+                // Step "chain" (chỉ dồn vào step kế tiếp) coi như không có trong Level 2 → C039 = 0
+                var fgRows = FgStepRows();
+                foreach (var st in fgRows.Where(x => IsChainOnly(x, fgRows)))
+                    _pieceQtyByCode.Remove(st.C002!.Trim());
 
                 foreach (var row in _scaleDataFinal)
                 {
@@ -1577,17 +1767,67 @@ namespace SSSW.UI.WPF.ViewModels
         }
 
         /// <summary>
-        /// Điều kiện cũ "mọi step trước phải cân xong" chỉ còn áp dụng cho step tính Part Weight theo công thức cũ (1 khuôn nhiều size, nonwoven / mesh).
-        /// Có Level 2 thì chặn theo chi tiết con (ApplyLevel2PartWeight báo danh sách chi tiết chưa cân khi tính C021);
-        /// không có Level 2 thì Part Weight = chính nó nên không phụ thuộc step trước; REX / non-injection cũng vậy.
+        /// Step phải cân xong trước khi cân <paramref name="row"/>:
+        /// - 1 khuôn nhiều size / nonwoven (công thức cũ): mọi step trước;
+        /// - còn lại: chỉ step ngay trước nếu nó là "chain" (xem ChainPredecessors); chi tiết con Level 2 được kiểm khi Save.
+        /// REX / non-injection không phụ thuộc step trước.
         /// </summary>
-        private bool RequiresPreviousStepsWeighed(FT600 row)
-            => !(row.C002?.StartsWith("REX") ?? false) && UsesLegacyPartWeight(row);
-
         private IEnumerable<FT600> PreviousStepsToCheck(FT600 row)
-            => RequiresPreviousStepsWeighed(row)
-                ? _scaleDataFinal.Where(x => x.C015 < row.C015)
-                : Enumerable.Empty<FT600>();
+        {
+            if (row.C002?.StartsWith("REX", StringComparison.OrdinalIgnoreCase) ?? false) return Enumerable.Empty<FT600>();
+            return UsesLegacyPartWeight(row)
+                ? _scaleDataFinal.Where(x => x.C015 > 0 && x.C015 < row.C015)   // bỏ dòng REX Level 2 (C015 = 0)
+                : ChainPredecessors(row);
+        }
+
+        // ─────────────────────────────────────────────────────────────────────
+        //  CHUỖI STEP: step không được dùng làm chi tiết con ở nơi nào khác thì "dồn" vào step kế tiếp
+        // ─────────────────────────────────────────────────────────────────────
+
+        private List<FT600> FgStepRows() => _scaleDataFinal.Where(x =>
+            !string.IsNullOrWhiteSpace(x.C002) && x.C002 != "Z-VHXXXXXX" &&
+            !x.C002.StartsWith("REX", StringComparison.OrdinalIgnoreCase)).ToList();
+
+        /// <summary>
+        /// Step P là "chain": trong BOM Level 2 của các step FG, P chỉ được tham chiếu bởi step kế liền sau nó
+        /// (hoặc không được tham chiếu ở đâu cả) → trọng lượng của P đã nằm trọn trong step kế tiếp, nên khi cân step kế tiếp
+        /// phải trừ Total Part của P. P được dùng ở step khác (vd. Studs dùng ở nhiều step, Logo dùng ở step xa) → trừ theo Level 2.
+        /// </summary>
+        private bool IsChainOnly(FT600 p, List<FT600> steps)
+        {
+            int? nextSeq = steps.Where(x => x.C015 > p.C015).Select(x => x.C015).OrderBy(x => x).FirstOrDefault();
+            var code = p.C002!.Trim();
+            foreach (var q in steps)
+            {
+                if (!_level2ByStep.TryGetValue(q.C002!.Trim(), out var l2)) continue;
+                bool refs = l2.Any(c => !PartWeightCalculator.IsSelfRow(c, q.C002!) && (c.Quantity ?? 0) > 0 &&
+                    string.Equals(c.ItemStepCode?.Trim(), code, StringComparison.OrdinalIgnoreCase));
+                if (refs && (nextSeq == null || q.C015 != nextSeq)) return false;
+            }
+            return true;
+        }
+
+        /// <summary>Các step "chain" ở thứ tự ngay trước <paramref name="row"/>.</summary>
+        private List<FT600> ChainCandidatesBefore(FT600 row)
+        {
+            var steps = FgStepRows();
+            var before = steps.Where(x => x.C015 < row.C015).ToList();
+            if (before.Count == 0) return new List<FT600>();
+            var prevSeq = before.Max(x => x.C015);
+            return before.Where(x => x.C015 == prevSeq && IsChainOnly(x, steps)).ToList();
+        }
+
+        /// <summary>Step chain ngay trước cần trừ (cùng thứ tự có nhiều size thì ưu tiên cùng size).</summary>
+        private List<FT600> ChainPredecessors(FT600 row)
+        {
+            var cands = ChainCandidatesBefore(row);
+            if (cands.Count == 0) return cands;
+            var pick = cands.FirstOrDefault(x => x.C008 == row.C008) ?? cands.First();
+            return new List<FT600> { pick };
+        }
+
+        private HashSet<string> ChainPredecessorCodes(FT600 row)
+            => ChainCandidatesBefore(row).Select(x => x.C002!.Trim()).ToHashSet(StringComparer.OrdinalIgnoreCase);
 
         /// <summary>Tìm FT600 đã cân của chi tiết con: ưu tiên dòng trong phiên hiện tại, sau đó bản ghi đã lưu.</summary>
         private FT600? FindWeighedChild(string code)
@@ -1602,8 +1842,10 @@ namespace SSSW.UI.WPF.ViewModels
         /// <summary>Dựng dữ liệu hiển thị Row Details (BOM Level 2) cho 1 step: chi tiết con, trạng thái cân, phần trừ, công thức.</summary>
         private void RefreshLevel2Details(FT600 row)
         {
-            var l2 = GetLevel2(row);
-            if (l2 == null)
+            var l2 = UsesLegacyPartWeight(row) ? null : GetLevel2(row);
+            var preds = UsesLegacyPartWeight(row) ? new List<FT600>() : ChainPredecessors(row);
+            var predCodes = preds.Count == 0 ? new HashSet<string>() : ChainPredecessorCodes(row);
+            if (l2 == null && preds.Count == 0)
             {
                 row.Level2Items = Array.Empty<Level2DetailItem>();
                 row.Level2Formula = null;
@@ -1616,7 +1858,7 @@ namespace SSSW.UI.WPF.ViewModels
             var missing = new List<string>();
             double total = 0;
 
-            foreach (var child in l2)
+            foreach (var child in l2 ?? new List<BomWinlineModel>())
             {
                 if (PartWeightCalculator.IsSelfRow(child, row.C002!)) continue;
 
@@ -1624,6 +1866,7 @@ namespace SSSW.UI.WPF.ViewModels
                 if (qty <= 0) continue;
 
                 var code = child.ItemStepCode!.Trim();
+                if (predCodes.Contains(code)) continue;   // step chain: trừ Total Part của step trước (dòng riêng bên dưới)
                 var weighed = FindWeighedChild(code);
                 var perPiece = weighed == null ? null : PartWeightCalculator.UnitWeightPerPiece(weighed);
                 double? deduct = perPiece == null ? null : qty * perPiece;
@@ -1654,6 +1897,26 @@ namespace SSSW.UI.WPF.ViewModels
                 }
             }
 
+            foreach (var pr in preds)
+            {
+                var prev = PartPerPair(pr);
+                bool ok = prev > 0;
+                items.Add(new Level2DetailItem
+                {
+                    Component = (pr.C003?.Trim() ?? pr.C002!.Trim()) + " (previous step)",
+                    ComponentCode = pr.C002!.Trim(),
+                    Step = pr.C015?.ToString() ?? "—",
+                    Qty = 1,
+                    Unit = "PRS",
+                    Weighed = ok ? prev : null,
+                    PerPiece = ok ? prev : null,
+                    Deduct = ok ? prev : null,
+                    IsWeighed = ok
+                });
+                if (ok) { total += prev; terms.Add(prev.ToString("F2")); }
+                else { missing.Add(pr.C002!.Trim()); terms.Add($"{pr.C002!.Trim()} ?"); }
+            }
+
             row.Level2Items = items;
             row.Level2HasMissing = missing.Count > 0;
             row.Level2Formula = items.Count == 0 ? null
@@ -1663,29 +1926,65 @@ namespace SSSW.UI.WPF.ViewModels
                       : $" = Total Part Weight − {total:F2}");
         }
 
+        /// <summary>
+        /// Part Weight của step (g/prs) = Total Part / N − Σ chi tiết con Level 2 (không tính step "chain") − Total Part của step chain ngay trước.
+        /// available=false: không có Level 2 và không có step chain → Part Weight = chính nó.
+        /// </summary>
+        private double? ComputePartWeight(FT600 row, out List<string> missing, out bool available)
+        {
+            missing = new List<string>();
+            var l2 = GetLevel2(row);
+            var preds = ChainPredecessors(row);
+            available = l2 != null || preds.Count > 0;
+            if (!available) return null;
+
+            var predCodes = ChainPredecessorCodes(row);
+            var children = (l2 ?? new List<BomWinlineModel>())
+                .Where(c => !predCodes.Contains(c.ItemStepCode?.Trim() ?? string.Empty)).ToList();
+
+            var result = _partWeightCalculator.Calculate(PartPerPair(row), row.C002!, children, FindWeighedChild);
+            missing.AddRange(result.MissingChildren);
+
+            double prevTotal = 0;
+            foreach (var pr in preds)
+            {
+                if (PartPerPair(pr) <= 0) missing.Add(pr.C002!.Trim());
+                else prevTotal += PartPerPair(pr);
+            }
+
+            return missing.Count == 0 && result.PartWeight.HasValue ? result.PartWeight.Value - prevTotal : null;
+        }
+
+        /// <summary>Làm tròn 3 số lẻ các cột kiểu double của FT600 (trước khi hiển thị / lưu DB).</summary>
+        private static void RoundDoubles(FT600 r)
+        {
+            static double? R(double? v) => v.HasValue ? Math.Round(v.Value, 3) : null;
+            r.C021 = R(r.C021); r.C022 = R(r.C022); r.C023 = R(r.C023); r.C024 = R(r.C024);
+            r.C025 = R(r.C025); r.C028 = R(r.C028); r.C035 = R(r.C035); r.C036 = R(r.C036); r.C039 = R(r.C039);
+        }
+
         private PartWeightApply ApplyLevel2PartWeight()
         {
-            var l2 = GetLevel2(_rowSelected);
-            if (l2 == null) return PartWeightApply.Unavailable;
+            var part = ComputePartWeight(_rowSelected, out var missing, out var available);
+            if (!available) return PartWeightApply.Unavailable;
 
-            var result = _partWeightCalculator.Calculate(PartPerPair(_rowSelected), _rowSelected.C002!, l2, FindWeighedChild);
-            if (!result.IsComplete)
+            if (part == null)
             {
                 _dialog.Warn(
-                    "Component step(s) of this step (BOM level 2) have no weight yet and must be weighed first:" +
-                    $"{Environment.NewLine}{Environment.NewLine}{string.Join(Environment.NewLine, result.MissingChildren)}");
+                    "Component / previous step(s) of this step (BOM level 2) have no weight yet and must be weighed first:" +
+                    $"{Environment.NewLine}{Environment.NewLine}{string.Join(Environment.NewLine, missing)}");
                 _rowSelected.C023 = 0;
                 _rowSelected.C022 = 0;
                 return PartWeightApply.Blocked;
             }
 
-            _rowSelected.C021 = result.PartWeight;
-            _logger.LogInformation("PartWeight L2 {Step}: C023={C023} - deduction={Ded} => C021={C021}",
-                _rowSelected.C002, _rowSelected.C023, result.TotalDeduction, result.PartWeight);
+            _rowSelected.C021 = part;
+            _logger.LogInformation("PartWeight L2 {Step}: C023={C023} N={N} => C021={C021}",
+                _rowSelected.C002, _rowSelected.C023, _rowSelected.C028, _rowSelected.C021);
             return PartWeightApply.Applied;
         }
 
-        /// <summary>Tính lại C021/C022 của các step đã cân có dùng step vừa cân làm chi tiết con (Level 2).</summary>
+        /// <summary>Tính lại C021/C022 của các step đã cân có dùng step vừa cân (chi tiết con Level 2 hoặc step chain ngay trước).</summary>
         private void CascadeLevel2()
         {
             var changed = _rowSelected.C002?.Trim();
@@ -1693,16 +1992,19 @@ namespace SSSW.UI.WPF.ViewModels
 
             foreach (var parent in _scaleDataFinal.Where(x =>
                          x != _rowSelected && (x.C023 ?? 0) > 0 && (x.C021 ?? 0) > 0 &&
-                         !(x.C002?.StartsWith("REX") ?? false)))
+                         !(x.C002?.StartsWith("REX") ?? false) && !UsesLegacyPartWeight(x)).ToList())
             {
                 var l2 = GetLevel2(parent);
-                if (l2 == null || UsesLegacyPartWeight(parent) || !l2.Any(c => !PartWeightCalculator.IsSelfRow(c, parent.C002!) &&
-                        string.Equals(c.ItemStepCode?.Trim(), changed, StringComparison.OrdinalIgnoreCase))) continue;
+                bool usesChanged =
+                    (l2?.Any(c => !PartWeightCalculator.IsSelfRow(c, parent.C002!) &&
+                        string.Equals(c.ItemStepCode?.Trim(), changed, StringComparison.OrdinalIgnoreCase)) ?? false)
+                    || ChainPredecessors(parent).Any(pr => pr == _rowSelected);
+                if (!usesChanged) continue;
 
-                var r = _partWeightCalculator.Calculate(PartPerPair(parent), parent.C002!, l2, FindWeighedChild);
-                if (!r.IsComplete) continue;
+                var part = ComputePartWeight(parent, out _, out var available);
+                if (!available || part == null) continue;
 
-                parent.C021 = r.PartWeight;
+                parent.C021 = part;
                 UpdateWeightPerPiece(parent);
                 parent.C022 = parent.C024 - parent.C021;
             }
@@ -1715,7 +2017,8 @@ namespace SSSW.UI.WPF.ViewModels
                         // C021 = Part weight thực tế (g/prs)
                         // = C023(bước này) − ∑C023(bước trước) − ∑C023(non-injection cùng bước)
                         var previuosStep = _scaleDataFinal
-                            .Where(x => x.C015 <= _rowSelected.C015 - 1).ToList();
+                            // C015 = 0: dòng REX chỉ có ở Level 2 (không thuộc step nào) — không tính vào các bước trước
+                            .Where(x => x.C015 > 0 && x.C015 <= _rowSelected.C015 - 1).ToList();
 
                         // REX nonwoven chỉ có ở Level 2 (dòng C015 = 0) vẫn được trừ như REX cùng step
                         var l2Codes = _level2ByStep.TryGetValue(_rowSelected.C002?.Trim() ?? "", out var l2c)
@@ -1781,7 +2084,31 @@ namespace SSSW.UI.WPF.ViewModels
         // ─────────────────────────────────────────────────────────────────────
         //  CONFIRM (lưu DB)
         // ─────────────────────────────────────────────────────────────────────
+        /// <summary>Hiện lớp phủ chờ (thanh chạy) với nội dung <paramref name="message"/>; không cho hủy.</summary>
+        private void ShowBusy(string message)
+        {
+            OverlayMessage = message;
+            IsCancelLoadEnabled = false;
+            IsOverlayVisible = true;
+        }
+
+        private void HideBusy()
+        {
+            IsOverlayVisible = false;
+            OverlayMessage = "Loading…";
+        }
+
+        /// <summary>Confirm: hiện thanh chờ "Saving data…" trong lúc ghi DB, xong thì ẩn.</summary>
         private async Task ExecuteConfirmAsync(object? _)
+        {
+            if (IsOverlayVisible) return;   // đang bận
+            ShowBusy("Saving data…");
+            await Task.Delay(50);           // để UI kịp vẽ lớp phủ trước khi xử lý
+            try { await ConfirmCoreAsync(); }
+            finally { HideBusy(); }
+        }
+
+        private async Task ConfirmCoreAsync()
         {
             using var db = _dbFactory.CreateDbContext();
             using var transaction = await db.Database.BeginTransactionAsync();
@@ -1789,7 +2116,7 @@ namespace SSSW.UI.WPF.ViewModels
             {
                 if (!_operatorSession.IsOperatorSet)
                 {
-                    _dialog.Warn("RFID card not yet scanned.", "Warning");
+                    HideBusy(); _dialog.Warn("RFID card not yet scanned.", "Warning");
                     return;
                 }
 
@@ -1813,7 +2140,7 @@ namespace SSSW.UI.WPF.ViewModels
                         if (item.AllowScale && item.C023 == 0 &&
                             (item.C024 == 0 && (item.C002?.StartsWith("REX") ?? false)))
                         {
-                            _dialog.Warn($"Scale not completed for step: {item.C002}.", "Warning");
+                            HideBusy(); _dialog.Warn($"Scale not completed for step: {item.C002}.", "Warning");
                             return;
                         }
                     }
@@ -1914,6 +2241,7 @@ namespace SSSW.UI.WPF.ViewModels
 
                 insert.ForEach(x =>
                 {
+                    RoundDoubles(x);   // các cột double lưu DB làm tròn 3 số lẻ
                     x.C010 = _operatorSession.OperatorInfo.C000;
                     x.C011 = _operatorSession.OperatorInfo.C001;
                     x.CreatedDate = now;
@@ -1945,7 +2273,7 @@ namespace SSSW.UI.WPF.ViewModels
                 // ── Tự động gọi sp_ShotweightReport_UpsertFT609 nếu bước đang cân là bước cuối ──
                 await ProcessUpsertFT609ForFinalStepsAsync(insert);
 
-                _dialog.Info("Scale shot weight saved successfully.", "Information");
+                HideBusy(); _dialog.Info("Scale shot weight saved successfully.", "Information");
 
                 _labelInfo = new FT606_Label();
                 ClearStepComboAction?.Invoke();
@@ -1959,7 +2287,7 @@ namespace SSSW.UI.WPF.ViewModels
             {
                 await transaction.RollbackAsync();
                 _logger.LogError(ex, "Confirm error");
-                _dialog.Error($"Transaction error: {ex.Message}\n{ex.InnerException?.Message}", "ERROR");
+                HideBusy(); _dialog.Error($"Transaction error: {ex.Message}\n{ex.InnerException?.Message}", "ERROR");
             }
         }
 
@@ -2071,7 +2399,8 @@ namespace SSSW.UI.WPF.ViewModels
 
             if (!rowSelect.AllowScale)
             {
-                _dialog.Warn("Do not allow to scale this step.", "Warning");
+                // Step bị khóa ở lượt kiểm tra này → tự chuyển sang cân step đó (như quét QR / chọn từ dropdown Step)
+                _ = SwitchToLockedStepAsync(rowSelect);
                 return;
             }
             foreach (var step in PreviousStepsToCheck(rowSelect))
@@ -2092,6 +2421,200 @@ namespace SSSW.UI.WPF.ViewModels
             RefreshUI(true);
             UpdateReferencePanel();
             _ = LoadRefHistoryAsync(_rowSelected);
+        }
+
+        /// <summary>
+        /// Bấm vào step đang bị khóa (không được cân trong lượt này): kiểm tra rồi tải lại màn hình cân cho step đó,
+        /// lấy đầy đủ thông tin như khi quét QR / chọn step từ dropdown (danh sách được dựng lại theo step này).
+        /// </summary>
+        private async Task SwitchToLockedStepAsync(FT600 row)
+        {
+            try
+            {
+                var item = _allStepCodeMaster.FirstOrDefault(x => row.C032 != null && x.FT601Id == row.C032)
+                           ?? _allStepCodeMaster.FirstOrDefault(x =>
+                                string.Equals(x.StepItemCode?.Trim(), row.C002?.Trim(), StringComparison.OrdinalIgnoreCase) &&
+                                (string.IsNullOrEmpty(row.C004) || x.Machine?.Trim() == row.C004.Trim()))
+                           ?? _allStepCodeMaster.FirstOrDefault(x =>
+                                string.Equals(x.StepItemCode?.Trim(), row.C002?.Trim(), StringComparison.OrdinalIgnoreCase));
+
+                if (item == null)
+                {
+                    _dialog.Warn($"No step data found to weigh this step: {row.C002}.", "Warning");
+                    return;
+                }
+
+                // Luôn hỏi xác nhận trước khi chuyển; đổi step sẽ dựng lại danh sách → mất giá trị đã cân trong phiên mà chưa Confirm
+                var unsaved = _scaleDataFinal.Count(x => (x.C021 ?? 0) > 0 && !x.IsReusedFromHistory);
+                var msg = $"Step {row.C002} ({row.C003}) is locked in the current check.{Environment.NewLine}" +
+                          "Switch to weigh this step? The step list will be reloaded for it.";
+                if (unsaved > 0)
+                    msg += $"{Environment.NewLine}{Environment.NewLine}{unsaved} step(s) have been weighed but not confirmed yet and will be discarded.";
+                if (!_dialog.Confirm(msg, "Switch step"))
+                    return;
+
+                _scaleDataFinal = new List<FT600>();
+                _labelInfo = new FT606_Label();
+                _qrCodeScan = string.Empty;
+                ClearBarcodeAction?.Invoke();
+
+                _suppress = true;
+                SetStepComboAction?.Invoke(item);
+                _suppress = false;
+
+                await OnStepSelectedAsync(item);
+            }
+            catch (Exception ex)
+            {
+                _suppress = false;
+                _logger.LogError(ex, "SwitchToLockedStepAsync");
+                _dialog.Warn(ex.Message, "WARNING");
+            }
+        }
+
+        // ─────────────────────────────────────────────────────────────────────
+        //  LOGO: CÁC SIZE CÙNG NHÓM (sp_sssw_getGroupSize)
+        // ─────────────────────────────────────────────────────────────────────
+        /// <summary>
+        /// Với step Logo, lấy các size liên quan cùng nhóm (cùng tiền tố mã step) rồi thêm vào lưới cùng thứ tự step / máy / khuôn
+        /// → được xử lý như 1 khuôn nhiều size (phân bổ runner, công thức cũ). Dòng size đang chọn giữ nguyên.
+        /// </summary>
+        private async Task AddLogoGroupSizesAsync(DbContextDogeWH db, FT601 stepCode)
+        {
+            try
+            {
+                var logoRow = _scaleDataFinal.FirstOrDefault(x =>
+                                  string.Equals(x.C002?.Trim(), stepCode.C004?.Trim(), StringComparison.OrdinalIgnoreCase))
+                              ?? _scaleDataFinal.FirstOrDefault(x => x.C003?.StartsWith("Logo") == true);
+                if (logoRow == null) return;
+
+                var prefix = GlobalVariable.PrefixUpToThirdHyphen(logoRow.C002);
+                if (string.IsNullOrEmpty(prefix)) return;
+
+                var sizes = await GetGroupSizesAsync(db, prefix);
+
+                foreach (var gs in sizes)
+                {
+                    var code = gs.ItemCode?.Trim();
+                    if (string.IsNullOrEmpty(code) || code.EndsWith("-0000", StringComparison.Ordinal) ||
+                        string.Equals(gs.SizeName?.Trim(), "no size", StringComparison.OrdinalIgnoreCase)) continue;
+                    if (_scaleDataFinal.Any(x => string.Equals(x.C002?.Trim(), code, StringComparison.OrdinalIgnoreCase))) continue;
+
+                    // Mỗi size có partitioning riêng: lấy từ FT601 của chính size đó (lệnh đang chạy, nếu không có thì master)
+                    var sizeStep = _dataHydra.FirstOrDefault(x =>
+                                       string.Equals(x.C004?.Trim(), code, StringComparison.OrdinalIgnoreCase) &&
+                                       x.C015 == logoRow.C004 && x.C019 == logoRow.C020)
+                                   ?? _dataHydra.FirstOrDefault(x =>
+                                       string.Equals(x.C004?.Trim(), code, StringComparison.OrdinalIgnoreCase))
+                                   ?? await db.FT601s.AsNoTracking()
+                                       .Where(x => x.C004 == code)
+                                       .OrderByDescending(x => x.CreatedDate)
+                                       .FirstOrDefaultAsync();
+                    // Có dữ liệu riêng của size thì dùng; không có (hoặc = 0) thì copy từ dòng Logo ban đầu
+                    int ownPartition = sizeStep?.C013 != null ? (int)sizeStep.C013 : 0;
+                    int sizePartition = ownPartition > 0 ? ownPartition : (int)(logoRow.C028 ?? 0);
+                    int sizePpic = ownPartition > 0 ? ownPartition : (logoRow.C017 ?? sizePartition);
+
+                    _scaleDataFinal.Add(new FT600
+                    {
+                        id = Guid.NewGuid(),
+                        C000 = logoRow.C000,
+                        C001 = logoRow.C001,
+                        C002 = code,
+                        C003 = gs.ItemName?.Trim(),
+                        C004 = logoRow.C004,
+                        C005 = logoRow.C005,
+                        C006 = logoRow.C006,
+                        C007 = logoRow.C007,
+                        C008 = gs.SizeName?.Trim(),
+                        C009 = logoRow.C009,
+                        C012 = logoRow.C012,
+                        C013 = logoRow.C013,
+                        C014 = logoRow.C014,
+                        C015 = logoRow.C015,
+                        C017 = sizePpic,
+                        C018 = sizeStep?.C014 ?? logoRow.C018,
+                        C019 = logoRow.C019,
+                        C020 = logoRow.C020,
+                        C021 = 0,
+                        C022 = 0,
+                        C023 = 0,
+                        C024 = 0,
+                        C025 = logoRow.C025,
+                        C026 = logoRow.C026,
+                        C027 = logoRow.C027,
+                        C028 = sizePartition,
+                        C029 = logoRow.C029,
+                        C032 = sizeStep?.Id ?? logoRow.C032,   // FT601 của chính size này
+                        C033 = logoRow.C033,
+                        C034 = logoRow.C034,
+                        C035 = _percentOfUsage,
+                        C036 = 0,
+                        C037 = logoRow.C037,
+                        C038 = logoRow.C038,
+                        AllowScale = true
+                    });
+                    _sameMoldRowIds.Add(_scaleDataFinal[^1].id);
+                }
+
+                _scaleDataFinal = _scaleDataFinal.OrderBy(x => x.C015).ThenBy(x => x.C008).ToList();
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "AddLogoGroupSizesAsync error");
+            }
+        }
+
+        /// <summary>
+        /// Gọi sp_sssw_getGroupSize và đọc kết quả bằng DbDataReader, đổi kiểu mềm (SizeCode có thể là int, C063/C064 có thể là decimal/float)
+        /// để không phụ thuộc kiểu cột của SP (map trực tiếp bằng SqlQueryRaw từng lỗi "Unable to cast Int32 to String").
+        /// </summary>
+        private static async Task<List<GroupSizeModel>> GetGroupSizesAsync(DbContextDogeWH db, string prefix)
+        {
+            var result = new List<GroupSizeModel>();
+            var conn = db.Database.GetDbConnection();
+            bool openedHere = conn.State != ConnectionState.Open;
+            if (openedHere) await conn.OpenAsync();
+            try
+            {
+                using var cmd = conn.CreateCommand();
+                cmd.CommandText = "sp_sssw_getGroupSize";
+                cmd.CommandType = CommandType.StoredProcedure;
+                var prm = cmd.CreateParameter();
+                prm.ParameterName = "@ItemCode";
+                prm.Value = prefix;
+                cmd.Parameters.Add(prm);
+
+                using var rd = await cmd.ExecuteReaderAsync();
+                static string? Str(System.Data.Common.DbDataReader r, string name)
+                {
+                    var i = r.GetOrdinal(name);
+                    return r.IsDBNull(i) ? null : Convert.ToString(r.GetValue(i), System.Globalization.CultureInfo.InvariantCulture);
+                }
+                static double? Dbl(System.Data.Common.DbDataReader r, string name)
+                {
+                    var i = r.GetOrdinal(name);
+                    return r.IsDBNull(i) ? null : Convert.ToDouble(r.GetValue(i), System.Globalization.CultureInfo.InvariantCulture);
+                }
+                while (await rd.ReadAsync())
+                {
+                    result.Add(new GroupSizeModel
+                    {
+                        ItemCode = Str(rd, "ItemCode"),
+                        ItemName = Str(rd, "ItemName"),
+                        SizeCode = Str(rd, "SizeCode"),
+                        SizeName = Str(rd, "SizeName"),
+                        C063 = Dbl(rd, "C063"),
+                        C064 = Dbl(rd, "C064"),
+                        ShotWeight = Dbl(rd, "ShotWeight")
+                    });
+                }
+            }
+            finally
+            {
+                if (openedHere) await conn.CloseAsync();
+            }
+            return result;
         }
 
         public void OnGridReset(FT600? rowSelect)
@@ -2153,7 +2676,10 @@ namespace SSSW.UI.WPF.ViewModels
         public void OnActualPairsEnter(string text)
         {
             _articlePaisShotFinaly = double.TryParse(text, out var v) ? v : 0;
-            var row = _scaleDataFinal.FirstOrDefault(x => x.C032 == _rowSelected.C032);
+            // Khớp đúng dòng đang chọn (id duy nhất). Trước đây khớp theo C032 (FT601.Id) nên các size cùng nhóm dùng chung C032
+            // chỉ sửa được dòng đầu tiên.
+            var row = _scaleDataFinal.FirstOrDefault(x => x.id == _rowSelected.id)
+                      ?? _scaleDataFinal.FirstOrDefault(x => x.C032 == _rowSelected.C032 && x.C002 == _rowSelected.C002);
             if (row != null) row.C028 = _articlePaisShotFinaly;
             RefreshUI(true);
         }

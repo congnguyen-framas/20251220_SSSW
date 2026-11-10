@@ -153,6 +153,7 @@
                                     <StackPanel Grid.Column="0">
                                         <TextBlock Style="{StaticResource LabelStyle}" Text="Partitioning (prs)" />
                                         <TextBox
+                                            IsEnabled="{Binding AllowPartitionAdj}"
                                             KeyDown="tbActualPairs_KeyDown"
                                             Style="{StaticResource EditableFieldStyle}"
                                             Text="{Binding ActualPairs}" />
@@ -504,7 +505,6 @@
                                                     Command="{Binding DataContext.GridScaleCommand, RelativeSource={RelativeSource AncestorType=DataGrid}}"
                                                     CommandParameter="{Binding}"
                                                     Content="Scale"
-                                                    IsEnabled="{Binding AllowScale}"
                                                     Style="{StaticResource PrimaryButton}"
                                                     Tag="{Binding}" />
                                                 <Button
@@ -669,7 +669,7 @@
 
                                 <DataGridTextColumn
                                     Width="100"
-                                    Binding="{Binding C024, StringFormat=F2}"
+                                    Binding="{Binding C024, StringFormat=F3}"
                                     ElementStyle="{StaticResource CenterCell}">
                                     <DataGridTextColumn.HeaderTemplate>
                                         <DataTemplate>
@@ -690,7 +690,7 @@
 
                                 <DataGridTextColumn
                                     Width="60"
-                                    Binding="{Binding C023, StringFormat=F2}"
+                                    Binding="{Binding C023, StringFormat=F3}"
                                     ElementStyle="{StaticResource CenterCell}">
                                     <DataGridTextColumn.HeaderTemplate>
                                         <DataTemplate>
@@ -711,7 +711,7 @@
 
                                 <DataGridTextColumn
                                     Width="60"
-                                    Binding="{Binding C021, StringFormat=F2}"
+                                    Binding="{Binding C021, StringFormat=F3}"
                                     ElementStyle="{StaticResource CenterCell}">
                                     <DataGridTextColumn.HeaderTemplate>
                                         <DataTemplate>
@@ -733,7 +733,7 @@
 
                                 <DataGridTextColumn
                                     Width="100"
-                                    Binding="{Binding C022, StringFormat=F2}"
+                                    Binding="{Binding C022, StringFormat=F3}"
                                     ElementStyle="{StaticResource CenterCell}">
                                     <DataGridTextColumn.HeaderTemplate>
                                         <DataTemplate>
@@ -818,7 +818,7 @@
 
                                 <DataGridTextColumn
                                     Width="80"
-                                    Binding="{Binding C039, StringFormat=F2}"
+                                    Binding="{Binding C039, StringFormat=F3}"
                                     ElementStyle="{StaticResource CenterCell}">
                                     <DataGridTextColumn.HeaderTemplate>
                                         <DataTemplate>
@@ -839,7 +839,7 @@
 
                                 <DataGridTextColumn
                                     Width="80"
-                                    Binding="{Binding C036, StringFormat=F2}"
+                                    Binding="{Binding C036, StringFormat=F3}"
                                     ElementStyle="{StaticResource CenterCell}">
                                     <DataGridTextColumn.HeaderTemplate>
                                         <DataTemplate>
@@ -1156,7 +1156,7 @@
 
                                             <DataGridTextColumn
                                                 Width="100"
-                                                Binding="{Binding C024, StringFormat=F2}"
+                                                Binding="{Binding C024, StringFormat=F3}"
                                                 ElementStyle="{StaticResource CenterCell}">
                                                 <DataGridTextColumn.Header>
                                                     <TextBlock
@@ -1168,7 +1168,7 @@
 
                                             <DataGridTextColumn
                                                 Width="125"
-                                                Binding="{Binding C023, StringFormat=F2}"
+                                                Binding="{Binding C023, StringFormat=F3}"
                                                 ElementStyle="{StaticResource CenterCell}">
                                                 <DataGridTextColumn.Header>
                                                     <TextBlock
@@ -1180,7 +1180,7 @@
 
                                             <DataGridTextColumn
                                                 Width="115"
-                                                Binding="{Binding C021, StringFormat=F2}"
+                                                Binding="{Binding C021, StringFormat=F3}"
                                                 ElementStyle="{StaticResource CenterCell}">
                                                 <DataGridTextColumn.Header>
                                                     <TextBlock
@@ -1192,7 +1192,7 @@
 
                                             <DataGridTextColumn
                                                 Width="115"
-                                                Binding="{Binding C022, StringFormat=F2}"
+                                                Binding="{Binding C022, StringFormat=F3}"
                                                 ElementStyle="{StaticResource CenterCell}">
                                                 <DataGridTextColumn.Header>
                                                     <TextBlock
@@ -1628,16 +1628,62 @@
                 VerticalAlignment="Center"
                 Background="White"
                 CornerRadius="8">
-                <StackPanel HorizontalAlignment="Center">
+                <StackPanel Width="360" HorizontalAlignment="Center">
                     <TextBlock
-                        Margin="0,0,0,8"
+                        Margin="0,0,0,14"
                         HorizontalAlignment="Center"
                         FontFamily="Segoe UI"
                         FontSize="18"
                         FontWeight="Bold"
-                        Foreground="#1565C0"
-                        Text="Loading…" />
+                        Foreground="#D0021B"
+                        Text="{Binding OverlayMessage}" />
+
+                    <!--  Thanh chạy (indeterminate) kiểu vạch đỏ  -->
+                    <Border
+                        Height="8"
+                        Background="#ECEFF1"
+                        ClipToBounds="True"
+                        CornerRadius="4">
+                        <Border
+                            Width="130"
+                            HorizontalAlignment="Left"
+                            CornerRadius="4">
+                            <Border.Background>
+                                <LinearGradientBrush StartPoint="0,0" EndPoint="1,0">
+                                    <GradientStop Offset="0" Color="#D0021B" />
+                                    <GradientStop Offset="1" Color="#FF0A54" />
+                                </LinearGradientBrush>
+                            </Border.Background>
+                            <Border.RenderTransform>
+                                <TranslateTransform X="-130" />
+                            </Border.RenderTransform>
+                            <Border.Style>
+                                <Style TargetType="Border">
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding IsOverlayVisible}" Value="True">
+                                            <DataTrigger.EnterActions>
+                                                <BeginStoryboard x:Name="RunBar">
+                                                    <Storyboard RepeatBehavior="Forever">
+                                                        <DoubleAnimation
+                                                            Storyboard.TargetProperty="(UIElement.RenderTransform).(TranslateTransform.X)"
+                                                            From="-130"
+                                                            To="360"
+                                                            Duration="0:0:1.1" />
+                                                    </Storyboard>
+                                                </BeginStoryboard>
+                                            </DataTrigger.EnterActions>
+                                            <DataTrigger.ExitActions>
+                                                <StopStoryboard BeginStoryboardName="RunBar" />
+                                            </DataTrigger.ExitActions>
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </Border.Style>
+                        </Border>
+                    </Border>
+
                     <TextBlock
+                        Margin="0,12,0,0"
                         HorizontalAlignment="Center"
                         FontFamily="Segoe UI"
                         FontSize="12"
@@ -1649,7 +1695,8 @@
                         HorizontalAlignment="Center"
                         Command="{Binding CancelLoadCommand}"
                         Content="Cancel"
-                        IsEnabled="{Binding IsCancelLoadEnabled}" />
+                        IsEnabled="{Binding IsCancelLoadEnabled}"
+                        Visibility="{Binding IsCancelLoadEnabled, Converter={StaticResource BoolToVisibility}}" />
                 </StackPanel>
             </Border>
         </Grid>

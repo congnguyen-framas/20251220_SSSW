@@ -1,7 +1,8 @@
 # Review logic khóa nút cân (`AllowScale`) — TOTAL STEPS
 
 - **Ngày**: 2026-11-04 · **Nhánh**: `feature/use-bom-level-2`
-- **Trạng thái**: ✅ **Đã chốt và triển khai (2026-11-04)** — §1–§5 mô tả logic **trước khi sửa** (giữ lại để đối chiếu); kết quả quyết định và code mới ở **§0** bên dưới.
+- **Cập nhật 2026-11-05**: bấm Scale ở step bị khóa → tự chuyển sang cân step đó (dựng lại danh sách như quét QR / chọn dropdown); Logo lấy thêm các size cùng nhóm qua `sp_sssw_getGroupSize`.
+- **Trạng thái**: ⚠️ **Bỏ khóa (2026-11-04) đã được hoàn nguyên ngày 2026-11-05: logic khóa `AllowScale` / lọc danh sách đã khôi phục như bản gốc (Logo, group size, 1 khuôn nhiều size phải cân riêng)**. Nội dung cũ: ✅ đã chốt và triển khai (2026-11-04) — §1–§5 mô tả logic **trước khi sửa** (giữ lại để đối chiếu); kết quả quyết định và code mới ở **§0** bên dưới.
 - **Phạm vi**: nút **Scale / Reset / Delete** ở từng dòng TOTAL STEPS bị mờ (disabled) khi `FT600.AllowScale == false` ([ShotWeightWindow.xaml](../../UI/WPF/ShotWeightWindow.xaml) `IsEnabled="{Binding AllowScale}"`).
 - **Liên quan**: [BUSINESS_LOGIC.md](BUSINESS_LOGIC.md) §4.4, session [2026-10-30 fix step matching / AllowScale](../sessions/2026-10-30_fix-step-matching-allowscale.md).
 

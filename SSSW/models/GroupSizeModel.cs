@@ -3,7 +3,8 @@ namespace SSSW.models
     /// <summary>
     /// Kết quả của stored procedure <c>sp_sssw_getGroupSize @ItemCode</c>: trọng lượng ép theo từng size của nhóm item.
     /// Script tạo SP: docs/sql/sp_sssw_getGroupSize.sql.
-    /// Gọi: <c>db.Database.SqlQueryRaw&lt;GroupSizeModel&gt;("EXEC sp_sssw_getGroupSize @ItemCode = {0}", prefix)</c>
+    /// Đọc bằng DbDataReader với đổi kiểu mềm (xem ShotWeightViewModel.GetGroupSizesAsync) vì kiểu cột của SP có thể là int/decimal;
+    /// không map trực tiếp bằng SqlQueryRaw (từng lỗi "Unable to cast Int32 to String" ở SizeCode).
     /// </summary>
     public class GroupSizeModel
     {

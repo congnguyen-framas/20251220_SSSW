@@ -303,7 +303,7 @@ Selecting a row in TOTAL STEPS outlines it and expands a Level-2 detail table di
 
 ### 4.6.3 No step lock (2026-11-04)
 
-All steps can be weighed (`AllowScale` is always `true`; the Logo / Cleat_Ring / Studs / Inlay lock and the "no running order" lock were removed). Part Weight of an injection step is computed from its BOM level 2 components; Save is refused only when a component has no weight yet (the dialog lists them). Steps without level 2 data fall back to the old "all previous steps weighed" rule. On Confirm, rows reloaded from a previous weighing (`IsReusedFromHistory`) are inserted again with `C013` / `C014` replaced by the FG code / name of the step being scanned or selected. Each card header (STEP INFORMATION, TOTAL STEPS, REFERENCE / HISTORY, REFERENCE VALUES) has an "i" icon with a description tooltip.
+The original `AllowScale` lock is restored (2026-11-05): Logo / Cleat_Ring / Studs / Inlay (group size, multi-size molds) must be weighed separately — steps outside the group being weighed are locked or removed from the list. Part Weight of an injection step is computed from its BOM level 2 components; Save is refused only when a component has no weight yet (the dialog lists them). Steps without level 2 data fall back to the old "all previous steps weighed" rule. On Confirm, rows reloaded from a previous weighing (`IsReusedFromHistory`) are inserted again with `C013` / `C014` replaced by the FG code / name of the step being scanned or selected. Each card header (STEP INFORMATION, TOTAL STEPS, REFERENCE / HISTORY, REFERENCE VALUES) has an "i" icon with a description tooltip.
 
 ### 4.6.2 REFERENCE VALUES – note as tooltip
 
@@ -335,6 +335,7 @@ ScaleCard border/background = **worst** ToleranceCategory among 4 Reference rows
 2. Check multi-size molds (`sameMolds`): if > 0, skip completeness check.
 3. For each row (all rows are weighable since 2026-11-04): `C023 == 0 AND C024 == 0` → warn "Scale not completed for step: XXX".
 4. Filter: `insert = _scaleDataFinal WHERE AllowScale=true AND C021 > 0`.
+   While Confirm runs, a busy overlay with a red running bar and "Saving data…" is shown; double values are rounded to 3 decimals before insert.
 5. Set metadata: `C010=EmployeeCode`, `C011=EmployeeName`, `CreatedDate=now`, `CreatedMachine`, `Mesocomp`, `Mesoyear`.
 6. Transaction: `db.FT600s.AddRangeAsync(insert)`.
 7. `FT601s.ExecuteUpdateAsync`: SET `C017=true, ModifiedDate, ModifiedMachine` WHERE conditions match.

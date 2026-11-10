@@ -76,7 +76,9 @@ Dành cho các linh kiện thông thường ép nhựa:
 - Tương tự như insert kim loại/vải chèn trong lòng khuôn. Kể từ 2026-11-02, Part Weight của Inlay (và Studs/Base) được tính theo **BOM Level 2** (xem §4.8), không còn nhánh đặc cách theo tên step.
 
 ### 4.4. Kiểm tra thứ tự tuần tự (Sequential Step Validation)
-- Từ 2026-11-04: **không còn khóa nút cân theo loại step** (`AllowScale` luôn `true`) và **không còn bắt cân hết mọi bước trước**.
+- ~~Từ 2026-11-04: không còn khóa nút cân theo loại step~~ → **2026-11-05: khôi phục logic khóa nút cân (`AllowScale`) / lọc danh sách như bản gốc**: Logo, Cleat_Ring, Studs, Inlay (group size, 1 khuôn nhiều size) phải **cân riêng** — khi chọn cân step khác nhóm thì các step nhóm đó bị khóa hoặc loại khỏi danh sách (code trong `GetDataAsync`, vùng "Lọc lại để cho phép cân"). Việc bắt cân hết mọi bước trước vẫn theo Level 2 / chain (xem §4.8).
+  - **Bấm vào step đang bị khóa**: nút Scale luôn bấm được; với step có `AllowScale = false`, hệ thống **luôn hỏi xác nhận** (nêu thêm số step đã cân chưa Confirm sẽ bị bỏ) rồi **dựng lại danh sách cân theo step đó** như khi quét QR / chọn từ dropdown Step (`SwitchToLockedStepAsync`).
+  - **Logo**: khi cân Logo, lấy thêm các size cùng nhóm bằng `sp_sssw_getGroupSize @ItemCode = <tiền tố 3 phần của mã step>` (bỏ dòng `-0000` / `no size`) và thêm vào lưới cùng thứ tự step / máy / khuôn → xử lý như **1 khuôn nhiều size** (`AddLogoGroupSizesAsync`). Mỗi size có **partitioning riêng**: lấy `C028`/`C017` từ FT601 của chính size đó (lệnh đang chạy, không có thì FT601 master mới nhất); không tìm thấy (hoặc = 0) → **copy từ dòng Logo ban đầu** (người dùng vẫn chỉnh từng size bằng "Adjust no. of prs").
 - Step có BOM Level 2: chỉ cần các **chi tiết con** (§4.8) đã có trọng lượng. Thiếu chi tiết nào, lúc Save hệ thống cảnh báo
   `"Component step(s) of this step (BOM level 2) have no weight yet and must be weighed first"` kèm danh sách và từ chối ghi.
 - Step **không có** Level 2 (SP rỗng/lỗi) và không phải nonwoven: **Part Weight = chính nó** (`C023 / N`), không trừ bước nào và không phụ thuộc bước trước. Step có Level 2 mà không có chi tiết con thì cũng bằng chính nó.
@@ -104,14 +106,16 @@ C021(step) = C023(step) − Σ over child in L2(step), child ≠ self :  Qty(chi
 - Dòng **self**: mã kết thúc `-0000` / đơn vị `G` / trùng mã step → không trừ.
 - `Qty` ở L2 là **số chiếc (PCS)** của chi tiết con trong 1 đôi của step cha. `UnitWeight` (g/chiếc) = `C036` đã lưu của chi tiết con;
   nếu chưa có (không phải REX) thì `C021 ÷ C039`. `C039` = **số chiếc của chi tiết đó trong 1 đôi, gộp theo toàn FG**:
-  `C039(c) = Σ qty(step cha → c)` (bỏ dòng self); step không là chi tiết của step nào (vd. step cuối) thì lấy Quantity Level 1 quy ra chiếc (1 PRS = 2 PCS).
+  `C039(c) = Σ qty(step cha → c)` (bỏ dòng self); step không có trong Level 2 của step nào (vd. step cuối) hoặc là step "chain" (dồn vào step kế tiếp) thì **`C039 = 0` và `C036 = 0`** (từ 2026-11-05; trước đây fallback Quantity Level 1 × 2).
   Ví dụ FG `6112042313-A478-2801`: Studs = 8 (Inlay) + 2 (Base_FF) = **10 chiếc** → cân 22.10 g/prs ⇒ **2.21 g/chiếc**; Logo = 2; Inlay = 2; Base_FF = 2; REX00018 = 8 + 4 = 12.
   Cột `C025` (Quantity, Level 1) giữ nguyên; `C039` là cột mới.
 - Trọng lượng/chiếc `C036` được cập nhật mỗi lần cân/tính lại `C021`: `C036 = C021 ÷ C039` (REX Receptacle: `scale ÷ C039`).
 - REX chỉ có trong Level 2 (không có dòng ở Level 1) được đưa ra lưới thành dòng riêng để cân: một dòng cho mỗi mã REX, `C015 = 0` (REX có thể thuộc nhiều step), đặt đầu danh sách, `C025 = 1`, cân đủ số chiếc của 1 đôi = tổng qua các step (`C039`).
 - Chi tiết con lấy từ dòng cùng phiên (`_scaleDataFinal`) trước, nếu không có thì FT600 mới nhất theo `C002`.
 - Chi tiết con chưa cân (hoặc trọng lượng ≤ 0) → cảnh báo, **không ghi** `C023`/`C021`.
-- Không có L2 (SP rỗng/lỗi, `Z-VHXXXXXX`) → rơi về công thức cũ (`ApplyLegacyPartWeight`).
+- **Step chain (2026-11-05)**: nếu step ngay trước P chỉ được tham chiếu trong Level 2 bởi step kế liền sau nó (hoặc không được tham chiếu ở đâu), thì khi cân step sau phải **trừ thêm Total Part của P** (`C023(P)/N(P)`) và **bỏ dòng P** khỏi Level 2:
+  `C021 = C023/N − C023(P)/N(P) − Σ Qty × g/chiếc (c ≠ self, c ≠ P)`. P được dùng ở step khác (Studs, Logo ở ví dụ) → chỉ trừ theo Level 2, không trừ step trước. Ví dụ FG trên: Logo = Total Part; Studs = Total Part; Inlay = Total Part − Studs×8; Base_FF = Total Part − Total Part(Inlay) − (Studs×2 + REX×8); Base_HF = Total Part − Total Part(Base_FF) − (Logo×2 + REX×4). Chi tiết: [brainstorm](../brainstorm/PART_WEIGHT_CHAIN_AND_LEVEL2.md), [plan](../plan/PART_WEIGHT_CHAIN_AND_LEVEL2_PLAN.md).
+- Không có L2 và không có step chain → **Part Weight = chính nó** (`C023/N`). Ngoại lệ dùng công thức cũ: 1 khuôn nhiều size, nonwoven/mesh (`ApplyLegacyPartWeight`).
 - **Cascade**: khi một step đổi, các step cha đã cân có step đó trong L2 được tính lại `C021` và `C022 = C024 − C021`.
 
 **Cây BOM của FG `6112042313-A478-2801`** (Level 1 → Level 2; số = Qty):
@@ -219,7 +223,7 @@ Code: `UI/WPF/Services/PartWeightCalculator.cs`, test: `tests/SSSW.Tests`.
 ## 6. Luồng Lưu & Commit Transaction (`ExecuteSave`)
 
 1. **Validate**:
-   - ~~Kiểm tra `AllowScale == true`~~ (đã bỏ khóa 2026-11-04; `AllowScale` luôn `true`).
+   - Kiểm tra `AllowScale == true` (khôi phục 2026-11-05).
    - Kiểm tra các bước trước đã hoàn tất.
    - Kiểm tra đã có thẻ RFID.
 2. **Database Transaction**:

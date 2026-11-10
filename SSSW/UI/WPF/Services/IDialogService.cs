@@ -12,6 +12,9 @@ namespace SSSW.UI.WPF.Services
         void Info(string message, string title = "Information");
         void Warn(string message, string title = "Warning");
         void Error(string message, string title = "ERROR");
+
+        /// <summary>Hỏi Yes/No; true nếu người dùng chọn Yes.</summary>
+        bool Confirm(string message, string title = "Confirm");
     }
 
     /// <summary>Hiển thị bằng System.Windows.Forms.MessageBox (giữ nguyên hành vi cũ).</summary>
@@ -25,5 +28,8 @@ namespace SSSW.UI.WPF.Services
 
         public void Error(string message, string title = "ERROR")
             => MessageBox.Show(message, title, MessageBoxButtons.OK, MessageBoxIcon.Error);
+
+        public bool Confirm(string message, string title = "Confirm")
+            => MessageBox.Show(message, title, MessageBoxButtons.YesNo, MessageBoxIcon.Question) == DialogResult.Yes;
     }
 }

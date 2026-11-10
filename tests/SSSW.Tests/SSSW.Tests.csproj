@@ -16,6 +16,10 @@
   </ItemGroup>
 
   <ItemGroup>
+    <Using Include="Xunit" />
+  </ItemGroup>
+
+  <ItemGroup>
     <ProjectReference Include="..\..\SSSW\SSSW.csproj" />
   </ItemGroup>
 

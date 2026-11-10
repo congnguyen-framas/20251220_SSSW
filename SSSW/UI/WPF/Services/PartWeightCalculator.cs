@@ -90,6 +90,9 @@ namespace SSSW.UI.WPF.Services
         {
             if (weighed.C036 is > 0) return weighed.C036;
 
+            // Hàng PU: Part Weight đã là g/chiếc (N = số chiếc/shot) → không chia thêm C039
+            if (weighed.IsPu && weighed.C021 is > 0) return weighed.C021;
+
             bool isRex = weighed.C002?.Trim().StartsWith("REX", StringComparison.OrdinalIgnoreCase) ?? false;
             if (!isRex && weighed.C021 is > 0 && weighed.C039 is > 0)
                 return weighed.C021 / weighed.C039;

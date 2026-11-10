@@ -161,6 +161,16 @@ namespace SSSW.UI.WPF.ViewModels
             set { _actualPairs = value; OnPropertyChanged(); }
         }
 
+        private string _countUnit = "prs";
+        /// <summary>"prs" (hàng thường) hoặc "pcs" (hàng PU) — nhãn đơn vị cho Partitioning / Adjust no.</summary>
+        public string CountUnit
+        {
+            get => _countUnit;
+            set { _countUnit = value; OnPropertyChanged(); OnPropertyChanged(nameof(PartitioningLabel)); OnPropertyChanged(nameof(AdjustLabel)); }
+        }
+        public string PartitioningLabel => $"Partitioning ({CountUnit})";
+        public string AdjustLabel => $"Adjust no. of {CountUnit}";
+
         private string? _size;
         public string? Size
         {
@@ -844,8 +854,31 @@ namespace SSSW.UI.WPF.ViewModels
                         bool exactHydra = ckHydra != null &&
                             string.Equals(ckHydra.C004?.Trim(), stepCodeTrim, StringComparison.OrdinalIgnoreCase);
                         if (!exactHydra && !stepCodeTrim.StartsWith("REX", StringComparison.OrdinalIgnoreCase))
+                        {
                             line.C005 = RemoveColorFromStepCode(stepCodeTrim);
+                            // Khớp mờ có thể trúng FT601 của step/size khác (cùng "-FC992601-" hoặc cùng mã FG chính) →
+                            // FG code / FG name của dòng đó sai. FG đang cân là FG của step trong BOM (item).
+                            line.C013 = item.ItemFgCode;
+                            line.C014 = item.ItemFgName;
+                            // Step không có dữ liệu trong FT601: bỏ machine group / mold / partitioning của dòng khớp sai
+                            // (Actual Partitioning = 0 → coi là 1, người cân chỉnh bằng "Adjust no.").
+                            line.C017 = null;
+                            line.C018 = null;
+                            line.C019 = null;
+                            line.C020 = null;
+                            line.C028 = 0;
+                        }
                         _scaleData.Add(line);
+                    }
+
+                    // FG hàng PU: các step không có dòng FT601 (đã bỏ machine group ở trên) cũng là PU.
+                    if (_scaleData.Any(x => x.IsPu))
+                    {
+                        foreach (var r in _scaleData.Where(x =>
+                                     string.IsNullOrEmpty(x.C019) && string.IsNullOrEmpty(x.C020) &&
+                                     !string.IsNullOrWhiteSpace(x.C002) && x.C002 != "Z-VHXXXXXX" &&
+                                     !x.C002.StartsWith("REX", StringComparison.OrdinalIgnoreCase)))
+                            r.C019 = FT600.PuMachineGroup;
                     }
 
                     // Trường hợp nhiều size trên 1 khuôn
@@ -860,6 +893,7 @@ namespace SSSW.UI.WPF.ViewModels
                         //    GlobalVariable.PrefixUpToSecondHyphen(x.C004) == pfx2 &&
                         //    x.C010 == item1.C015).DistinctBy(x => x.C002).ToList();
 
+                        if (string.IsNullOrEmpty(item.C020)) continue;   // không có mold (step không có dòng FT601) → không có "cùng khuôn"
                         var pfx2 = GlobalVariable.PrefixUpToThirdHyphen(item.C002);
                         var sameMolds = _dataHydra.Where(x =>
                             x.C019 == item.C020 && x.C015 == item.C004 &&
@@ -925,6 +959,9 @@ namespace SSSW.UI.WPF.ViewModels
                     _scaleData.AddRange(newSameMold);
 
                     FillMissingArticleInfo(_scaleData);
+                    // C003 (tên step) có thể null: ItemStepName từ SP rỗng, hoặc FT601.C005 null (dòng cùng khuôn nhiều size).
+                    // Phía dưới gọi C003.StartsWith(...) trực tiếp → chuẩn hóa về chuỗi rỗng để không NullReferenceException.
+                    foreach (var r in _scaleData) r.C003 ??= string.Empty;
                     _scaleDataFinal = _scaleData.OrderBy(x => x.C015).ThenBy(x => x.C027).ToList();
 
                     // Khôi phục logic khóa / lọc nút cân như bản gốc (2026-11-05): Logo, Cleat_Ring, Studs, Inlay (1 khuôn nhiều size, group size)
@@ -942,6 +979,7 @@ namespace SSSW.UI.WPF.ViewModels
                                 .Select(x => x.ItemStepCode)
                                 .ToHashSet();
                     var checkMultiSize = _scaleDataFinal
+                                .Where(x => !string.IsNullOrEmpty(x.C020))
                                 .GroupBy(x => (x.C004, x.C020))
                                 .Where(g => g.Count() > 1)
                                 .ToDictionary(g => g.Key, g => g.ToList());
@@ -1182,6 +1220,7 @@ namespace SSSW.UI.WPF.ViewModels
 
                     _scaleDataFinal = _scaleDataFinal.OrderBy(x => x.C015).ThenBy(x => x.C004).ToList();
 
+                    ApplyPuUnits(_scaleDataFinal);
                     await PreloadLevel2Async();
                     var level2RexRows = AddLevel2OnlyRexRows();
                     ApplyPieceQuantities();
@@ -1495,6 +1534,20 @@ namespace SSSW.UI.WPF.ViewModels
             return code != null && _pieceQtyByCode.TryGetValue(code, out var q) ? q : 0;
         }
 
+        /// <summary>
+        /// Hàng PU (FT601.C016 = 'PU'): cân theo chiếc — Unit (C037) = PCS-L / PCS-R theo hậu tố mã step.
+        /// Mold / PPIC / Actual Partitioning (C018 / C017 / C028) là số chiếc; mọi phép chia N (Part, Runner, Total PW) ra g/chiếc,
+        /// không còn quy đổi 1 PRS = 2 chiếc (đơn vị không phải "PRS").
+        /// </summary>
+        private static void ApplyPuUnits(IEnumerable<FT600> rows)
+        {
+            foreach (var r in rows.Where(x => x.IsPu))
+                r.C037 = FT600.PuUnitOf(r.C002);
+        }
+
+        /// <summary>Đơn vị số lượng ở panel/lưới: "pcs" nếu dòng PU, ngược lại "prs".</summary>
+        private static string CountUnitOf(FT600? row) => row?.IsPu == true ? "pcs" : "prs";
+
         /// <summary>Số chiếc dùng để chia trọng lượng: C039 nếu đã có, ngược lại C025 (Quantity), tối thiểu 1.</summary>
         private static double PiecesOf(FT600 row)
             => (row.C039 ?? 0) > 0 ? row.C039!.Value : ((row.C025 ?? 0) > 0 ? row.C025!.Value : 1);
@@ -1507,6 +1560,7 @@ namespace SSSW.UI.WPF.ViewModels
         {
             if (row.C002?.StartsWith("REX") ?? false) return;
             if ((row.C021 ?? 0) <= 0) return;
+            if (row.IsPu) { row.C036 = Math.Round(row.C021!.Value, 3); return; }   // PU: C021 đã là g/chiếc
             var pcs = PiecesStrict(row);
             row.C036 = pcs > 0 ? Math.Round(row.C021!.Value / pcs, 3) : 0;
         }
@@ -1614,7 +1668,7 @@ namespace SSSW.UI.WPF.ViewModels
             C000 = parent.C000,
             C001 = parent.C001,
             C002 = code,
-            C003 = child.ItemStepName?.Trim(),
+            C003 = child.ItemStepName?.Trim() ?? string.Empty,
             C004 = parent.C004,
             C005 = parent.C005,
             C006 = parent.C006,
@@ -1907,7 +1961,7 @@ namespace SSSW.UI.WPF.ViewModels
                     ComponentCode = pr.C002!.Trim(),
                     Step = pr.C015?.ToString() ?? "—",
                     Qty = 1,
-                    Unit = "PRS",
+                    Unit = pr.IsPu ? (pr.C037 ?? "PCS") : "PRS",
                     Weighed = ok ? prev : null,
                     PerPiece = ok ? prev : null,
                     Deduct = ok ? prev : null,
@@ -2521,7 +2575,7 @@ namespace SSSW.UI.WPF.ViewModels
                         C000 = logoRow.C000,
                         C001 = logoRow.C001,
                         C002 = code,
-                        C003 = gs.ItemName?.Trim(),
+                        C003 = gs.ItemName?.Trim() ?? string.Empty,
                         C004 = logoRow.C004,
                         C005 = logoRow.C005,
                         C006 = logoRow.C006,
@@ -2789,18 +2843,19 @@ namespace SSSW.UI.WPF.ViewModels
         // ─────────────────────────────────────────────────────────────────────
         private void UpdateReferencePanel()
         {
+            var perUnit = "g/" + CountUnitOf(_rowSelected);
             _referenceRows = new List<ReferenceRow>
             {
                 new() { No=1, FieldName="Total Weight",           Unit="g",
                         Std    = _stdRow?.C024 > 0 ? _stdRow.C024 : null,
                         Actual = _rowSelected?.C024 > 0 ? _rowSelected.C024 : null },
-                new() { No=2, FieldName="Total Part Weight",             Unit="g/prs",
+                new() { No=2, FieldName="Total Part Weight",             Unit=perUnit,
                         Std    = _stdRow?.C023 > 0 ? _stdRow.C023 : null,
                         Actual = _rowSelected?.C023 > 0 ? _rowSelected.C023 : null },
-                new() { No=3, FieldName="Part Weight",                 Unit="g/prs",
+                new() { No=3, FieldName="Part Weight",                 Unit=perUnit,
                         Std    = _stdRow?.C021 > 0 ? _stdRow.C021 : null,
                         Actual = _rowSelected?.C021 > 0 ? _rowSelected.C021 : null },
-                new() { No=4, FieldName="Runner / Excess Mat. Weight", Unit="g/prs",
+                new() { No=4, FieldName="Runner / Excess Mat. Weight", Unit=perUnit,
                         Std    = _stdRow?.C022 > 0 ? _stdRow.C022 : null,
                         Actual = _rowSelected?.C022 > 0 ? _rowSelected.C022 : null }
             };
@@ -2847,6 +2902,7 @@ namespace SSSW.UI.WPF.ViewModels
                 Size = _rowSelected?.C008;
                 StepIndex = _rowSelected?.C015?.ToString();
                 ActualPairs = _rowSelected?.C028?.ToString();
+                CountUnit = CountUnitOf(_rowSelected);
                 Qty = _rowSelected?.C025?.ToString();
                 FgItemCode = _rowSelected?.C013;
                 FgName = _rowSelected?.C014;

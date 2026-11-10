@@ -43,10 +43,17 @@ namespace SSSW.UI.WPF.Services
             var key = stepCode.Trim();
             if (_level2.TryGetValue(key, out var cached)) return cached;
 
-            var rows = await GetLevel1Async(key); // cùng SP, truyền mã step
+            var rows = IgnoreNonItemRows(await GetLevel1Async(key)); // cùng SP, truyền mã step
             _level2[key] = rows;
             return rows;
         }
+
+        /// <summary>
+        /// SP trả thêm các dòng không phải chi tiết thật (vd. mã "220280HT", "CEMENTINGPU", "PU": tên / category / unit / size đều NULL).
+        /// Bỏ các dòng không có tên chi tiết; nếu không còn dòng nào thì coi như step không có Level 2.
+        /// </summary>
+        internal static List<BomWinlineModel> IgnoreNonItemRows(IEnumerable<BomWinlineModel> rows)
+            => rows.Where(r => !string.IsNullOrWhiteSpace(r.ItemStepName)).ToList();
 
         public void ClearCache() => _level2.Clear();
     }

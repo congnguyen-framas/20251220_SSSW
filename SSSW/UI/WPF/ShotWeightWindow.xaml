@@ -151,7 +151,7 @@
                                     </Grid.ColumnDefinitions>
 
                                     <StackPanel Grid.Column="0">
-                                        <TextBlock Style="{StaticResource LabelStyle}" Text="Partitioning (prs)" />
+                                        <TextBlock Style="{StaticResource LabelStyle}" Text="{Binding PartitioningLabel}" />
                                         <TextBox
                                             IsEnabled="{Binding AllowPartitionAdj}"
                                             KeyDown="tbActualPairs_KeyDown"
@@ -160,7 +160,7 @@
                                     </StackPanel>
 
                                     <StackPanel Grid.Column="2" VerticalAlignment="Bottom">
-                                        <TextBlock Style="{StaticResource LabelStyle}" Text="Adjust no. of prs" />
+                                        <TextBlock Style="{StaticResource LabelStyle}" Text="{Binding AdjustLabel}" />
                                         <CheckBox IsChecked="{Binding AllowPartitionAdj}" />
                                     </StackPanel>
                                 </Grid>
@@ -759,7 +759,7 @@
                                     <DataGridTextColumn.HeaderTemplate>
                                         <DataTemplate>
                                             <TextBlock
-                                                Text="Actual Partitioning (prs)"
+                                                Text="Actual Partitioning (prs/pcs)"
                                                 TextAlignment="Center"
                                                 TextWrapping="WrapWithOverflow"
                                                 ToolTipService.ShowDuration="20000">
@@ -780,7 +780,7 @@
                                     <DataGridTextColumn.HeaderTemplate>
                                         <DataTemplate>
                                             <TextBlock
-                                                Text="PPIC Partitioning (prs)"
+                                                Text="PPIC Partitioning (prs/pcs)"
                                                 TextAlignment="Center"
                                                 TextWrapping="WrapWithOverflow"
                                                 ToolTipService.ShowDuration="20000">
@@ -802,7 +802,7 @@
                                     <DataGridTextColumn.HeaderTemplate>
                                         <DataTemplate>
                                             <TextBlock
-                                                Text="Mold Pairs Shot (prs)"
+                                                Text="Mold Pairs Shot (prs/pcs)"
                                                 TextAlignment="Center"
                                                 TextWrapping="WrapWithOverflow"
                                                 ToolTipService.ShowDuration="20000">

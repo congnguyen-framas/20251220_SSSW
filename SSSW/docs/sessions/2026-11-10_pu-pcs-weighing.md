@@ -29,3 +29,7 @@ Hàng có `FT601.C016 = 'PU'` (lưu ở `FT600.C019`) cân theo **chiếc (PCS)*
 - `SwitchToLockedStepAsync`: step không có trong master vẫn chuyển sang xử lý → `CreateStepFromSelectionAsync` (master FT601 theo mã step, không có thì dựng FT601 tạm + `sp_sssw_getproductInfo`).
 - Logo: FG/Main lấy từ `sp_sssw_getproductInfo` (FG name = `ProductName`), lưu Confirm theo FG này; group size PU chỉ giữ size cùng L/R với step gốc; lưu `C019 = PU`, `C037 = PCS-L/PCS-R`.
 - Actual / PPIC / Mold pairs-or-pcs shot (`C028/C017/C018`) mặc định 1 khi FT601 không có (null/0).
+
+## 5. UI (2026-11-11)
+- Row Details (Total Steps): đơn vị `PCS` cho mọi dòng con (trừ "previous step" = `PRS`); hàng PU giữ đơn vị của child. Header cột `Qty` bỏ `(PCS)`.
+- `ShotWeightWindow.xaml`: thêm `GridSplitter` — dọc giữa Total Steps và 2 card dưới (mặc định cao 520, min 200/320), ngang giữa Reference/History và Reference Values (mặc định 50/50, min 320). Kích thước chỉnh tay không được lưu.

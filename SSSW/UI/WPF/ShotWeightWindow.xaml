@@ -423,7 +423,9 @@
                     <!--  TOTAL STEPS lấy phần không gian còn lại; 2 card Reference/History + Reference Values
                           thu về chiều cao cố định (đã bỏ khối ghi chú, ghi chú nằm trong tooltip icon "i")  -->
                     <RowDefinition Height="*" MinHeight="320" />
-                    <RowDefinition Height="520" />
+                    <!--  Thanh kéo đổi chiều cao: mặc định như cũ (520), người dùng kéo để chỉnh trong phiên  -->
+                    <RowDefinition Height="4" />
+                    <RowDefinition MinHeight="200" Height="520" />
                 </Grid.RowDefinitions>
 
                 <!--  TOTAL STEPS  -->
@@ -1053,18 +1055,43 @@
                     </Grid>
                 </Border>
 
+                <GridSplitter
+                    Grid.Row="1"
+                    Height="4"
+                    HorizontalAlignment="Stretch"
+                    VerticalAlignment="Stretch"
+                    Background="Transparent"
+                    Cursor="SizeNS"
+                    ResizeBehavior="PreviousAndNext"
+                    ResizeDirection="Rows"
+                    ToolTip="Drag to resize Total Steps / bottom cards" />
+
                 <!--  HISTORY + SCALE CARD + REF VALUES  -->
-                <Border Grid.Row="1" Padding="0,4,0,0">
+                <Border Grid.Row="2">
                     <Grid Grid.IsSharedSizeScope="True">
                         <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="*" />
-                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="*" MinWidth="320" />
+                            <ColumnDefinition Width="6" />
+                            <ColumnDefinition Width="*" MinWidth="320" />
                         </Grid.ColumnDefinitions>
+
+                        <!--  Thanh kéo đổi chiều rộng 2 card dưới (mặc định chia đôi như cũ)  -->
+                        <GridSplitter
+                            Grid.Column="1"
+                            Width="6"
+                            Margin="0,0,0,4"
+                            HorizontalAlignment="Stretch"
+                            VerticalAlignment="Stretch"
+                            Background="Transparent"
+                            Cursor="SizeWE"
+                            ResizeBehavior="PreviousAndNext"
+                            ResizeDirection="Columns"
+                            ToolTip="Drag to resize Reference / History and Reference Values" />
 
                         <!--  History panel  -->
                         <Border
                             Grid.Column="0"
-                            Margin="6,0,6,4"
+                            Margin="6,0,0,4"
                             Style="{StaticResource CardStyle}">
                             <Grid>
                                 <Grid.RowDefinitions>
@@ -1221,7 +1248,7 @@
 
                         <!--  Scale Card + Reference Values (Combined)  -->
                         <Border
-                            Grid.Column="1"
+                            Grid.Column="2"
                             Margin="0,0,6,4"
                             Style="{StaticResource CardStyle}">
                             <Grid>

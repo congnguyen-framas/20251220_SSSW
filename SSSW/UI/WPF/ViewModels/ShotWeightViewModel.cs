@@ -1982,7 +1982,8 @@ namespace SSSW.UI.WPF.ViewModels
                     Step = code.StartsWith("REX", StringComparison.OrdinalIgnoreCase)
                         ? "REX" : (weighed?.C015?.ToString() ?? "—"),
                     Qty = qty,
-                    Unit = child.Unit?.Trim(),
+                    // Qty ở Level 2 là số chiếc → hàng thường hiển thị PCS (chỉ dòng "previous step" mới là PRS); hàng PU giữ đơn vị BOM
+                    Unit = row.IsPu ? child.Unit?.Trim() : "PCS",
                     Weighed = perPiece == null ? null : weighed!.C021,
                     PerPiece = perPiece,
                     Deduct = deduct,

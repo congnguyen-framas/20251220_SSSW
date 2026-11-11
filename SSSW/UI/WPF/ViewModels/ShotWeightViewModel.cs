@@ -59,6 +59,16 @@ namespace SSSW.UI.WPF.ViewModels
         private bool _newScale = true;
         public FT601 _stepItemCodeScale = new();
         private readonly HashSet<Guid> _sameMoldRowIds = new();
+        /// <summary>Dòng cùng khuôn / group size thêm vào → step chọn cân ban đầu (nguồn copy FG, Main, số chiếc khi thiếu).</summary>
+        private readonly Dictionary<Guid, FT600> _sameMoldAnchor = new();
+        /// <summary>Id các FT601 dựng tạm (step không có trong FT601) — không tồn tại trong DB.</summary>
+        private readonly HashSet<Guid> _syntheticStepIds = new();
+        /// <summary>Dòng step đang chuyển sang là PU (đọc trước khi danh sách bị dựng lại).</summary>
+        private bool _switchRowIsPu;
+        private int? _switchRowSeq;
+        /// <summary>FG (code / name) thật của step Logo đang cân, lấy từ sp_sssw_getproductInfo; null = dùng FG của FT601 như thường.</summary>
+        private string? _productFgCode;
+        private string? _productFgName;
 
         private List<BomWinlineModel> _allStepsFG = new();
         private List<FT600> _scaledDataPreviousStep = new();
@@ -717,7 +727,9 @@ namespace SSSW.UI.WPF.ViewModels
                         x.C015?.Trim() == selected.Machine?.Trim() &&
                         x.C018 == selected.HydraOrderNo)
                         ?? _dataHydra.FirstOrDefault(x => x.C004?.Trim() == selected.StepItemCode?.Trim())
-                        ?? throw new Exception("Step not found in master data.");
+                        // Step không có trong FT601 của lệnh (vd. size L/R lấy từ group size): tìm master FT601 theo đúng mã step,
+                        // không có thì dựng từ thông tin step + sp_sssw_getproductInfo
+                        ?? await CreateStepFromSelectionAsync(selected);
 
                     if (!string.IsNullOrEmpty(_qrCodeScan) && _stepSelected.Id != _labelInfo?.C000)
                     {
@@ -758,9 +770,16 @@ namespace SSSW.UI.WPF.ViewModels
                     _stepItemCodeScale = await db.FT601s
                         .Where(x => x.C007 == stepCode.C007 && x.C004 == stepCode.C004)
                         .FirstOrDefaultAsync()
-                        ?? throw new Exception($"Step item1 code {stepCode.C007} not found.");
+                        ?? (_syntheticStepIds.Contains(stepCode.Id) ? stepCode
+                            : throw new Exception($"Step item1 code {stepCode.C007} not found."));
 
                     _allStepsFG = await _bom.GetLevel1Async(stepCode.C007);
+
+                    // FG hàng PU: có step của FG (hoặc step đang chọn) với FT601.C016 = 'PU'
+                    bool fgIsPu = string.Equals(stepCode.C016?.Trim(), FT600.PuMachineGroup, StringComparison.OrdinalIgnoreCase) ||
+                        _allStepsFG.Any(it => _dataHydra.Any(h =>
+                            string.Equals(h.C004?.Trim(), it.ItemStepCode?.Trim(), StringComparison.OrdinalIgnoreCase) &&
+                            string.Equals(h.C016?.Trim(), FT600.PuMachineGroup, StringComparison.OrdinalIgnoreCase)));
 
                     foreach (var item in _allStepsFG)
                     {
@@ -785,9 +804,13 @@ namespace SSSW.UI.WPF.ViewModels
                             {
                                 var mc = fgMainCodeTrim;
                                 var smc = stepCodeTrim.Contains('-') ? stepCodeTrim.Split('-')[1] : stepCodeTrim;
+                                // Chỉ hàng PU: FT601 khớp mờ phải cùng L/R với step, tránh trúng size chung / phía kia
+                                // (vd. step ...-F21L không được khớp ...-F189 hay ...-F21R). Hàng khác giữ cách khớp cũ.
+                                var stepSide = fgIsPu ? FT600.PuSideOf(stepCodeTrim) : null;
                                 ckHydra = _dataHydra.FirstOrDefault(x =>
-                                    (!string.IsNullOrEmpty(mc) && x.C007 != null && x.C007.Contains($"{mc}-")) ||
-                                    (!string.IsNullOrEmpty(smc) && x.C004 != null && x.C004.Contains($"-{smc}-")));
+                                    ((!string.IsNullOrEmpty(mc) && x.C007 != null && x.C007.Contains($"{mc}-")) ||
+                                     (!string.IsNullOrEmpty(smc) && x.C004 != null && x.C004.Contains($"-{smc}-"))) &&
+                                    (stepSide == null || FT600.PuSideOf(x.C004) == stepSide));
                                 // Không còn khóa theo lệnh đang chạy: mọi step đều cho phép cân (xem docs/tech/ALLOWSCALE_LOGIC_REVIEW.md)
                             }
                             else
@@ -875,7 +898,7 @@ namespace SSSW.UI.WPF.ViewModels
                     if (_scaleData.Any(x => x.IsPu))
                     {
                         foreach (var r in _scaleData.Where(x =>
-                                     string.IsNullOrEmpty(x.C019) && string.IsNullOrEmpty(x.C020) &&
+                                     string.IsNullOrEmpty(x.C019) &&
                                      !string.IsNullOrWhiteSpace(x.C002) && x.C002 != "Z-VHXXXXXX" &&
                                      !x.C002.StartsWith("REX", StringComparison.OrdinalIgnoreCase)))
                             r.C019 = FT600.PuMachineGroup;
@@ -884,6 +907,8 @@ namespace SSSW.UI.WPF.ViewModels
                     // Trường hợp nhiều size trên 1 khuôn
                     var dataSize = new List<FT600>();
                     _sameMoldRowIds.Clear();
+                    _sameMoldAnchor.Clear();
+                    _productFgCode = _productFgName = null;
                     foreach (var item in _scaleData)
                     {
                         //var pfx2 = GlobalVariable.PrefixUpToSecondHyphen(item1.C002);
@@ -909,6 +934,7 @@ namespace SSSW.UI.WPF.ViewModels
                                 "sp_GetCategorryOfItem @ItemCode = {0}", itemList)
                             .AsNoTracking().ToListAsync();
 
+                        var firstNewIdx = dataSize.Count;
                         foreach (var ms in sameMolds)
                         {
                             var cat = category.FirstOrDefault(x => x.ItemCode == ms.C004);
@@ -951,6 +977,16 @@ namespace SSSW.UI.WPF.ViewModels
                                 AllowScale = true
                             });
                         }
+
+                        // FG của các dòng cùng khuôn = FG của step chọn cân ban đầu (FT601 của size khác có thể ghi FG khác);
+                        // Main code/name giữ theo FT601, thiếu thì copy từ step gốc. Số chiếc (C039) copy từ step gốc khi chưa có.
+                        foreach (var added in dataSize.Skip(firstNewIdx))
+                        {
+                            if (!string.IsNullOrWhiteSpace(item.C013)) added.C013 = item.C013;
+                            if (!string.IsNullOrWhiteSpace(item.C014)) added.C014 = item.C014;
+                            CopyMissingFgInfo(added, item);
+                            _sameMoldAnchor[added.id] = item;
+                        }
                     }
 
                     var newSameMold = dataSize.Where(ds =>
@@ -959,6 +995,14 @@ namespace SSSW.UI.WPF.ViewModels
                     _scaleData.AddRange(newSameMold);
 
                     FillMissingArticleInfo(_scaleData);
+
+                    // Không có thông tin partitioning trong FT601 (null / 0) → mặc định 1 (Actual / PPIC / Mold pairs-or-pcs shot)
+                    foreach (var r in _scaleData.Where(x => !(x.C002?.StartsWith("REX", StringComparison.OrdinalIgnoreCase) ?? false)))
+                    {
+                        if ((r.C028 ?? 0) <= 0) r.C028 = 1;
+                        if ((r.C017 ?? 0) <= 0) r.C017 = 1;
+                        if ((r.C018 ?? 0) <= 0) r.C018 = 1;
+                    }
                     // C003 (tên step) có thể null: ItemStepName từ SP rỗng, hoặc FT601.C005 null (dòng cùng khuôn nhiều size).
                     // Phía dưới gọi C003.StartsWith(...) trực tiếp → chuẩn hóa về chuỗi rỗng để không NullReferenceException.
                     foreach (var r in _scaleData) r.C003 ??= string.Empty;
@@ -1592,6 +1636,12 @@ namespace SSSW.UI.WPF.ViewModels
                 foreach (var row in _scaleDataFinal)
                 {
                     row.C039 = PiecesFor(row);
+                    // Dòng cùng khuôn / group size không có trong BOM Level 2 của FG → số chiếc & Quantity copy từ step chọn cân
+                    if (row.C039 == 0 && _sameMoldAnchor.TryGetValue(row.id, out var anchor))
+                    {
+                        row.C039 = PiecesFor(anchor);
+                        if ((row.C025 ?? 0) <= 0) row.C025 = anchor.C025;
+                    }
                     if ((row.C036 ?? 0) <= 0) UpdateWeightPerPiece(row);
                 }
 
@@ -2305,12 +2355,24 @@ namespace SSSW.UI.WPF.ViewModels
 
                     // FG code / FG name lưu theo FG của step đang scan/chọn cân (trọng lượng step dùng chung giữa các FG/màu).
                     // Không áp cho dòng cùng khuôn khác size (mỗi size có FG riêng).
-                    if (!string.IsNullOrEmpty(_stepItemCodeScale.C007) && !_sameMoldRowIds.Contains(x.id))
+                    // Step Logo: FG thật lấy từ sp_sssw_getproductInfo (FT601 của Logo ghi FG là chính step Logo).
+                    var fgCode = _productFgCode ?? _stepItemCodeScale.C007;
+                    var fgName = _productFgName ?? _stepItemCodeScale.C008;
+                    if (!string.IsNullOrEmpty(fgCode) && !_sameMoldRowIds.Contains(x.id))
                     {
-                        x.C013 = _stepItemCodeScale.C007;
-                        x.C014 = _stepItemCodeScale.C008;
+                        x.C013 = fgCode;
+                        x.C014 = fgName;
                     }
                 });
+
+                // Hàng PU: lưu C019 = PU và C037 = PCS-L / PCS-R (cả step không có dòng FT601).
+                if (insert.Any(r => r.IsPu))
+                {
+                    foreach (var r in insert.Where(r => string.IsNullOrEmpty(r.C019) && !string.IsNullOrWhiteSpace(r.C002) &&
+                                 !r.C002.StartsWith("REX", StringComparison.OrdinalIgnoreCase)))
+                        r.C019 = FT600.PuMachineGroup;
+                    ApplyPuUnits(insert);
+                }
 
                 await db.FT600s.AddRangeAsync(insert);
                 await db.FT601s
@@ -2485,18 +2547,33 @@ namespace SSSW.UI.WPF.ViewModels
         {
             try
             {
-                var item = _allStepCodeMaster.FirstOrDefault(x => row.C032 != null && x.FT601Id == row.C032)
-                           ?? _allStepCodeMaster.FirstOrDefault(x =>
+                // C032 phải trỏ đúng step (cùng mã) — tránh C032 của FT601 khớp sai (vd. step F21L trỏ nhầm FT601 của F189)
+                var item = _allStepCodeMaster.FirstOrDefault(x => row.C032 != null && x.FT601Id == row.C032 &&
+                                string.Equals(x.StepItemCode?.Trim(), row.C002?.Trim(), StringComparison.OrdinalIgnoreCase))
+                           ??_allStepCodeMaster.FirstOrDefault(x =>
                                 string.Equals(x.StepItemCode?.Trim(), row.C002?.Trim(), StringComparison.OrdinalIgnoreCase) &&
                                 (string.IsNullOrEmpty(row.C004) || x.Machine?.Trim() == row.C004.Trim()))
                            ?? _allStepCodeMaster.FirstOrDefault(x =>
                                 string.Equals(x.StepItemCode?.Trim(), row.C002?.Trim(), StringComparison.OrdinalIgnoreCase));
 
-                if (item == null)
+                // Không có trong danh sách master (FT601 của lệnh) → vẫn chuyển step đang chọn sang xử lý:
+                // OnStepSelectedAsync tìm master FT601 theo mã step, không có thì dựng từ sp_sssw_getproductInfo.
+                bool inMaster = item != null;
+                _switchRowIsPu = row.IsPu;
+                _switchRowSeq = row.C015;
+                item ??= new StepSelectModel
                 {
-                    _dialog.Warn($"No step data found to weigh this step: {row.C002}.", "Warning");
-                    return;
-                }
+                    StepItemCode = row.C002?.Trim() ?? string.Empty,
+                    StepItemName = row.C003 ?? string.Empty,
+                    Size = row.C008,
+                    ArticlePairsShot = row.C017,
+                    MoldPairsShot = row.C018,
+                    Machine = row.C004,
+                    HydraOrderNo = _stepItemCodeScale.C018,
+                    FGCode = _stepItemCodeScale.C007,   // FG hiện tại: dự phòng khi SP không trả FG
+                    FGName = _stepItemCodeScale.C008,
+                    FT601Id = Guid.Empty
+                };
 
                 // Luôn hỏi xác nhận trước khi chuyển; đổi step sẽ dựng lại danh sách → mất giá trị đã cân trong phiên mà chưa Confirm
                 var unsaved = _scaleDataFinal.Count(x => (x.C021 ?? 0) > 0 && !x.IsReusedFromHistory);
@@ -2513,7 +2590,7 @@ namespace SSSW.UI.WPF.ViewModels
                 ClearBarcodeAction?.Invoke();
 
                 _suppress = true;
-                SetStepComboAction?.Invoke(item);
+                if (inMaster) SetStepComboAction?.Invoke(item);   // step dựng tạm không có trong combo
                 _suppress = false;
 
                 await OnStepSelectedAsync(item);
@@ -2547,11 +2624,24 @@ namespace SSSW.UI.WPF.ViewModels
 
                 var sizes = await GetGroupSizesAsync(db, prefix);
 
+                // FG / Main thật của step Logo đang cân (FT601 của Logo ghi FG là chính step) → theo sp_sssw_getproductInfo,
+                // áp cho dòng Logo chính; các size thêm vào bên dưới copy từ dòng này.
+                var product = await GetProductInfoAsync(db, logoRow.C002);
+                if (product != null)
+                {
+                    if (!string.IsNullOrWhiteSpace(product.FgCode)) { logoRow.C013 = product.FgCode; _productFgCode = product.FgCode; }
+                    if (!string.IsNullOrWhiteSpace(product.FgName)) { logoRow.C014 = product.FgName; _productFgName = product.FgName; }
+                    if (!string.IsNullOrWhiteSpace(product.MainCode)) logoRow.C026 = product.MainCode;
+                    if (!string.IsNullOrWhiteSpace(product.MainName)) logoRow.C027 = product.MainName;
+                }
+
                 foreach (var gs in sizes)
                 {
                     var code = gs.ItemCode?.Trim();
                     if (string.IsNullOrEmpty(code) || code.EndsWith("-0000", StringComparison.Ordinal) ||
                         string.Equals(gs.SizeName?.Trim(), "no size", StringComparison.OrdinalIgnoreCase)) continue;
+                    // Hàng PU: chỉ lấy size có hậu tố cuối giống step gốc (gốc ...-F21L → chỉ L; ...-F21R → chỉ R)
+                    if (logoRow.IsPu && FT600.PuSideOf(code) != FT600.PuSideOf(logoRow.C002)) continue;
                     if (_scaleDataFinal.Any(x => string.Equals(x.C002?.Trim(), code, StringComparison.OrdinalIgnoreCase))) continue;
 
                     // Mỗi size có partitioning riêng: lấy từ FT601 của chính size đó (lệnh đang chạy, nếu không có thì master)
@@ -2608,6 +2698,8 @@ namespace SSSW.UI.WPF.ViewModels
                         C038 = logoRow.C038,
                         AllowScale = true
                     });
+                    CopyMissingFgInfo(_scaleDataFinal[^1], logoRow);
+                    _sameMoldAnchor[_scaleDataFinal[^1].id] = logoRow;
                     _sameMoldRowIds.Add(_scaleDataFinal[^1].id);
                 }
 
@@ -2617,6 +2709,99 @@ namespace SSSW.UI.WPF.ViewModels
             {
                 _logger.LogError(ex, "AddLogoGroupSizesAsync error");
             }
+        }
+
+        /// <summary>
+        /// Step được chọn nhưng không có trong FT601 của lệnh: ưu tiên master FT601 mới nhất đúng mã step;
+        /// không có thì dựng FT601 tạm (không lưu DB) với FG / Main từ sp_sssw_getproductInfo, máy &amp; size &amp; partitioning từ step đang chọn.
+        /// </summary>
+        private async Task<FT601> CreateStepFromSelectionAsync(StepSelectModel s)
+        {
+            using var db = _dbFactory.CreateDbContext();
+            var code = s.StepItemCode?.Trim();
+
+            var master = await db.FT601s.AsNoTracking()
+                .Where(x => x.C004 == code)
+                .OrderByDescending(x => x.CreatedDate)
+                .FirstOrDefaultAsync();
+            if (master != null) return master;
+
+            var product = await GetProductInfoAsync(db, code);
+            var step = new FT601
+            {
+                Id = Guid.NewGuid(),
+                C001 = EnumSampleLocation.Production,
+                C002 = s.Size,
+                C003 = product?.MainName,
+                C004 = code,
+                C005 = s.StepItemName,
+                C007 = !string.IsNullOrWhiteSpace(product?.FgCode) ? product!.FgCode : s.FGCode,
+                C008 = !string.IsNullOrWhiteSpace(product?.FgName) ? product!.FgName : s.FGName,
+                C010 = _switchRowSeq,
+                C013 = s.ArticlePairsShot,
+                C014 = s.MoldPairsShot,
+                C015 = s.Machine,
+                C016 = _switchRowIsPu ? FT600.PuMachineGroup : null,
+                C017 = false,
+                C018 = s.HydraOrderNo,
+                C020 = product?.MainCode
+            };
+            _syntheticStepIds.Add(step.Id);
+            return step;
+        }
+
+        private sealed record ProductInfo(string? FgCode, string? FgName, string? MainCode, string? MainName);
+
+        /// <summary>
+        /// sp_sssw_getproductInfo @itemCode = mã step → FG chứa step (ProductItemCode / ProductName) và Main (MainCode / MainName).
+        /// Lỗi hoặc không có dòng → null (giữ dữ liệu FT601).
+        /// </summary>
+        private async Task<ProductInfo?> GetProductInfoAsync(DbContextDogeWH db, string? stepCode)
+        {
+            if (string.IsNullOrWhiteSpace(stepCode)) return null;
+            var conn = db.Database.GetDbConnection();
+            bool openedHere = conn.State != ConnectionState.Open;
+            try
+            {
+                if (openedHere) await conn.OpenAsync();
+                using var cmd = conn.CreateCommand();
+                cmd.CommandText = "sp_sssw_getproductInfo";
+                cmd.CommandType = CommandType.StoredProcedure;
+                var prm = cmd.CreateParameter();
+                prm.ParameterName = "@itemCode";
+                prm.Value = stepCode.Trim();
+                cmd.Parameters.Add(prm);
+
+                using var rd = await cmd.ExecuteReaderAsync();
+                if (!await rd.ReadAsync()) return null;
+
+                string? Str(string name)
+                {
+                    for (int i = 0; i < rd.FieldCount; i++)
+                        if (string.Equals(rd.GetName(i), name, StringComparison.OrdinalIgnoreCase))
+                            return rd.IsDBNull(i) ? null : Convert.ToString(rd.GetValue(i), System.Globalization.CultureInfo.InvariantCulture)?.Trim();
+                    return null;
+                }
+                return new ProductInfo(Str("ProductItemCode"), Str("ProductName"), Str("MainCode"), Str("MainName"));
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "GetProductInfoAsync error ({Code})", stepCode);
+                return null;
+            }
+            finally
+            {
+                if (openedHere) await conn.CloseAsync();
+            }
+        }
+
+        /// <summary>Dòng thêm vào chưa có FG code/name, main code/name thì copy từ dòng gốc.</summary>
+        private static void CopyMissingFgInfo(FT600 row, FT600 source)
+        {
+            if (string.IsNullOrWhiteSpace(row.C013)) row.C013 = source.C013;
+            if (string.IsNullOrWhiteSpace(row.C014)) row.C014 = source.C014;
+            if (string.IsNullOrWhiteSpace(row.C026)) row.C026 = source.C026;
+            if (string.IsNullOrWhiteSpace(row.C027)) row.C027 = source.C027;
         }
 
         /// <summary>

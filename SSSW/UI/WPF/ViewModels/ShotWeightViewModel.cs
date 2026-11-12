@@ -1628,9 +1628,10 @@ namespace SSSW.UI.WPF.ViewModels
 
                 _pieceQtyByCode = ComponentQuantityAggregator.Aggregate(scoped);
 
-                // Step "chain" (chỉ dồn vào step kế tiếp) coi như không có trong Level 2 → C039 = 0
+                // Step "chain" thực sự bị trừ như step trước (ChainPredecessors) coi như không có trong Level 2 → C039 = 0;
+                // step cùng thứ tự không được chọn (vd. Studs) vẫn là chi tiết con Level 2 → giữ C039 để có g/chiếc
                 var fgRows = FgStepRows();
-                foreach (var st in fgRows.Where(x => IsChainOnly(x, fgRows)))
+                foreach (var st in fgRows.SelectMany(x => ChainPredecessors(x)).Distinct())
                     _pieceQtyByCode.Remove(st.C002!.Trim());
 
                 foreach (var row in _scaleDataFinal)
@@ -1930,8 +1931,9 @@ namespace SSSW.UI.WPF.ViewModels
             return new List<FT600> { pick };
         }
 
+        /// <summary>Chỉ mã của step chain thực sự bị trừ (ChainPredecessors); step cùng thứ tự không được chọn (vd. Studs) vẫn tính như chi tiết con Level 2.</summary>
         private HashSet<string> ChainPredecessorCodes(FT600 row)
-            => ChainCandidatesBefore(row).Select(x => x.C002!.Trim()).ToHashSet(StringComparer.OrdinalIgnoreCase);
+            => ChainPredecessors(row).Select(x => x.C002!.Trim()).ToHashSet(StringComparer.OrdinalIgnoreCase);
 
         /// <summary>Tìm FT600 đã cân của chi tiết con: ưu tiên dòng trong phiên hiện tại, sau đó bản ghi đã lưu.</summary>
         private FT600? FindWeighedChild(string code)
@@ -1987,7 +1989,8 @@ namespace SSSW.UI.WPF.ViewModels
                     Weighed = perPiece == null ? null : weighed!.C021,
                     PerPiece = perPiece,
                     Deduct = deduct,
-                    IsWeighed = perPiece != null
+                    IsWeighed = perPiece != null,
+                    IsPu = row.IsPu
                 });
 
                 if (deduct != null)
@@ -2016,7 +2019,8 @@ namespace SSSW.UI.WPF.ViewModels
                     Weighed = ok ? prev : null,
                     PerPiece = ok ? prev : null,
                     Deduct = ok ? prev : null,
-                    IsWeighed = ok
+                    IsWeighed = ok,
+                    IsPu = pr.IsPu
                 });
                 if (ok) { total += prev; terms.Add(prev.ToString("F2")); }
                 else { missing.Add(pr.C002!.Trim()); terms.Add($"{pr.C002!.Trim()} ?"); }

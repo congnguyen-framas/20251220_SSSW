@@ -691,13 +691,13 @@
                                 </DataGridTextColumn>
 
                                 <DataGridTextColumn
-                                    Width="60"
+                                    Width="95"
                                     Binding="{Binding C023, StringFormat=F3}"
                                     ElementStyle="{StaticResource CenterCell}">
                                     <DataGridTextColumn.HeaderTemplate>
                                         <DataTemplate>
                                             <TextBlock
-                                                Text="TOTAL PART (g/prs)"
+                                                Text="TOTAL PART (g)"
                                                 TextAlignment="Center"
                                                 TextWrapping="WrapWithOverflow"
                                                 ToolTipService.ShowDuration="20000">
@@ -712,13 +712,14 @@
                                 </DataGridTextColumn>
 
                                 <DataGridTextColumn
-                                    Width="60"
-                                    Binding="{Binding C021, StringFormat=F3}"
+                                    Width="95"
+                                    
                                     ElementStyle="{StaticResource CenterCell}">
+<DataGridTextColumn.Binding><MultiBinding Converter="{StaticResource ValueUnit}" ConverterParameter="g:F3"><Binding Path="C021" /><Binding Path="C037" /></MultiBinding></DataGridTextColumn.Binding>
                                     <DataGridTextColumn.HeaderTemplate>
                                         <DataTemplate>
                                             <TextBlock
-                                                Text="PART (g/prs)"
+                                                Text="PART"
                                                 TextAlignment="Center"
                                                 TextWrapping="WrapWithOverflow"
                                                 ToolTipService.ShowDuration="20000">
@@ -734,13 +735,14 @@
                                 </DataGridTextColumn>
 
                                 <DataGridTextColumn
-                                    Width="100"
-                                    Binding="{Binding C022, StringFormat=F3}"
+                                    Width="105"
+                                    
                                     ElementStyle="{StaticResource CenterCell}">
+<DataGridTextColumn.Binding><MultiBinding Converter="{StaticResource ValueUnit}" ConverterParameter="g:F3"><Binding Path="C022" /><Binding Path="C037" /></MultiBinding></DataGridTextColumn.Binding>
                                     <DataGridTextColumn.HeaderTemplate>
                                         <DataTemplate>
                                             <TextBlock
-                                                Text="RUNNER / EXCESS MAT. (g/prs)"
+                                                Text="RUNNER / EXCESS MAT."
                                                 TextAlignment="Center"
                                                 TextWrapping="WrapWithOverflow"
                                                 ToolTipService.ShowDuration="20000">
@@ -756,12 +758,13 @@
 
                                 <DataGridTextColumn
                                     Width="100"
-                                    Binding="{Binding C028, StringFormat=F2}"
+                                    
                                     ElementStyle="{StaticResource CenterCell}">
+<DataGridTextColumn.Binding><MultiBinding Converter="{StaticResource ValueUnit}" ConverterParameter="count:F2"><Binding Path="C028" /><Binding Path="C037" /></MultiBinding></DataGridTextColumn.Binding>
                                     <DataGridTextColumn.HeaderTemplate>
                                         <DataTemplate>
                                             <TextBlock
-                                                Text="Actual Partitioning (prs/pcs)"
+                                                Text="Actual Partitioning"
                                                 TextAlignment="Center"
                                                 TextWrapping="WrapWithOverflow"
                                                 ToolTipService.ShowDuration="20000">
@@ -777,12 +780,13 @@
 
                                 <DataGridTextColumn
                                     Width="100"
-                                    Binding="{Binding C017, StringFormat=F2}"
+                                    
                                     ElementStyle="{StaticResource CenterCell}">
+<DataGridTextColumn.Binding><MultiBinding Converter="{StaticResource ValueUnit}" ConverterParameter="count:F2"><Binding Path="C017" /><Binding Path="C037" /></MultiBinding></DataGridTextColumn.Binding>
                                     <DataGridTextColumn.HeaderTemplate>
                                         <DataTemplate>
                                             <TextBlock
-                                                Text="PPIC Partitioning (prs/pcs)"
+                                                Text="PPIC Partitioning"
                                                 TextAlignment="Center"
                                                 TextWrapping="WrapWithOverflow"
                                                 ToolTipService.ShowDuration="20000">
@@ -798,13 +802,14 @@
 
 
                                 <DataGridTextColumn
-                                    Width="80"
-                                    Binding="{Binding C018, StringFormat=F2}"
+                                    Width="95"
+                                    
                                     ElementStyle="{StaticResource CenterCell}">
+<DataGridTextColumn.Binding><MultiBinding Converter="{StaticResource ValueUnit}" ConverterParameter="mold:F2"><Binding Path="C018" /><Binding Path="C037" /><Binding Path="C003" /></MultiBinding></DataGridTextColumn.Binding>
                                     <DataGridTextColumn.HeaderTemplate>
                                         <DataTemplate>
                                             <TextBlock
-                                                Text="Mold Pairs Shot (prs/pcs)"
+                                                Text="Mold Pairs Shot"
                                                 TextAlignment="Center"
                                                 TextWrapping="WrapWithOverflow"
                                                 ToolTipService.ShowDuration="20000">
@@ -819,13 +824,14 @@
                                 </DataGridTextColumn>
 
                                 <DataGridTextColumn
-                                    Width="80"
-                                    Binding="{Binding C039, StringFormat=F3}"
+                                    Width="95"
+                                    
                                     ElementStyle="{StaticResource CenterCell}">
+<DataGridTextColumn.Binding><MultiBinding Converter="{StaticResource ValueUnit}" ConverterParameter="pcs:F3"><Binding Path="C039" /><Binding Path="C037" /></MultiBinding></DataGridTextColumn.Binding>
                                     <DataGridTextColumn.HeaderTemplate>
                                         <DataTemplate>
                                             <TextBlock
-                                                Text="Pieces Qty (PCS)"
+                                                Text="Pieces Qty"
                                                 TextAlignment="Center"
                                                 TextWrapping="WrapWithOverflow"
                                                 ToolTipService.ShowDuration="20000">
@@ -840,13 +846,14 @@
                                 </DataGridTextColumn>
 
                                 <DataGridTextColumn
-                                    Width="80"
-                                    Binding="{Binding C036, StringFormat=F3}"
+                                    Width="105"
+                                    
                                     ElementStyle="{StaticResource CenterCell}">
+<DataGridTextColumn.Binding><MultiBinding Converter="{StaticResource ValueUnit}" ConverterParameter="g:F3"><Binding Path="C036" /><Binding Path="C037" /></MultiBinding></DataGridTextColumn.Binding>
                                     <DataGridTextColumn.HeaderTemplate>
                                         <DataTemplate>
                                             <TextBlock
-                                                Text="Weight per Unit (g/unit)"
+                                                Text="Weight per Unit"
                                                 TextAlignment="Center"
                                                 TextWrapping="WrapWithOverflow"
                                                 ToolTipService.ShowDuration="20000">
@@ -862,6 +869,7 @@
 
                                 <DataGridTextColumn
                                     Width="50"
+                                    Visibility="Collapsed"
                                     Binding="{Binding C037, StringFormat=F2}"
                                     ElementStyle="{StaticResource CenterCell}">
                                     <DataGridTextColumn.HeaderTemplate>

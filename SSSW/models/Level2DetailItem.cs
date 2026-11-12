@@ -1,4 +1,4 @@
-namespace SSSW.models
+﻿namespace SSSW.models
 {
     /// <summary>
     /// Một dòng chi tiết BOM Level 2 hiển thị trong phần mở rộng (Row Details) của TOTAL STEPS.
@@ -23,6 +23,12 @@ namespace SSSW.models
 
         /// <summary>Phần bị trừ = Qty × PerPiece (g), null nếu chưa cân.</summary>
         public double? Deduct { get; init; }
+
+        /// <summary>Hàng PU → g/chiếc; ngược lại g/đôi. UI only.</summary>
+        public bool IsPu { get; init; }
+        public string WeighedText => Weighed is { } v ? $"{v:F2} g/{(IsPu ? "pcs" : "prs")}" : "—";
+        public string PerPieceText => PerPiece is { } v ? $"{v:F2} g/pcs" : "—";
+        public string DeductText => Deduct is { } v ? $"{v:F2} g" : "—";
 
         public bool IsWeighed { get; init; }
         public string StatusText => IsWeighed ? "✔ done" : "✖ missing";

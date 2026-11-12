@@ -1,4 +1,4 @@
-<ResourceDictionary
+﻿<ResourceDictionary
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
     xmlns:conv="clr-namespace:SSSW.UI.WPF.Converters"
@@ -12,6 +12,7 @@
     <conv:ToleranceToBrushConverter x:Key="ToleranceToBrush" />
     <conv:ToleranceToBorderBrushConverter x:Key="ToleranceToBorderBrush" />
     <conv:ToleranceToForeConverter x:Key="ToleranceToFore" />
+    <conv:ValueUnitConverter x:Key="ValueUnit" />
     <!--  WPF built-in: tránh XDG-000 "incompatible type" trong XAML designer  -->
     <BooleanToVisibilityConverter x:Key="BoolToVisibility" />
     <!--  ScanAndScale.Core – trạng thái kết nối thiết bị  -->
@@ -250,9 +251,9 @@
             <Border Width="{Binding Columns[4].ActualWidth, RelativeSource={RelativeSource AncestorType=DataGrid}}"><TextBlock HorizontalAlignment="Center" VerticalAlignment="Center" FontSize="11" FontWeight="Bold" Foreground="#37474F" Text="Unit" TextAlignment="Center" TextWrapping="Wrap" /></Border>
             <Grid Width="{Binding Columns[5].ActualWidth, RelativeSource={RelativeSource AncestorType=DataGrid}}">
                 <Grid.ColumnDefinitions><ColumnDefinition Width="*" /><ColumnDefinition Width="*" /><ColumnDefinition Width="*" /></Grid.ColumnDefinitions>
-                <Border Grid.Column="0"><TextBlock HorizontalAlignment="Center" VerticalAlignment="Center" FontSize="11" FontWeight="Bold" Foreground="#37474F" Text="Weighed (g/prs)" TextAlignment="Center" TextWrapping="Wrap" /></Border>
-                <Border Grid.Column="1"><TextBlock HorizontalAlignment="Center" VerticalAlignment="Center" FontSize="11" FontWeight="Bold" Foreground="#37474F" Text="g / piece" TextAlignment="Center" TextWrapping="Wrap" /></Border>
-                <Border Grid.Column="2"><TextBlock HorizontalAlignment="Center" VerticalAlignment="Center" FontSize="11" FontWeight="Bold" Foreground="#37474F" Text="Deduct (g)" TextAlignment="Center" TextWrapping="Wrap" /></Border>
+                <Border Grid.Column="0"><TextBlock HorizontalAlignment="Center" VerticalAlignment="Center" FontSize="11" FontWeight="Bold" Foreground="#37474F" Text="Weighed" TextAlignment="Center" TextWrapping="Wrap" /></Border>
+                <Border Grid.Column="1"><TextBlock HorizontalAlignment="Center" VerticalAlignment="Center" FontSize="11" FontWeight="Bold" Foreground="#37474F" Text="Weight / piece" TextAlignment="Center" TextWrapping="Wrap" /></Border>
+                <Border Grid.Column="2"><TextBlock HorizontalAlignment="Center" VerticalAlignment="Center" FontSize="11" FontWeight="Bold" Foreground="#37474F" Text="Deduct" TextAlignment="Center" TextWrapping="Wrap" /></Border>
             </Grid>
         </StackPanel>
         <ItemsControl ItemsSource="{Binding Level2Items}">
@@ -296,9 +297,9 @@
 <Border Width="{Binding Columns[4].ActualWidth, RelativeSource={RelativeSource AncestorType=DataGrid}}"><TextBlock HorizontalAlignment="Center" VerticalAlignment="Center" FontSize="12" Text="{Binding Unit}" /></Border>
                         <Grid Width="{Binding Columns[5].ActualWidth, RelativeSource={RelativeSource AncestorType=DataGrid}}">
                             <Grid.ColumnDefinitions><ColumnDefinition Width="*" /><ColumnDefinition Width="*" /><ColumnDefinition Width="*" /></Grid.ColumnDefinitions>
-                            <TextBlock Grid.Column="0" HorizontalAlignment="Center" VerticalAlignment="Center" FontSize="12" Text="{Binding Weighed, StringFormat=F2, TargetNullValue='—'}" />
-                            <TextBlock Grid.Column="1" HorizontalAlignment="Center" VerticalAlignment="Center" FontSize="12" Text="{Binding PerPiece, StringFormat=F2, TargetNullValue='—'}" />
-                            <TextBlock Grid.Column="2" HorizontalAlignment="Center" VerticalAlignment="Center" FontSize="12" Text="{Binding Deduct, StringFormat=F2, TargetNullValue='—'}" />
+                            <TextBlock Grid.Column="0" HorizontalAlignment="Center" VerticalAlignment="Center" FontSize="12" Text="{Binding WeighedText}" />
+                            <TextBlock Grid.Column="1" HorizontalAlignment="Center" VerticalAlignment="Center" FontSize="12" Text="{Binding PerPieceText}" />
+                            <TextBlock Grid.Column="2" HorizontalAlignment="Center" VerticalAlignment="Center" FontSize="12" Text="{Binding DeductText}" />
                         </Grid>
                     </StackPanel>
                     </Border>

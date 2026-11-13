@@ -9,6 +9,7 @@
 
 | Ngày | File Session | Tóm tắt mục tiêu & kết quả |
 |------|--------------|---------------------------|
+| **2026-11-12** | [`2026-11-12_bom-l2-match-by-main-code.md`](2026-11-12_bom-l2-match-by-main-code.md) | Ghép child BOM Level 2 với step theo mã chính (bỏ màu & size, REX giữ nguyên); nhiều size thì ưu tiên cùng size step cha. |
 | **2026-11-10** | [`2026-11-10_pu-pcs-weighing.md`](2026-11-10_pu-pcs-weighing.md) | Cân hàng PU (`FT601.C016='PU'`) theo chiếc: Unit `PCS-L`/`PCS-R` theo hậu tố mã step, g/chiếc, nhãn UI pcs. |
 | **2026-11-04** | [`2026-11-04_status-column-align-bom-l2-ui-options.md`](2026-11-04_status-column-align-bom-l2-ui-options.md) | Căn cột STATUS trong TOTAL STEPS; 3 mockup hiển thị BOM Level 2 (`docs/image`, `brainstorm/BOM_LEVEL2_UI_OPTIONS.md`) chờ chốt. |
 | **2026-11-02** | [`2026-11-02_bom-level2-partweight.md`](2026-11-02_bom-level2-partweight.md) | Tính `C021` theo BOM Level 2 (`PartWeightCalculator`), tách service MVVM (Dialog/Bom/Repository), thêm test xUnit; entity tạm trỏ `FT600_dev`. |

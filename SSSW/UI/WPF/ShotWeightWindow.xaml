@@ -779,6 +779,50 @@
                                 </DataGridTextColumn>
 
                                 <DataGridTextColumn
+                                    Width="95"
+                                    
+                                    ElementStyle="{StaticResource CenterCell}">
+<DataGridTextColumn.Binding><MultiBinding Converter="{StaticResource ValueUnit}" ConverterParameter="pcs:F3"><Binding Path="C039" /><Binding Path="C037" /></MultiBinding></DataGridTextColumn.Binding>
+                                    <DataGridTextColumn.HeaderTemplate>
+                                        <DataTemplate>
+                                            <TextBlock
+                                                Text="Pieces Qty"
+                                                TextAlignment="Center"
+                                                TextWrapping="WrapWithOverflow"
+                                                ToolTipService.ShowDuration="20000">
+                                                <TextBlock.ToolTip>
+                                                    <TextBlock Width="250" TextWrapping="Wrap">
+                                                        Pieces of this item in 1 pair, aggregated from BOM level 2 (sum of the quantities of every step that uses it). Weight per Unit = Part Weight / this value.
+                                                    </TextBlock>
+                                                </TextBlock.ToolTip>
+                                            </TextBlock>
+                                        </DataTemplate>
+                                    </DataGridTextColumn.HeaderTemplate>
+                                </DataGridTextColumn>
+
+                                <DataGridTextColumn
+                                    Width="105"
+                                    
+                                    ElementStyle="{StaticResource CenterCell}">
+<DataGridTextColumn.Binding><MultiBinding Converter="{StaticResource ValueUnit}" ConverterParameter="g:F3"><Binding Path="C036" /><Binding Path="C037" /></MultiBinding></DataGridTextColumn.Binding>
+                                    <DataGridTextColumn.HeaderTemplate>
+                                        <DataTemplate>
+                                            <TextBlock
+                                                Text="Weight per Unit"
+                                                TextAlignment="Center"
+                                                TextWrapping="WrapWithOverflow"
+                                                ToolTipService.ShowDuration="20000">
+                                                <!--<TextBlock.ToolTip>
+    <TextBlock Width="250" TextWrapping="Wrap">
+        Runner weight of the current step. Calculation = (TOTAL WEIGHT INJECTION - TOTAL PART WEIGHT) / pairs per shot
+    </TextBlock>
+</TextBlock.ToolTip>-->
+                                            </TextBlock>
+                                        </DataTemplate>
+                                    </DataGridTextColumn.HeaderTemplate>
+                                </DataGridTextColumn>
+
+                                <DataGridTextColumn
                                     Width="100"
                                     
                                     ElementStyle="{StaticResource CenterCell}">
@@ -818,50 +862,6 @@
                         Runner weight of the current step. Calculation = (TOTAL WEIGHT INJECTION - TOTAL PART WEIGHT) / pairs per shot
                     </TextBlock>
                 </TextBlock.ToolTip>-->
-                                            </TextBlock>
-                                        </DataTemplate>
-                                    </DataGridTextColumn.HeaderTemplate>
-                                </DataGridTextColumn>
-
-                                <DataGridTextColumn
-                                    Width="95"
-                                    
-                                    ElementStyle="{StaticResource CenterCell}">
-<DataGridTextColumn.Binding><MultiBinding Converter="{StaticResource ValueUnit}" ConverterParameter="pcs:F3"><Binding Path="C039" /><Binding Path="C037" /></MultiBinding></DataGridTextColumn.Binding>
-                                    <DataGridTextColumn.HeaderTemplate>
-                                        <DataTemplate>
-                                            <TextBlock
-                                                Text="Pieces Qty"
-                                                TextAlignment="Center"
-                                                TextWrapping="WrapWithOverflow"
-                                                ToolTipService.ShowDuration="20000">
-                                                <TextBlock.ToolTip>
-                                                    <TextBlock Width="250" TextWrapping="Wrap">
-                                                        Pieces of this item in 1 pair, aggregated from BOM level 2 (sum of the quantities of every step that uses it). Weight per Unit = Part Weight / this value.
-                                                    </TextBlock>
-                                                </TextBlock.ToolTip>
-                                            </TextBlock>
-                                        </DataTemplate>
-                                    </DataGridTextColumn.HeaderTemplate>
-                                </DataGridTextColumn>
-
-                                <DataGridTextColumn
-                                    Width="105"
-                                    
-                                    ElementStyle="{StaticResource CenterCell}">
-<DataGridTextColumn.Binding><MultiBinding Converter="{StaticResource ValueUnit}" ConverterParameter="g:F3"><Binding Path="C036" /><Binding Path="C037" /></MultiBinding></DataGridTextColumn.Binding>
-                                    <DataGridTextColumn.HeaderTemplate>
-                                        <DataTemplate>
-                                            <TextBlock
-                                                Text="Weight per Unit"
-                                                TextAlignment="Center"
-                                                TextWrapping="WrapWithOverflow"
-                                                ToolTipService.ShowDuration="20000">
-                                                <!--<TextBlock.ToolTip>
-    <TextBlock Width="250" TextWrapping="Wrap">
-        Runner weight of the current step. Calculation = (TOTAL WEIGHT INJECTION - TOTAL PART WEIGHT) / pairs per shot
-    </TextBlock>
-</TextBlock.ToolTip>-->
                                             </TextBlock>
                                         </DataTemplate>
                                     </DataGridTextColumn.HeaderTemplate>

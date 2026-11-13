@@ -71,12 +71,26 @@ namespace SSSW.UI.WPF.Services
             };
         }
 
+        /// <summary>
+        /// Mã chính của step dùng để ghép child Level 2 với step Level 1: bỏ màu &amp; size
+        /// ("1-VB042313-A123-5065" → "1-VB042313"). Mã REX (và mã không có dấu '-') giữ nguyên.
+        /// </summary>
+        public static string StepMainCode(string? code)
+        {
+            var c = code?.Trim() ?? string.Empty;
+            if (c.StartsWith("REX", StringComparison.OrdinalIgnoreCase) || !c.Contains('-')) return c;
+            return string.Join("-", c.Split('-').Take(2));
+        }
+
+        public static bool SameStep(string? a, string? b)
+            => string.Equals(StepMainCode(a), StepMainCode(b), StringComparison.OrdinalIgnoreCase);
+
         /// <summary>Dòng self: chính phần nhựa của step (mã kết thúc "-0000", đơn vị G).</summary>
         public static bool IsSelfRow(BomWinlineModel row, string stepCode)
         {
             var code = row.ItemStepCode?.Trim();
             if (string.IsNullOrEmpty(code)) return true;
-            return string.Equals(code, stepCode?.Trim(), StringComparison.OrdinalIgnoreCase)
+            return SameStep(code, stepCode)
                 || code.EndsWith("-0000", StringComparison.Ordinal)
                 || string.Equals(row.Unit?.Trim(), "G", StringComparison.OrdinalIgnoreCase);
         }

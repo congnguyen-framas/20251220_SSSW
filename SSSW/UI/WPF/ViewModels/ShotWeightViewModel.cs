@@ -1574,8 +1574,8 @@ namespace SSSW.UI.WPF.ViewModels
         /// </summary>
         private double PiecesFor(FT600 row)
         {
-            var code = row.C002?.Trim();
-            return code != null && _pieceQtyByCode.TryGetValue(code, out var q) ? q : 0;
+            var code = PartWeightCalculator.StepMainCode(row.C002);
+            return code.Length > 0 && _pieceQtyByCode.TryGetValue(code, out var q) ? q : 0;
         }
 
         /// <summary>
@@ -1632,7 +1632,7 @@ namespace SSSW.UI.WPF.ViewModels
                 // step cùng thứ tự không được chọn (vd. Studs) vẫn là chi tiết con Level 2 → giữ C039 để có g/chiếc
                 var fgRows = FgStepRows();
                 foreach (var st in fgRows.SelectMany(x => ChainPredecessors(x)).Distinct())
-                    _pieceQtyByCode.Remove(st.C002!.Trim());
+                    _pieceQtyByCode.Remove(PartWeightCalculator.StepMainCode(st.C002));
 
                 foreach (var row in _scaleDataFinal)
                 {
@@ -1906,7 +1906,7 @@ namespace SSSW.UI.WPF.ViewModels
             {
                 if (!_level2ByStep.TryGetValue(q.C002!.Trim(), out var l2)) continue;
                 bool refs = l2.Any(c => !PartWeightCalculator.IsSelfRow(c, q.C002!) && (c.Quantity ?? 0) > 0 &&
-                    string.Equals(c.ItemStepCode?.Trim(), code, StringComparison.OrdinalIgnoreCase));
+                    PartWeightCalculator.SameStep(c.ItemStepCode, code));
                 if (refs && (nextSeq == null || q.C015 != nextSeq)) return false;
             }
             return true;
@@ -1933,17 +1933,28 @@ namespace SSSW.UI.WPF.ViewModels
 
         /// <summary>Chỉ mã của step chain thực sự bị trừ (ChainPredecessors); step cùng thứ tự không được chọn (vd. Studs) vẫn tính như chi tiết con Level 2.</summary>
         private HashSet<string> ChainPredecessorCodes(FT600 row)
-            => ChainPredecessors(row).Select(x => x.C002!.Trim()).ToHashSet(StringComparer.OrdinalIgnoreCase);
+            => ChainPredecessors(row).Select(x => PartWeightCalculator.StepMainCode(x.C002)).ToHashSet(StringComparer.OrdinalIgnoreCase);
 
-        /// <summary>Tìm FT600 đã cân của chi tiết con: ưu tiên dòng trong phiên hiện tại, sau đó bản ghi đã lưu.</summary>
-        private FT600? FindWeighedChild(string code)
+        /// <summary>
+        /// Tìm FT600 đã cân của chi tiết con theo mã chính (bỏ màu &amp; size; REX khớp nguyên mã).
+        /// Ưu tiên dòng trong phiên hiện tại rồi bản ghi đã lưu; nhiều dòng cùng mã chính thì chọn dòng cùng size với step cha
+        /// (<paramref name="parent"/>.C008), nếu không có thì dòng đầu tiên đã có g/chiếc (bản đã lưu: mới nhất).
+        /// </summary>
+        private FT600? FindWeighedChild(string code, FT600? parent)
         {
-            var inSession = _scaleDataFinal.FirstOrDefault(x =>
-                x.C002?.Trim().Equals(code, StringComparison.OrdinalIgnoreCase) == true &&
-                PartWeightCalculator.UnitWeightPerPiece(x) != null);
-            if (inSession != null) return inSession;
-            return _weighedChildrenFromDb.TryGetValue(code, out var saved) ? saved : null;
+            var inSession = _scaleDataFinal.Where(x => PartWeightCalculator.SameStep(x.C002, code) &&
+                PartWeightCalculator.UnitWeightPerPiece(x) != null).ToList();
+            var pick = PickSameSize(inSession, parent);
+            if (pick != null) return pick;
+
+            var saved = _weighedChildrenFromDb.Values
+                .Where(x => PartWeightCalculator.SameStep(x.C002, code)).ToList();
+            return PickSameSize(saved, parent);
         }
+
+        private static FT600? PickSameSize(List<FT600> list, FT600? parent)
+            => list.Count == 0 ? null
+               : (parent != null ? list.FirstOrDefault(x => x.C008 == parent.C008) : null) ?? list.First();
 
         /// <summary>Dựng dữ liệu hiển thị Row Details (BOM Level 2) cho 1 step: chi tiết con, trạng thái cân, phần trừ, công thức.</summary>
         private void RefreshLevel2Details(FT600 row)
@@ -1972,8 +1983,8 @@ namespace SSSW.UI.WPF.ViewModels
                 if (qty <= 0) continue;
 
                 var code = child.ItemStepCode!.Trim();
-                if (predCodes.Contains(code)) continue;   // step chain: trừ Total Part của step trước (dòng riêng bên dưới)
-                var weighed = FindWeighedChild(code);
+                if (predCodes.Contains(PartWeightCalculator.StepMainCode(code))) continue;   // step chain: trừ Total Part của step trước (dòng riêng bên dưới)
+                var weighed = FindWeighedChild(code, row);
                 var perPiece = weighed == null ? null : PartWeightCalculator.UnitWeightPerPiece(weighed);
                 double? deduct = perPiece == null ? null : qty * perPiece;
 
@@ -2049,9 +2060,9 @@ namespace SSSW.UI.WPF.ViewModels
 
             var predCodes = ChainPredecessorCodes(row);
             var children = (l2 ?? new List<BomWinlineModel>())
-                .Where(c => !predCodes.Contains(c.ItemStepCode?.Trim() ?? string.Empty)).ToList();
+                .Where(c => !predCodes.Contains(PartWeightCalculator.StepMainCode(c.ItemStepCode))).ToList();
 
-            var result = _partWeightCalculator.Calculate(PartPerPair(row), row.C002!, children, FindWeighedChild);
+            var result = _partWeightCalculator.Calculate(PartPerPair(row), row.C002!, children, c => FindWeighedChild(c, row));
             missing.AddRange(result.MissingChildren);
 
             double prevTotal = 0;
@@ -2106,7 +2117,7 @@ namespace SSSW.UI.WPF.ViewModels
                 var l2 = GetLevel2(parent);
                 bool usesChanged =
                     (l2?.Any(c => !PartWeightCalculator.IsSelfRow(c, parent.C002!) &&
-                        string.Equals(c.ItemStepCode?.Trim(), changed, StringComparison.OrdinalIgnoreCase)) ?? false)
+                        PartWeightCalculator.SameStep(c.ItemStepCode, changed)) ?? false)
                     || ChainPredecessors(parent).Any(pr => pr == _rowSelected);
                 if (!usesChanged) continue;
 

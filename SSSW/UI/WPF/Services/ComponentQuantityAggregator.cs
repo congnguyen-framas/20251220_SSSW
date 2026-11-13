@@ -27,7 +27,7 @@ namespace SSSW.UI.WPF.Services
                     var qty = row.Quantity ?? 0;
                     if (qty <= 0) continue;
 
-                    var code = row.ItemStepCode!.Trim();
+                    var code = PartWeightCalculator.StepMainCode(row.ItemStepCode);
                     total[code] = total.GetValueOrDefault(code) + qty;
                 }
             }
@@ -42,7 +42,7 @@ namespace SSSW.UI.WPF.Services
         public static double PiecesFor(string? code, IReadOnlyDictionary<string, double> aggregated,
             double? level1Quantity, string? level1Unit)
         {
-            if (!string.IsNullOrWhiteSpace(code) && aggregated.TryGetValue(code.Trim(), out var total) && total > 0)
+            if (!string.IsNullOrWhiteSpace(code) && aggregated.TryGetValue(PartWeightCalculator.StepMainCode(code), out var total) && total > 0)
                 return total;
 
             var qty = level1Quantity is > 0 ? level1Quantity.Value : 1;

@@ -23,17 +23,23 @@ namespace SSSW.UI.WPF.Services
 
         public async Task<Dictionary<string, FT600>> GetLatestByStepCodesAsync(IEnumerable<string> stepCodes)
         {
-            var codes = stepCodes.Select(x => x.Trim()).Distinct().ToList();
-            if (codes.Count == 0) return new();
+            // REX: khớp nguyên mã. Còn lại: khớp theo mã chính (bỏ màu & size) → C002 LIKE 'N-VB042313-%'.
+            var mains = stepCodes.Select(PartWeightCalculator.StepMainCode).Where(x => x.Length > 0)
+                .Distinct(StringComparer.OrdinalIgnoreCase).ToList();
+            if (mains.Count == 0) return new();
+
+            var exact = mains.Where(m => m.StartsWith("REX", StringComparison.OrdinalIgnoreCase) || !m.Contains('-')).ToList();
+            var prefixes = mains.Except(exact).Select(m => m + "-").ToList();
 
             using var db = _dbFactory.CreateDbContext();
-            var rows = await db.FT600s.AsNoTracking()
-                .Where(x => x.C002 != null && codes.Contains(x.C002))
-                .OrderByDescending(x => x.CreatedDate)
-                .ToListAsync();
+            var query = db.FT600s.AsNoTracking().Where(x => x.C002 != null &&
+                (exact.Contains(x.C002) || prefixes.Any(p => x.C002.StartsWith(p))));
+            var rows = await query.OrderByDescending(x => x.CreatedDate).ToListAsync();
 
-            return rows.GroupBy(x => x.C002!.Trim())
-                       .ToDictionary(g => g.Key, g => g.First());
+            // Key = mã chính; giữ danh sách theo size ở bước chọn (FindWeighedChild) → ở đây lấy bản mới nhất mỗi mã đầy đủ
+            return rows.GroupBy(x => x.C002!.Trim(), StringComparer.OrdinalIgnoreCase)
+                       .Select(g => g.First())
+                       .ToDictionary(x => x.C002!.Trim(), x => x, StringComparer.OrdinalIgnoreCase);
         }
     }
 }

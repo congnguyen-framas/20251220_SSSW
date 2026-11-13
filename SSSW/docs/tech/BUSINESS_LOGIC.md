@@ -103,6 +103,7 @@ C021(step) = C023(step) − Σ over child in L2(step), child ≠ self :  Qty(chi
 ```
 
 - `L2(step)` = `sp_getBomWinlineOfItemFG @itemFG = <ItemStepCode của step>` (cache theo phiên, `IBomService`).
+- **Ghép child ↔ step theo mã chính (2026-11-12)**: child Level 2 chỉ có mã chính (`1-VB042313`), step Level 1 có đủ màu/size (`1-VB042313-A123-5065`). Mọi so khớp dùng `PartWeightCalculator.StepMainCode` (2 phần đầu của mã; mã `REX…` giữ nguyên). Nhiều dòng cùng mã chính (nhiều size) → chọn dòng cùng size với step cha (`C008`), nếu không thì dòng đầu tiên đã có g/chiếc. `C039` gộp theo mã chính trên mọi size.
 - Dòng **self**: mã kết thúc `-0000` / đơn vị `G` / trùng mã step → không trừ.
 - `Qty` ở L2 là **số chiếc (PCS)** của chi tiết con trong 1 đôi của step cha. `UnitWeight` (g/chiếc) = `C036` đã lưu của chi tiết con;
   nếu chưa có (không phải REX) thì `C021 ÷ C039`. `C039` = **số chiếc của chi tiết đó trong 1 đôi, gộp theo toàn FG**:

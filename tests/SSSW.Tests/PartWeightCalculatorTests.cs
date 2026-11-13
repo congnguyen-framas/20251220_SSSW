@@ -139,12 +139,12 @@ public class ComponentQuantityAggregatorTests
     {
         var total = ComponentQuantityAggregator.Aggregate(Fg());
 
-        Assert.Equal(2, total["0-VB042313-A123-2706"]);   // Logo: 2 (Base_HF)
-        Assert.Equal(10, total["1-VB042313-A123-5065"]);  // Studs: 8 (Inlay) + 2 (Base_FF)
-        Assert.Equal(2, total["2-VB042313-A123-2801"]);   // Inlay: 2 (Base_FF)
-        Assert.Equal(2, total["3-VB042313-A123-2801"]);   // Base_FF: 2 (Base_HF)
+        Assert.Equal(2, total["0-VB042313"]);   // Logo: 2 (Base_HF)
+        Assert.Equal(10, total["1-VB042313"]);  // Studs: 8 (Inlay) + 2 (Base_FF)
+        Assert.Equal(2, total["2-VB042313"]);   // Inlay: 2 (Base_FF)
+        Assert.Equal(2, total["3-VB042313"]);   // Base_FF: 2 (Base_HF)
         Assert.Equal(12, total["REX00018"]);              // REX: 8 + 4
-        Assert.False(total.ContainsKey("4-VB042313-A123-2801")); // Base_HF không là chi tiết của step nào
+        Assert.False(total.ContainsKey("4-VB042313")); // Base_HF không là chi tiết của step nào
     }
 
     [Fact]
@@ -162,7 +162,7 @@ public class ComponentQuantityAggregatorTests
     public void WeightPerPiece_StudsExample()
     {
         var total = ComponentQuantityAggregator.Aggregate(Fg());
-        var perPiece = 22.10 / total["1-VB042313-A123-5065"];
+        var perPiece = 22.10 / total["1-VB042313"];
 
         Assert.Equal(2.21, perPiece, 6);
         Assert.Equal(17.68, 8 * perPiece, 6);  // trừ ở Inlay

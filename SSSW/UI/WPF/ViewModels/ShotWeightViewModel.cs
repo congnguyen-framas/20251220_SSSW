@@ -63,6 +63,17 @@ namespace SSSW.UI.WPF.ViewModels
         private readonly Dictionary<Guid, FT600> _sameMoldAnchor = new();
         /// <summary>Id các FT601 dựng tạm (step không có trong FT601) — không tồn tại trong DB.</summary>
         private readonly HashSet<Guid> _syntheticStepIds = new();
+        // ── Chế độ popup cân (step bị khóa / step PU khác): mở 1 giao diện cân mới, giữ nguyên lưới hiện tại ──────────
+        /// <summary>true khi ViewModel này chạy trong popup cân (không phải màn chính).</summary>
+        public bool IsDialogMode { get; private set; }
+        /// <summary>Popup yêu cầu đóng (sau Confirm thành công hoặc Cancel). View đóng cửa sổ popup.</summary>
+        public event Action? DialogCloseRequested;
+        /// <summary>View mở popup cân cho step (modal, trả về khi popup đóng). Trả false nếu không mở được → dùng cách cũ (tải lại lưới).</summary>
+        public Func<StepSelectModel, bool, int?, bool>? OpenWeighDialogAction { get; set; }
+        private StepSelectModel? _pendingStep;
+        /// <summary>Tiêu đề popup: mã + tên step đang cân.</summary>
+        public string DialogTitle { get; private set; } = string.Empty;
+
         /// <summary>Dòng step đang chuyển sang là PU (đọc trước khi danh sách bị dựng lại).</summary>
         private bool _switchRowIsPu;
         private int? _switchRowSeq;
@@ -2484,6 +2495,7 @@ namespace SSSW.UI.WPF.ViewModels
                 ClearBarcodeAction?.Invoke();
 
                 ResetNewLoop();
+                if (IsDialogMode) DialogCloseRequested?.Invoke();   // popup: lưu xong thì đóng, màn chính nạp lại giá trị
             }
             catch (Exception ex)
             {
@@ -2577,6 +2589,13 @@ namespace SSSW.UI.WPF.ViewModels
         // ─────────────────────────────────────────────────────────────────────
         private void ExecuteCancel(object? _)
         {
+            // Popup: Cancel chỉ bỏ dữ liệu trong popup và đóng; KHÔNG xóa thẻ RFID dùng chung với màn chính.
+            if (IsDialogMode)
+            {
+                DialogCloseRequested?.Invoke();
+                return;
+            }
+
             _labelInfo = new FT606_Label();
             _qrCodeScan = string.Empty;
 
@@ -2669,6 +2688,70 @@ namespace SSSW.UI.WPF.ViewModels
             return !_scaleDataFinal.Any(x => string.Equals(x.C002?.Trim(), pairCode, StringComparison.OrdinalIgnoreCase));
         }
 
+        /// <summary>Tạo ViewModel cho popup cân: step cần cân được chọn tự động sau khi popup nạp xong master data.</summary>
+        public ShotWeightViewModel CreateDialogViewModel(StepSelectModel step, bool isPu, int? seq)
+        {
+            var vm = _serviceProvider.GetRequiredService<ShotWeightViewModel>();
+            vm.IsDialogMode = true;
+            vm._pendingStep = step;
+            vm._switchRowIsPu = isPu;
+            vm._switchRowSeq = seq;
+            vm.DialogTitle = $"{step.StepItemCode?.Trim()}  ·  {step.StepItemName?.Trim()}";
+            return vm;
+        }
+
+        /// <summary>Popup: sau khi nạp master data thì chọn step cần cân (như chọn từ droplist Step).</summary>
+        public async Task ApplyPendingStepAsync()
+        {
+            var item = _pendingStep;
+            if (item == null) return;
+            _pendingStep = null;
+
+            _suppress = true;
+            if (item.FT601Id != Guid.Empty) SetStepComboAction?.Invoke(item);   // step dựng tạm không có trong combo
+            _suppress = false;
+            await OnStepSelectedAsync(item);
+        }
+
+        /// <summary>
+        /// Sau khi popup cân đóng: nạp lại bản cân mới nhất (FT600) cho các dòng của lưới hiện tại chưa cân trong phiên này
+        /// (giữ nguyên dòng đã cân dở chưa Confirm), tính lại số chiếc / Part rồi vẽ lại lưới.
+        /// </summary>
+        public async Task ReloadWeighedValuesAsync()
+        {
+            try
+            {
+                var rows = (_scaleDataFinal ?? new()).Where(x => !string.IsNullOrWhiteSpace(x.C002) && x.C002 != "Z-VHXXXXXX" &&
+                                !x.C002.StartsWith("REX", StringComparison.OrdinalIgnoreCase)).ToList();
+                var codes = rows.Select(x => x.C002!.Trim()).Distinct().ToList();
+                if (codes.Count == 0) return;
+
+                using var db = _dbFactory.CreateDbContext();
+                var latest = (await db.FT600s.AsNoTracking().Where(x => x.C002 != null && codes.Contains(x.C002)).ToListAsync())
+                    .GroupBy(x => x.C002!.Trim())
+                    .ToDictionary(g => g.Key, g => g.OrderByDescending(x => x.CreatedDate).First(), StringComparer.OrdinalIgnoreCase);
+
+                foreach (var row in rows)
+                {
+                    if (!latest.TryGetValue(row.C002!.Trim(), out var saved) || (saved.C021 ?? 0) <= 0) continue;
+                    if ((row.C021 ?? 0) > 0 && !row.IsReusedFromHistory) continue;   // đã cân trong phiên này, giữ nguyên
+
+                    row.C021 = saved.C021; row.C022 = saved.C022; row.C023 = saved.C023; row.C024 = saved.C024;
+                    row.C028 = saved.C028; row.C035 = saved.C035;
+                    row.C036 = (saved.C039 ?? 0) > 0 ? saved.C036 : 0;   // C036 cũ (chưa có C039) tính lại ở ApplyPieceQuantities
+                    row.IsReusedFromHistory = true;
+                }
+
+                await PreloadLevel2Async();
+                ApplyPieceQuantities();
+                RefreshUI(true);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "ReloadWeighedValuesAsync");
+            }
+        }
+
         private async Task SwitchToLockedStepAsync(FT600 row, bool locked = true)
         {
             try
@@ -2700,6 +2783,13 @@ namespace SSSW.UI.WPF.ViewModels
                     FGName = _stepItemCodeScale.C008,
                     FT601Id = Guid.Empty
                 };
+
+                // Mở popup cân cho step này, giữ nguyên lưới hiện tại; khi popup đóng thì nạp lại giá trị cân mới lên lưới.
+                if (!IsDialogMode && OpenWeighDialogAction != null && OpenWeighDialogAction(item, row.IsPu, row.C015))
+                {
+                    await ReloadWeighedValuesAsync();
+                    return;
+                }
 
                 // Luôn hỏi xác nhận trước khi chuyển; đổi step sẽ dựng lại danh sách → mất giá trị đã cân trong phiên mà chưa Confirm
                 var unsaved = _scaleDataFinal.Count(x => (x.C021 ?? 0) > 0 && !x.IsReusedFromHistory);

@@ -1,4 +1,4 @@
-// ============================================================================
+﻿// ============================================================================
 //  ShotWeightWindow.xaml.cs  –  Minimal code-behind (MVVM refactor)
 //
 //  Chỉ chứa những gì KHÔNG thể làm qua binding:
@@ -76,6 +76,77 @@ namespace SSSW.UI.WPF
         }
 
         // ════════════════════════════════════════════════════════════════════
+        //  POPUP CÂN (step bị khóa / step PU khác): giữ lưới hiện tại, cân ở cửa sổ mới
+        // ════════════════════════════════════════════════════════════════════
+        private bool _dialogOpen;
+
+        /// <summary>Mở popup cân (modal) cho step; trả về khi popup đóng. false = không mở được (dùng cách cũ).</summary>
+        private bool OpenWeighDialog(StepSelectModel step, bool isPu, int? seq)
+        {
+            var owner = Window.GetWindow(this);
+            if (owner == null) return false;
+
+            var vm2 = _vm.CreateDialogViewModel(step, isPu, seq);
+            var content = new ShotWeightWindow(vm2);
+
+            var title = new TextBlock
+            {
+                Text = "WEIGH STEP  ·  " + vm2.DialogTitle,
+                Foreground = System.Windows.Media.Brushes.White, FontSize = 16, FontWeight = FontWeights.Bold,
+                VerticalAlignment = VerticalAlignment.Center, Margin = new Thickness(16, 0, 0, 0),
+                TextTrimming = TextTrimming.CharacterEllipsis
+            };
+            var close = new System.Windows.Controls.Button
+            {
+                Content = "✕", Width = 44, Foreground = System.Windows.Media.Brushes.White,
+                Background = System.Windows.Media.Brushes.Transparent,
+                BorderThickness = new Thickness(0), FontSize = 16, Cursor = System.Windows.Input.Cursors.Hand,
+                ToolTip = "Close"
+            };
+            var header = new Grid { Height = 44, Background = new SolidColorBrush(System.Windows.Media.Color.FromRgb(0x0B, 0x0F, 0x1A)) };
+            header.ColumnDefinitions.Add(new ColumnDefinition());
+            header.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
+            header.Children.Add(title);
+            Grid.SetColumn(close, 1);
+            header.Children.Add(close);
+
+            var root = new Grid();
+            root.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
+            root.RowDefinitions.Add(new RowDefinition());
+            root.Children.Add(header);
+            Grid.SetRow(content, 1);
+            root.Children.Add(content);
+
+            var dlg = new Window
+            {
+                Owner = owner,
+                WindowStartupLocation = WindowStartupLocation.CenterOwner,
+                WindowStyle = WindowStyle.None,
+                ResizeMode = ResizeMode.NoResize,
+                ShowInTaskbar = false,
+                Width = Math.Max(900, owner.ActualWidth * 0.92),
+                Height = Math.Max(600, owner.ActualHeight * 0.92),
+                Background = System.Windows.Media.Brushes.White,
+                BorderBrush = new SolidColorBrush(System.Windows.Media.Color.FromRgb(0x37, 0x47, 0x4F)),
+                BorderThickness = new Thickness(1),
+                Content = root
+            };
+            close.Click += (_, _) => dlg.Close();
+            vm2.DialogCloseRequested += () => dlg.Dispatcher.BeginInvoke(new Action(dlg.Close));
+
+            var oldOpacity = owner.Opacity;
+            _dialogOpen = true;
+            owner.Opacity = 0.55;   // làm mờ màn chính (lưới giữ nguyên bên dưới)
+            try { dlg.ShowDialog(); }
+            finally
+            {
+                _dialogOpen = false;
+                owner.Opacity = oldOpacity;
+            }
+            return true;
+        }
+
+        // ════════════════════════════════════════════════════════════════════
         //  LOADED
         // ════════════════════════════════════════════════════════════════════
         private async void OnLoaded(object sender, RoutedEventArgs e)
@@ -106,6 +177,7 @@ namespace SSSW.UI.WPF
             _vm.ClearStepComboAction = () => { cbStepName.EditValue = null; };
             _vm.SetStepComboAction = item => { cbStepName.EditValue = item?.StepItemCode; };
             _vm.FocusGridRowAction = code => FocusStepInGrid(code);
+            _vm.OpenWeighDialogAction = OpenWeighDialog;
 
             // 3. Load master data CHỈ MỘT LẦN cho instance này (xem ghi chú ở _initialized).
             //    Config/hardware không còn được load/kết nối ở đây nữa — Main lo hết.
@@ -113,6 +185,7 @@ namespace SSSW.UI.WPF
             {
                 _initialized = true;
                 await _vm.InitializeAsync();
+                await _vm.ApplyPendingStepAsync();   // popup cân: chọn sẵn step cần cân
             }
         }
 
@@ -140,6 +213,7 @@ namespace SSSW.UI.WPF
         /// </summary>
         private async void BarcodeDriver_DataValueChanged(object? sender, DataValueChangedEventArgs e)
         {
+            if (_dialogOpen) return;   // popup cân đang mở: popup xử lý quét mã, màn chính bỏ qua
             await Dispatcher.InvokeAsync(() =>
             {
                 var data = e.NewValue;
@@ -162,6 +236,7 @@ namespace SSSW.UI.WPF
         /// </summary>
         private void ScaleDriver_DataValueChanged(object? sender, DataValueChangedEventArgs e)
         {
+            if (_dialogOpen) return;   // popup cân đang mở: popup xử lý số cân, màn chính bỏ qua
             Dispatcher.Invoke(() =>
             {
                 var data = e.NewValue;

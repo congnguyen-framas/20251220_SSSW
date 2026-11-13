@@ -46,3 +46,9 @@ Hàng có `FT601.C016 = 'PU'` (lưu ở `FT600.C019`) cân theo **chiếc (PCS)*
 - Lưới nạp lại giá trị đã cân (FT600) cho mọi step PU đứng trước step đang cân.
 - Logo PU: group size lấy size có hậu tố L hoặc R (bỏ size không có L/R).
 - Chọn step trong droplist: ưu tiên đúng dòng FT601 đã chọn (`FT601Id`); dòng trống (thiếu `C007`/`C005`) → dùng dòng đầy đủ cùng mã step, tránh NullReference / lưới rỗng (F05R).
+
+## 8. Popup cân cho step bị khóa (2026-11-13)
+- Bấm Scale ở step bị khóa / step PU cần cặp L/R: không còn dựng lại lưới chính. `OpenWeighDialogAction` (View) mở popup modal chứa 1 `ShotWeightWindow` + `ShotWeightViewModel` mới (`CreateDialogViewModel`, `IsDialogMode`), step chọn sẵn qua `ApplyPendingStepAsync`.
+- Popup: Confirm thành công → tự đóng; Cancel chỉ bỏ dữ liệu popup (không xóa RFID dùng chung); màn chính bỏ qua sự kiện quét/cân khi popup mở (`_dialogOpen`).
+- Popup đóng → `ReloadWeighedValuesAsync`: nạp bản cân mới nhất (FT600) cho dòng chưa cân trong phiên, giữ dòng cân dở chưa Confirm, tính lại số chiếc / Part / trạng thái.
+- Chưa chạy thử trên app thật; làm mờ màn chính (`Opacity`) có thể không có tác dụng nếu cửa sổ không bật transparency.

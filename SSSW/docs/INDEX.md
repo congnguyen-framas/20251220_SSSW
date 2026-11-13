@@ -20,6 +20,7 @@
 |------|-----------|----------|
 | [`manual/OPERATOR_MANUAL.vi.md`](manual/OPERATOR_MANUAL.vi.md) | Operator (công nhân cân) | Tiếng Việt |
 | [`manual/OPERATOR_MANUAL.en.md`](manual/OPERATOR_MANUAL.en.md) | Operator | English |
+| [`manual/OPERATOR_MANUAL.id.md`](manual/OPERATOR_MANUAL.id.md) | Operator | Bahasa Indonesia |
 | [`manual/DEVELOPER_MANUAL.vi.md`](manual/DEVELOPER_MANUAL.vi.md) | Developer | Tiếng Việt |
 | [`manual/DEVELOPER_MANUAL.en.md`](manual/DEVELOPER_MANUAL.en.md) | Developer | English |
 

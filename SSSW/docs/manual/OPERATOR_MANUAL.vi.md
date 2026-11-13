@@ -1,7 +1,7 @@
 # Hướng dẫn vận hành SSSW (Tiếng Việt)
 
 > **Đối tượng:** công nhân vận hành và kỹ thuật viên chuyền cân shot ép nhựa trên trạm SSSW.
-> **Ngôn ngữ:** Tiếng Việt (file này) · [English](OPERATOR_MANUAL.en.md) · Tài liệu cho Dev: [EN](DEVELOPER_MANUAL.en.md) / [VI](DEVELOPER_MANUAL.vi.md)
+> **Ngôn ngữ:** Tiếng Việt (file này) · [English](OPERATOR_MANUAL.en.md) · [Bahasa Indonesia](OPERATOR_MANUAL.id.md) · Tài liệu cho Dev: [EN](DEVELOPER_MANUAL.en.md) / [VI](DEVELOPER_MANUAL.vi.md)
 > **Ảnh chụp màn hình:** chụp từ màn hình thật của ứng dụng với **dữ liệu giả lập (mẫu)** — mã hàng, máy, tên, trọng lượng chỉ là ví dụ, không phải dữ liệu nhà máy. Khung đỏ và số trong vòng tròn đỏ được giải thích ngay dưới mỗi ảnh. Giao diện phần mềm hiển thị bằng tiếng Anh nên tên nút/cột được giữ nguyên tiếng Anh.
 
 ---

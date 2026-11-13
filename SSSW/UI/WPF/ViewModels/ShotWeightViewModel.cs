@@ -3163,8 +3163,11 @@ namespace SSSW.UI.WPF.ViewModels
         {
             foreach (var item in _scaleDataFinal ?? new())
             {
-                bool isDone = item.C021 > 0 ||
-                    (!(item.C002?.StartsWith("REX") ?? false) ? item.C024 > 0 : item.C023 > 0);
+                // Done chỉ khi đủ thông số cân: REX cần Total Part (C023); step ép cần Total Part (C023) và Part Weight (C021).
+                // Không dùng riêng Total Weight (C024): khi cân 1 khuôn nhiều size, C024 được copy cho mọi size cùng khuôn nhưng chưa size nào khác đủ thông số.
+                bool isDone = (item.C002?.StartsWith("REX") ?? false)
+                    ? item.C023 > 0
+                    : item.C021 > 0 && item.C023 > 0;
                 bool isActive = item.C002 == _rowSelected?.C002 &&
                                 item.C032 == _rowSelected?.C032;
 

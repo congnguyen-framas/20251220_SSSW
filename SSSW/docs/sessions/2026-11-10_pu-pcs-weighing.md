@@ -38,3 +38,4 @@ Hàng có `FT601.C016 = 'PU'` (lưu ở `FT600.C019`) cân theo **chiếc (PCS)*
 - BOM L2: `ChainPredecessorCodes` chỉ gồm step chain thực sự bị trừ (Studs cùng thứ tự không được chọn vẫn là chi tiết con L2); `ApplyPieceQuantities` chỉ xóa `C039` của step chain được chọn → Studs có Pieces Qty / g-per-piece.
 - Lưới Total Steps: đơn vị chuyển từ header vào cell (`ValueUnitConverter`, đơn vị lấy từ `C037`, xuống dòng; Mold Pairs Shot của Logo/Cleat_Ring luôn `pcs`, PU giữ `pcs-L/R`); Total Part header `(g)` và cell không đơn vị; cột Unit ẩn; cột Size wrap (`CenterWrapCell`). Row Details: `Weighed / Weight per piece / Deduct` có đơn vị trong cell.
 - Logo hàng PU: Actual Partitioning mặc định 2; group size chỉ lấy size có hậu tố L hoặc R (cả L và R, bỏ size không có L/R).
+- `UpdateStepStatuses`: Done chỉ khi đủ thông số (step ép: `C023 > 0` và `C021 > 0`; REX: `C023 > 0`). Trước đây `C024 > 0` làm mọi size cùng khuôn (Logo PU) nhảy Done sau khi cân Total Weight.

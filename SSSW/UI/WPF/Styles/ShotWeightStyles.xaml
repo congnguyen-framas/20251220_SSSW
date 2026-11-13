@@ -507,8 +507,11 @@
         <Setter Property="Margin" Value="0,10,0,10" />
     </Style>
 
-    <!-- Như CenterCell nhưng tự xuống dòng khi tràn (cột Size, cell "giá trị + đơn vị") -->
-    <Style x:Key="CenterWrapCell" TargetType="TextBlock" BasedOn="{StaticResource CenterCell}">
+    <!--  Như CenterCell nhưng tự xuống dòng khi tràn (cột Size, cell "giá trị + đơn vị")  -->
+    <Style
+        x:Key="CenterWrapCell"
+        TargetType="TextBlock"
+        BasedOn="{StaticResource CenterCell}">
         <Setter Property="TextWrapping" Value="Wrap" />
         <Setter Property="TextAlignment" Value="Center" />
     </Style>

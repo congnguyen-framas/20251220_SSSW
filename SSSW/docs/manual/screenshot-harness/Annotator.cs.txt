@@ -1,0 +1,127 @@
+using System.Globalization;
+using System.IO;
+using System.Windows;
+using System.Windows.Controls;
+using System.Windows.Media;
+using System.Windows.Media.Imaging;
+
+namespace ManualShots;
+
+/// <summary>Một chú thích: khung đỏ + số thứ tự (số này khớp với danh sách ở manual).</summary>
+public record Ann(Rect Box, string Label, Point? Badge = null);
+
+public static class Annotator
+{
+    static readonly Brush Red = new SolidColorBrush(Color.FromRgb(0xE5, 0x39, 0x35));
+    static readonly Typeface Face = new("Segoe UI");
+
+    /// <summary>Vẽ chú thích lên ảnh (tọa độ chú thích theo DIP của cửa sổ; <paramref name="scale"/> = tỉ lệ ảnh/DIP).</summary>
+    public static BitmapSource Draw(BitmapSource img, IEnumerable<Ann> anns, double scale = 1.0, Rect? crop = null, (string Kind, string Title, string Msg)? dialog = null)
+    {
+        var dv = new DrawingVisual();
+        var imgW = img.PixelWidth; var imgH = img.PixelHeight;
+        var pen = new Pen(Red, Math.Max(2.5, 3 * scale)) { LineJoin = PenLineJoin.Round };
+        using (var dc = dv.RenderOpen())
+        {
+            dc.DrawImage(img, new Rect(0, 0, imgW, imgH));
+            if (dialog != null)
+            {
+                dc.DrawRectangle(new SolidColorBrush(Color.FromArgb(70, 0, 0, 0)), null, new Rect(0, 0, imgW, imgH));
+                DrawDialog(dc, dialog.Value, imgW, imgH, scale);
+            }
+            foreach (var a in anns)
+            {
+                var r = new Rect(a.Box.X * scale, a.Box.Y * scale, a.Box.Width * scale, a.Box.Height * scale);
+                r.Inflate(3 * scale, 3 * scale);
+                dc.DrawRoundedRectangle(null, pen, r, 4 * scale, 4 * scale);
+
+                double d = 26 * scale;
+                var c = a.Badge.HasValue ? new Point(a.Badge.Value.X * scale, a.Badge.Value.Y * scale) : new Point(Math.Max(r.Left, d / 2 + 2), Math.Max(r.Top, d / 2 + 2));
+                dc.DrawEllipse(Red, new Pen(Brushes.White, 2 * scale), c, d / 2, d / 2);
+                var ft = new FormattedText(a.Label, CultureInfo.InvariantCulture, FlowDirection.LeftToRight, Face, 15 * scale, Brushes.White, 1.0)
+                { TextAlignment = TextAlignment.Center };
+                ft.SetFontWeight(FontWeights.Bold);
+                dc.DrawText(ft, new Point(c.X, c.Y - ft.Height / 2));
+            }
+        }
+        var rtb = new RenderTargetBitmap(imgW, imgH, 96, 96, PixelFormats.Pbgra32);
+        rtb.Render(dv);
+        if (crop == null) return rtb;
+        var cr = new Int32Rect((int)(crop.Value.X * scale), (int)(crop.Value.Y * scale), (int)(crop.Value.Width * scale), (int)(crop.Value.Height * scale));
+        return new CroppedBitmap(rtb, cr);
+    }
+
+    static void DrawDialog(DrawingContext dc, (string Kind, string Title, string Msg) d, double imgW, double imgH, double scale)
+    {
+        double w = 520 * scale;
+        var ft = new FormattedText(d.Msg, CultureInfo.InvariantCulture, FlowDirection.LeftToRight, Face, 14 * scale, Brushes.Black, 1.0) { MaxTextWidth = w - 100 * scale };
+        double h = Math.Max(150 * scale, 32 * scale + ft.Height + 90 * scale);
+        var r = new Rect((imgW - w) / 2, (imgH - h) / 2, w, h);
+        dc.DrawRectangle(Brushes.White, new Pen(new SolidColorBrush(Color.FromRgb(0x60, 0x60, 0x60)), 1.5 * scale), r);
+        dc.DrawRectangle(Brushes.White, null, new Rect(r.X, r.Y, w, 32 * scale));
+        var t = new FormattedText(d.Title, CultureInfo.InvariantCulture, FlowDirection.LeftToRight, Face, 13 * scale, Brushes.Black, 1.0);
+        dc.DrawText(t, new Point(r.X + 12 * scale, r.Y + 8 * scale));
+        dc.DrawRectangle(new SolidColorBrush(Color.FromRgb(0xF0, 0xF0, 0xF0)), null, new Rect(r.X, r.Y + 32 * scale, w, h - 32 * scale));
+        string icon = d.Kind switch { "Error" => "⛔", "Confirm" => "❓", "Info" => "ℹ", _ => "⚠" };
+        var ic = new FormattedText(icon, CultureInfo.InvariantCulture, FlowDirection.LeftToRight, new Typeface("Segoe UI Emoji"), 30 * scale,
+            d.Kind == "Warn" ? Brushes.DarkGoldenrod : d.Kind == "Error" ? Brushes.Firebrick : Brushes.RoyalBlue, 1.0);
+        dc.DrawText(ic, new Point(r.X + 22 * scale, r.Y + 52 * scale));
+        dc.DrawText(ft, new Point(r.X + 80 * scale, r.Y + 52 * scale));
+        void Btn(string text, double x)
+        {
+            var br = new Rect(x, r.Bottom - 40 * scale, 76 * scale, 26 * scale);
+            dc.DrawRectangle(new SolidColorBrush(Color.FromRgb(0xE1, 0xE1, 0xE1)), new Pen(new SolidColorBrush(Color.FromRgb(0xAD, 0xAD, 0xAD)), 1 * scale), br);
+            var bt = new FormattedText(text, CultureInfo.InvariantCulture, FlowDirection.LeftToRight, Face, 13 * scale, Brushes.Black, 1.0) { TextAlignment = TextAlignment.Center };
+            dc.DrawText(bt, new Point(br.X + br.Width / 2, br.Y + 4 * scale));
+        }
+        if (d.Kind == "Confirm") { Btn("Yes", r.Right - 170 * scale); Btn("No", r.Right - 90 * scale); }
+        else Btn("OK", r.Right - 90 * scale);
+    }
+
+    public static BitmapSource Stack(IList<BitmapSource> imgs, int gap = 10)
+    {
+        int w = imgs.Max(i => i.PixelWidth); int h = imgs.Sum(i => i.PixelHeight) + gap * (imgs.Count - 1);
+        var dv = new DrawingVisual();
+        using (var dc = dv.RenderOpen())
+        {
+            dc.DrawRectangle(Brushes.White, null, new Rect(0, 0, w, h));
+            double y = 0;
+            foreach (var i in imgs) { dc.DrawImage(i, new Rect(0, y, i.PixelWidth, i.PixelHeight)); y += i.PixelHeight + gap; }
+        }
+        var rtb = new RenderTargetBitmap(w, h, 96, 96, PixelFormats.Pbgra32); rtb.Render(dv); return rtb;
+    }
+
+    public static void Save(BitmapSource img, string path)
+    {
+        var enc = new PngBitmapEncoder();
+        enc.Frames.Add(BitmapFrame.Create(img));
+        using var fs = File.Create(path);
+        enc.Save(fs);
+    }
+
+    // ── Tìm element theo chữ để lấy khung ──────────────────────────────────
+    public static IEnumerable<T> Descendants<T>(DependencyObject root) where T : DependencyObject
+    {
+        int n = VisualTreeHelper.GetChildrenCount(root);
+        for (int i = 0; i < n; i++)
+        {
+            var c = VisualTreeHelper.GetChild(root, i);
+            if (c is T t) yield return t;
+            foreach (var d in Descendants<T>(c)) yield return d;
+        }
+    }
+
+    public static T? Ancestor<T>(DependencyObject d, int nth = 1) where T : DependencyObject
+    {
+        int k = 0;
+        for (var cur = VisualTreeHelper.GetParent(d); cur != null; cur = VisualTreeHelper.GetParent(cur))
+            if (cur is T t && ++k == nth) return t;
+        return null;
+    }
+
+    public static Rect BoundsOf(FrameworkElement el, FrameworkElement root)
+        => el.TransformToAncestor(root).TransformBounds(new Rect(0, 0, el.ActualWidth, el.ActualHeight));
+
+    public static TextBlock? FindText(FrameworkElement root, string text, bool exact = true)
+        => Descendants<TextBlock>(root).FirstOrDefault(t => t.IsVisible && (exact ? t.Text.Trim() == text : t.Text.Contains(text)));
+}

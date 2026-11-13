@@ -1,0 +1,40 @@
+using Microsoft.Extensions.Logging;
+using SSSW.models;
+using SSSW.UI.WPF.Services;
+
+namespace ManualShots;
+
+/// <summary>Dialog giả: ghi lại nội dung cảnh báo để harness vẽ lại thành hộp thoại trong ảnh.</summary>
+public class FakeDialog : IDialogService
+{
+    public List<(string Kind, string Title, string Message)> Log { get; } = new();
+    public bool ConfirmAnswer { get; set; } = true;
+    public void Info(string message, string title = "Information") => Log.Add(("Info", title, message));
+    public void Warn(string message, string title = "Warning") => Log.Add(("Warn", title, message));
+    public void Error(string message, string title = "ERROR") => Log.Add(("Error", title, message));
+    public bool Confirm(string message, string title = "Confirm") { Log.Add(("Confirm", title, message)); return ConfirmAnswer; }
+}
+
+/// <summary>BOM giả: Level 2 lấy từ bộ dữ liệu của scene.</summary>
+public class FakeBom : IBomService
+{
+    public Dictionary<string, List<BomWinlineModel>> L2 { get; } = new(StringComparer.OrdinalIgnoreCase);
+    public Task<List<BomWinlineModel>> GetLevel1Async(string itemFgCode) => Task.FromResult(new List<BomWinlineModel>());
+    public Task<IReadOnlyList<BomWinlineModel>> GetLevel2Async(string stepCode)
+        => Task.FromResult<IReadOnlyList<BomWinlineModel>>(L2.TryGetValue(stepCode.Trim(), out var l) ? l : new List<BomWinlineModel>());
+    public void ClearCache() { }
+}
+
+public class FakeRepo : IScaleStepRepository
+{
+    public Dictionary<string, FT600> Latest { get; } = new(StringComparer.OrdinalIgnoreCase);
+    public Task<Dictionary<string, FT600>> GetLatestByStepCodesAsync(IEnumerable<string> stepCodes)
+        => Task.FromResult(stepCodes.Where(Latest.ContainsKey).ToDictionary(c => c, c => Latest[c], StringComparer.OrdinalIgnoreCase));
+}
+
+public class NullLog<T> : ILogger<T>
+{
+    public IDisposable? BeginScope<TState>(TState state) where TState : notnull => null;
+    public bool IsEnabled(LogLevel logLevel) => false;
+    public void Log<TState>(LogLevel logLevel, EventId eventId, TState state, Exception? exception, Func<TState, Exception?, string> formatter) { }
+}

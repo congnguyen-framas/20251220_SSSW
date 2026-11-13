@@ -175,7 +175,7 @@ SSSW/
 │   ├── brainstorm/                     # Ideas & design discussions
 │   ├── plan/                           # Development plans & roadmaps
 │   ├── tech/                           # Technical deep-dives
-│   ├── manual/                         # End-user manuals
+│   ├── manual/                         # Operator + Developer manuals (EN/VI), images/, screenshot-harness/
 │   └── worklog/                        # Legacy worklogs (pre-standardization)
 │
 └── Resources/                          # Icons, images

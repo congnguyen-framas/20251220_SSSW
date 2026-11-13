@@ -1,0 +1,434 @@
+using System.IO;
+using SSSW.models;
+using System.Windows;
+using System.Windows.Controls;
+using System.Windows.Media.Imaging;
+
+namespace ManualShots;
+
+public static class Scenes
+{
+    static string _out = "";
+
+    // ── Vùng cố định trên màn 1920x1200 (DIP) ───────────────────────────────
+    static readonly Rect Title = new(36, 10, 370, 24), OperatorBox = new(1326, 8, 330, 30), Toolbar = new(1656, 8, 180, 32);
+    static readonly Rect StepInfo = new(14, 60, 366, 1130), FName = new(19, 127, 356, 50), FCode = new(19, 207, 356, 30),
+        FMachine = new(19, 267, 174, 30), FQty = new(201, 267, 174, 30), FPart = new(19, 327, 174, 30), FAdjust = new(201, 316, 174, 44),
+        FRunner = new(19, 387, 174, 28), FUsage = new(201, 387, 174, 30), FSize = new(19, 447, 174, 30), FStepNo = new(201, 447, 174, 30),
+        FFgName = new(19, 507, 356, 50), FFgCode = new(19, 587, 356, 30), SelectStep = new(19, 647, 356, 28),
+        QrBox = new(19, 686, 356, 56), Remark = new(19, 742, 356, 440);
+    static readonly Rect TotalSteps = new(396, 60, 1510, 605), History = new(396, 676, 752, 515), RefValues = new(1156, 676, 752, 515),
+        ScaleBox = new(1488, 727, 268, 103), SaveBtn = new(1768, 755, 134, 47), RefTable = new(1160, 845, 745, 262),
+        CancelBtn = new(1632, 1135, 100, 48), ConfirmBtn = new(1772, 1135, 130, 48), ScaleTitle = new(1206, 760, 270, 44);
+
+    static Stage New(bool login = true)
+    {
+        var s = new Stage();
+        if (login) s.Login(); else s.RfidConnectedOnly();
+        return s;
+    }
+
+    static Stage NewSandal(out List<FT600> rows, bool login = true)
+    {
+        var s = New(login);
+        rows = Data.Sandal(s);
+        s.Load(rows, rows.Select(Data.Master));
+        return s;
+    }
+
+    static FT600 R(List<FT600> rows, string name) => rows.First(r => r.C003 == name);
+
+    static readonly Dictionary<string, (double T, double P, double Part, double Run)> Hist = new()
+    {
+        ["Studs"] = (27.4, 22.1, 22.1, 5.3), ["Logo"] = (4.6, 3.4, 3.4, 1.2), ["Inlay"] = (61.0, 48.2, 30.5, 12.8),
+        ["Base_FF"] = (140.0, 128.4, 71.4, 11.6), ["Base_HF"] = (178.0, 160.0, 60.0, 18.0), ["Receptacle"] = (6.6, 6.6, 6.6, 0)
+    };
+
+    static void Pick(Stage s, FT600 row)
+    {
+        s.ClickScale(row);
+        if (Hist.TryGetValue(row.C003!, out var h) && !row.IsPu) s.SeedHistory(row, Data.History(h.T, h.P, h.Part, h.Run));
+    }
+
+    /// <summary>Cân đủ 2 lần cho step ép (flow thật: OnGridScale → OnScaleValueChanged → SaveCommand).</summary>
+    static void Weigh2(Stage s, FT600 row, double total, double part)
+    {
+        s.ClickScale(row);
+        s.PutOnScale(total); s.ClickSave();
+        s.PutOnScale(part); s.ClickSave();
+    }
+
+    static void Weigh1(Stage s, FT600 row, double v)
+    {
+        s.ClickScale(row);
+        s.PutOnScale(v); s.ClickSave();
+    }
+
+    // ── Chụp + chú thích ───────────────────────────────────────────────────
+    static void Shot(Stage s, string name, IEnumerable<Ann>? anns = null, Rect? crop = null, double scale = 1.0, bool dialog = false)
+    {
+        var img = s.Capture(scale);
+        (string, string, string)? d = null;
+        if (dialog && s.Dialog.Log.Count > 0) { var l = s.Dialog.Log.Last(); d = (l.Kind, l.Title, l.Message); }
+        var res = Annotator.Draw(img, anns ?? Array.Empty<Ann>(), scale, crop, d);
+        Annotator.Save(res, Path.Combine(_out, name + ".png"));
+        Console.WriteLine("shot " + name);
+    }
+
+    static Rect Row(Stage s, FT600 row)
+    {
+        Stage.Settle();
+        var root = (FrameworkElement)s.Win.Content;
+        var r = Annotator.Descendants<DataGridRow>(root).First(x => ReferenceEquals(x.Item, row));
+        var b = Annotator.BoundsOf(r, root);
+        return new Rect(b.X, b.Y, Math.Min(b.Width, 1892 - b.X), b.Height);
+    }
+
+    static Rect Cell(Stage s, FT600 row, int dx, int w, int dy = 0, int h = 0)
+    {
+        var rb = Row(s, row); return new Rect(rb.X + dx, rb.Y + dy, w, h == 0 ? Math.Min(rb.Height, 56) : h);
+    }
+
+    static Rect ActionBtn(Stage s, FT600 row, string text)
+    {
+        Stage.Settle();
+        var root = (FrameworkElement)s.Win.Content;
+        var r = Annotator.Descendants<DataGridRow>(root).First(x => ReferenceEquals(x.Item, row));
+        var b = Annotator.Descendants<Button>(r).First(x => x.Content?.ToString() == text);
+        return Annotator.BoundsOf(b, root);
+    }
+
+    static Ann A(Rect r, string n) => new(r, n);
+
+    // ════════════════════════════════════════════════════════════════════
+    public static void RunAll(string outDir, string? only)
+    {
+        _out = outDir;
+        var all = new (string Name, Action Run)[]
+        {
+            ("overview", Overview), ("login", Login), ("load-steps", LoadSteps), ("grid-columns", GridColumns),
+            ("standard", Standard), ("rex", Rex), ("nonwoven", Nonwoven), ("level2", Level2), ("chain", Chain),
+            ("partition", Partition), ("multisize", MultiSize), ("pu", Pu), ("tolerance", Tolerance),
+            ("warnings", Warnings), ("confirm", Confirm), ("rowactions", RowActions),
+        };
+        foreach (var (n, run) in all)
+        {
+            if (only != null && only != n) continue;
+            try { run(); }
+            catch (Exception ex) { Console.WriteLine($"!! {n}: {ex}"); }
+        }
+    }
+
+    // 1 ─ tổng quan màn hình ─────────────────────────────────────────────
+    static void Overview()
+    {
+        var s = NewSandal(out var rows);
+        s.Close();
+        s = NewSandal(out rows);
+        Pick(s, R(rows, "Studs"));
+        s.PutOnScale(0);
+        Shot(s, "01-screen-overview", new[]
+        {
+            A(Title, "1"), A(OperatorBox, "2"), A(Toolbar, "3"), A(StepInfo, "4"), A(TotalSteps, "5"), A(History, "6"),
+            A(ScaleBox, "7"), A(SaveBtn, "8"), A(RefTable, "9"), A(CancelBtn, "10"), A(ConfirmBtn, "11")
+        });
+        s.Close();
+    }
+
+    // 2 ─ đăng nhập RFID ────────────────────────────────────────────────
+    static void Login()
+    {
+        var s = New(login: false);
+        Shot(s, "02a-login-before", new[] { A(OperatorBox, "1"), A(Title, "2") }, new Rect(0, 0, 1920, 50));
+        s.Close();
+        s = New(login: true);
+        Shot(s, "02b-login-after", new[] { A(OperatorBox, "1") }, new Rect(0, 0, 1920, 50));
+        s.Close();
+    }
+
+    // 3 ─ nạp danh sách step: quét QR / chọn step ─────────────────────────
+    static void LoadSteps()
+    {
+        var s = NewSandal(out var rows);
+        s.Vm.BarcodeScannedValue = "6112042313-A478-2801|1-VB042313-A478-5065";
+        Shot(s, "03-load-steps", new[] { A(QrBox, "1"), A(SelectStep, "2"), A(TotalSteps, "3"), A(StepInfo, "4") });
+        s.Close();
+    }
+
+    // 4 ─ các cột của bảng TOTAL STEPS ───────────────────────────────────
+    static void GridColumns()
+    {
+        var s = NewSandal(out var rows);
+        var studs = R(rows, "Studs");
+        Pick(s, studs);
+        var rb = Row(s, studs);
+        Shot(s, "04-grid-columns", new[]
+        {
+            A(new Rect(408, 128, 140, 48), "1"), A(new Rect(548, 128, 80, 48), "2"), A(new Rect(626, 128, 60, 48), "3"),
+            A(new Rect(690, 128, 140, 48), "4"), A(new Rect(830, 128, 90, 48), "5"), A(new Rect(920, 128, 280, 48), "6"),
+            A(new Rect(1210, 128, 70, 48), "7"), A(new Rect(1286, 128, 90, 48), "8"), A(new Rect(1376, 128, 100, 48), "9"),
+            A(new Rect(1476, 128, 90, 48), "10"), A(new Rect(1566, 128, 110, 48), "11"), A(new Rect(1676, 128, 90, 48), "12"),
+            A(new Rect(1766, 128, 130, 48), "13"),
+            A(new Rect(408, rb.Y, 1490, rb.Height), "R")
+        }, new Rect(396, 60, 1510, 360));
+        s.Close();
+    }
+
+    // 5 ─ step ép thường (2 lần cân) ─────────────────────────────────────
+    static void Standard()
+    {
+        var s = NewSandal(out var rows);
+        var studs = R(rows, "Studs");
+
+        Pick(s, studs);
+        Shot(s, "05a-standard-select", new[] { A(ActionBtn(s, studs, "Scale"), "1"), A(Row(s, studs), "2"), A(StepInfo, "3"), A(History, "4"), A(RefTable, "5") });
+
+        s.PutOnScale(27.40);
+        Shot(s, "05b-standard-weigh1", new[] { A(ScaleTitle, "1"), A(ScaleBox, "2"), A(SaveBtn, "3"), A(RefTable, "4") }, new Rect(1156, 676, 752, 515));
+
+        s.ClickSave();
+        s.PutOnScale(22.10);
+        Shot(s, "05c-standard-weigh2", new[] { A(Cell(s, studs, 880, 90), "1"), A(ScaleBox, "2"), A(SaveBtn, "3"), A(RefTable, "4") });
+
+        s.ClickSave();
+        Shot(s, "05d-standard-done", new[] { A(Row(s, studs), "1"), A(Cell(s, studs, 140, 90), "2"), A(RefTable, "3"), A(StepInfo, "4") });
+        s.Close();
+    }
+
+    // 6 ─ REX receptacle (1 lần cân) ─────────────────────────────────────
+    static void Rex()
+    {
+        var s = NewSandal(out var rows);
+        var rex = R(rows, "Receptacle");
+        Pick(s, rex);
+        s.PutOnScale(6.60);
+        Shot(s, "06a-rex-weigh", new[] { A(Row(s, rex), "1"), A(ScaleBox, "2"), A(SaveBtn, "3"), A(StepInfo, "4") });
+        s.ClickSave();
+        Shot(s, "06b-rex-done", new[] { A(Row(s, rex), "1"), A(RefTable, "2") });
+        s.Close();
+    }
+
+    // 7 ─ Nonwoven / Mesh: dùng một phần theo % ──────────────────────────
+    static void Nonwoven()
+    {
+        var s = New();
+        var fg = "6812050001-C100-2801"; var nm = "SHOE MODEL C - GREY - SIZE 2801";
+        var inj = Data.Row(1, "1-VB050001-C100-2801", "Upper", "1-VB050001", "Upper", "M-05", "2801", "MD-C-01", 1, fg: fg, fgName: nm);
+        var nw = Data.Row(1, "REX00031", "Non Woven", "REX00031", "Non Woven", "REX", "-", "-", 1, fg: fg, fgName: nm, group: "REX", cat: 20, catName: "Non Woven");
+        nw.C035 = 100;
+        s.Bom.L2[inj.C002!] = new() { new() { ItemStepCode = inj.C002, ItemStepName = inj.C003, Quantity = 1, Unit = "G" } };
+        var rows = new List<FT600> { nw, inj };
+        s.Load(rows, rows.Select(Data.Master));
+        s.ClickScale(nw);
+        s.SeedHistory(nw, Data.History(18.5, 11.1, 11.1, 7.4));
+        s.PutOnScale(18.50);
+        Shot(s, "07a-nonwoven-weigh", new[] { A(Row(s, nw), "1"), A(FUsage, "2"), A(ScaleBox, "3"), A(SaveBtn, "4") });
+        s.ClickSave();
+        s.Vm.OnUsagePctEnter("60");
+        Shot(s, "07b-nonwoven-usage", new[] { A(FUsage, "1"), A(Row(s, nw), "2"), A(RefTable, "3") });
+        s.Close();
+    }
+
+    // 8 ─ BOM Level 2: Row Details ───────────────────────────────────────
+    static void Level2()
+    {
+        var s = NewSandal(out var rows);
+        var studs = R(rows, "Studs"); var inlay = R(rows, "Inlay");
+        s.ClickScale(inlay);
+        Shot(s, "08a-level2-missing", new[] { A(Row(s, inlay), "1") }, new Rect(396, 60, 1510, 605));
+
+        Weigh2(s, studs, 27.40, 22.10);
+        Pick(s, inlay);
+        s.PutOnScale(61.00); s.ClickSave();
+        s.PutOnScale(48.20);
+        Shot(s, "08b-level2-details", new[] { A(Row(s, inlay), "1"), A(ScaleBox, "2"), A(SaveBtn, "3") });
+        s.ClickSave();
+        Pick(s, inlay);
+        Shot(s, "08c-level2-result", new[] { A(Row(s, inlay), "1"), A(RefTable, "2") });
+        s.Close();
+    }
+
+    // 9 ─ step chain (trừ Total Part của step ngay trước) ────────────────
+    static void Chain()
+    {
+        var s = NewSandal(out var rows);
+        var studs = R(rows, "Studs"); var inlay = R(rows, "Inlay"); var ff = R(rows, "Base_FF"); var rex = R(rows, "Receptacle");
+        Weigh2(s, studs, 27.40, 22.10);
+        Weigh1(s, rex, 6.60);
+        Weigh2(s, inlay, 61.00, 48.20);
+        Pick(s, ff);
+        s.PutOnScale(140.00); s.ClickSave();
+        s.PutOnScale(128.40);
+        Shot(s, "09a-chain-details", new[] { A(Row(s, ff), "1"), A(ScaleBox, "2") });
+        s.ClickSave();
+        Pick(s, ff);
+        Shot(s, "09b-chain-result", new[] { A(Row(s, ff), "1"), A(RefTable, "2") });
+        s.Close();
+    }
+
+    // 10 ─ nhiều đôi / shot (Partitioning N), Runner YES/NO ───────────────
+    static void Partition()
+    {
+        var s = New();
+        var fg = "6912060001-B200-3601"; var nm = "SHOE MODEL B - WHITE - SIZE 3601";
+        var sole = Data.Row(1, "1-VB060001-B200-3601", "Outsole", "1-VB060001", "Outsole", "M-09", "3601", "MD-B-01", 2, fg: fg, fgName: nm);
+        s.Bom.L2[sole.C002!] = new() { new() { ItemStepCode = sole.C002, ItemStepName = sole.C003, Quantity = 1, Unit = "G" } };
+        var rows = new List<FT600> { sole };
+        s.Load(rows, rows.Select(Data.Master));
+        s.ClickScale(sole);
+        s.SeedHistory(sole, Data.History(125.4, 96.8, 48.4, 14.3));
+        s.Vm.AllowPartitionAdj = true;
+        Stage.Settle();
+        Shot(s, "10a-partition-adjust", new[] { A(FPart, "1"), A(FAdjust, "2"), A(FRunner, "3"), A(Row(s, sole), "4") });
+        s.Vm.AllowPartitionAdj = false;
+        s.PutOnScale(125.40); s.ClickSave();
+        s.PutOnScale(96.80);
+        Shot(s, "10b-partition-weigh2", new[] { A(ScaleBox, "1"), A(FPart, "2") });
+        s.ClickSave();
+        s.ClickScale(sole);
+        s.SeedHistory(sole, Data.History(125.4, 96.8, 48.4, 14.3));
+        Shot(s, "10c-partition-result", new[] { A(Row(s, sole), "1"), A(RefTable, "2") });
+        s.Close();
+
+        // Runner = NO
+        s = New();
+        rows = Data.Sandal(s);
+        s.Load(rows, rows.Select(Data.Master));
+        var studs = R(rows, "Studs");
+        Pick(s, studs);
+        s.Vm.RunnerText = "NO";
+        s.PutOnScale(22.10); s.ClickSave();
+        s.PutOnScale(22.10); s.ClickSave();
+        Pick(s, studs);
+        Shot(s, "10d-runner-no", new[] { A(FRunner, "1"), A(Row(s, studs), "2") });
+        s.Close();
+    }
+
+    // 11 ─ 1 khuôn nhiều size (Logo group size) ──────────────────────────
+    static void MultiSize()
+    {
+        var s = New();
+        var fg = "6112042313-A478-2801";
+        FT600 Logo(string size) => Data.Row(1, $"1-VB042706-A478-{size}", "Logo", "1-VB042706", "Logo", "M-03", size, "MD-LOGO-01", 1, fg: fg);
+        var l1 = Logo("2706"); var l2 = Logo("2801"); var l3 = Logo("2806");
+        foreach (var l in new[] { l1, l2, l3 }) s.Bom.L2[l.C002!] = new() { new() { ItemStepCode = l.C002, ItemStepName = l.C003, Quantity = 1, Unit = "G" } };
+        var rows = new List<FT600> { l1, l2, l3 };
+        s.Load(rows, rows.Select(Data.Master));
+        s.ClickScale(l1);
+        s.SeedHistory(l1, Data.History(14.6, 4.8, 4.8, 0.4));
+        s.PutOnScale(14.60);
+        Shot(s, "11a-multisize-total", new[] { A(new Rect(408, Row(s, l1).Y, 1484, Row(s, l3).Bottom - Row(s, l1).Y), "1"), A(ScaleBox, "2"), A(SaveBtn, "3") });
+        s.ClickSave();
+        s.PutOnScale(4.80);
+        Shot(s, "11b-multisize-part", new[] { A(Row(s, l1), "1"), A(ScaleBox, "2"), A(SaveBtn, "3") });
+        s.ClickSave();
+        s.PutOnScale(4.20); s.ClickSave();
+        Shot(s, "11c-multisize-next", new[] { A(Row(s, l1), "1"), A(Row(s, l2), "2"), A(Row(s, l3), "3"), A(StepInfo, "4") });
+        s.Close();
+    }
+
+    // 12 ─ hàng PU (PCS-L / PCS-R) ──────────────────────────────────────
+    static void Pu()
+    {
+        var s = New();
+        var fg = "6813992601-SG10-F10R"; var nm = "SANDAL MODEL P - PU - F10";
+        FT600 Pu(string side) => Data.Row(1, $"1-VB070001-E300-F05{side}", "Sole_PU", "1-VB070001", "Sole_PU", "PU-02", $"F05{side}", "MD-PU-01", 1, fg: fg, fgName: nm, group: "PU");
+        var l = Pu("L"); var r = Pu("R");
+        foreach (var x in new[] { l, r }) s.Bom.L2[x.C002!] = new() { new() { ItemStepCode = x.C002, ItemStepName = x.C003, Quantity = 1, Unit = "G" } };
+        var rows = new List<FT600> { l, r };
+        s.Load(rows, rows.Select(Data.Master));
+        s.ClickScale(l);
+        s.SeedHistory(l, Data.History(40.0, 16.6, 16.6, 3.4));
+        s.PutOnScale(40.00); s.ClickSave();
+        s.PutOnScale(16.50);
+        Shot(s, "12a-pu-left", new[] { A(Row(s, l), "1"), A(Row(s, r), "2"), A(FPart, "3"), A(ScaleBox, "4") });
+        s.ClickSave();
+        s.PutOnScale(17.20); s.ClickSave();
+        Shot(s, "12b-pu-result", new[] { A(Row(s, l), "1"), A(Row(s, r), "2") });
+        s.Close();
+    }
+
+    // 13 ─ màu dung sai ─────────────────────────────────────────────────
+    static void Tolerance()
+    {
+        var imgs = new List<BitmapSource>();
+        foreach (var total in new[] { 27.45, 28.60, 31.50 })
+        {
+            var s = NewSandal(out var rows);
+            var studs = R(rows, "Studs");
+            Pick(s, studs);
+            s.PutOnScale(total); s.ClickSave();
+            Stage.Settle();
+            var crop = new Rect(1156, 676, 752, 440);
+            imgs.Add(Annotator.Draw(s.Capture(), new[] { A(new Rect(1488, 727, 268, 103), "1"), A(new Rect(1624, 885, 130, 38), "2"), A(new Rect(1760, 888, 140, 32), "3") }, 1, crop));
+            s.Close();
+        }
+        Annotator.Save(Annotator.Stack(imgs), Path.Combine(_out, "13-tolerance.png"));
+        Console.WriteLine("shot 13-tolerance");
+    }
+
+    // 14 ─ các cảnh báo thường gặp ──────────────────────────────────────
+    static void Warnings()
+    {
+        // a. cân step ghép khi chi tiết con chưa cân
+        var s = NewSandal(out var rows);
+        var inlay = R(rows, "Inlay");
+        s.ClickScale(inlay); s.PutOnScale(61.0); s.ClickSave(); s.PutOnScale(48.2); s.ClickSave();
+        Shot(s, "14a-warn-level2", new[] { A(Row(s, inlay), "1") }, dialog: true);
+        s.Close();
+
+        // b. step trước chưa cân
+        s = NewSandal(out rows);
+        var ff = R(rows, "Base_FF");
+        s.ClickScale(ff);
+        Shot(s, "14b-warn-previous", null, dialog: true);
+        s.Close();
+
+        // c. chưa quét thẻ RFID khi Confirm
+        s = NewSandal(out rows, login: false);
+        s.Dialog.Warn("RFID card not yet scanned.", "Warning");
+        Shot(s, "14c-warn-rfid", new[] { A(OperatorBox, "1"), A(ConfirmBtn, "2") }, dialog: true);
+        s.Close();
+
+        // d. chuyển sang step bị khóa
+        s = NewSandal(out rows);
+        var logo = R(rows, "Logo");
+        s.Dialog.Confirm($"Step {logo.C002} ({logo.C003}) is locked in the current check.{Environment.NewLine}Switch to weigh this step? The step list will be reloaded for it.", "Switch step");
+        Shot(s, "14d-switch-step", null, dialog: true);
+        s.Close();
+    }
+
+    // 15 ─ Confirm / Cancel / Remark ────────────────────────────────────
+    static void Confirm()
+    {
+        var s = NewSandal(out var rows);
+        var studs = R(rows, "Studs");
+        Weigh2(s, studs, 27.40, 22.10);
+        s.Vm.Remark = "Mold cleaned before this shot";
+        Shot(s, "15a-confirm-ready", new[] { A(Row(s, studs), "1"), A(Remark, "2"), A(CancelBtn, "3"), A(ConfirmBtn, "4") });
+        s.Vm.OverlayMessage = "Saving data…";
+        s.Vm.IsOverlayVisible = true;
+        Stage.Settle();
+        Shot(s, "15b-confirm-saving", null);
+        s.Vm.IsOverlayVisible = false;
+        s.Dialog.Info("Scale shot weight saved successfully.", "Information");
+        Shot(s, "15c-confirm-ok", null, dialog: true);
+        s.Close();
+    }
+
+    // 16 ─ Scale / Reset / Delete trên dòng ─────────────────────────────
+    static void RowActions()
+    {
+        var s = NewSandal(out var rows);
+        var studs = R(rows, "Studs");
+        Weigh2(s, studs, 27.40, 22.10);
+        var logo = R(rows, "Logo");
+        s.ClickScale(logo);
+        Shot(s, "16-row-actions", new[]
+        {
+            A(ActionBtn(s, logo, "Scale"), "1"), A(ActionBtn(s, logo, "Reset"), "2"), A(ActionBtn(s, logo, "Delete"), "3"),
+            A(Cell(s, logo, 140, 90), "4")
+        }, new Rect(396, 60, 1510, 360));
+        s.Close();
+    }
+}

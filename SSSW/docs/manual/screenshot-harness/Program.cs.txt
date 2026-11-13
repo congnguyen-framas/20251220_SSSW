@@ -1,0 +1,37 @@
+using System.IO;
+using SSSW;
+using SSSW.modelss;
+using System.Windows;
+using Application = System.Windows.Application;
+
+namespace ManualShots;
+
+public static class Program
+{
+    [STAThread]
+    public static int Main(string[] args)
+    {
+        var outDir = args.Length > 0 ? args[0] : Path.Combine(AppContext.BaseDirectory, "shots");
+        var only = args.Length > 1 ? args[1] : null;
+        Directory.CreateDirectory(outDir);
+
+        var app = new Application { ShutdownMode = ShutdownMode.OnExplicitShutdown };
+        app.Resources.MergedDictionaries.Add(new ResourceDictionary
+        {
+            Source = new Uri("UI/WPF/Styles/ShotWeightStyles.xaml", UriKind.Relative)
+        });
+
+        GlobalVariable.ConfigSystem = new ConfigModel
+        {
+            DeltaLevel1 = 1, DeltaLevel2 = 3, PercentOfUserNonWoven = 100,
+            CategoryOfNonInjectionUsagePartial = new() { new() { CategoryCode = 20, CategoryName = "Non Woven" }, new() { CategoryCode = 21, CategoryName = "Mesh" } }
+        };
+        GlobalVariable.ConfigSystem.Scanner.Enable = false;
+        GlobalVariable.ConfigSystem.RFID.Enable = false;
+        GlobalVariable.ConfigSystem.Scale.Enable = false;
+
+        Scenes.RunAll(outDir, only);
+        Console.WriteLine("done -> " + outDir);
+        return 0;
+    }
+}

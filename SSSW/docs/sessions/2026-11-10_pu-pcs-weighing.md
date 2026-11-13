@@ -39,3 +39,10 @@ Hàng có `FT601.C016 = 'PU'` (lưu ở `FT600.C019`) cân theo **chiếc (PCS)*
 - Lưới Total Steps: đơn vị chuyển từ header vào cell (`ValueUnitConverter`, đơn vị lấy từ `C037`, xuống dòng; Mold Pairs Shot của Logo/Cleat_Ring luôn `pcs`, PU giữ `pcs-L/R`); Total Part header `(g)` và cell không đơn vị; cột Unit ẩn; cột Size wrap (`CenterWrapCell`). Row Details: `Weighed / Weight per piece / Deduct` có đơn vị trong cell.
 - Logo hàng PU: Actual Partitioning mặc định 2; group size chỉ lấy size có hậu tố L hoặc R (cả L và R, bỏ size không có L/R).
 - `UpdateStepStatuses`: Done chỉ khi đủ thông số (step ép: `C023 > 0` và `C021 > 0`; REX: `C023 > 0`). Trước đây `C024 > 0` làm mọi size cùng khuôn (Logo PU) nhảy Done sau khi cân Total Weight.
+
+## 7. PU nhiều bước theo chân L/R (2026-11-13)
+- Hàng PU, bấm Scale / chọn step không phải step cuối, không phải Logo/Cleat_Ring: dựng lại lưới gồm step đó + chân đối xứng L/R (`AddLogoGroupSizesAsync(pairOnly: true)`), cộng step chain ngay trước (cũng đủ L/R); bỏ step sau và step trước không phải chain (đã nằm trong Level 2 của step khác). `NeedsPuPairReload` kích hoạt tải lại khi bấm Scale mà lưới chưa có chân đối xứng.
+- Trừ theo chân: `SameSide` — step L trừ component L, step R trừ component R (công thức khuôn nhiều size, `ChainPredecessors`, `FindWeighedChild`).
+- Lưới nạp lại giá trị đã cân (FT600) cho mọi step PU đứng trước step đang cân.
+- Logo PU: group size lấy size có hậu tố L hoặc R (bỏ size không có L/R).
+- Chọn step trong droplist: ưu tiên đúng dòng FT601 đã chọn (`FT601Id`); dòng trống (thiếu `C007`/`C005`) → dùng dòng đầy đủ cùng mã step, tránh NullReference / lưới rỗng (F05R).

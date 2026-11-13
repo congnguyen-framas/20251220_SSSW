@@ -1,7 +1,7 @@
 # SSSW Operator Manual (English)
 
 > **Audience:** production-floor operators and line technicians who weigh injection-molding shots on the SSSW workstation.
-> **Language versions:** English (this file) · [Tiếng Việt](OPERATOR_MANUAL.vi.md) · Developer manual: [EN](DEVELOPER_MANUAL.en.md) / [VI](DEVELOPER_MANUAL.vi.md)
+> **Language versions:** English (this file) · [Tiếng Việt](OPERATOR_MANUAL.vi.md) · [Bahasa Indonesia](OPERATOR_MANUAL.id.md) · Developer manual: [EN](DEVELOPER_MANUAL.en.md) / [VI](DEVELOPER_MANUAL.vi.md)
 > **Screenshots:** all screenshots were taken from the real application screen with **simulated (sample) data** — item codes, machines, names and weights are examples, not factory data. Red frames and numbered badges are explained in the list under each picture.
 
 ---

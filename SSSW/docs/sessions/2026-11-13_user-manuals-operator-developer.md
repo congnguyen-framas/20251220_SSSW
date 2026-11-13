@@ -27,3 +27,6 @@ Harness chạy hết 16 scene không lỗi; app `dotnet build SSSW/SSSW.csproj` 
 ## 6. Việc còn mở
 - Nhờ operator/PO đọc lại các thuật ngữ & ngưỡng dung sai.
 - Khi UI/công thức đổi: chạy lại harness, cập nhật ảnh + cả 2 ngôn ngữ (Docs-Sync).
+
+## 7. Bổ sung (2026-11-14)
+- Thêm `manual/OPERATOR_MANUAL.id.md` (tiếng Indonesia, dịch từ bản EN, dùng chung ảnh `images/`); cập nhật liên kết chéo ở bản EN/VI và `docs/INDEX.md`.

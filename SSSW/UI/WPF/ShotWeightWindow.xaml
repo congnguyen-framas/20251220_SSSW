@@ -25,9 +25,25 @@
               context của tab đang active (xem Main.xaml). ────────────────────────  -->
         <Grid Margin="6">
             <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="*" />
-                <ColumnDefinition Width="4*" />
+                <ColumnDefinition Width="*" MinWidth="200" />
+                <!--  Cột 0 px: thanh kéo phủ lên khe giữa 2 card (margin 4 + 4) nên khoảng cách giữ nguyên như default  -->
+                <ColumnDefinition Width="0" />
+                <ColumnDefinition Width="4*" MinWidth="500" />
             </Grid.ColumnDefinitions>
+
+            <!--  Thanh kéo đổi chiều rộng Step Information / vùng bên phải (mặc định tỉ lệ 1 : 4 như cũ)  -->
+            <GridSplitter
+                Grid.Column="1"
+                Width="8"
+                Margin="-4,0"
+                Panel.ZIndex="10"
+                HorizontalAlignment="Center"
+                VerticalAlignment="Stretch"
+                Background="Transparent"
+                Cursor="SizeWE"
+                ResizeBehavior="PreviousAndNext"
+                ResizeDirection="Columns"
+                ToolTip="Drag to resize Step Information / Total Steps" />
 
             <!--  ────────────────── LEFT PANEL – STEP INFORMATION ──────────────────  -->
             <Grid Grid.Column="0">
@@ -418,7 +434,7 @@
                 </Border>
             </Grid>
             <!--  ────────────────── RIGHT AREA ──────────────────  -->
-            <Grid Grid.Column="1">
+            <Grid Grid.Column="2">
                 <Grid.RowDefinitions>
                     <!--  TOTAL STEPS lấy phần không gian còn lại; 2 card Reference/History + Reference Values
                           thu về chiều cao cố định (đã bỏ khối ghi chú, ghi chú nằm trong tooltip icon "i")  -->

@@ -58,7 +58,9 @@ namespace SSSW
                     //force cập nhật binding
                     tb?.GetBindingExpression(System.Windows.Controls.TextBox.TextProperty)?.UpdateSource();
 
-                    _vm?.OnRfidValueChanged();
+                    // Tìm thấy nhân viên → tự đóng dialog (không cần bấm OK)
+                    if (_vm != null && _vm.OnRfidValueChanged())
+                        CloseWithResult();
                 }
             }
             catch (Exception ex)
@@ -72,7 +74,10 @@ namespace SSSW
             try
             {
                 if (e.Key == Key.Enter && sender is System.Windows.Controls.TextBox tb && _vm != null)
-                    await _vm.OnRfidNameEnterAsync(tb.Text);
+                {
+                    if (await _vm.OnRfidNameEnterAsync(tb.Text))
+                        CloseWithResult();
+                }
             }
             catch (Exception ex)
             {
@@ -83,6 +88,12 @@ namespace SSSW
         // ════════════════════════════════════════════════════════════════════
         //  OK / CANCEL
         // ════════════════════════════════════════════════════════════════════
+
+        private void CloseWithResult()
+        {
+            DialogResult = true;
+            Close();
+        }
 
         private void btnOk_Click(object sender, RoutedEventArgs e)
         {

@@ -11,8 +11,19 @@
 | [`brainstorm/`](brainstorm/) | Ý tưởng, đề xuất, thảo luận thiết kế | Khi brainstorm feature mới |
 | [`plan/`](plan/) | Kế hoạch phát triển, roadmap, sprint plan | Khi lên kế hoạch task mới |
 | [`tech/`](tech/) | Tài liệu kỹ thuật chuyên sâu (DB, công thức, API) | Khi cần hiểu logic nghiệp vụ |
-| [`manual/`](manual/) | Hướng dẫn sử dụng cho end-user | Khi viết docs cho người dùng |
+| [`manual/`](manual/) | Manual Operator + Developer (EN/VI) kèm ảnh chú thích | Khi viết docs cho người dùng / dev mới |
 | [`worklog/`](worklog/) | (Legacy) Worklog cũ – đã migrate sang sessions/ | Tham khảo lịch sử |
+
+## Manual (User Manual)
+
+| File | Đối tượng | Ngôn ngữ |
+|------|-----------|----------|
+| [`manual/OPERATOR_MANUAL.vi.md`](manual/OPERATOR_MANUAL.vi.md) | Operator (công nhân cân) | Tiếng Việt |
+| [`manual/OPERATOR_MANUAL.en.md`](manual/OPERATOR_MANUAL.en.md) | Operator | English |
+| [`manual/DEVELOPER_MANUAL.vi.md`](manual/DEVELOPER_MANUAL.vi.md) | Developer | Tiếng Việt |
+| [`manual/DEVELOPER_MANUAL.en.md`](manual/DEVELOPER_MANUAL.en.md) | Developer | English |
+
+Ảnh trong `manual/images/` chụp từ màn hình thật với **dữ liệu giả lập**, đã đánh số chú thích; mã nguồn harness chụp ảnh ở `manual/screenshot-harness/` (đuôi `.cs.txt` – xem DEVELOPER_MANUAL §12).
 
 ## Quy trình Vibe Code
 

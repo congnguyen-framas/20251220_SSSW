@@ -49,7 +49,8 @@ namespace SSSW.UI.WPF.ViewModels
 
         public Action? ClearRfidAction { get; set; }
 
-        public void OnRfidValueChanged()
+        /// <returns>true nếu tra cứu thấy nhân viên (dialog có thể tự đóng).</returns>
+        public bool OnRfidValueChanged()
         {
             // Dùng giá trị bool trả về (không dựa vào IsOperatorSet) — IsOperatorSet có thể vẫn
             // true từ 1 lần quét thành công TRƯỚC ĐÓ (VD trên tab Step) và không phản ánh đúng
@@ -63,22 +64,25 @@ namespace SSSW.UI.WPF.ViewModels
                 ClearRfidAction?.Invoke();
                 RfidName = string.Empty;
                 UserName = string.Empty;
-                return;
+                return false;
             }
 
-            RfidCardCode = _operatorSession.RfidCardCode;
+            // Service không set lại RfidCardCode khi tra cứu thành công → giữ mã vừa gõ (trước đây bị xóa trắng)
+            if (!string.IsNullOrWhiteSpace(_operatorSession.RfidCardCode))
+                RfidCardCode = _operatorSession.RfidCardCode;
             RfidName = _operatorSession.RfidName;
             UserName = _operatorSession.UserName;
+            return !string.IsNullOrWhiteSpace(RfidCardCode) && !string.IsNullOrWhiteSpace(RfidName);
         }
 
         /// <summary>Người dùng nhấn Enter trong ô Employee Name để đăng ký operator mới (khi ID chưa tồn tại).</summary>
-        public async Task OnRfidNameEnterAsync(string name)
+        public async Task<bool> OnRfidNameEnterAsync(string name)
         {
             await _operatorSession.OnRfidNameEnterAsync(name);
 
             // Đăng ký xong → tra cứu lại ngay để RfidName/UserName phản ánh operator vừa tạo,
             // để dialog có thể trả kết quả về form chính mà không cần người dùng nhấn Enter lại ở ô ID.
-            OnRfidValueChanged();
+            return OnRfidValueChanged();
         }
     }
 }

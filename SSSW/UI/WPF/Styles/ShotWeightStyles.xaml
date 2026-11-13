@@ -1,4 +1,4 @@
-<ResourceDictionary
+﻿<ResourceDictionary
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
     xmlns:conv="clr-namespace:SSSW.UI.WPF.Converters"
@@ -12,6 +12,7 @@
     <conv:ToleranceToBrushConverter x:Key="ToleranceToBrush" />
     <conv:ToleranceToBorderBrushConverter x:Key="ToleranceToBorderBrush" />
     <conv:ToleranceToForeConverter x:Key="ToleranceToFore" />
+    <conv:ValueUnitConverter x:Key="ValueUnit" />
     <!--  WPF built-in: tránh XDG-000 "incompatible type" trong XAML designer  -->
     <BooleanToVisibilityConverter x:Key="BoolToVisibility" />
     <!--  ScanAndScale.Core – trạng thái kết nối thiết bị  -->
@@ -19,6 +20,7 @@
     <conv:StableToForegroundConverter x:Key="StableToForeground" />
     <conv:TareToBackgroundConverter x:Key="TareToBackground" />
     <BooleanToVisibilityConverter x:Key="InverseBoolToVisibilityConverter" />
+    <conv:NullToCollapsedConverter x:Key="NullToCollapsed" />
 
     <!--
         ════════════════════════════════════════════════════════════════
@@ -55,6 +57,39 @@
         CARD BORDER
         ════════════════════════════════════════════════════════════════
     -->
+    <!--  Icon "i" ở tiêu đề card: hover để xem mô tả card (ToolTip khai báo tại nơi dùng)  -->
+    <Style x:Key="InfoIcon" TargetType="ContentControl">
+        <Setter Property="Width" Value="24" />
+        <Setter Property="Height" Value="24" />
+        <Setter Property="HorizontalAlignment" Value="Right" />
+        <Setter Property="VerticalAlignment" Value="Center" />
+        <Setter Property="Focusable" Value="False" />
+        <Setter Property="Cursor" Value="Help" />
+        <Setter Property="ToolTipService.InitialShowDelay" Value="0" />
+        <Setter Property="ToolTipService.ShowDuration" Value="60000" />
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="ContentControl">
+                    <Border
+                        Background="Transparent"
+                        BorderBrush="#B0BEC5"
+                        BorderThickness="1.5"
+                        CornerRadius="12">
+                        <TextBlock
+                            HorizontalAlignment="Center"
+                            VerticalAlignment="Center"
+                            FontFamily="Segoe UI"
+                            FontSize="14"
+                            FontStyle="Italic"
+                            FontWeight="Bold"
+                            Foreground="White"
+                            Text="i" />
+                    </Border>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
     <Style x:Key="CardStyle" TargetType="Border">
         <Setter Property="Background" Value="White" />
         <Setter Property="BorderBrush" Value="#CFD8DC" />
@@ -172,6 +207,7 @@
     </Style>
 
     <Style TargetType="DataGridCell">
+        <Setter Property="FocusVisualStyle" Value="{x:Null}" />
         <Setter Property="BorderThickness" Value="0" />
         <Setter Property="Padding" Value="0" />
         <Setter Property="VerticalAlignment" Value="Center" />
@@ -182,6 +218,276 @@
             </Trigger>
         </Style.Triggers>
     </Style>
+
+    <!--
+        ════════════════════════════════════════════════════════════════
+        TOTAL STEPS – dòng step + Row Details BOM Level 2
+        Cột của Row Details bám theo ActualWidth của cột lưới chính (cùng đường dọc):
+        Component→Actions(0), Status→STATUS(1), Step→MACHINE(2), Qty→MAIN / MAIN CODE(3), Unit→Step No.(4);
+        Weighed / g per piece / Deduct chia đều 3 phần trong bề rộng cột STEP / STEP CODE(5).
+        Chỉ số = thứ tự cột trong dgTotalSteps.
+        ════════════════════════════════════════════════════════════════
+    -->
+    <Style x:Key="StepRowStyle" TargetType="DataGridRow">
+        <Setter Property="BorderBrush" Value="Transparent" />
+        <Setter Property="BorderThickness" Value="2" />
+        <Style.Triggers>
+            <Trigger Property="IsSelected" Value="True">
+                <Setter Property="BorderBrush" Value="#90A4AE" />
+                <Setter Property="Background" Value="White" />
+            </Trigger>
+        </Style.Triggers>
+    </Style>
+
+    <DataTemplate x:Key="Level2DetailsTemplate">
+        <StackPanel
+            Margin="0,0,0,6"
+            HorizontalAlignment="Left"
+            Background="White">
+            <StackPanel
+                Height="28"
+                Background="#EAF1F8"
+                Orientation="Horizontal">
+                <Border Width="{Binding Columns[0].ActualWidth, RelativeSource={RelativeSource AncestorType=DataGrid}}">
+                    <TextBlock
+                        Margin="6,0,0,0"
+                        HorizontalAlignment="Left"
+                        VerticalAlignment="Center"
+                        FontSize="11"
+                        FontWeight="Bold"
+                        Foreground="#37474F"
+                        Text="Component" />
+                </Border>
+                <Border Width="{Binding Columns[1].ActualWidth, RelativeSource={RelativeSource AncestorType=DataGrid}}">
+                    <TextBlock
+                        HorizontalAlignment="Center"
+                        VerticalAlignment="Center"
+                        FontSize="11"
+                        FontWeight="Bold"
+                        Foreground="#37474F"
+                        Text="Status"
+                        TextAlignment="Center"
+                        TextWrapping="Wrap" />
+                </Border>
+                <Border Width="{Binding Columns[2].ActualWidth, RelativeSource={RelativeSource AncestorType=DataGrid}}">
+                    <TextBlock
+                        HorizontalAlignment="Center"
+                        VerticalAlignment="Center"
+                        FontSize="11"
+                        FontWeight="Bold"
+                        Foreground="#37474F"
+                        Text="Step"
+                        TextAlignment="Center"
+                        TextWrapping="Wrap" />
+                </Border>
+                <Border Width="{Binding Columns[3].ActualWidth, RelativeSource={RelativeSource AncestorType=DataGrid}}">
+                    <TextBlock
+                        HorizontalAlignment="Center"
+                        VerticalAlignment="Center"
+                        FontSize="11"
+                        FontWeight="Bold"
+                        Foreground="#37474F"
+                        Text="Qty"
+                        TextAlignment="Center"
+                        TextWrapping="Wrap" />
+                </Border>
+                <Border Width="{Binding Columns[4].ActualWidth, RelativeSource={RelativeSource AncestorType=DataGrid}}">
+                    <TextBlock
+                        HorizontalAlignment="Center"
+                        VerticalAlignment="Center"
+                        FontSize="11"
+                        FontWeight="Bold"
+                        Foreground="#37474F"
+                        Text="Unit"
+                        TextAlignment="Center"
+                        TextWrapping="Wrap" />
+                </Border>
+                <Grid Width="{Binding Columns[5].ActualWidth, RelativeSource={RelativeSource AncestorType=DataGrid}}">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="*" />
+                    </Grid.ColumnDefinitions>
+                    <Border Grid.Column="0">
+                        <TextBlock
+                            HorizontalAlignment="Center"
+                            VerticalAlignment="Center"
+                            FontSize="11"
+                            FontWeight="Bold"
+                            Foreground="#37474F"
+                            Text="Weighed"
+                            TextAlignment="Center"
+                            TextWrapping="Wrap" />
+                    </Border>
+                    <Border Grid.Column="1">
+                        <TextBlock
+                            HorizontalAlignment="Center"
+                            VerticalAlignment="Center"
+                            FontSize="11"
+                            FontWeight="Bold"
+                            Foreground="#37474F"
+                            Text="Weight / piece"
+                            TextAlignment="Center"
+                            TextWrapping="Wrap" />
+                    </Border>
+                    <Border Grid.Column="2">
+                        <TextBlock
+                            HorizontalAlignment="Center"
+                            VerticalAlignment="Center"
+                            FontSize="11"
+                            FontWeight="Bold"
+                            Foreground="#37474F"
+                            Text="Deduct"
+                            TextAlignment="Center"
+                            TextWrapping="Wrap" />
+                    </Border>
+                </Grid>
+            </StackPanel>
+            <ItemsControl ItemsSource="{Binding Level2Items}">
+                <ItemsControl.ItemTemplate>
+                    <DataTemplate>
+                        <Border
+                            MinHeight="30"
+                            BorderBrush="#ECEFF1"
+                            BorderThickness="0,0,0,1">
+                            <StackPanel Orientation="Horizontal">
+                                <Border Width="{Binding Columns[0].ActualWidth, RelativeSource={RelativeSource AncestorType=DataGrid}}">
+                                    <TextBlock
+                                        Margin="6,3,4,3"
+                                        HorizontalAlignment="Left"
+                                        VerticalAlignment="Center"
+                                        FontSize="12"
+                                        Text="{Binding Component}"
+                                        TextWrapping="Wrap"
+                                        ToolTip="{Binding ComponentCode}" />
+                                </Border>
+                                <Border Width="{Binding Columns[1].ActualWidth, RelativeSource={RelativeSource AncestorType=DataGrid}}">
+                                    <Border
+                                        Padding="5,1"
+                                        HorizontalAlignment="Center"
+                                        VerticalAlignment="Center"
+                                        CornerRadius="9"
+                                        BorderThickness="1">
+                                        <Border.Style>
+                                            <Style TargetType="Border">
+                                                <Setter Property="Background" Value="#FFEBEE" />
+                                                <Setter Property="BorderBrush" Value="#EF5350" />
+                                                <Style.Triggers>
+                                                    <DataTrigger Binding="{Binding IsWeighed}" Value="True">
+                                                        <Setter Property="Background" Value="#E8F5E9" />
+                                                        <Setter Property="BorderBrush" Value="#66BB6A" />
+                                                    </DataTrigger>
+                                                </Style.Triggers>
+                                            </Style>
+                                        </Border.Style>
+                                        <TextBlock FontSize="10" Text="{Binding StatusText}">
+                                            <TextBlock.Style>
+                                                <Style TargetType="TextBlock">
+                                                    <Setter Property="Foreground" Value="#C62828" />
+                                                    <Style.Triggers>
+                                                        <DataTrigger Binding="{Binding IsWeighed}" Value="True">
+                                                            <Setter Property="Foreground" Value="#2E7D32" />
+                                                        </DataTrigger>
+                                                    </Style.Triggers>
+                                                </Style>
+                                            </TextBlock.Style>
+                                        </TextBlock>
+                                    </Border>
+                                </Border>
+                                <Border Width="{Binding Columns[2].ActualWidth, RelativeSource={RelativeSource AncestorType=DataGrid}}">
+                                    <TextBlock
+                                        HorizontalAlignment="Center"
+                                        VerticalAlignment="Center"
+                                        FontSize="12"
+                                        Text="{Binding Step}" />
+                                </Border>
+                                <Border Width="{Binding Columns[3].ActualWidth, RelativeSource={RelativeSource AncestorType=DataGrid}}">
+                                    <TextBlock
+                                        HorizontalAlignment="Center"
+                                        VerticalAlignment="Center"
+                                        FontSize="12"
+                                        Text="{Binding Qty, StringFormat=0.##}" />
+                                </Border>
+                                <Border Width="{Binding Columns[4].ActualWidth, RelativeSource={RelativeSource AncestorType=DataGrid}}">
+                                    <TextBlock
+                                        HorizontalAlignment="Center"
+                                        VerticalAlignment="Center"
+                                        FontSize="12"
+                                        Text="{Binding Unit}" />
+                                </Border>
+                                <Grid Width="{Binding Columns[5].ActualWidth, RelativeSource={RelativeSource AncestorType=DataGrid}}">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*" />
+                                        <ColumnDefinition Width="*" />
+                                        <ColumnDefinition Width="*" />
+                                    </Grid.ColumnDefinitions>
+                                    <TextBlock
+                                        Grid.Column="0"
+                                        HorizontalAlignment="Center"
+                                        VerticalAlignment="Center"
+                                        FontSize="12"
+                                        Text="{Binding WeighedText}" />
+                                    <TextBlock
+                                        Grid.Column="1"
+                                        HorizontalAlignment="Center"
+                                        VerticalAlignment="Center"
+                                        FontSize="12"
+                                        Text="{Binding PerPieceText}" />
+                                    <TextBlock
+                                        Grid.Column="2"
+                                        HorizontalAlignment="Center"
+                                        VerticalAlignment="Center"
+                                        FontSize="12"
+                                        Text="{Binding DeductText}" />
+                                </Grid>
+                            </StackPanel>
+                        </Border>
+                    </DataTemplate>
+                </ItemsControl.ItemTemplate>
+            </ItemsControl>
+            <TextBlock
+                Margin="6,6,0,2"
+                FontSize="12"
+                Foreground="#78909C"
+                Text="No components">
+                <TextBlock.Style>
+                    <Style TargetType="TextBlock">
+                        <Setter Property="Visibility" Value="Collapsed" />
+                        <Style.Triggers>
+                            <DataTrigger Binding="{Binding Level2Items.Count}" Value="0">
+                                <Setter Property="Visibility" Value="Visible" />
+                            </DataTrigger>
+                        </Style.Triggers>
+                    </Style>
+                </TextBlock.Style>
+            </TextBlock>
+            <Border
+                Margin="6,6,6,2"
+                Padding="8,4"
+                BorderBrush="#90A4AE"
+                BorderThickness="1"
+                CornerRadius="4"
+                Visibility="{Binding Level2Formula, Converter={StaticResource NullToCollapsed}}">
+                <TextBlock
+                    FontFamily="Consolas"
+                    FontSize="12"
+                    Text="{Binding Level2Formula}"
+                    TextAlignment="Center"
+                    TextWrapping="Wrap">
+                    <TextBlock.Style>
+                        <Style TargetType="TextBlock">
+                            <Setter Property="Foreground" Value="#37474F" />
+                            <Style.Triggers>
+                                <DataTrigger Binding="{Binding Level2HasMissing}" Value="True">
+                                    <Setter Property="Foreground" Value="#C62828" />
+                                </DataTrigger>
+                            </Style.Triggers>
+                        </Style>
+                    </TextBlock.Style>
+                </TextBlock>
+            </Border>
+        </StackPanel>
+    </DataTemplate>
 
     <!--  ── Reference row style — rows luôn trắng, màu tolerance hiện trên từng ô ──  -->
     <Style x:Key="RefRowStyle" TargetType="DataGridRow">
@@ -199,6 +505,15 @@
         <Setter Property="HorizontalAlignment" Value="Center" />
         <Setter Property="VerticalAlignment" Value="Center" />
         <Setter Property="Margin" Value="0,10,0,10" />
+    </Style>
+
+    <!--  Như CenterCell nhưng tự xuống dòng khi tràn (cột Size, cell "giá trị + đơn vị")  -->
+    <Style
+        x:Key="CenterWrapCell"
+        TargetType="TextBlock"
+        BasedOn="{StaticResource CenterCell}">
+        <Setter Property="TextWrapping" Value="Wrap" />
+        <Setter Property="TextAlignment" Value="Center" />
     </Style>
 
     <Style x:Key="RightCell" TargetType="TextBlock">

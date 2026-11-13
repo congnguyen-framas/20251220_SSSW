@@ -4,7 +4,7 @@ using System.ComponentModel.DataAnnotations.Schema;
 
 namespace SSSW.models
 {
-    [Table("FT600")]
+    [Table("FT600")] // TODO(test BOM level 2): trả về "FT600" trước khi release
     public partial class FT600 : BaseEntity
     {
         [Browsable(false)][Key] public Guid id { get; set; }
@@ -96,6 +96,15 @@ namespace SSSW.models
         /// </summary>
         [DisplayName("Unit")]
         public string? C037 { get; set; }
+
+        /// <summary>
+        /// Số chiếc (PCS) của chi tiết này trong 1 đôi, gộp theo BOM Level 2:
+        /// = Σ qty(step cha -> chi tiết) trên mọi step của FG; step không là chi tiết của step nào
+        /// thì = Quantity Level 1 quy ra chiếc (1 PRS = 2 PCS). Cột <c>C025</c> (Quantity) giữ nguyên.
+        /// Weight per Unit (<c>C036</c>) = <c>C021 / C039</c>.
+        /// </summary>
+        [DisplayName("Pieces Qty (PCS)")]
+        public double? C039 { get; set; } = 0;
 
         /// <summary>
         /// Actual pairs shot.

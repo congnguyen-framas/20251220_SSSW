@@ -25,9 +25,25 @@
               context của tab đang active (xem Main.xaml). ────────────────────────  -->
         <Grid Margin="6">
             <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="*" />
-                <ColumnDefinition Width="4*" />
+                <ColumnDefinition Width="*" MinWidth="200" />
+                <!--  Cột 0 px: thanh kéo phủ lên khe giữa 2 card (margin 4 + 4) nên khoảng cách giữ nguyên như default  -->
+                <ColumnDefinition Width="0" />
+                <ColumnDefinition Width="4*" MinWidth="500" />
             </Grid.ColumnDefinitions>
+
+            <!--  Thanh kéo đổi chiều rộng Step Information / vùng bên phải (mặc định tỉ lệ 1 : 4 như cũ)  -->
+            <GridSplitter
+                Grid.Column="1"
+                Width="8"
+                Margin="-4,0"
+                Panel.ZIndex="10"
+                HorizontalAlignment="Center"
+                VerticalAlignment="Stretch"
+                Background="Transparent"
+                Cursor="SizeWE"
+                ResizeBehavior="PreviousAndNext"
+                ResizeDirection="Columns"
+                ToolTip="Drag to resize Step Information / Total Steps" />
 
             <!--  ────────────────── LEFT PANEL – STEP INFORMATION ──────────────────  -->
             <Grid Grid.Column="0">
@@ -47,12 +63,29 @@
                             Padding="12,8"
                             Background="#0D1117"
                             CornerRadius="4,4,0,0">
-                            <TextBlock
-                                FontFamily="Segoe UI"
-                                FontSize="20"
-                                FontWeight="Bold"
-                                Foreground="White"
-                                Text="STEP INFORMATION" />
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="Auto" />
+                                </Grid.ColumnDefinitions>
+                                <TextBlock
+                                    FontFamily="Segoe UI"
+                                    FontSize="20"
+                                    FontWeight="Bold"
+                                    Foreground="White"
+                                    Text="STEP INFORMATION" />
+                                <ContentControl Grid.Column="1" Style="{StaticResource InfoIcon}">
+                                    <ContentControl.ToolTip>
+                                        <ToolTip>
+                                            <TextBlock
+                                                MaxWidth="460"
+                                                FontSize="13"
+                                                Text="Details of the step currently selected for weighing: step code, machine, quantity, partitioning, runner (YES/NO), usage %, size, FG description and remark. Scan the step's QR label or choose it in 'Select Step' to load it."
+                                                TextWrapping="Wrap" />
+                                        </ToolTip>
+                                    </ContentControl.ToolTip>
+                                </ContentControl>
+                            </Grid>
                         </Border>
 
                         <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto">
@@ -134,15 +167,16 @@
                                     </Grid.ColumnDefinitions>
 
                                     <StackPanel Grid.Column="0">
-                                        <TextBlock Style="{StaticResource LabelStyle}" Text="Partitioning (prs)" />
+                                        <TextBlock Style="{StaticResource LabelStyle}" Text="{Binding PartitioningLabel}" />
                                         <TextBox
+                                            IsEnabled="{Binding AllowPartitionAdj}"
                                             KeyDown="tbActualPairs_KeyDown"
                                             Style="{StaticResource EditableFieldStyle}"
                                             Text="{Binding ActualPairs}" />
                                     </StackPanel>
 
                                     <StackPanel Grid.Column="2" VerticalAlignment="Bottom">
-                                        <TextBlock Style="{StaticResource LabelStyle}" Text="Adjust no. of prs" />
+                                        <TextBlock Style="{StaticResource LabelStyle}" Text="{Binding AdjustLabel}" />
                                         <CheckBox IsChecked="{Binding AllowPartitionAdj}" />
                                     </StackPanel>
                                 </Grid>
@@ -400,10 +434,14 @@
                 </Border>
             </Grid>
             <!--  ────────────────── RIGHT AREA ──────────────────  -->
-            <Grid Grid.Column="1">
+            <Grid Grid.Column="2">
                 <Grid.RowDefinitions>
-                    <RowDefinition Height="428" />
-                    <RowDefinition Height="*" />
+                    <!--  TOTAL STEPS lấy phần không gian còn lại; 2 card Reference/History + Reference Values
+                          thu về chiều cao cố định (đã bỏ khối ghi chú, ghi chú nằm trong tooltip icon "i")  -->
+                    <RowDefinition Height="*" MinHeight="320" />
+                    <!--  Thanh kéo đổi chiều cao: mặc định như cũ (520), người dùng kéo để chỉnh trong phiên  -->
+                    <RowDefinition Height="4" />
+                    <RowDefinition MinHeight="200" Height="520" />
                 </Grid.RowDefinitions>
 
                 <!--  TOTAL STEPS  -->
@@ -419,26 +457,50 @@
                             Padding="12,8"
                             Background="#0D1117"
                             CornerRadius="4,4,0,0">
-                            <TextBlock
-                                FontFamily="Segoe UI"
-                                FontSize="20"
-                                FontWeight="Bold"
-                                Foreground="White"
-                                Text="TOTAL STEPS" />
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="Auto" />
+                                </Grid.ColumnDefinitions>
+                                <TextBlock
+                                    FontFamily="Segoe UI"
+                                    FontSize="20"
+                                    FontWeight="Bold"
+                                    Foreground="White"
+                                    Text="TOTAL STEPS" />
+                                <ContentControl Grid.Column="1" Style="{StaticResource InfoIcon}">
+                                    <ContentControl.ToolTip>
+                                        <ToolTip>
+                                            <TextBlock
+                                                MaxWidth="460"
+                                                FontSize="13"
+                                                Text="All steps of the selected FG. Every step can be weighed. Click a row to highlight it and see its BOM level 2 components (weighed status and the weight deducted from the step's Total Part Weight); click it again to collapse. Scale / Reset / Delete act on that step; the Active step is the one being weighed."
+                                                TextWrapping="Wrap" />
+                                        </ToolTip>
+                                    </ContentControl.ToolTip>
+                                </ContentControl>
+                            </Grid>
                         </Border>
 
                         <!--  ItemsSource binding từ ViewModel  -->
                         <DataGrid
                             x:Name="dgTotalSteps"
                             Grid.Row="1"
+                            GridLinesVisibility="None"
                             Padding="10"
                             ItemsSource="{Binding StepsCollection}"
+                            LoadingRow="dgTotalSteps_LoadingRow"
+                            PreviewMouseLeftButtonDown="dgTotalSteps_PreviewMouseLeftButtonDown"
+                            PreviewMouseLeftButtonUp="dgTotalSteps_PreviewMouseLeftButtonUp"
+                            RowDetailsTemplate="{StaticResource Level2DetailsTemplate}"
+                            RowDetailsVisibilityMode="VisibleWhenSelected"
+                            RowStyle="{StaticResource StepRowStyle}"
                             SelectionChanged="dgTotalSteps_SelectionChanged"
                             Style="{StaticResource GridStyle}">
                             <DataGrid.Columns>
 
                                 <!--  Action buttons – Command binding lên Window DataContext  -->
-                                <DataGridTemplateColumn Width="125" IsReadOnly="False">
+                                <DataGridTemplateColumn Width="140" IsReadOnly="False">
                                     <!--  HEADER TEMPLATE  -->
                                     <DataGridTemplateColumn.HeaderTemplate>
                                         <DataTemplate>
@@ -453,7 +515,7 @@
                                     <!--  CELL TEMPLATE  -->
                                     <DataGridTemplateColumn.CellTemplate>
                                         <DataTemplate>
-                                            <StackPanel
+                                            <WrapPanel
                                                 HorizontalAlignment="Center"
                                                 VerticalAlignment="Center"
                                                 Orientation="Horizontal">
@@ -461,7 +523,6 @@
                                                     Command="{Binding DataContext.GridScaleCommand, RelativeSource={RelativeSource AncestorType=DataGrid}}"
                                                     CommandParameter="{Binding}"
                                                     Content="Scale"
-                                                    IsEnabled="{Binding AllowScale}"
                                                     Style="{StaticResource PrimaryButton}"
                                                     Tag="{Binding}" />
                                                 <Button
@@ -478,7 +539,7 @@
                                                     IsEnabled="{Binding AllowScale}"
                                                     Style="{StaticResource DangerButton}"
                                                     Tag="{Binding}" />
-                                            </StackPanel>
+                                            </WrapPanel>
                                         </DataTemplate>
                                     </DataGridTemplateColumn.CellTemplate>
                                 </DataGridTemplateColumn>
@@ -500,7 +561,7 @@
                                     <DataGridTemplateColumn.CellTemplate>
                                         <DataTemplate>
                                             <StackPanel
-                                                Margin="0,0,0,14"
+                                                Margin="0,10"
                                                 HorizontalAlignment="Center"
                                                 VerticalAlignment="Center"
                                                 Orientation="Horizontal">
@@ -615,7 +676,7 @@
                                 <DataGridTextColumn
                                     Width="60"
                                     Binding="{Binding C008}"
-                                    ElementStyle="{StaticResource CenterCell}">
+                                    ElementStyle="{StaticResource CenterWrapCell}">
                                     <DataGridTextColumn.Header>
                                         <TextBlock
                                             Text="SIZE"
@@ -626,7 +687,7 @@
 
                                 <DataGridTextColumn
                                     Width="100"
-                                    Binding="{Binding C024, StringFormat=F2}"
+                                    Binding="{Binding C024, StringFormat=F3}"
                                     ElementStyle="{StaticResource CenterCell}">
                                     <DataGridTextColumn.HeaderTemplate>
                                         <DataTemplate>
@@ -646,13 +707,13 @@
                                 </DataGridTextColumn>
 
                                 <DataGridTextColumn
-                                    Width="60"
-                                    Binding="{Binding C023, StringFormat=F2}"
+                                    Width="95"
+                                    Binding="{Binding C023, StringFormat=F3}"
                                     ElementStyle="{StaticResource CenterCell}">
                                     <DataGridTextColumn.HeaderTemplate>
                                         <DataTemplate>
                                             <TextBlock
-                                                Text="TOTAL PART (g/prs)"
+                                                Text="TOTAL PART (g)"
                                                 TextAlignment="Center"
                                                 TextWrapping="WrapWithOverflow"
                                                 ToolTipService.ShowDuration="20000">
@@ -667,13 +728,14 @@
                                 </DataGridTextColumn>
 
                                 <DataGridTextColumn
-                                    Width="60"
-                                    Binding="{Binding C021, StringFormat=F2}"
-                                    ElementStyle="{StaticResource CenterCell}">
+                                    Width="95"
+                                    
+                                    ElementStyle="{StaticResource CenterWrapCell}">
+<DataGridTextColumn.Binding><MultiBinding Converter="{StaticResource ValueUnit}" ConverterParameter="g:F3"><Binding Path="C021" /><Binding Path="C037" /></MultiBinding></DataGridTextColumn.Binding>
                                     <DataGridTextColumn.HeaderTemplate>
                                         <DataTemplate>
                                             <TextBlock
-                                                Text="PART (g/prs)"
+                                                Text="PART"
                                                 TextAlignment="Center"
                                                 TextWrapping="WrapWithOverflow"
                                                 ToolTipService.ShowDuration="20000">
@@ -689,13 +751,14 @@
                                 </DataGridTextColumn>
 
                                 <DataGridTextColumn
-                                    Width="100"
-                                    Binding="{Binding C022, StringFormat=F2}"
-                                    ElementStyle="{StaticResource CenterCell}">
+                                    Width="105"
+                                    
+                                    ElementStyle="{StaticResource CenterWrapCell}">
+<DataGridTextColumn.Binding><MultiBinding Converter="{StaticResource ValueUnit}" ConverterParameter="g:F3"><Binding Path="C022" /><Binding Path="C037" /></MultiBinding></DataGridTextColumn.Binding>
                                     <DataGridTextColumn.HeaderTemplate>
                                         <DataTemplate>
                                             <TextBlock
-                                                Text="RUNNER / EXCESS MAT. (g/prs)"
+                                                Text="RUNNER / EXCESS MAT."
                                                 TextAlignment="Center"
                                                 TextWrapping="WrapWithOverflow"
                                                 ToolTipService.ShowDuration="20000">
@@ -711,12 +774,13 @@
 
                                 <DataGridTextColumn
                                     Width="100"
-                                    Binding="{Binding C028, StringFormat=F2}"
-                                    ElementStyle="{StaticResource CenterCell}">
+                                    
+                                    ElementStyle="{StaticResource CenterWrapCell}">
+<DataGridTextColumn.Binding><MultiBinding Converter="{StaticResource ValueUnit}" ConverterParameter="count:F2"><Binding Path="C028" /><Binding Path="C037" /></MultiBinding></DataGridTextColumn.Binding>
                                     <DataGridTextColumn.HeaderTemplate>
                                         <DataTemplate>
                                             <TextBlock
-                                                Text="Actual Partitioning (prs)"
+                                                Text="Actual Partitioning"
                                                 TextAlignment="Center"
                                                 TextWrapping="WrapWithOverflow"
                                                 ToolTipService.ShowDuration="20000">
@@ -731,13 +795,58 @@
                                 </DataGridTextColumn>
 
                                 <DataGridTextColumn
+                                    Width="95"
+                                    
+                                    ElementStyle="{StaticResource CenterWrapCell}">
+<DataGridTextColumn.Binding><MultiBinding Converter="{StaticResource ValueUnit}" ConverterParameter="pcs:F3"><Binding Path="C039" /><Binding Path="C037" /></MultiBinding></DataGridTextColumn.Binding>
+                                    <DataGridTextColumn.HeaderTemplate>
+                                        <DataTemplate>
+                                            <TextBlock
+                                                Text="Pieces Qty"
+                                                TextAlignment="Center"
+                                                TextWrapping="WrapWithOverflow"
+                                                ToolTipService.ShowDuration="20000">
+                                                <TextBlock.ToolTip>
+                                                    <TextBlock Width="250" TextWrapping="Wrap">
+                                                        Pieces of this item in 1 pair, aggregated from BOM level 2 (sum of the quantities of every step that uses it). Weight per Unit = Part Weight / this value.
+                                                    </TextBlock>
+                                                </TextBlock.ToolTip>
+                                            </TextBlock>
+                                        </DataTemplate>
+                                    </DataGridTextColumn.HeaderTemplate>
+                                </DataGridTextColumn>
+
+                                <DataGridTextColumn
+                                    Width="105"
+                                    
+                                    ElementStyle="{StaticResource CenterWrapCell}">
+<DataGridTextColumn.Binding><MultiBinding Converter="{StaticResource ValueUnit}" ConverterParameter="g:F3"><Binding Path="C036" /><Binding Path="C037" /></MultiBinding></DataGridTextColumn.Binding>
+                                    <DataGridTextColumn.HeaderTemplate>
+                                        <DataTemplate>
+                                            <TextBlock
+                                                Text="Weight per Unit"
+                                                TextAlignment="Center"
+                                                TextWrapping="WrapWithOverflow"
+                                                ToolTipService.ShowDuration="20000">
+                                                <!--<TextBlock.ToolTip>
+    <TextBlock Width="250" TextWrapping="Wrap">
+        Runner weight of the current step. Calculation = (TOTAL WEIGHT INJECTION - TOTAL PART WEIGHT) / pairs per shot
+    </TextBlock>
+</TextBlock.ToolTip>-->
+                                            </TextBlock>
+                                        </DataTemplate>
+                                    </DataGridTextColumn.HeaderTemplate>
+                                </DataGridTextColumn>
+
+                                <DataGridTextColumn
                                     Width="100"
-                                    Binding="{Binding C017, StringFormat=F2}"
-                                    ElementStyle="{StaticResource CenterCell}">
+                                    
+                                    ElementStyle="{StaticResource CenterWrapCell}">
+<DataGridTextColumn.Binding><MultiBinding Converter="{StaticResource ValueUnit}" ConverterParameter="count:F2"><Binding Path="C017" /><Binding Path="C037" /></MultiBinding></DataGridTextColumn.Binding>
                                     <DataGridTextColumn.HeaderTemplate>
                                         <DataTemplate>
                                             <TextBlock
-                                                Text="PPIC Partitioning (prs)"
+                                                Text="PPIC Partitioning"
                                                 TextAlignment="Center"
                                                 TextWrapping="WrapWithOverflow"
                                                 ToolTipService.ShowDuration="20000">
@@ -753,13 +862,14 @@
 
 
                                 <DataGridTextColumn
-                                    Width="80"
-                                    Binding="{Binding C018, StringFormat=F2}"
-                                    ElementStyle="{StaticResource CenterCell}">
+                                    Width="95"
+                                    
+                                    ElementStyle="{StaticResource CenterWrapCell}">
+<DataGridTextColumn.Binding><MultiBinding Converter="{StaticResource ValueUnit}" ConverterParameter="mold:F2"><Binding Path="C018" /><Binding Path="C037" /><Binding Path="C003" /></MultiBinding></DataGridTextColumn.Binding>
                                     <DataGridTextColumn.HeaderTemplate>
                                         <DataTemplate>
                                             <TextBlock
-                                                Text="Mold Pairs Shot (prs)"
+                                                Text="Mold Pairs Shot"
                                                 TextAlignment="Center"
                                                 TextWrapping="WrapWithOverflow"
                                                 ToolTipService.ShowDuration="20000">
@@ -768,48 +878,6 @@
                         Runner weight of the current step. Calculation = (TOTAL WEIGHT INJECTION - TOTAL PART WEIGHT) / pairs per shot
                     </TextBlock>
                 </TextBlock.ToolTip>-->
-                                            </TextBlock>
-                                        </DataTemplate>
-                                    </DataGridTextColumn.HeaderTemplate>
-                                </DataGridTextColumn>
-
-                                <DataGridTextColumn
-                                    Width="70"
-                                    Binding="{Binding C025, StringFormat=F2}"
-                                    ElementStyle="{StaticResource CenterCell}">
-                                    <DataGridTextColumn.HeaderTemplate>
-                                        <DataTemplate>
-                                            <TextBlock
-                                                Text="Quantity"
-                                                TextAlignment="Center"
-                                                TextWrapping="WrapWithOverflow"
-                                                ToolTipService.ShowDuration="20000">
-                                                <!--<TextBlock.ToolTip>
-    <TextBlock Width="250" TextWrapping="Wrap">
-        Runner weight of the current step. Calculation = (TOTAL WEIGHT INJECTION - TOTAL PART WEIGHT) / pairs per shot
-    </TextBlock>
-</TextBlock.ToolTip>-->
-                                            </TextBlock>
-                                        </DataTemplate>
-                                    </DataGridTextColumn.HeaderTemplate>
-                                </DataGridTextColumn>
-
-                                <DataGridTextColumn
-                                    Width="80"
-                                    Binding="{Binding C036, StringFormat=F2}"
-                                    ElementStyle="{StaticResource CenterCell}">
-                                    <DataGridTextColumn.HeaderTemplate>
-                                        <DataTemplate>
-                                            <TextBlock
-                                                Text="Weight per Unit (g/unit)"
-                                                TextAlignment="Center"
-                                                TextWrapping="WrapWithOverflow"
-                                                ToolTipService.ShowDuration="20000">
-                                                <!--<TextBlock.ToolTip>
-    <TextBlock Width="250" TextWrapping="Wrap">
-        Runner weight of the current step. Calculation = (TOTAL WEIGHT INJECTION - TOTAL PART WEIGHT) / pairs per shot
-    </TextBlock>
-</TextBlock.ToolTip>-->
                                             </TextBlock>
                                         </DataTemplate>
                                     </DataGridTextColumn.HeaderTemplate>
@@ -817,6 +885,7 @@
 
                                 <DataGridTextColumn
                                     Width="50"
+                                    Visibility="Collapsed"
                                     Binding="{Binding C037, StringFormat=F2}"
                                     ElementStyle="{StaticResource CenterCell}">
                                     <DataGridTextColumn.HeaderTemplate>
@@ -984,23 +1053,69 @@
                                     </DataGridTextColumn.Header>
                                 </DataGridTextColumn>
 
+
+                                <DataGridTextColumn
+                                    Width="70"
+                                    Binding="{Binding C025, StringFormat=F2}"
+                                    ElementStyle="{StaticResource CenterCell}">
+                                    <DataGridTextColumn.HeaderTemplate>
+                                        <DataTemplate>
+                                            <TextBlock
+                                                Text="Quantity"
+                                                TextAlignment="Center"
+                                                TextWrapping="WrapWithOverflow"
+                                                ToolTipService.ShowDuration="20000">
+                                                <!--<TextBlock.ToolTip>
+    <TextBlock Width="250" TextWrapping="Wrap">
+        Runner weight of the current step. Calculation = (TOTAL WEIGHT INJECTION - TOTAL PART WEIGHT) / pairs per shot
+    </TextBlock>
+</TextBlock.ToolTip>-->
+                                            </TextBlock>
+                                        </DataTemplate>
+                                    </DataGridTextColumn.HeaderTemplate>
+                                </DataGridTextColumn>
                             </DataGrid.Columns>
                         </DataGrid>
                     </Grid>
                 </Border>
 
+                <GridSplitter
+                    Grid.Row="1"
+                    Height="4"
+                    HorizontalAlignment="Stretch"
+                    VerticalAlignment="Stretch"
+                    Background="Transparent"
+                    Cursor="SizeNS"
+                    ResizeBehavior="PreviousAndNext"
+                    ResizeDirection="Rows"
+                    ToolTip="Drag to resize Total Steps / bottom cards" />
+
                 <!--  HISTORY + SCALE CARD + REF VALUES  -->
-                <Border Grid.Row="1" Padding="0,4,0,0">
+                <Border Grid.Row="2">
                     <Grid Grid.IsSharedSizeScope="True">
                         <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="*" />
-                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="*" MinWidth="320" />
+                            <ColumnDefinition Width="6" />
+                            <ColumnDefinition Width="*" MinWidth="320" />
                         </Grid.ColumnDefinitions>
+
+                        <!--  Thanh kéo đổi chiều rộng 2 card dưới (mặc định chia đôi như cũ)  -->
+                        <GridSplitter
+                            Grid.Column="1"
+                            Width="6"
+                            Margin="0,0,0,4"
+                            HorizontalAlignment="Stretch"
+                            VerticalAlignment="Stretch"
+                            Background="Transparent"
+                            Cursor="SizeWE"
+                            ResizeBehavior="PreviousAndNext"
+                            ResizeDirection="Columns"
+                            ToolTip="Drag to resize Reference / History and Reference Values" />
 
                         <!--  History panel  -->
                         <Border
                             Grid.Column="0"
-                            Margin="6,0,6,0"
+                            Margin="6,0,0,4"
                             Style="{StaticResource CardStyle}">
                             <Grid>
                                 <Grid.RowDefinitions>
@@ -1017,15 +1132,32 @@
                                     CornerRadius="4,4,0,0"
                                     Cursor="Hand"
                                     MouseLeftButtonDown="HistoryHeader_Click">
-                                    <StackPanel VerticalAlignment="Center" Orientation="Vertical">
-                                        <TextBlock
-                                            FontFamily="Segoe UI"
-                                            FontSize="20"
-                                            FontWeight="Bold"
-                                            Foreground="White"
-                                            Text="{Binding HistoryToggleText}"
-                                            TextWrapping="WrapWithOverflow" />
-                                    </StackPanel>
+                                    <Grid>
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="*" />
+                                            <ColumnDefinition Width="Auto" />
+                                        </Grid.ColumnDefinitions>
+                                        <StackPanel VerticalAlignment="Center" Orientation="Vertical">
+                                            <TextBlock
+                                                FontFamily="Segoe UI"
+                                                FontSize="20"
+                                                FontWeight="Bold"
+                                                Foreground="White"
+                                                Text="{Binding HistoryToggleText}"
+                                                TextWrapping="WrapWithOverflow" />
+                                        </StackPanel>
+                                        <ContentControl Grid.Column="1" Style="{StaticResource InfoIcon}">
+                                            <ContentControl.ToolTip>
+                                                <ToolTip>
+                                                    <TextBlock
+                                                        MaxWidth="460"
+                                                        FontSize="13"
+                                                        Text="Reference for the selected step: the step being weighed and its recent weighings (date, total weight, total part weight, part weight, runner / excess material, operator). Click the title to show or hide the history table."
+                                                        TextWrapping="Wrap" />
+                                                </ToolTip>
+                                            </ContentControl.ToolTip>
+                                        </ContentControl>
+                                    </Grid>
 
                                 </Border>
                                 <Border
@@ -1075,7 +1207,7 @@
 
                                             <DataGridTextColumn
                                                 Width="100"
-                                                Binding="{Binding C024, StringFormat=F2}"
+                                                Binding="{Binding C024, StringFormat=F3}"
                                                 ElementStyle="{StaticResource CenterCell}">
                                                 <DataGridTextColumn.Header>
                                                     <TextBlock
@@ -1087,7 +1219,7 @@
 
                                             <DataGridTextColumn
                                                 Width="125"
-                                                Binding="{Binding C023, StringFormat=F2}"
+                                                Binding="{Binding C023, StringFormat=F3}"
                                                 ElementStyle="{StaticResource CenterCell}">
                                                 <DataGridTextColumn.Header>
                                                     <TextBlock
@@ -1099,7 +1231,7 @@
 
                                             <DataGridTextColumn
                                                 Width="115"
-                                                Binding="{Binding C021, StringFormat=F2}"
+                                                Binding="{Binding C021, StringFormat=F3}"
                                                 ElementStyle="{StaticResource CenterCell}">
                                                 <DataGridTextColumn.Header>
                                                     <TextBlock
@@ -1111,7 +1243,7 @@
 
                                             <DataGridTextColumn
                                                 Width="115"
-                                                Binding="{Binding C022, StringFormat=F2}"
+                                                Binding="{Binding C022, StringFormat=F3}"
                                                 ElementStyle="{StaticResource CenterCell}">
                                                 <DataGridTextColumn.Header>
                                                     <TextBlock
@@ -1140,8 +1272,8 @@
 
                         <!--  Scale Card + Reference Values (Combined)  -->
                         <Border
-                            Grid.Column="1"
-                            Margin="0,0,6,0"
+                            Grid.Column="2"
+                            Margin="0,0,6,4"
                             Style="{StaticResource CardStyle}">
                             <Grid>
                                 <Grid.RowDefinitions>
@@ -1172,6 +1304,19 @@
                                                 Foreground="White"
                                                 Text="REFERENCE VALUES" />
                                         </StackPanel>
+
+                                        <!--  Icon "i": hover để xem ghi chú STD / ACTUAL / dung sai  -->
+                                        <ContentControl Grid.Column="1" Style="{StaticResource InfoIcon}">
+                                            <ContentControl.ToolTip>
+                                                <ToolTip>
+                                                    <TextBlock
+                                                        MaxWidth="460"
+                                                        FontSize="13"
+                                                        Text="{Binding PlacementTarget.DataContext.DeltaInformation, RelativeSource={RelativeSource AncestorType=ToolTip}}"
+                                                        TextWrapping="Wrap" />
+                                                </ToolTip>
+                                            </ContentControl.ToolTip>
+                                        </ContentControl>
                                     </Grid>
                                 </Border>
 
@@ -1476,19 +1621,6 @@
                                             </DataGrid.Columns>
                                         </DataGrid>
 
-                                        <StackPanel
-                                            Grid.Row="1"
-                                            Margin="10,0,0,0"
-                                            VerticalAlignment="Center"
-                                            Grid.IsSharedSizeScope="True">
-                                            <TextBlock
-                                                Margin="0,0,0,0"
-                                                FontSize="16"
-                                                Foreground="#B0BEC5"
-                                                Style="{StaticResource LabelStyle}"
-                                                Text="{Binding DeltaInformation}"
-                                                TextWrapping="WrapWithOverflow" />
-                                        </StackPanel>
                                     </Grid>
 
                                 </Border>
@@ -1547,16 +1679,62 @@
                 VerticalAlignment="Center"
                 Background="White"
                 CornerRadius="8">
-                <StackPanel HorizontalAlignment="Center">
+                <StackPanel Width="360" HorizontalAlignment="Center">
                     <TextBlock
-                        Margin="0,0,0,8"
+                        Margin="0,0,0,14"
                         HorizontalAlignment="Center"
                         FontFamily="Segoe UI"
                         FontSize="18"
                         FontWeight="Bold"
-                        Foreground="#1565C0"
-                        Text="Loading…" />
+                        Foreground="#D0021B"
+                        Text="{Binding OverlayMessage}" />
+
+                    <!--  Thanh chạy (indeterminate) kiểu vạch đỏ  -->
+                    <Border
+                        Height="8"
+                        Background="#ECEFF1"
+                        ClipToBounds="True"
+                        CornerRadius="4">
+                        <Border
+                            Width="130"
+                            HorizontalAlignment="Left"
+                            CornerRadius="4">
+                            <Border.Background>
+                                <LinearGradientBrush StartPoint="0,0" EndPoint="1,0">
+                                    <GradientStop Offset="0" Color="#D0021B" />
+                                    <GradientStop Offset="1" Color="#FF0A54" />
+                                </LinearGradientBrush>
+                            </Border.Background>
+                            <Border.RenderTransform>
+                                <TranslateTransform X="-130" />
+                            </Border.RenderTransform>
+                            <Border.Style>
+                                <Style TargetType="Border">
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding IsOverlayVisible}" Value="True">
+                                            <DataTrigger.EnterActions>
+                                                <BeginStoryboard x:Name="RunBar">
+                                                    <Storyboard RepeatBehavior="Forever">
+                                                        <DoubleAnimation
+                                                            Storyboard.TargetProperty="(UIElement.RenderTransform).(TranslateTransform.X)"
+                                                            From="-130"
+                                                            To="360"
+                                                            Duration="0:0:1.1" />
+                                                    </Storyboard>
+                                                </BeginStoryboard>
+                                            </DataTrigger.EnterActions>
+                                            <DataTrigger.ExitActions>
+                                                <StopStoryboard BeginStoryboardName="RunBar" />
+                                            </DataTrigger.ExitActions>
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </Border.Style>
+                        </Border>
+                    </Border>
+
                     <TextBlock
+                        Margin="0,12,0,0"
                         HorizontalAlignment="Center"
                         FontFamily="Segoe UI"
                         FontSize="12"
@@ -1568,7 +1746,8 @@
                         HorizontalAlignment="Center"
                         Command="{Binding CancelLoadCommand}"
                         Content="Cancel"
-                        IsEnabled="{Binding IsCancelLoadEnabled}" />
+                        IsEnabled="{Binding IsCancelLoadEnabled}"
+                        Visibility="{Binding IsCancelLoadEnabled, Converter={StaticResource BoolToVisibility}}" />
                 </StackPanel>
             </Border>
         </Grid>

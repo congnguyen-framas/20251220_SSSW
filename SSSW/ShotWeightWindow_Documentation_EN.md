@@ -202,7 +202,7 @@ Uses a `CancellationTokenSource` linked with a timeout (default 30 s). Cancels a
 3. Check `DepartmentInfor`: must belong to IT or QC (FT031). If not → reject, clear RFID.
 4. If valid: `RfidName = C001`, `UserName = "Code · Name"` (displayed in title bar with status dot).
 5. If not in DB: Focus `tbRFIDName` → type name + Enter → `OnRfidNameEnterAsync` → INSERT into FT029.
-6. Clicking the employee name in the title bar opens `frmRfidInput` dialog for manual RFID entry.
+6. Clicking the employee name in the title bar opens `frmRfidInput` dialog for manual RFID entry. The dialog closes automatically once the employee is found (or a new operator is registered).
 
 ### 3.5 Barcode — Find Step from QR
 
@@ -233,24 +233,26 @@ Remove the runner, keep only the part on the scale:
 C023 = ScaleValue
 C022 (Runner=YES) = Round( (C024 − C023 × prsShot) / prsShot, 3 )
 C022 (Runner=NO)  = 0
-C021 = C023 − Σ C023_prev − Σ C023_non-inj
+C021 = C023 − Σ ( Qty × UnitWeight ) over BOM Level-2 children (self row excluded)
 ```
+
+> Since 2026-11-02. If no Level-2 data is available the legacy formula `C021 = C023 − Σ C021_prev − Σ C021_non-inj` is used. See `docs/tech/BUSINESS_LOGIC.md` §4.8.
 
 Where:
 - `prsShot` = `_articlePaisShotFinaly` (C028)
 - `Σ C023_prev` = sum of C023 for all steps with `C015 = current_C015 − 1`
 - `Σ C023_non-inj` = sum of C023 for REX / Z-VHXXXXXX steps at the same C015
 
-For Studs, Logo, Cleat_Ring:
+For Studs, Logo, Cleat_Ring and every other injection step (since 2026-11-04):
 ```
-C036 = Round( ScaleValue / prsShot, 2 )
+C036 = Round( C021 / C039, 3 )      // C039 = pieces per pair aggregated from BOM level 2
 ```
 
 ### 4.3 Non-Injection (REX) — Receptacle (catCheck == null)
 
 ```
 C024 = C023 = C021 = ScaleValue
-C036 = Round( ScaleValue / C025, 2 )        // C025 = quantity
+C036 = Round( ScaleValue / C039, 2 )        // C039 = pieces per pair (falls back to C025 when empty)
 ```
 
 ### 4.4 Non-Injection (REX) — Nonwoven / Mesh (catCheck != null)
@@ -279,7 +281,14 @@ C022[each size] = (C024 − sumPW) / pairShot  // if C023 > 0, else 0
 
 ### 4.6 Cascade Update (recalculate subsequent steps)
 
-After Save, subsequent steps with `C024 > 0` are recalculated:
+After Save (since 2026-11-02), every already-weighed parent step whose BOM Level-2 contains the saved step is recalculated:
+
+```
+C021 = C023 − Σ ( Qty × UnitWeight )   (Level 2)
+C022 = C024 − C021
+```
+
+Legacy cascade (only when no Level-2 data is available):
 
 ```
 Same sequence:   C021 = C023 − _rowSelected.C023
@@ -287,6 +296,18 @@ Same sequence:   C021 = C023 − _rowSelected.C023
 Later sequence:  C021 = C023 − prev.C023
                  C022 = C024 − C021
 ```
+
+### 4.6.1 TOTAL STEPS – BOM Level 2 Row Details (UI)
+
+Selecting a row in TOTAL STEPS outlines it and expands a Level-2 detail table directly below (columns aligned under the main grid columns: Component→Actions, Status→STATUS, Step→MACHINE, Qty→Step No., Unit→STEP / STEP CODE, Weighed→TOTAL WEIGHT, g/piece→TOTAL PART, Deduct→PART). Other rows are dimmed (opacity 0.35); clicking the selected row again clears the selection. A formula line `C021 = C023 − (…)` is shown under the table (red when a component is not weighed yet). Data comes from `FT600.Level2Items` built by `ShotWeightViewModel.RefreshLevel2Details()`. See `docs/brainstorm/BOM_LEVEL2_UI_OPTIONS.md`.
+
+### 4.6.3 No step lock (2026-11-04)
+
+The original `AllowScale` lock is restored (2026-11-05): Logo / Cleat_Ring / Studs / Inlay (group size, multi-size molds) must be weighed separately — steps outside the group being weighed are locked or removed from the list. Part Weight of an injection step is computed from its BOM level 2 components; Save is refused only when a component has no weight yet (the dialog lists them). Steps without level 2 data fall back to the old "all previous steps weighed" rule. On Confirm, rows reloaded from a previous weighing (`IsReusedFromHistory`) are inserted again with `C013` / `C014` replaced by the FG code / name of the step being scanned or selected. Each card header (STEP INFORMATION, TOTAL STEPS, REFERENCE / HISTORY, REFERENCE VALUES) has an "i" icon with a description tooltip.
+
+### 4.6.2 REFERENCE VALUES – note as tooltip
+
+The STD / ACTUAL / tolerance note (`DeltaInformation`) is no longer printed under the table; it is shown as a tooltip on the "i" icon in the REFERENCE VALUES header (hover, no delay). The two lower cards (REFERENCE / HISTORY and REFERENCE VALUES) use a fixed height (520) so TOTAL STEPS gets the remaining vertical space. TOTAL STEPS has no horizontal grid lines (`GridLinesVisibility="None"`).
 
 ### 4.7 Tolerance System
 
@@ -312,8 +333,9 @@ ScaleCard border/background = **worst** ToleranceCategory among 4 Reference rows
 
 1. Check `_operatorInfo.Id != Guid.Empty` — RFID must have been scanned and validated.
 2. Check multi-size molds (`sameMolds`): if > 0, skip completeness check.
-3. For each row with `AllowScale=true`: `C023 == 0 AND C024 == 0` → warn "Scale not completed for step: XXX".
+3. For each row (all rows are weighable since 2026-11-04): `C023 == 0 AND C024 == 0` → warn "Scale not completed for step: XXX".
 4. Filter: `insert = _scaleDataFinal WHERE AllowScale=true AND C021 > 0`.
+   While Confirm runs, a busy overlay with a red running bar and "Saving data…" is shown; double values are rounded to 3 decimals before insert.
 5. Set metadata: `C010=EmployeeCode`, `C011=EmployeeName`, `CreatedDate=now`, `CreatedMachine`, `Mesocomp`, `Mesoyear`.
 6. Transaction: `db.FT600s.AddRangeAsync(insert)`.
 7. `FT601s.ExecuteUpdateAsync`: SET `C017=true, ModifiedDate, ModifiedMachine` WHERE conditions match.
@@ -399,7 +421,7 @@ The **Select Step** LookUpEdit popup shows these columns: Machine, Step Code, St
 | Actual Partitioning (prs) | 100 | `C028` `F2` | — |
 | Actual Pairs Shot (prs) | 80 | `C017` `F2` | — |
 | Mold Pairs Shot (prs) | 80 | `C018` `F2` | — |
-| Quantity | 70 | `C025` `F2` | — |
+| Pieces Qty (PCS) | 80 | `C039` `F2` | Pieces of the item in 1 pair, aggregated from BOM level 2 (replaces Quantity at this position); tooltip on header |
 | Weight per Unit (g/unit) | 80 | `C036` `F2` | — |
 | Unit | 50 | `C037` `F2` | — |
 | FG / FG CODE | 763 | `C014` (bold) / `C013` (grey sub) | Two-line stacked; `TextWrapping` |
@@ -411,6 +433,7 @@ The **Select Step** LookUpEdit popup shows these columns: Machine, Step Code, St
 | CATEGORY / CATEGORY CODE | 200 | `C034` (bold) / `C033` (grey sub) | Two-line stacked |
 | PERCENT OF USAGE (%) | 90 | `C035` | Centered |
 | QR CODE | 90 | `C012` | Centered |
+| Quantity | 70 | `C025` `F2` | Level-1 BOM quantity; moved to the last column (2026-11-04) |
 
 #### 6.3.2 History Panel (bottom-left)
 
@@ -481,6 +504,7 @@ The **Select Step** LookUpEdit popup shows these columns: Machine, Step Code, St
 | C036 | double? | Weight per Unit (g/unit) — Studs, Logo, Cleat_Ring, REX |
 | C037 | string | Unit |
 | C038 | string | Remarks |
+| C039 | double? | Pieces (PCS) of the item in 1 pair, aggregated from BOM level 2 (`Σ qty(parent → item)`); `C036 = C021 / C039` (new 2026-11-04; `C025` unchanged) |
 | AllowScale | bool | Whether step can be weighed |
 | CreateDate | DateTime | DB save timestamp |
 | Mesocomp | string | Company code (VNT1, FKV, FTT1…) |

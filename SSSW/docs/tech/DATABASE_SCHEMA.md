@@ -72,7 +72,9 @@ Mỗi lần công nhân hoàn tất quy trình cân một sản phẩm/bộ linh
 | `C035` | `double?` | Tỉ lệ sử dụng (%) `_percentOfUsage` |
 | `C036` | `double?` | Trọng lượng lệch so với tiêu chuẩn (Tolerance Delta) |
 | `C037` | `string` | Đơn vị tính (g, kg) |
-| `AllowScale` | `bool` | Cờ cho phép cân bước này |
+| `C039` | `double?` | **Cột mới (2026-11-04)**: số chiếc (PCS) của chi tiết trong 1 đôi, gộp theo BOM Level 2. `C036 = C021 ÷ C039` (g/chiếc). Cột `C025` giữ nguyên. Tạo bằng `ALTER TABLE FT600 ADD C039 float NULL` |
+| `AllowScale` | `bool` | Cờ cho phép cân bước này — luôn `true` từ 2026-11-04 (đã bỏ khóa) |
+| `IsReusedFromHistory` | `bool` | Dòng nạp lại từ lần cân trước; khi Confirm đổi `C013`/`C014` theo FG đang scan (UI only) |
 | `CreatedDate` | `DateTime` | Ngày giờ cân |
 | `CreatedMachine` | `string` | Tên máy trạm thực hiện cân (`Environment.MachineName`) |
 | `Mesocomp` | `string` | Mã công ty / Site (`VNT1`, `FTT1`, v.v.) |
@@ -134,12 +136,38 @@ Chứa danh sách kế hoạch sản xuất và trạng thái đã cân:
 
 ---
 
+### 2.6. Quan hệ giữa các bảng chính
+
+```mermaid
+erDiagram
+    FT601 ||--o{ FT600 : "C017 hoàn tất khi Confirm (theo C004+C007)"
+    FT606_Label ||--o{ FT600 : "C012/C029 (tem QR)"
+    FT029_Operator_RFID ||--o{ FT600 : "C010/C011 (người cân)"
+    FT608_Config ||--|| MAY_TRAM : "MachineName"
+    FT600 }o--o{ FT609_ShotWeightUpToWL : "FT600.Id (chuỗi) → upsert ở bước cuối"
+    FT600 {
+        guid id PK
+        string C002 "mã step"
+        int C015 "thứ tự step"
+        double C021 "Part g/prs"
+        double C022 "Runner"
+        double C023 "Total PW"
+        double C024 "Total W_injection"
+        double C036 "g/piece"
+        string C037 "Unit (PRS/PCS/G)"
+        double C039 "Pieces per pair (L2 aggregated)"
+    }
+```
+
+> Lưu ý: nhánh `feature/use-bom-level-2` tạm trỏ entity `FT600` sang bảng `FT600_dev` để test.
+
 ## 3. Danh sách Stored Procedures (SP) trọng yếu
 
 1. **`sp_MaterialGetCompanyName`**: Trả về `mesocomp` (VNT1, FTT1...) để xác định site hiện tại.
 2. **`sp_MaterialGetMesoyear`**: Trả về năm làm việc (`mesoyear`) hiện hành trong Winline.
-3. **`sp_getBomWinlineOfItemFG`**: Truy vấn định mức BOM từ Winline cho mã thành phẩm (Finished Goods).
+3. **`sp_getBomWinlineOfItemFG`**: Truy vấn định mức BOM từ Winline. Truyền mã **FG** → Level 1 (các step); truyền mã **step** (vd. `3-VB042313-A123-2801`) → Level 2 (chi tiết cấu thành: dòng self `-0000` đơn vị G, các step con, REX). Level 2 dùng để tính `C021` (xem `BUSINESS_LOGIC.md` §4.8).
 4. **`sp_GetFullStepItemHydraIsRun`**: Lấy danh sách các lệnh sản xuất / khuôn đang chạy trên máy ép từ Hydra MES.
 5. **`sp_GetCategorryOfItem`**: Lấy danh mục nhóm linh kiện.
 6. **`sp_Shotweight_Gets`**: Lấy thông tin tiêu chuẩn shotweight từ Winline để đối chiếu.
 7. **`sp_Showweight_UpdateToWinline`**: Cập nhật kết quả shotweight đã cân ngược lại database Winline.
+8. **`sp_sssw_getGroupSize`**: `@ItemCode` = phần đầu mã item (vd. `1-VB042502-B660`, SP tự thêm `-%`), `@MesoYear` (mặc định 1512). Trả `ItemCode, ItemName, SizeCode, SizeName, C063, C064, ShotWeight (= C063 + C064)` theo từng size của nhóm. Script: `docs/sql/sp_sssw_getGroupSize.sql`; model: `GroupSizeModel`.

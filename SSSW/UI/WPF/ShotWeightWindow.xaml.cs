@@ -1,4 +1,4 @@
-// ============================================================================
+﻿// ============================================================================
 //  ShotWeightWindow.xaml.cs  –  Minimal code-behind (MVVM refactor)
 //
 //  Chỉ chứa những gì KHÔNG thể làm qua binding:
@@ -76,6 +76,77 @@ namespace SSSW.UI.WPF
         }
 
         // ════════════════════════════════════════════════════════════════════
+        //  POPUP CÂN (step bị khóa / step PU khác): giữ lưới hiện tại, cân ở cửa sổ mới
+        // ════════════════════════════════════════════════════════════════════
+        private bool _dialogOpen;
+
+        /// <summary>Mở popup cân (modal) cho step; trả về khi popup đóng. false = không mở được (dùng cách cũ).</summary>
+        private bool OpenWeighDialog(StepSelectModel step, bool isPu, int? seq)
+        {
+            var owner = Window.GetWindow(this);
+            if (owner == null) return false;
+
+            var vm2 = _vm.CreateDialogViewModel(step, isPu, seq);
+            var content = new ShotWeightWindow(vm2);
+
+            var title = new TextBlock
+            {
+                Text = "WEIGH STEP  ·  " + vm2.DialogTitle,
+                Foreground = System.Windows.Media.Brushes.White, FontSize = 16, FontWeight = FontWeights.Bold,
+                VerticalAlignment = VerticalAlignment.Center, Margin = new Thickness(16, 0, 0, 0),
+                TextTrimming = TextTrimming.CharacterEllipsis
+            };
+            var close = new System.Windows.Controls.Button
+            {
+                Content = "✕", Width = 44, Foreground = System.Windows.Media.Brushes.White,
+                Background = System.Windows.Media.Brushes.Transparent,
+                BorderThickness = new Thickness(0), FontSize = 16, Cursor = System.Windows.Input.Cursors.Hand,
+                ToolTip = "Close"
+            };
+            var header = new Grid { Height = 44, Background = new SolidColorBrush(System.Windows.Media.Color.FromRgb(0x0B, 0x0F, 0x1A)) };
+            header.ColumnDefinitions.Add(new ColumnDefinition());
+            header.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
+            header.Children.Add(title);
+            Grid.SetColumn(close, 1);
+            header.Children.Add(close);
+
+            var root = new Grid();
+            root.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
+            root.RowDefinitions.Add(new RowDefinition());
+            root.Children.Add(header);
+            Grid.SetRow(content, 1);
+            root.Children.Add(content);
+
+            var dlg = new Window
+            {
+                Owner = owner,
+                WindowStartupLocation = WindowStartupLocation.CenterOwner,
+                WindowStyle = WindowStyle.None,
+                ResizeMode = ResizeMode.NoResize,
+                ShowInTaskbar = false,
+                Width = Math.Max(900, owner.ActualWidth * 0.92),
+                Height = Math.Max(600, owner.ActualHeight * 0.92),
+                Background = System.Windows.Media.Brushes.White,
+                BorderBrush = new SolidColorBrush(System.Windows.Media.Color.FromRgb(0x37, 0x47, 0x4F)),
+                BorderThickness = new Thickness(1),
+                Content = root
+            };
+            close.Click += (_, _) => dlg.Close();
+            vm2.DialogCloseRequested += () => dlg.Dispatcher.BeginInvoke(new Action(dlg.Close));
+
+            var oldOpacity = owner.Opacity;
+            _dialogOpen = true;
+            owner.Opacity = 0.55;   // làm mờ màn chính (lưới giữ nguyên bên dưới)
+            try { dlg.ShowDialog(); }
+            finally
+            {
+                _dialogOpen = false;
+                owner.Opacity = oldOpacity;
+            }
+            return true;
+        }
+
+        // ════════════════════════════════════════════════════════════════════
         //  LOADED
         // ════════════════════════════════════════════════════════════════════
         private async void OnLoaded(object sender, RoutedEventArgs e)
@@ -106,6 +177,7 @@ namespace SSSW.UI.WPF
             _vm.ClearStepComboAction = () => { cbStepName.EditValue = null; };
             _vm.SetStepComboAction = item => { cbStepName.EditValue = item?.StepItemCode; };
             _vm.FocusGridRowAction = code => FocusStepInGrid(code);
+            _vm.OpenWeighDialogAction = OpenWeighDialog;
 
             // 3. Load master data CHỈ MỘT LẦN cho instance này (xem ghi chú ở _initialized).
             //    Config/hardware không còn được load/kết nối ở đây nữa — Main lo hết.
@@ -113,6 +185,7 @@ namespace SSSW.UI.WPF
             {
                 _initialized = true;
                 await _vm.InitializeAsync();
+                await _vm.ApplyPendingStepAsync();   // popup cân: chọn sẵn step cần cân
             }
         }
 
@@ -140,6 +213,7 @@ namespace SSSW.UI.WPF
         /// </summary>
         private async void BarcodeDriver_DataValueChanged(object? sender, DataValueChangedEventArgs e)
         {
+            if (_dialogOpen) return;   // popup cân đang mở: popup xử lý quét mã, màn chính bỏ qua
             await Dispatcher.InvokeAsync(() =>
             {
                 var data = e.NewValue;
@@ -162,6 +236,7 @@ namespace SSSW.UI.WPF
         /// </summary>
         private void ScaleDriver_DataValueChanged(object? sender, DataValueChangedEventArgs e)
         {
+            if (_dialogOpen) return;   // popup cân đang mở: popup xử lý số cân, màn chính bỏ qua
             Dispatcher.Invoke(() =>
             {
                 var data = e.NewValue;
@@ -241,7 +316,77 @@ namespace SSSW.UI.WPF
         /// </summary>
         private void dgTotalSteps_SelectionChanged(object sender, SelectionChangedEventArgs e)
         {
-            // No-op: hành động qua GridScaleCommand / GridResetCommand (XAML)
+            // Hành động Scale/Reset đi qua Command (XAML). Ở đây chỉ làm mờ các dòng không được chọn
+            // (thuần hiển thị): dòng đang chọn được xổ Row Details BOM Level 2 và viền nổi.
+            ApplyRowDimming();
+
+            // Dòng mới được tạo lại (RefreshStepsGridCore) có thể chưa sinh container ngay lúc chọn → áp dụng lại sau khi layout xong
+            Dispatcher.BeginInvoke(new Action(ApplyRowDimming), System.Windows.Threading.DispatcherPriority.Loaded);
+        }
+
+        private const double DimmedRowOpacity = 0.35;
+
+        /// <summary>Có step được chọn → các dòng còn lại mờ đi; không chọn → mọi dòng rõ nét.</summary>
+        private void ApplyRowDimming()
+        {
+            foreach (var item in dgTotalSteps.Items)
+                if (dgTotalSteps.ItemContainerGenerator.ContainerFromItem(item) is DataGridRow row)
+                    row.Opacity = RowOpacity(row);
+        }
+
+        /// <summary>
+        /// So khớp theo Item (không dùng row.IsSelected): ở LoadingRow cờ IsSelected chưa được gán nên
+        /// dòng đang chọn từng bị làm mờ nhầm khi vào màn hình lần đầu.
+        /// </summary>
+        private double RowOpacity(DataGridRow row)
+        {
+            var selected = dgTotalSteps.SelectedItem;
+            return selected != null && !ReferenceEquals(row.Item, selected) ? DimmedRowOpacity : 1.0;
+        }
+
+        private void dgTotalSteps_LoadingRow(object sender, DataGridRowEventArgs e)
+            => e.Row.Opacity = RowOpacity(e.Row);
+
+        private DataGridRow? _rowPressed;
+        private bool _rowWasSelectedOnPress;
+
+        /// <summary>Ghi nhớ dòng đang nhấn và dòng đó đã được chọn trước khi nhấn hay chưa.</summary>
+        private void dgTotalSteps_PreviewMouseLeftButtonDown(object sender, MouseButtonEventArgs e)
+        {
+            _rowPressed = null;
+            if (e.OriginalSource is not DependencyObject src || IsInsideButtonOrDetails(src)) return;
+
+            _rowPressed = FindAncestor<DataGridRow>(src);
+            _rowWasSelectedOnPress = _rowPressed?.IsSelected == true;
+        }
+
+        /// <summary>Click lại đúng dòng đang chọn → bỏ chọn (thu gọn chi tiết, hết mờ).</summary>
+        private void dgTotalSteps_PreviewMouseLeftButtonUp(object sender, MouseButtonEventArgs e)
+        {
+            var pressed = _rowPressed;
+            _rowPressed = null;
+            if (pressed == null || !_rowWasSelectedOnPress) return;
+            if (e.OriginalSource is not DependencyObject src || FindAncestor<DataGridRow>(src) != pressed) return;
+
+            // Chạy sau khi DataGrid xử lý xong selection của lần nhấn này
+            Dispatcher.BeginInvoke(new Action(() => dgTotalSteps.SelectedItem = null),
+                System.Windows.Threading.DispatcherPriority.Background);
+        }
+
+        private static bool IsInsideButtonOrDetails(DependencyObject src)
+        {
+            for (var cur = src; cur != null; cur = VisualTreeHelper.GetParent(cur))
+                if (cur is System.Windows.Controls.Primitives.ButtonBase || cur is DataGridDetailsPresenter)
+                    return true;
+                else if (cur is DataGridRow) return false;
+            return false;
+        }
+
+        private static T? FindAncestor<T>(DependencyObject? start) where T : DependencyObject
+        {
+            for (var cur = start; cur != null; cur = VisualTreeHelper.GetParent(cur))
+                if (cur is T t) return t;
+            return null;
         }
 
         // ════════════════════════════════════════════════════════════════════

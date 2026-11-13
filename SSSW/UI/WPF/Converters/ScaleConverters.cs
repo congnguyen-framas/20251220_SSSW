@@ -1,4 +1,4 @@
-// ============================================================================
+﻿// ============================================================================
 //  ScaleConverters.cs
 //  Value converters dùng trong ShotWeightWindow (MVVM)
 //  Namespace : SSSW.UI.WPF.Converters
@@ -14,6 +14,60 @@ using Color   = System.Windows.Media.Color;
 
 namespace SSSW.UI.WPF.Converters
 {
+
+    /// <summary>
+    /// Giá trị + đơn vị theo dòng, đơn vị lấy từ cột Unit (FT600.C037: PRS / PCS / PCS-L / PCS-R).
+    /// values[0] = số (double?), values[1] = C037, values[2] = C003 (tên step, chỉ dùng cho "mold").
+    /// parameter "kiểu:format": "g" → g/prs | g/pcs, "count" → prs | pcs, "mold" → như count nhưng step Logo / Cleat_Ring luôn pcs
+    /// (Mold Pairs Shot của 2 loại này là số chiếc, không theo Unit), "pcs" → pcs. Unit PU giữ hậu tố phía (pcs-L / pcs-R).
+    /// Giá trị null → rỗng; Unit trống → prs.
+    /// </summary>
+    public class ValueUnitConverter : IMultiValueConverter
+    {
+        public object Convert(object[] values, Type targetType, object parameter, CultureInfo culture)
+        {
+            if (values.Length < 1 || values[0] is not IConvertible raw || values[0] == DependencyProperty.UnsetValue) return string.Empty;
+            var num = raw.ToDouble(CultureInfo.InvariantCulture);
+            var spec = (parameter as string ?? "g").Split(':');          // "g:F3" → đơn vị g, format F3
+            var fmt = spec.Length > 1 ? spec[1] : "F2";
+
+            var count = spec[0] == "pcs" ? "pcs" : CountFromUnit(values.Length > 1 ? values[1] as string : null);
+            if (spec[0] == "mold" && IsPieceMold(values) && !count.StartsWith("pcs")) count = "pcs";   // Logo PU (Unit PCS-L/R) giữ hậu tố L/R: pcs-L / pcs-R
+            var unit = spec[0] == "g" ? "g/" + count : count;
+            return $"{num.ToString(fmt, culture)}\n{unit}";   // đơn vị xuống dòng (cell dùng CenterWrapCell)
+        }
+
+        /// <summary>PRS → "prs"; PCS / PCS-L / PCS-R → "pcs" (giữ "-L"/"-R"); trống / khác → "prs".</summary>
+        private static string CountFromUnit(string? unit)
+        {
+            var u = unit?.Trim();
+            if (string.IsNullOrEmpty(u)) return "prs";
+            if (u.StartsWith("PCS", StringComparison.OrdinalIgnoreCase)) return "pcs" + u[3..];
+            return "prs";
+        }
+
+        private static bool IsPieceMold(object[] values)
+        {
+            var name = values.Length > 2 ? (values[2] as string)?.Trim() : null;
+            return name != null && (name.StartsWith("Logo", StringComparison.OrdinalIgnoreCase)
+                                    || name.StartsWith("Cleat_Ring", StringComparison.OrdinalIgnoreCase));
+        }
+
+        public object[] ConvertBack(object value, Type[] targetTypes, object parameter, CultureInfo culture)
+            => throw new NotSupportedException();
+    }
+
+
+    /// <summary>null / chuỗi rỗng → Collapsed, ngược lại Visible.</summary>
+    public class NullToCollapsedConverter : IValueConverter
+    {
+        public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
+            => string.IsNullOrWhiteSpace(value as string) ? Visibility.Collapsed : Visibility.Visible;
+
+        public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
+            => throw new NotSupportedException();
+    }
+
     /// <summary>Maps ToleranceCategory → background Brush cho DataGridRow.</summary>
     public class ToleranceToBrushConverter : IValueConverter
     {

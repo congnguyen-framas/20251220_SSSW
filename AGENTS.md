@@ -5,6 +5,7 @@
 1. **Zero Logic Mutation**:
    - Maintain 100% numerical and logical equivalence with existing business rules in `ShotWeightViewModel.cs` and `ShotWeightFGViewModel.cs`.
    - Never alter the formulas for `C021`, `C022`, `C023`, `C024`.
+   - Exception (explicit user request, 2026-11-02): injection-step `C021` is computed from BOM Level 2 (`PartWeightCalculator`, see `SSSW/docs/tech/BUSINESS_LOGIC.md` §4.8); the legacy formula remains as fallback.
    - Preserve edge case handlers (`REX`, `Cleat_Ring` cascade subtraction, `Inlay`, Multi-size mold allocation).
 
 2. **Database Integrity**:
@@ -22,3 +23,4 @@
 5. **Vibe Coding & Documentation**:
    - Consult [`SSSW/docs/INDEX.md`](SSSW/docs/INDEX.md) and [`SSSW/docs/sessions/INDEX.md`](SSSW/docs/sessions/INDEX.md) before implementing changes.
    - Log all non-trivial sessions in `SSSW/docs/sessions/YYYY-MM-DD_slug.md`.
+   - **Docs-Sync**: after completing every task, always review and fully update all related docs (sessions + INDEX, `tech/BUSINESS_LOGIC.md`, `tech/DATABASE_SCHEMA.md`, `architecture/ARCHITECTURE.md`, Mermaid/UML diagrams, `CLAUDE.md`/`AGENTS.md`, plan status) before committing. Checklist: `SSSW/docs/VIBE_CODING_GUIDELINES.md` §1.5.

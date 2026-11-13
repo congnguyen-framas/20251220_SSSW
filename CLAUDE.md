@@ -65,6 +65,10 @@ Note the doc is dated 2026-06-01 (v1.1); the ViewModel's step-filtering / `Allow
 
 `FT600` has a `[NotMapped]` partial extension ([models/ef/entities/FT600.partial.cs](SSSW/models/ef/entities/FT600.partial.cs)) adding UI-only fields (`AllowScale`, `StatusText`, `StatusDotColor`, `StatusBarColor`) — these live only in memory/UI, never persisted.
 
+> **Test tạm thời (nhánh `feature/use-bom-level-2`)**: entity `FT600` đang trỏ `[Table("FT600_dev")]`. Phải đổi lại `"FT600"` trước khi release.
+
+`C021` của injection step tính theo BOM Level 2 qua `PartWeightCalculator` / `IBomService` ([UI/WPF/Services/](SSSW/UI/WPF/Services/)); xem `docs/tech/BUSINESS_LOGIC.md` §4.8. Unit test ở `tests/SSSW.Tests`.
+
 Several stored procedures are called directly rather than modeled as DbSets (BOM lookup, Hydra sync, company/year lookup, category lookup) — see doc §11 for the full list and parameters.
 
 ### Models directory conventions
@@ -89,3 +93,5 @@ Toàn bộ hệ sinh thái tài liệu của dự án đã được chuẩn hóa
 - **Lịch sử cũ (Legacy Worklog)**: [SSSW/docs/worklog/INDEX.md](SSSW/docs/worklog/INDEX.md) — nhật ký giai đoạn cũ trước khi migrate sang `sessions/`.
 
 [docs/worklog/](SSSW/docs/worklog/) holds a dated, per-task log of work done on this repo (what was asked, what changed, assumptions made, open questions, build result) — separate from the architecture docs above, which describe current-state design rather than change history. **Check [docs/worklog/INDEX.md](SSSW/docs/worklog/INDEX.md) at the start of a session** (at least the most recent entry, more if continuing related work) before re-deriving context from git log/code alone. Append a new entry (don't edit old ones) after any non-trivial task — see the conventions at the bottom of `INDEX.md`.
+
+**Docs-Sync rule:** after finishing every task, review and update all related docs (session log + index, `tech/`, `architecture/`, Mermaid diagrams, `CLAUDE.md`/`AGENTS.md`, plan status) before committing — checklist in [SSSW/docs/VIBE_CODING_GUIDELINES.md](SSSW/docs/VIBE_CODING_GUIDELINES.md) §1.5.

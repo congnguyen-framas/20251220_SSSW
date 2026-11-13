@@ -1,0 +1,45 @@
+using System.Reflection;
+
+namespace ManualShots;
+
+public static class Reflect
+{
+    const BindingFlags All = BindingFlags.Static | BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic;
+    public static T Get<T>(object o, string name)
+    {
+        var t = o.GetType();
+        while (t != null)
+        {
+            var f = t.GetField(name, All | BindingFlags.DeclaredOnly);
+            if (f != null) return (T)f.GetValue(o)!;
+            var p = t.GetProperty(name, All | BindingFlags.DeclaredOnly);
+            if (p != null) return (T)p.GetValue(o)!;
+            t = t.BaseType;
+        }
+        throw new MissingMemberException(o.GetType().Name, name);
+    }
+    public static void Set(object o, string name, object? value)
+    {
+        var t = o.GetType();
+        while (t != null)
+        {
+            var f = t.GetField(name, All | BindingFlags.DeclaredOnly);
+            if (f != null) { f.SetValue(o, value); return; }
+            var p = t.GetProperty(name, All | BindingFlags.DeclaredOnly);
+            if (p != null) { p.SetValue(o, value); return; }
+            t = t.BaseType;
+        }
+        throw new MissingMemberException(o.GetType().Name, name);
+    }
+    public static object? Call(object o, string name, params object?[] args)
+    {
+        var t = o.GetType();
+        while (t != null)
+        {
+            var m = t.GetMethods(All | BindingFlags.DeclaredOnly).FirstOrDefault(x => x.Name == name && x.GetParameters().Length == args.Length);
+            if (m != null) return m.Invoke(o, args);
+            t = t.BaseType;
+        }
+        throw new MissingMethodException(o.GetType().Name, name);
+    }
+}

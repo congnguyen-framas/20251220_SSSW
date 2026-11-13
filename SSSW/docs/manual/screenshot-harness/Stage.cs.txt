@@ -1,0 +1,161 @@
+using Microsoft.Extensions.DependencyInjection;
+using ScanAndScale.Core.Models;
+using SSSW;
+using SSSW.models;
+using SSSW.modelss;
+using SSSW.UI.WPF;
+using SSSW.UI.WPF.Services;
+using SSSW.UI.WPF.ViewModels;
+using System.Windows;
+using System.Windows.Media;
+using System.Windows.Media.Imaging;
+using System.Windows.Threading;
+
+namespace ManualShots;
+
+/// <summary>Một "sân khấu": cửa sổ Main thật + màn cân thật + ViewModel thật, nhưng dữ liệu là giả.</summary>
+public class Stage
+{
+    public const double W = 1920, H = 1200;
+
+    public FakeDialog Dialog { get; } = new();
+    public FakeBom Bom { get; } = new();
+    public FakeRepo Repo { get; } = new();
+    public OperatorSessionService Operator { get; }
+    public ShotWeightViewModel Vm { get; }
+    public ShotWeightWindow View { get; }
+    public MainViewModel MainVm { get; }
+    public Window Win { get; }
+    public IServiceProvider Services { get; }
+
+    public Stage()
+    {
+        Operator = new OperatorSessionService(null!, new NullLog<OperatorSessionService>());
+        var sc = new ServiceCollection();
+        sc.AddSingleton<IDialogService>(Dialog);
+        sc.AddSingleton<IBomService>(Bom);
+        sc.AddSingleton<IScaleStepRepository>(Repo);
+        sc.AddSingleton<IPartWeightCalculator, PartWeightCalculator>();
+        sc.AddSingleton(Operator);
+        sc.AddTransient(sp => new ShotWeightViewModel(null!, sp, Operator, Dialog, Bom,
+            sp.GetRequiredService<IPartWeightCalculator>(), Repo, new NullLog<ShotWeightViewModel>()));
+        Services = sc.BuildServiceProvider();
+
+        Vm = Services.GetRequiredService<ShotWeightViewModel>();
+        InitVm(Vm);
+
+        var devices = new DeviceConnectionService();
+        GlobalVariable.Devices = devices;
+        MainVm = new MainViewModel(Services, null!, devices, Operator, new NullLog<MainViewModel>());
+        Reflect.Set(MainVm, "WindowTitle", "fFT – Scan and Scale Shot Weight (SSSW) – Ver-1.0.1113.0900");
+        Reflect.Set(MainVm, "IsStepActive", true);
+
+        View = new ShotWeightWindow(Vm);
+        Reflect.Set(View, "_initialized", true);   // không gọi InitializeAsync() (cần DB)
+        Reflect.Set(MainVm, "ActiveContent", View);
+
+        Win = new Main(MainVm) { Width = W, Height = H, Left = 0, Top = 0, WindowStartupLocation = WindowStartupLocation.Manual };
+        Win.Show();
+        Settle();
+        // Main_Loaded gọi StartupAsync() (cần DB) → lỗi bị nuốt; đặt lại state cho chắc.
+        Reflect.Set(MainVm, "ActiveContent", View);
+        Reflect.Set(MainVm, "IsStepActive", true);
+        Reflect.Set(MainVm, "IsFgActive", false);
+        Vm.ScaleStatus = DriverStatus.Connected; Vm.BarcodeStatus = DriverStatus.Connected;
+        Settle();
+    }
+
+    static void InitVm(ShotWeightViewModel vm)
+    {
+        vm.ScaleStatus = DriverStatus.Connected;
+        vm.BarcodeStatus = DriverStatus.Connected;
+        vm.ReadOnlyScale = true;
+        vm.ReadOnlyScanner = false;
+        vm.DeltaInformation = "STD: Target Weight ↔ ACTUAL: Live Weight · auto colored vs. tolerance: -1g<=Delta<=1g -->green;  -3g<=Delta<=-1g or 1g<=Delta<=3g -->Orange; Delta<-3g or Delta>3g -->Red.";
+        vm.UsagePct = "100";
+        vm.OnScaleValueChanged(0, true, false, "G");
+        vm.EnableBtnSaveScale = false;
+    }
+
+    // ── Operator (RFID) ────────────────────────────────────────────────────
+    public void Login(string code = "10234", string name = "Nguyen Van A")
+    {
+        Reflect.Set(Operator, "_operatorInfo", new FT029_Operator_RFID { Id = Guid.NewGuid(), C000 = code, C001 = name });
+        Reflect.Set(Operator, "RfidStatus", DriverStatus.Connected);
+        Reflect.Set(Operator, "RfidCardCode", code);
+        Reflect.Set(Operator, "RfidName", name);
+        Reflect.Set(Operator, "UserName", $"{code} - {name}");
+        Settle();
+    }
+
+    public void RfidConnectedOnly() { Reflect.Set(Operator, "RfidStatus", DriverStatus.Connected); Settle(); }
+
+    // ── Nạp dữ liệu "như GetDataAsync" ─────────────────────────────────────
+    public void Load(IEnumerable<FT600> rows, IEnumerable<StepSelectModel>? dropdown = null)
+    {
+        var list = rows.ToList();
+        Reflect.Set(Vm, "_scaleData", list.ToList());
+        Reflect.Set(Vm, "_scaleDataFinal", list);
+        Reflect.Set(Vm, "_allStepsFG", list.Where(r => !(r.C002?.StartsWith("REX") ?? false))
+            .Select(r => new BomWinlineModel { ParallelSequence = r.C015, ItemStepCode = r.C002, ItemStepName = r.C003, ItemFgCode = r.C013, ItemFgName = r.C014 }).ToList());
+        Reflect.Set(Vm, "_level2ByStep", Bom.L2.ToDictionary(k => k.Key, k => (IReadOnlyList<BomWinlineModel>)k.Value, StringComparer.OrdinalIgnoreCase));
+        Reflect.Set(Vm, "_weighedChildrenFromDb", new Dictionary<string, FT600>(Repo.Latest, StringComparer.OrdinalIgnoreCase));
+        Reflect.Call(Vm, "ApplyPieceQuantities");
+        Reflect.Call(Vm, "ApplyPuUnits", list);
+        if (dropdown != null) Reflect.Set(Vm, "StepCodeMaster", dropdown.ToList());
+        Reflect.Call(Vm, "RefreshUI", false);
+        Settle();
+    }
+
+    // ── Thao tác của operator ──────────────────────────────────────────────
+    public void ClickScale(FT600 row) { Vm.OnGridScale(row); Settle(); }
+    public void PutOnScale(double grams, bool stable = true) { Vm.OnScaleValueChanged(grams, stable, false, "G"); Settle(); }
+    public void ClickSave() { Vm.SaveCommand.Execute(null); Settle(); }
+
+    /// <summary>Giả lập LoadRefHistoryAsync (bản thật đọc 15 lần cân gần nhất từ FT600).</summary>
+    public void SeedHistory(FT600 step, IList<FT600> history)
+    {
+        Reflect.Set(Vm, "_refHistory", history.ToList());
+        double? Avg(IEnumerable<double?> v) { var p = v.Where(x => x > 0).Select(x => x!.Value).ToList(); return p.Count > 0 ? Math.Round(p.Average(), 3) : null; }
+        Reflect.Set(Vm, "_stdRow", new FT600
+        {
+            C024 = Avg(history.Select(x => x.C024)), C023 = Avg(history.Select(x => x.C023)),
+            C021 = Avg(history.Select(x => x.C021)), C022 = Avg(history.Select(x => x.C022))
+        });
+        Reflect.Call(Vm, "UpdateReferencePanel");
+        Vm.HistoryCollection.Clear();
+        foreach (var h in history) Vm.HistoryCollection.Add(h);
+        Vm.HistoryToggleTextDetail = $"Last {history.Count} weighings  ·  {step.C002}  ·  {step.C008}  ·  {step.C007}";
+        Vm.HistoryToggleText = "REFERENCE / HISTORY";
+        Vm.HistoryToggleTextSecond = step.C003 ?? "";
+        Vm.IsHistoryExpanded = true;
+        Settle();
+    }
+
+    // ── Dispatcher / chụp ảnh ──────────────────────────────────────────────
+    public static void Settle()
+    {
+        var d = Dispatcher.CurrentDispatcher;
+        for (int i = 0; i < 3; i++)
+        {
+            d.Invoke(() => { }, DispatcherPriority.Loaded);
+            d.Invoke(() => { }, DispatcherPriority.Render);
+            d.Invoke(() => { }, DispatcherPriority.ApplicationIdle);
+        }
+    }
+
+    public BitmapSource Capture(double scale = 1.0)
+    {
+        Settle();
+        var root = (FrameworkElement)Win.Content;
+        root.UpdateLayout();
+        var rtb = new RenderTargetBitmap((int)(W * scale), (int)(H * scale), 96 * scale, 96 * scale, PixelFormats.Pbgra32);
+        var dv = new DrawingVisual();
+        using (var dc = dv.RenderOpen())
+            dc.DrawRectangle(new VisualBrush(root), null, new Rect(0, 0, root.ActualWidth, root.ActualHeight));
+        rtb.Render(dv);
+        return rtb;
+    }
+
+    public void Close() { try { Win.Close(); } catch { } }
+}

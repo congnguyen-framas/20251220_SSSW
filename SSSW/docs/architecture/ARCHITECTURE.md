@@ -106,7 +106,7 @@ SSSW/
 │   │   ├── Main.xaml / .cs             # Shell window (tab switching)
 │   │   ├── ShotWeightWindow.xaml / .cs # Step Component weighing (UserControl)
 │   │   ├── ShotWeightFGWindow.xaml/.cs # FG sample weighing (UserControl)
-│   │   ├── frmRfidInput.xaml / .cs     # Manual RFID entry dialog
+│   │   ├── frmRfidInput.xaml / .cs     # Manual RFID entry dialog (auto-closes when the employee is found)
 │   │   ├── ViewModels/
 │   │   │   ├── BaseViewModel.cs        # INotifyPropertyChanged base
 │   │   │   ├── RelayCommand.cs         # ICommand implementations
@@ -120,7 +120,11 @@ SSSW/
 │   │   │   └── ScaleConverters.cs      # Tolerance → Color converters
 │   │   ├── Services/
 │   │   │   ├── DeviceConnectionService.cs  # Hardware singleton
-│   │   │   └── OperatorSessionService.cs   # RFID/operator singleton
+│   │   │   ├── OperatorSessionService.cs   # RFID/operator singleton
+│   │   │   ├── IDialogService.cs           # Thông báo cho ViewModel (MessageBox)
+│   │   │   ├── BomService.cs               # BOM Level 1/2 + cache
+│   │   │   ├── PartWeightCalculator.cs     # C021 theo BOM Level 2 (hàm thuần)
+│   │   │   └── ScaleStepRepository.cs      # Truy cập FT600
 │   │   └── Styles/
 │   │       └── ShotWeightStyles.xaml    # Global WPF styles
 │   │
@@ -171,7 +175,7 @@ SSSW/
 │   ├── brainstorm/                     # Ideas & design discussions
 │   ├── plan/                           # Development plans & roadmaps
 │   ├── tech/                           # Technical deep-dives
-│   ├── manual/                         # End-user manuals
+│   ├── manual/                         # Operator + Developer manuals (EN/VI), images/, screenshot-harness/
 │   └── worklog/                        # Legacy worklogs (pre-standardization)
 │
 └── Resources/                          # Icons, images
@@ -208,6 +212,91 @@ SSSW/
                               └──────────────────────────────────────────────┘
 ```
 
+## Sơ đồ lớp (UML) — màn cân Step
+
+```mermaid
+classDiagram
+    direction LR
+    class ShotWeightViewModel {
+        -FT600 _rowSelected
+        -List~FT600~ _scaleDataFinal
+        -Dictionary _level2ByStep
+        +SaveCommand
+        +ConfirmCommand
+        -ExecuteSave()
+        -ApplyLevel2PartWeight() PartWeightApply
+        -CascadeLevel2()
+        -ApplyLegacyPartWeight()
+        -PreloadLevel2Async()
+    }
+    class IDialogService {
+        <<interface>>
+        +Info(msg)
+        +Warn(msg)
+        +Error(msg)
+    }
+    class IBomService {
+        <<interface>>
+        +GetLevel1Async(fg) List~BomWinlineModel~
+        +GetLevel2Async(step) IReadOnlyList~BomWinlineModel~
+        +ClearCache()
+    }
+    class IPartWeightCalculator {
+        <<interface>>
+        +Calculate(c023, stepCode, level2, findWeighed) PartWeightResult
+    }
+    class IScaleStepRepository {
+        <<interface>>
+        +GetLatestByStepCodesAsync(codes) Dictionary
+    }
+    class PartWeightResult {
+        +double? PartWeight
+        +MissingChildren
+        +TotalDeduction
+        +IsComplete
+    }
+    class MessageBoxDialogService
+    class BomService
+    class PartWeightCalculator
+    class ScaleStepRepository
+    class DbContextDogeWH
+
+    ShotWeightViewModel --> IDialogService
+    ShotWeightViewModel --> IBomService
+    ShotWeightViewModel --> IPartWeightCalculator
+    ShotWeightViewModel --> IScaleStepRepository
+    IDialogService <|.. MessageBoxDialogService
+    IBomService <|.. BomService
+    IPartWeightCalculator <|.. PartWeightCalculator
+    IScaleStepRepository <|.. ScaleStepRepository
+    IPartWeightCalculator ..> PartWeightResult
+    BomService --> DbContextDogeWH : IDbContextFactory
+    ScaleStepRepository --> DbContextDogeWH : IDbContextFactory
+```
+
+## Sơ đồ phụ thuộc DI
+
+```mermaid
+graph LR
+    Program["Program.cs (Host + DI)"] --> Main
+    Main --> MainViewModel
+    Main --> StepWin["ShotWeightWindow"]
+    Main --> FGWin["ShotWeightFGWindow"]
+    StepWin --> SVM["ShotWeightViewModel"]
+    FGWin --> FVM["ShotWeightFGViewModel"]
+    SVM --> Dialog["IDialogService (S)"]
+    SVM --> Bom["IBomService (S)"]
+    SVM --> Calc["IPartWeightCalculator (S)"]
+    SVM --> Repo["IScaleStepRepository (S)"]
+    SVM --> Op["OperatorSessionService (S)"]
+    FVM --> Op
+    MainViewModel --> Dev["DeviceConnectionService (S)"]
+    Bom --> Factory["IDbContextFactory"]
+    Repo --> Factory
+```
+
+(S) = Singleton.
+
 ## DI Container (Program.cs)
 
 | Service | Lifetime | Mô tả |
@@ -215,6 +304,10 @@ SSSW/
 | `IDbContextFactory<DbContextDogeWH>` | Scoped | EF Core factory (thread-safe) |
 | `DeviceConnectionService` | **Singleton** | Barcode/RFID/Scale hardware |
 | `OperatorSessionService` | **Singleton** | RFID/operator identity chung Step/FG |
+| `IDialogService` | **Singleton** | Hộp thoại thông báo cho ViewModel |
+| `IBomService` | **Singleton** | `sp_getBomWinlineOfItemFG` Level 1/2 + cache Level 2 |
+| `IPartWeightCalculator` | **Singleton** | Tính `C021` theo BOM Level 2 |
+| `IScaleStepRepository` | **Singleton** | Đọc FT600 (bản ghi mới nhất theo mã step) |
 | `MainViewModel` | Transient | Shell window ViewModel |
 | `Main` | Transient | Shell window (real top-level Window) |
 | `ShotWeightViewModel` | Transient | Step weighing ViewModel |

@@ -1,0 +1,74 @@
+using SSSW.models;
+
+namespace ManualShots;
+
+/// <summary>Bộ dữ liệu GIẢ (không phải dữ liệu nhà máy) dùng để dựng màn hình khi chụp ảnh manual.</summary>
+public static class Data
+{
+    public const string FgCode = "6112042313-A478-2801";
+    public const string FgName = "SANDAL MODEL A - BLACK - SIZE 2801";
+
+    public static FT600 Row(int seq, string code, string name, string main, string mainName, string machine, string size,
+        string mold, double partition, int ppic = 0, int moldPairs = 0, double qty = 1,
+        string fg = FgCode, string fgName = FgName, string group = "INJ", int? cat = null, string? catName = null,
+        string order = "HY-26-004512", bool allow = true)
+        => new()
+        {
+            id = Guid.NewGuid(), C002 = code, C003 = name, C026 = main, C027 = mainName, C004 = machine, C015 = seq,
+            C008 = size, C020 = mold, C028 = partition, C017 = ppic == 0 ? (int)partition : ppic, C018 = moldPairs == 0 ? (int)partition : moldPairs,
+            C025 = qty, C013 = fg, C014 = fgName, C019 = group, C033 = cat, C034 = catName, C000 = order,
+            C005 = main, C006 = "A478", C007 = "BLACK", C032 = Guid.NewGuid(), C037 = "PRS", C035 = 0,
+            C021 = 0, C022 = 0, C023 = 0, C024 = 0, C036 = 0, C039 = 0, C038 = "",
+            C012 = "QR-" + code, C016 = "", C009 = 1, C001 = SSSW.models.EnumSampleLocation.Production,
+            AllowScale = allow
+        };
+
+    static BomWinlineModel L2(string code, string name, double qty, string unit = "PCS")
+        => new() { ItemStepCode = code, ItemStepName = name, Quantity = qty, Unit = unit };
+
+    /// <summary>FG mẫu 5 step + REX (khớp ví dụ trong BUSINESS_LOGIC §4.8).</summary>
+    public static List<FT600> Sandal(Stage s)
+    {
+        var logo = Row(0, "0-VB042706-A478-2706", "Logo", "0-VB042706", "Logo", "M-03", "2706", "MD-2706", 1);
+        var studs = Row(1, "1-VB042313-A478-5065", "Studs", "1-VB042313", "Studs", "M-07", "5065", "MD-5065", 1);
+        var inlay = Row(2, "2-VB042500-A478-2801", "Inlay", "2-VB042500", "Inlay", "M-11", "2801", "MD-2801-I", 1);
+        var ff = Row(3, "3-VB042501-A478-2801", "Base_FF", "3-VB042501", "Base_FF", "M-12", "2801", "MD-2801-F", 1);
+        var hf = Row(4, "4-VB042502-A478-2801", "Base_HF", "4-VB042502", "Base_HF", "M-12", "2801", "MD-2801-H", 1);
+        var rex = Row(0, "REX00018", "Receptacle", "REX00018", "Receptacle", "-", "-", "-", 1, group: "REX", cat: 5, catName: "Receptacle");
+        rex.C004 = "REX";
+
+        void Self(FT600 r, params BomWinlineModel[] kids)
+            => s.Bom.L2[r.C002!] = new[] { new BomWinlineModel { ItemStepCode = r.C002, ItemStepName = r.C003, Quantity = 1, Unit = "G" } }
+                .Concat(kids).ToList();
+
+        Self(logo);
+        Self(studs);
+        Self(inlay, L2("1-VB042313", "Studs", 8));
+        Self(ff, L2("1-VB042313", "Studs", 2), L2("2-VB042500", "Inlay", 2), L2("REX00018", "Receptacle", 8));
+        Self(hf, L2("0-VB042706", "Logo", 2), L2("REX00018", "Receptacle", 4), L2("3-VB042501", "Base_FF", 2));
+
+        return new List<FT600> { rex, logo, studs, inlay, ff, hf };
+    }
+
+    public static StepSelectModel Master(FT600 r) => new()
+    {
+        StepItemCode = r.C002!, StepItemName = r.C003!, Size = r.C008, ArticlePairsShot = r.C013 == null ? 0 : (int)(r.C028 ?? 1), MoldPairsShot = r.C018,
+        Machine = r.C004, HydraOrderNo = r.C000, FGCode = r.C013, FGName = r.C014, FT601Id = r.C032 ?? Guid.Empty
+    };
+
+    /// <summary>Lịch sử cân giả quanh một giá trị chuẩn (jitter nhỏ) — dùng cho bảng Reference / History.</summary>
+    public static List<FT600> History(double total, double totalPart, double part, double runner, int n = 8, string op = "Tran Thi B")
+    {
+        var rnd = new Random(7);
+        double J(double v, double a) => Math.Round(v + (rnd.NextDouble() - 0.5) * a, 2);
+        var list = new List<FT600>();
+        for (int i = 0; i < n; i++)
+            list.Add(new FT600
+            {
+                CreatedDate = new DateTime(2026, 11, 12, 14, 0, 0).AddHours(-i * 5).AddMinutes(i * 7),
+                C024 = J(total, 0.5), C023 = J(totalPart, 0.4), C021 = J(part, 0.4), C022 = J(runner, 0.2),
+                C011 = i % 3 == 0 ? op : i % 3 == 1 ? "Le Van C" : "Pham Thi D"
+            });
+        return list;
+    }
+}

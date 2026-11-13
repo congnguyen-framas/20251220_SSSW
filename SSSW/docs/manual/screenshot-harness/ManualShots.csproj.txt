@@ -1,0 +1,24 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net8.0-windows</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <UseWPF>true</UseWPF>
+    <RootNamespace>ManualShots</RootNamespace>
+    <EnableDefaultItems>true</EnableDefaultItems>
+    <OutDir>$(MSBuildThisFileDirectory)..\run\</OutDir>
+    <AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
+  </PropertyGroup>
+  <ItemGroup>
+    <Resource Include="UI/WPF/Styles/ShotWeightStyles.xaml" />
+  </ItemGroup>
+  <ItemGroup>
+    <Reference Include="..\run\SSSW.dll" />
+    <Reference Include="..\run\ScanAndScale.*.dll" />
+    <Reference Include="..\run\Microsoft.Extensions.*.dll" />
+    <Reference Include="..\run\Microsoft.EntityFrameworkCore*.dll" />
+    <Reference Include="..\run\Newtonsoft.Json.dll" />
+    <Reference Include="..\run\DevExpress*.dll" />
+  </ItemGroup>
+</Project>

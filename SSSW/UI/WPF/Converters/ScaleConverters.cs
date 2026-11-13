@@ -32,9 +32,9 @@ namespace SSSW.UI.WPF.Converters
             var fmt = spec.Length > 1 ? spec[1] : "F2";
 
             var count = spec[0] == "pcs" ? "pcs" : CountFromUnit(values.Length > 1 ? values[1] as string : null);
-            if (spec[0] == "mold" && IsPieceMold(values)) count = "pcs";
+            if (spec[0] == "mold" && IsPieceMold(values) && !count.StartsWith("pcs")) count = "pcs";   // Logo PU (Unit PCS-L/R) giữ hậu tố L/R: pcs-L / pcs-R
             var unit = spec[0] == "g" ? "g/" + count : count;
-            return $"{num.ToString(fmt, culture)} {unit}";
+            return $"{num.ToString(fmt, culture)}\n{unit}";   // đơn vị xuống dòng (cell dùng CenterWrapCell)
         }
 
         /// <summary>PRS → "prs"; PCS / PCS-L / PCS-R → "pcs" (giữ "-L"/"-R"); trống / khác → "prs".</summary>

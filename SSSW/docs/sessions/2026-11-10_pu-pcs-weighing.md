@@ -33,3 +33,8 @@ Hàng có `FT601.C016 = 'PU'` (lưu ở `FT600.C019`) cân theo **chiếc (PCS)*
 ## 5. UI (2026-11-11)
 - Row Details (Total Steps): đơn vị `PCS` cho mọi dòng con (trừ "previous step" = `PRS`); hàng PU giữ đơn vị của child. Header cột `Qty` bỏ `(PCS)`.
 - `ShotWeightWindow.xaml`: thêm `GridSplitter` — dọc giữa Total Steps và 2 card dưới (mặc định cao 520, min 200/320), ngang giữa Reference/History và Reference Values (mặc định 50/50, min 320). Kích thước chỉnh tay không được lưu.
+
+## 6. Cập nhật (2026-11-13)
+- BOM L2: `ChainPredecessorCodes` chỉ gồm step chain thực sự bị trừ (Studs cùng thứ tự không được chọn vẫn là chi tiết con L2); `ApplyPieceQuantities` chỉ xóa `C039` của step chain được chọn → Studs có Pieces Qty / g-per-piece.
+- Lưới Total Steps: đơn vị chuyển từ header vào cell (`ValueUnitConverter`, đơn vị lấy từ `C037`, xuống dòng; Mold Pairs Shot của Logo/Cleat_Ring luôn `pcs`, PU giữ `pcs-L/R`); Total Part header `(g)` và cell không đơn vị; cột Unit ẩn; cột Size wrap (`CenterWrapCell`). Row Details: `Weighed / Weight per piece / Deduct` có đơn vị trong cell.
+- Logo hàng PU: Actual Partitioning mặc định 2; group size chỉ lấy size có hậu tố L hoặc R (cả L và R, bỏ size không có L/R).

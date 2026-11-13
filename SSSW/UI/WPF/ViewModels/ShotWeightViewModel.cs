@@ -2640,6 +2640,7 @@ namespace SSSW.UI.WPF.ViewModels
 
                 var sizes = await GetGroupSizesAsync(db, prefix);
 
+
                 // FG / Main thật của step Logo đang cân (FT601 của Logo ghi FG là chính step) → theo sp_sssw_getproductInfo,
                 // áp cho dòng Logo chính; các size thêm vào bên dưới copy từ dòng này.
                 var product = await GetProductInfoAsync(db, logoRow.C002);
@@ -2651,13 +2652,17 @@ namespace SSSW.UI.WPF.ViewModels
                     if (!string.IsNullOrWhiteSpace(product.MainName)) logoRow.C027 = product.MainName;
                 }
 
+                // Logo hàng PU: Actual Partitioning mặc định 2 (chiếc) cho dòng Logo chính và các size thêm vào
+                const double LogoPuDefaultPartition = 2;
+                if (logoRow.IsPu) logoRow.C028 = LogoPuDefaultPartition;
+
                 foreach (var gs in sizes)
                 {
                     var code = gs.ItemCode?.Trim();
                     if (string.IsNullOrEmpty(code) || code.EndsWith("-0000", StringComparison.Ordinal) ||
                         string.Equals(gs.SizeName?.Trim(), "no size", StringComparison.OrdinalIgnoreCase)) continue;
-                    // Hàng PU: chỉ lấy size có hậu tố cuối giống step gốc (gốc ...-F21L → chỉ L; ...-F21R → chỉ R)
-                    if (logoRow.IsPu && FT600.PuSideOf(code) != FT600.PuSideOf(logoRow.C002)) continue;
+                    // Hàng PU: lấy các size có hậu tố cuối là L hoặc R (gốc ...-F20L hoặc ...-F20R đều lấy cả L và R); size không có L/R bỏ qua
+                    if (logoRow.IsPu && FT600.PuSideOf(code) == null) continue;
                     if (_scaleDataFinal.Any(x => string.Equals(x.C002?.Trim(), code, StringComparison.OrdinalIgnoreCase))) continue;
 
                     // Mỗi size có partitioning riêng: lấy từ FT601 của chính size đó (lệnh đang chạy, nếu không có thì master)
@@ -2672,7 +2677,7 @@ namespace SSSW.UI.WPF.ViewModels
                                        .FirstOrDefaultAsync();
                     // Có dữ liệu riêng của size thì dùng; không có (hoặc = 0) thì copy từ dòng Logo ban đầu
                     int ownPartition = sizeStep?.C013 != null ? (int)sizeStep.C013 : 0;
-                    int sizePartition = ownPartition > 0 ? ownPartition : (int)(logoRow.C028 ?? 0);
+                    int sizePartition = logoRow.IsPu ? (int)LogoPuDefaultPartition : (ownPartition > 0 ? ownPartition : (int)(logoRow.C028 ?? 0));
                     int sizePpic = ownPartition > 0 ? ownPartition : (logoRow.C017 ?? sizePartition);
 
                     _scaleDataFinal.Add(new FT600

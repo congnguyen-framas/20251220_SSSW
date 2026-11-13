@@ -676,7 +676,7 @@
                                 <DataGridTextColumn
                                     Width="60"
                                     Binding="{Binding C008}"
-                                    ElementStyle="{StaticResource CenterCell}">
+                                    ElementStyle="{StaticResource CenterWrapCell}">
                                     <DataGridTextColumn.Header>
                                         <TextBlock
                                             Text="SIZE"
@@ -730,7 +730,7 @@
                                 <DataGridTextColumn
                                     Width="95"
                                     
-                                    ElementStyle="{StaticResource CenterCell}">
+                                    ElementStyle="{StaticResource CenterWrapCell}">
 <DataGridTextColumn.Binding><MultiBinding Converter="{StaticResource ValueUnit}" ConverterParameter="g:F3"><Binding Path="C021" /><Binding Path="C037" /></MultiBinding></DataGridTextColumn.Binding>
                                     <DataGridTextColumn.HeaderTemplate>
                                         <DataTemplate>
@@ -753,7 +753,7 @@
                                 <DataGridTextColumn
                                     Width="105"
                                     
-                                    ElementStyle="{StaticResource CenterCell}">
+                                    ElementStyle="{StaticResource CenterWrapCell}">
 <DataGridTextColumn.Binding><MultiBinding Converter="{StaticResource ValueUnit}" ConverterParameter="g:F3"><Binding Path="C022" /><Binding Path="C037" /></MultiBinding></DataGridTextColumn.Binding>
                                     <DataGridTextColumn.HeaderTemplate>
                                         <DataTemplate>
@@ -775,7 +775,7 @@
                                 <DataGridTextColumn
                                     Width="100"
                                     
-                                    ElementStyle="{StaticResource CenterCell}">
+                                    ElementStyle="{StaticResource CenterWrapCell}">
 <DataGridTextColumn.Binding><MultiBinding Converter="{StaticResource ValueUnit}" ConverterParameter="count:F2"><Binding Path="C028" /><Binding Path="C037" /></MultiBinding></DataGridTextColumn.Binding>
                                     <DataGridTextColumn.HeaderTemplate>
                                         <DataTemplate>
@@ -797,7 +797,7 @@
                                 <DataGridTextColumn
                                     Width="95"
                                     
-                                    ElementStyle="{StaticResource CenterCell}">
+                                    ElementStyle="{StaticResource CenterWrapCell}">
 <DataGridTextColumn.Binding><MultiBinding Converter="{StaticResource ValueUnit}" ConverterParameter="pcs:F3"><Binding Path="C039" /><Binding Path="C037" /></MultiBinding></DataGridTextColumn.Binding>
                                     <DataGridTextColumn.HeaderTemplate>
                                         <DataTemplate>
@@ -819,7 +819,7 @@
                                 <DataGridTextColumn
                                     Width="105"
                                     
-                                    ElementStyle="{StaticResource CenterCell}">
+                                    ElementStyle="{StaticResource CenterWrapCell}">
 <DataGridTextColumn.Binding><MultiBinding Converter="{StaticResource ValueUnit}" ConverterParameter="g:F3"><Binding Path="C036" /><Binding Path="C037" /></MultiBinding></DataGridTextColumn.Binding>
                                     <DataGridTextColumn.HeaderTemplate>
                                         <DataTemplate>
@@ -841,7 +841,7 @@
                                 <DataGridTextColumn
                                     Width="100"
                                     
-                                    ElementStyle="{StaticResource CenterCell}">
+                                    ElementStyle="{StaticResource CenterWrapCell}">
 <DataGridTextColumn.Binding><MultiBinding Converter="{StaticResource ValueUnit}" ConverterParameter="count:F2"><Binding Path="C017" /><Binding Path="C037" /></MultiBinding></DataGridTextColumn.Binding>
                                     <DataGridTextColumn.HeaderTemplate>
                                         <DataTemplate>
@@ -864,7 +864,7 @@
                                 <DataGridTextColumn
                                     Width="95"
                                     
-                                    ElementStyle="{StaticResource CenterCell}">
+                                    ElementStyle="{StaticResource CenterWrapCell}">
 <DataGridTextColumn.Binding><MultiBinding Converter="{StaticResource ValueUnit}" ConverterParameter="mold:F2"><Binding Path="C018" /><Binding Path="C037" /><Binding Path="C003" /></MultiBinding></DataGridTextColumn.Binding>
                                     <DataGridTextColumn.HeaderTemplate>
                                         <DataTemplate>

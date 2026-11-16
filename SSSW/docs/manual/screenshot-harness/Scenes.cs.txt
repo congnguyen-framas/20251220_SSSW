@@ -108,7 +108,7 @@ public static class Scenes
         {
             ("overview", Overview), ("login", Login), ("load-steps", LoadSteps), ("grid-columns", GridColumns),
             ("standard", Standard), ("rex", Rex), ("nonwoven", Nonwoven), ("level2", Level2), ("chain", Chain),
-            ("partition", Partition), ("multisize", MultiSize), ("pu", Pu), ("tolerance", Tolerance),
+            ("partition", Partition), ("multisize", MultiSize), ("pu", Pu), ("raw", Raw), ("dbg", Dbg), ("dbg2", Dbg2), ("dbg3", Dbg3), ("fix3", Fix3), ("fix4", Fix4), ("tolerance", Tolerance),
             ("warnings", Warnings), ("confirm", Confirm), ("rowactions", RowActions),
         };
         foreach (var (n, run) in all)
@@ -429,6 +429,228 @@ public static class Scenes
             A(ActionBtn(s, logo, "Scale"), "1"), A(ActionBtn(s, logo, "Reset"), "2"), A(ActionBtn(s, logo, "Delete"), "3"),
             A(Cell(s, logo, 140, 90), "4")
         }, new Rect(396, 60, 1510, 360));
+        s.Close();
+    }
+
+    // 17 ─ REX / RPU (g) của hàng PU: lên lưới, mặc định theo BOM, cân mới, lịch sử, chưa cấu hình ──
+    static (Stage s, FT600 outsole, FT600 pu) RawStage(bool history = false, bool cfg101 = true)
+    {
+        var cfg = SSSW.GlobalVariable.ConfigSystem.CategoryOfNonInjectionUsagePartial!;
+        cfg.RemoveAll(c => c.CategoryCode == 101);
+        if (cfg101) cfg.Add(new() { CategoryCode = 101, CategoryName = "PU glue" });
+
+        var s = New();
+        var fg = "6813992601-SG10-F05L"; var nm = "SANDAL MODEL FC - PU - F05";
+        FT600 Pu(int seq, string code, string name) => Data.Row(seq, code, name, code[..10], name, "PU-02", "F05L", "MD-PU-01", 1, fg: fg, fgName: nm, group: "PU");
+        var outsole = Pu(1, "2-FC992601-SG11-F05L", "Outsole"); outsole.C019 = "INJ";   // step ép thường (PU không phải step cuối sẽ cần DB để nạp chân R)
+        var pu = Pu(2, "4-FC992601-SG11-F05L", "PU_Midsole");
+        s.Bom.L2[outsole.C002!] = new() { new() { ItemStepCode = "2-FC992601-SG11-0000", ItemStepName = "Outsole", Quantity = 1, Unit = "G" } };
+        s.Bom.L2[pu.C002!] = new()
+        {
+            new() { ItemStepCode = "4-FC992601-SG11-0000", ItemStepName = "PU_Midsole", Quantity = 1, Unit = "G" },
+            new() { ItemStepCode = "2-FC992601", ItemStepName = "Outsole", Quantity = 1, Unit = "PCS" },
+            new() { ItemStepCode = "REX00172", ItemStepName = "TPU film", Quantity = 5.715, Unit = "G", CategoryCode = 34, CategoryName = "TPU film" },
+            new() { ItemStepCode = "RPU00001", ItemStepName = "FIXEKO 2020 HP", Quantity = 118.59, Unit = "G", CategoryCode = 101, CategoryName = "PU glue" },
+        };
+        if (history)
+        {
+            s.Repo.Latest["REX00172"] = new FT600 { C002 = "REX00172", C024 = 6.10, C035 = 100, C036 = 6.10, C021 = 6.10, C023 = 6.10 };
+            s.Repo.Latest["RPU00001"] = new FT600 { C002 = "RPU00001", C024 = 121.40, C035 = 100, C036 = 121.40, C021 = 121.40, C023 = 121.40 };
+        }
+        var rows = new List<FT600> { outsole, pu };
+        s.Load(rows, rows.Select(Data.Master));
+
+        // như GetDataAsync: thêm dòng REX/RPU chỉ có ở Level 2 → gộp số lượng → nạp lịch sử
+        var created = (List<FT600>)Reflect.Call(s.Vm, "AddLevel2OnlyRexRows")!;
+        Reflect.Call(s.Vm, "ApplyPieceQuantities");
+        Reflect.Call(s.Vm, "PrefillRexFromHistory", created);
+        Reflect.Call(s.Vm, "RefreshUI", false);
+        Stage.Settle();
+        return (s, outsole, pu);
+    }
+
+    static void Raw()
+    {
+        // a. lưới có REX00172 / RPU00001 (Step 0); step PU chọn cân sau khi Outsole cân xong
+        var (s, outsole, pu) = RawStage();
+        var rex = s.Vm.StepsCollection.First(x => x.C002 == "REX00172");
+        var rpu = s.Vm.StepsCollection.First(x => x.C002 == "RPU00001");
+        Shot(s, "17a-raw-grid", new[] { A(Row(s, rex), "1"), A(Row(s, rpu), "2"), A(Row(s, outsole), "3"), A(Row(s, pu), "4") }, new Rect(396, 60, 1510, 420));
+
+        Weigh2(s, outsole, 125.00, 116.50);
+        // b. PU: chưa cân REX/RPU → Row Details trừ theo giá trị BOM Level 2
+        s.ClickScale(pu);
+        s.PutOnScale(300.00); s.ClickSave();
+        s.PutOnScale(270.00);
+        Shot(s, "17b-raw-bom-default", new[] { A(Row(s, pu), "1"), A(ScaleBox, "2"), A(SaveBtn, "3") }, new Rect(396, 60, 1510, 620));
+        s.ClickSave();
+        Shot(s, "17c-raw-bom-result", new[] { A(Row(s, pu), "1"), A(RefTable, "2") });
+        s.Close();
+
+        // d. cân mới REX / RPU → trừ theo giá trị cân
+        (s, outsole, pu) = RawStage();
+        rex = s.Vm.StepsCollection.First(x => x.C002 == "REX00172");
+        rpu = s.Vm.StepsCollection.First(x => x.C002 == "RPU00001");
+        s.ClickScale(rex); s.PutOnScale(6.20);
+        Shot(s, "17d-raw-weigh-rex", new[] { A(Row(s, rex), "1"), A(FUsage, "2"), A(ScaleBox, "3"), A(SaveBtn, "4") });
+        s.ClickSave();
+        s.ClickScale(rpu); s.PutOnScale(120.00); s.ClickSave();
+        Weigh2(s, outsole, 125.00, 116.50);
+        s.ClickScale(pu); s.PutOnScale(300.00); s.ClickSave(); s.PutOnScale(270.00);
+        Shot(s, "17e-raw-weighed-details", new[] { A(Row(s, rex), "1"), A(Row(s, rpu), "2"), A(Row(s, pu), "3"), A(ScaleBox, "4") }, new Rect(396, 60, 1510, 620));
+        s.ClickSave();
+        Shot(s, "17f-raw-weighed-result", new[] { A(Row(s, pu), "1"), A(RefTable, "2") });
+        s.Close();
+
+        // g. đổi % sử dụng của RPU (50%) → trừ theo giá trị mới
+        (s, outsole, pu) = RawStage();
+        rpu = s.Vm.StepsCollection.First(x => x.C002 == "RPU00001");
+        s.ClickScale(rpu); s.PutOnScale(120.00); s.ClickSave();
+        s.ClickScale(rpu);                                   // Save tự chuyển sang dòng kế → chọn lại RPU
+        s.Vm.OnUsagePctEnter("50"); Stage.Settle();
+        Shot(s, "17g-raw-usage-pct", new[] { A(FUsage, "1"), A(Row(s, rpu), "2") }, new Rect(14, 60, 1892, 420));
+        s.Close();
+
+        // h. có lịch sử cân → nạp lên lưới, cân PU không cân lại REX/RPU
+        (s, outsole, pu) = RawStage(history: true);
+        Weigh2(s, outsole, 125.00, 116.50);
+        s.ClickScale(pu); s.PutOnScale(300.00); s.ClickSave(); s.PutOnScale(270.00);
+        Shot(s, "17h-raw-history", new[] { A(Row(s, s.Vm.StepsCollection.First(x => x.C002 == "REX00172")), "1"), A(Row(s, s.Vm.StepsCollection.First(x => x.C002 == "RPU00001")), "2"), A(Row(s, pu), "3") }, new Rect(396, 60, 1510, 620));
+        s.Close();
+
+        // i. category chưa cấu hình → cảnh báo báo admin; vẫn trừ theo BOM
+        (s, outsole, pu) = RawStage(cfg101: false);
+        Shot(s, "17i-raw-unconfigured", null, dialog: true);
+        s.Close();
+        SSSW.GlobalVariable.ConfigSystem.CategoryOfNonInjectionUsagePartial!.Add(new() { CategoryCode = 101, CategoryName = "PU glue" });
+    }
+
+    static void Dbg()
+    {
+        var (s, outsole, pu) = RawStage();
+        var rex = s.Vm.StepsCollection.First(x => x.C002 == "REX00172");
+        var rpu = s.Vm.StepsCollection.First(x => x.C002 == "RPU00001");
+        s.ClickScale(rex); s.PutOnScale(6.20); s.ClickSave();
+        s.ClickScale(rpu); s.PutOnScale(120.00); s.ClickSave();
+        Weigh2(s, outsole, 125.00, 116.50);
+        s.ClickScale(pu); s.PutOnScale(300.00); s.ClickSave(); s.PutOnScale(270.00); s.ClickSave();
+        Console.WriteLine($"PU after weigh: C021={pu.C021} C022={pu.C022} C023={pu.C023} C024={pu.C024}");
+        s.ClickScale(rex); s.PutOnScale(5.00); s.ClickSave();
+        Console.WriteLine($"PU after reweigh REX: C021={pu.C021} C022={pu.C022} C023={pu.C023} C024={pu.C024}");
+        s.ClickScale(rpu); s.PutOnScale(110.00); s.ClickSave();
+        Console.WriteLine($"PU after reweigh RPU: C021={pu.C021} C022={pu.C022} C023={pu.C023} C024={pu.C024}");
+        Console.WriteLine($"REX C021={rex.C021} C022={rex.C022} C023={rex.C023} C024={rex.C024} C036={rex.C036}; RPU C021={rpu.C021} C024={rpu.C024}");
+        foreach (var l in s.Dialog.Log) Console.WriteLine("DLG " + l.Message);
+        s.Close();
+    }
+
+    static void Dbg2()
+    {
+        var s = New();
+        var fg = "6813992601-SG10-F05L"; var nm = "FC";
+        FT600 St(int seq, string code, string name, string grp) => Data.Row(seq, code, name, code[..10], name, "PU-02", "F05L", "MD-PU-01", 1, fg: fg, fgName: nm, group: grp);
+        var logo = St(1, "1-FC992601-SG03-F20L", "Logo", "INJ");
+        var outsole = St(2, "2-FC992601-SG04-F05L", "Outsole", "INJ");
+        var cs = St(3, "3-FC992601-SG05-F05L", "Central_Shank", "INJ");
+        var pu = St(4, "4-FC992601-SG11-F05L", "Midsole", "PU");
+        void Self(FT600 r, params BomWinlineModel[] k) => s.Bom.L2[r.C002!] = new List<BomWinlineModel> { new() { ItemStepCode = r.C002![..^5] + "-0000", ItemStepName = r.C003, Quantity = 1, Unit = "G" } }.Concat(k).ToList();
+        Self(logo); Self(outsole); Self(cs);
+        Self(pu,
+            new() { ItemStepCode = "1-FC992601", ItemStepName = "Logo", Quantity = 2, Unit = "PCS" },
+            new() { ItemStepCode = "2-FC992601", ItemStepName = "Outsole", Quantity = 1, Unit = "PCS" },
+            new() { ItemStepCode = "3-FC992601", ItemStepName = "Central_Shank", Quantity = 1, Unit = "PCS" },
+            new() { ItemStepCode = "REX00172", ItemStepName = "TPU", Quantity = 5.715, Unit = "G", CategoryCode = 34 },
+            new() { ItemStepCode = "RPU00001", ItemStepName = "FIXEKO", Quantity = 118.59, Unit = "G", CategoryCode = 101 });
+        var rows = new List<FT600> { logo, outsole, cs, pu };
+        s.Load(rows, rows.Select(Data.Master));
+        var created = (List<FT600>)Reflect.Call(s.Vm, "AddLevel2OnlyRexRows")!;
+        Reflect.Call(s.Vm, "ApplyPieceQuantities"); Reflect.Call(s.Vm, "PrefillRexFromHistory", created); Reflect.Call(s.Vm, "RefreshUI", false);
+        var rex = s.Vm.StepsCollection.First(x => x.C002 == "REX00172"); var rpu = s.Vm.StepsCollection.First(x => x.C002 == "RPU00001");
+        Weigh2(s, logo, 9.88, 0.50); Weigh2(s, outsole, 282.17, 116.73); Weigh2(s, cs, 67.43, 29.87);
+        foreach (var r in new[]{logo,outsole,cs}) Console.WriteLine($"{r.C003}: C021={r.C021} C023={r.C023} C036={r.C036} C039={r.C039}");
+        s.ClickScale(pu); s.PutOnScale(300.00); s.ClickSave(); s.PutOnScale(300.00); s.ClickSave();
+        Console.WriteLine($"PU: C021={pu.C021} C022={pu.C022} C023={pu.C023} C024={pu.C024}");
+        s.ClickScale(rex); s.PutOnScale(5.00); s.ClickSave();
+        s.ClickScale(rpu); s.PutOnScale(110.00); s.ClickSave();
+        Console.WriteLine($"PU after reweigh: C021={pu.C021} C022={pu.C022}");
+        Console.WriteLine(pu.Level2Formula);
+        foreach (var l in s.Dialog.Log) Console.WriteLine("DLG " + l.Message);
+        s.Close();
+    }
+
+    static void Dbg3()
+    {
+        var s = New();
+        var fg = "6818012301-2672-3501"; var nm = "Insole";
+        FT600 Sz(string code, string size) => Data.Row(1, code, "Base Insole", "0-FH012301", "Insole", "0116", size, "MD-01", 1, fg: fg, fgName: nm, group: "INJ");
+        var a = Sz("0-FH012301-2672-3501", "15"); var b = Sz("0-FH012301-2672-2451", "4.5");
+        void Self(FT600 r, params BomWinlineModel[] k) => s.Bom.L2[r.C002!] = new List<BomWinlineModel> { new() { ItemStepCode = "0-FH012301-2672-0000", ItemStepName = r.C003, Quantity = 1, Unit = "G" } }.Concat(k).ToList();
+        Self(a, new BomWinlineModel { ItemStepCode = "REX00118", ItemStepName = "Nonwoven", Quantity = 4, Unit = "Y", CategoryCode = 20 });
+        Self(b);   // size 4.5: BOM Level 2 không liệt kê REX
+        var rows = new List<FT600> { a, b };
+        s.Load(rows, rows.Select(Data.Master));
+        var created = (List<FT600>)Reflect.Call(s.Vm, "AddLevel2OnlyRexRows")!;
+        Reflect.Call(s.Vm, "ApplyPieceQuantities"); Reflect.Call(s.Vm, "RefreshUI", false);
+        var rex = s.Vm.StepsCollection.First(x => x.C002 == "REX00118");
+        Console.WriteLine("REX StepNoText=" + rex.StepNoText + " | step a=" + a.StepNoText);
+        s.ClickScale(rex); s.Vm.OnUsagePctEnter("55.04"); s.PutOnScale(0.75); s.ClickSave();
+        Console.WriteLine($"REX C021={rex.C021} C023={rex.C023}");
+        s.ClickScale(a); s.PutOnScale(100.0); s.ClickSave(); s.PutOnScale(60.0); s.ClickSave();
+        s.PutOnScale(30.0); s.ClickSave();   // size 2 dùng chung Total Weight của lần cân đầu
+        Console.WriteLine($"size15 C021={a.C021} C022={a.C022}; size4.5 C021={b.C021} C022={b.C022}");
+        foreach (var l in s.Dialog.Log) Console.WriteLine("DLG " + l.Message);
+        s.Close();
+    }
+
+    // 18 ─ 3 lỗi test thật: Step No. = REX, 1 khuôn nhiều size + non-woven, Runner sau khi cân lại REX/RPU ──
+    static void Fix3()
+    {
+        // a. 1 khuôn 2 size + non-woven dùng chung (BOM Level 2 chỉ liệt kê ở size 15)
+        var s = New();
+        var fg = "6818012301-2672-3501"; var nm = "Insole Board #11047 White 01F7 (0.4mm Non-Woven)";
+        FT600 Sz(string code, string size) => Data.Row(1, code, "Base Insole Board #11047", "0-FH012301", "Insole Board #11047", "0116", size, "MD-01", 1, fg: fg, fgName: nm, group: "INJ");
+        var a = Sz("0-FH012301-2672-3501", "15"); var b = Sz("0-FH012301-2672-2451", "4.5");
+        void Self(FT600 r, params BomWinlineModel[] k) => s.Bom.L2[r.C002!] = new List<BomWinlineModel> { new() { ItemStepCode = "0-FH012301-2672-0000", ItemStepName = r.C003, Quantity = 1, Unit = "G" } }.Concat(k).ToList();
+        Self(a, new BomWinlineModel { ItemStepCode = "REX00118", ItemStepName = "Nonwoven 0.4mm *54 inch White_EPM 5", Quantity = 4, Unit = "Y", CategoryCode = 20, CategoryName = "Non Woven" });
+        Self(b);
+        var rows = new List<FT600> { a, b };
+        s.Load(rows, rows.Select(Data.Master));
+        var created = (List<FT600>)Reflect.Call(s.Vm, "AddLevel2OnlyRexRows")!;
+        Reflect.Call(s.Vm, "ApplyPieceQuantities"); Reflect.Call(s.Vm, "RefreshUI", false);
+        var rex = s.Vm.StepsCollection.First(x => x.C002 == "REX00118");
+        s.ClickScale(rex); s.Vm.OnUsagePctEnter("55.04"); s.PutOnScale(0.75); s.ClickSave();
+        s.ClickScale(a); s.PutOnScale(100.0); s.ClickSave(); s.PutOnScale(60.0); s.ClickSave();
+        s.PutOnScale(30.0);
+        Shot(s, "18a-multisize-nonwoven", new[] { A(Cell(s, rex, 100, 70), "1"), A(Row(s, a), "2"), A(Row(s, b), "3") }, new Rect(396, 60, 1510, 420));
+        s.ClickSave();
+        Shot(s, "18b-multisize-nonwoven-result", new[] { A(Row(s, rex), "1"), A(Row(s, a), "2"), A(Row(s, b), "3") }, new Rect(396, 60, 1510, 420));
+        s.Close();
+
+        // c. PU: cân lại REX/RPU sau khi PU đã cân → Part cập nhật, Runner giữ nguyên
+        (s, var outsole, var pu) = RawStage();
+        rex = s.Vm.StepsCollection.First(x => x.C002 == "REX00172");
+        var rpu = s.Vm.StepsCollection.First(x => x.C002 == "RPU00001");
+        s.ClickScale(rex); s.PutOnScale(6.20); s.ClickSave();
+        s.ClickScale(rpu); s.PutOnScale(120.00); s.ClickSave();
+        Weigh2(s, outsole, 125.00, 116.50);
+        s.ClickScale(pu); s.PutOnScale(300.00); s.ClickSave(); s.PutOnScale(270.00); s.ClickSave();
+        Shot(s, "18c-pu-before-reweigh", new[] { A(Row(s, pu), "1"), A(Cell(s, pu, 1130, 90), "2") }, new Rect(396, 60, 1510, 620));
+        s.ClickScale(rex); s.PutOnScale(5.00); s.ClickSave();
+        s.ClickScale(rpu); s.PutOnScale(110.00); s.ClickSave();
+        Shot(s, "18d-pu-after-reweigh", new[] { A(Row(s, rex), "1"), A(Row(s, rpu), "2"), A(Row(s, pu), "3") }, new Rect(396, 60, 1510, 620));
+        s.Close();
+    }
+
+    // 19 ─ cột Pieces Qty / Weight per Unit của REX/RPU (g): 1 pcs, mặc định theo BOM Level 2 ──
+    static void Fix4()
+    {
+        var (s, outsole, pu) = RawStage();
+        var root = (FrameworkElement)s.Win.Content;
+        var sv = Annotator.Descendants<ScrollViewer>(Annotator.Descendants<DataGrid>(root).First()).First();
+        sv.ScrollToHorizontalOffset(sv.ScrollableWidth * 0.45); Stage.Settle();
+        var rex = s.Vm.StepsCollection.First(x => x.C002 == "REX00172"); var rpu = s.Vm.StepsCollection.First(x => x.C002 == "RPU00001");
+        Console.WriteLine($"REX C039={rex.C039} C036={rex.C036}; RPU C039={rpu.C039} C036={rpu.C036}");
+        Shot(s, "19a-raw-pcs-weight-per-unit", new[] { A(new Rect(1050, 110, 140, 130), "1"), A(new Rect(1190, 110, 140, 130), "2") }, new Rect(396, 60, 1510, 420));
         s.Close();
     }
 }

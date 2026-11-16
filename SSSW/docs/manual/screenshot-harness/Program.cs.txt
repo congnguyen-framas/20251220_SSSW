@@ -24,7 +24,7 @@ public static class Program
         GlobalVariable.ConfigSystem = new ConfigModel
         {
             DeltaLevel1 = 1, DeltaLevel2 = 3, PercentOfUserNonWoven = 100,
-            CategoryOfNonInjectionUsagePartial = new() { new() { CategoryCode = 20, CategoryName = "Non Woven" }, new() { CategoryCode = 21, CategoryName = "Mesh" } }
+            CategoryOfNonInjectionUsagePartial = new() { new() { CategoryCode = 20, CategoryName = "Non Woven" }, new() { CategoryCode = 21, CategoryName = "Mesh" }, new() { CategoryCode = 34, CategoryName = "TPU film" }, new() { CategoryCode = 101, CategoryName = "PU glue" } }
         };
         GlobalVariable.ConfigSystem.Scanner.Enable = false;
         GlobalVariable.ConfigSystem.RFID.Enable = false;

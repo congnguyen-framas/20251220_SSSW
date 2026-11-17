@@ -631,7 +631,8 @@
 
                                 <DataGridTextColumn
                                     Width="80"
-                                    Binding="{Binding C015}"
+                                    Binding="{Binding StepNoText}"
+                                    SortMemberPath="C015"
                                     ElementStyle="{StaticResource CenterCell}">
                                     <DataGridTextColumn.Header>
                                         <TextBlock

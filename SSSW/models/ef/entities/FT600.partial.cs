@@ -37,6 +37,14 @@ namespace SSSW.models
         /// <summary>Machine Group của hàng PU (FT601.C016 = 'PU', lưu ở FT600.C019).</summary>
         public const string PuMachineGroup = "PU";
 
+        /// <summary>Số thứ tự step để hiển thị: dòng REX / RPU hiện "REX" / "RPU" (không hiện 0), còn lại hiện C015.</summary>
+        [NotMapped]
+        [Browsable(false)]
+        public string StepNoText =>
+            SSSW.UI.WPF.Services.PartWeightCalculator.IsNonInjectionCode(C002)
+                ? C002!.TrimStart()[..3].ToUpperInvariant()
+                : C015?.ToString() ?? string.Empty;
+
         /// <summary>
         /// Hàng PU (không phải REX): cân theo chiếc (PCS), không theo đôi (PRS).
         /// Mold / PPIC / Actual Partitioning đọc ra đã là số chiếc; Unit = PCS-L / PCS-R.
@@ -45,7 +53,7 @@ namespace SSSW.models
         [Browsable(false)]
         public bool IsPu =>
             string.Equals(C019?.Trim(), PuMachineGroup, StringComparison.OrdinalIgnoreCase) &&
-            !(C002?.TrimStart().StartsWith("REX", StringComparison.OrdinalIgnoreCase) ?? false);
+            !SSSW.UI.WPF.Services.PartWeightCalculator.IsNonInjectionCode(C002);
 
         /// <summary>
         /// Phía L / R của chi tiết PU theo hậu tố mã step (đoạn sau dấu '-' cuối cùng kết thúc bằng L hoặc R,

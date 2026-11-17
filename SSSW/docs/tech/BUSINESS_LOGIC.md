@@ -104,7 +104,7 @@ C021(step) = C023(step) − Σ over child in L2(step), child ≠ self :  Qty(chi
 
 - `L2(step)` = `sp_getBomWinlineOfItemFG @itemFG = <ItemStepCode của step>` (cache theo phiên, `IBomService`).
 - **Ghép child ↔ step theo mã chính (2026-11-12)**: child Level 2 chỉ có mã chính (`1-VB042313`), step Level 1 có đủ màu/size (`1-VB042313-A123-5065`). Mọi so khớp dùng `PartWeightCalculator.StepMainCode` (2 phần đầu của mã; mã `REX…` giữ nguyên). Nhiều dòng cùng mã chính (nhiều size) → chọn dòng cùng size với step cha (`C008`), nếu không thì dòng đầu tiên đã có g/chiếc. `C039` gộp theo mã chính trên mọi size.
-- Dòng **self**: mã kết thúc `-0000` / đơn vị `G` / trùng mã step → không trừ.
+- Dòng **self**: mã kết thúc `-0000` / trùng mã step / đơn vị `G` → không trừ. **Ngoại lệ (2026-11-16)**: mã `REX…` / `RPU…` đơn vị `G` là **vật liệu tiêu hao theo gram** (vd. TPU film, keo PU của step PU cuối), **không phải self** → xem §4.8.1.
 - `Qty` ở L2 là **số chiếc (PCS)** của chi tiết con trong 1 đôi của step cha. `UnitWeight` (g/chiếc) = `C036` đã lưu của chi tiết con;
   nếu chưa có (không phải REX) thì `C021 ÷ C039`. `C039` = **số chiếc của chi tiết đó trong 1 đôi, gộp theo toàn FG**:
   `C039(c) = Σ qty(step cha → c)` (bỏ dòng self); step không có trong Level 2 của step nào (vd. step cuối) hoặc là step "chain" (dồn vào step kế tiếp) thì **`C039 = 0` và `C036 = 0`** (từ 2026-11-05; trước đây fallback Quantity Level 1 × 2).
@@ -117,7 +117,29 @@ C021(step) = C023(step) − Σ over child in L2(step), child ≠ self :  Qty(chi
 - **Step chain (2026-11-05)**: nếu step ngay trước P chỉ được tham chiếu trong Level 2 bởi step kế liền sau nó (hoặc không được tham chiếu ở đâu), thì khi cân step sau phải **trừ thêm Total Part của P** (`C023(P)/N(P)`) và **bỏ dòng P** khỏi Level 2:
   `C021 = C023/N − C023(P)/N(P) − Σ Qty × g/chiếc (c ≠ self, c ≠ P)`. P được dùng ở step khác (Studs, Logo ở ví dụ) → chỉ trừ theo Level 2, không trừ step trước. Ví dụ FG trên: Logo = Total Part; Studs = Total Part; Inlay = Total Part − Studs×8; Base_FF = Total Part − Total Part(Inlay) − (Studs×2 + REX×8); Base_HF = Total Part − Total Part(Base_FF) − (Logo×2 + REX×4). Chi tiết: [brainstorm](../brainstorm/PART_WEIGHT_CHAIN_AND_LEVEL2.md), [plan](../plan/PART_WEIGHT_CHAIN_AND_LEVEL2_PLAN.md).
 - Không có L2 và không có step chain → **Part Weight = chính nó** (`C023/N`). Ngoại lệ dùng công thức cũ: 1 khuôn nhiều size, nonwoven/mesh (`ApplyLegacyPartWeight`).
-- **Cascade**: khi một step đổi, các step cha đã cân có step đó trong L2 được tính lại `C021` và `C022 = C024 − C021`.
+- **Cascade**: khi một step đổi, các step cha đã cân có step đó trong L2 được tính lại **`C021`** (và `C036`). **`C022` (Runner) giữ nguyên** (từ 2026-11-16; trước đây `C022 = C024 − C021` làm Runner gồm cả trọng lượng chi tiết con).
+
+#### 4.8.1. REX / RPU tiêu hao theo gram của step PU (2026-11-16)
+
+Trong Level 2 của step PU cuối có thể có dòng `REX…` / `RPU…` đơn vị `G`, `Quantity` = **số gram dùng ở step đó** (vd. `REX00172` 5.715 g category 34, `RPU00001` 118.59 g category 101). Cách xử lý:
+
+- **Nhận diện / cấu hình**: category của dòng phải nằm trong `CategoryOfNonInjectionUsagePartial` (JSON `FT608_Config`, cấu hình trên OMS; admin thêm `34`, `101`). Chưa có trong danh sách → dòng **không lên lưới**, vẫn bị trừ theo giá trị BOM, và hiện cảnh báo yêu cầu báo admin cập nhật `CategoryOfNonInjectionUsagePartial`.
+- **Lên lưới**: như REX non-woven, dòng riêng `C015 = 0`, `C037 = G`, `C035 = 100` mặc định (`AddLevel2OnlyRexRows`). `C039` = `Quantity` gram (gộp Level 2).
+- **Giá trị để trừ vào `C021` của step PU** (`PartWeightCalculator.Calculate` / `RefreshLevel2Details`):
+
+  | Tình huống | Số trừ |
+  |---|---|
+  | Có lịch sử cân (FT600 mới nhất) | nạp `C024`, `C035` đã lưu → `C021 = C024 × % ÷ 100` |
+  | Không lịch sử, chưa cân | `Quantity` (g) của BOM Level 2, `% = 100` |
+  | Cân mới | phần sử dụng đã cân (`C021` của dòng = scale × % ÷ N) |
+  | Đổi `%` sử dụng | tính lại theo `%` mới của **chính dòng đang chọn** |
+
+- Không kích hoạt công thức non-woven cũ: `HasNonwovenRex` bỏ qua dòng `G` (`IsGramMaterial` / `IsGramRaw`) nên step PU vẫn tính theo Level 2. Dòng `G` cũng không bị coi là "cùng khuôn nhiều size" (mã không có `-` nên prefix rỗng).
+- **Dòng REX/RPU (g) trên lưới** (2026-11-16): `C039` (Pieces Qty) = 1; `C036` (Weight per Unit) = `Quantity` gram của BOM Level 2 khi chưa có lịch sử/chưa cân (ghi đè bằng giá trị đã cân hoặc lịch sử); Row Details ghi `REX`/`RPU` theo mã. Confirm không bắt buộc cân dòng này (không cân thì trừ theo BOM, dòng không được lưu vì `C021 = 0`).
+- **Step No. hiển thị** (`FT600.StepNoText`): dòng REX/RPU hiện `REX`/`RPU` thay vì `0`.
+- **1 khuôn nhiều size + non-woven dùng chung**: `ApplyLegacyPartWeight` gộp mã BOM Level 2 của mọi size cùng khuôn nên size nào cũng bị trừ REX non-woven (trước đây chỉ size có REX trong BOM của chính nó).
+- `IsNonInjectionCode` (REX hoặc RPU) thay cho các chỗ `StartsWith("REX")` trong luồng Save/Confirm/trạng thái; phần tải Level 1 (Hydra) giữ nguyên.
+- Test: `tests/SSSW.Tests/PartWeightCalculatorTests.cs` (5 test mới). Ảnh các bước: [`manual/REX_RPU_TEST_REVIEW.md`](../manual/REX_RPU_TEST_REVIEW.md).
 
 **Cây BOM của FG `6112042313-A478-2801`** (Level 1 → Level 2; số = Qty):
 

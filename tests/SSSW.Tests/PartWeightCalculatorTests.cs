@@ -100,6 +100,54 @@ public class PartWeightCalculatorTests
         Assert.Null(PartWeightCalculator.UnitWeightPerPiece(Weighed("REX00018", c021: 10, pieces: 4))); // REX không suy từ C021
         Assert.Null(PartWeightCalculator.UnitWeightPerPiece(Weighed("1-X-Y-5065")));
     }
+
+    // ── REX / RPU tiêu hao tính theo gram (đơn vị G) của step PU, vd. 4-FC992601-SG11-F05L ──
+    private static readonly BomWinlineModel[] PuStep =
+    {
+        Row("4-FC992601-SG11-0000", 1, "G"),
+        Row("2-FC992601", 1, "PCS"),
+        Row("REX00172", 5.715, "G"),
+        Row("RPU00001", 118.59, "G"),
+    };
+
+    [Fact]
+    public void IsSelfRow_RexAndRpuWithUnitG_AreNotSelf_ButStepRowStillIs()
+    {
+        Assert.False(PartWeightCalculator.IsSelfRow(Row("REX00172", 5.715, "G"), "4-FC992601-SG11-F05L"));
+        Assert.False(PartWeightCalculator.IsSelfRow(Row("RPU00001", 118.59, "G"), "4-FC992601-SG11-F05L"));
+        Assert.True(PartWeightCalculator.IsSelfRow(Row("4-FC992601-SG11-0000", 1, "G"), "4-FC992601-SG11-F05L"));
+        Assert.True(PartWeightCalculator.IsSelfRow(Row("2-VB042313-A123-0000", 1, "G"), "3-VB042313-A123-2801"));
+    }
+
+    [Fact]
+    public void GramMaterials_NotWeighed_DeductBomQuantity()
+    {
+        var r = _calc.Calculate(200, "4-FC992601-SG11-F05L", PuStep,
+            Lookup(Weighed("2-FC992601", c021: 30, pieces: 1)));
+
+        Assert.True(r.IsComplete);
+        Assert.Equal(30 + 5.715 + 118.59, r.TotalDeduction, 6);
+        Assert.Equal(200 - (30 + 5.715 + 118.59), r.PartWeight!.Value, 6);
+    }
+
+    [Fact]
+    public void GramMaterials_Weighed_DeductWeighedUsage()
+    {
+        var r = _calc.Calculate(200, "4-FC992601-SG11-F05L", PuStep, Lookup(
+            Weighed("2-FC992601", c021: 30, pieces: 1),
+            Weighed("REX00172", c021: 6.0, c036: 3),
+            Weighed("RPU00001", c021: 120.5, c036: 60)));
+
+        Assert.Equal(30 + 6.0 + 120.5, r.TotalDeduction, 6);
+    }
+
+    [Fact]
+    public void NonGramComponents_StillNeedWeighing()
+    {
+        var r = _calc.Calculate(100, "3-VB042313-A123-2801", BaseFF, Lookup());
+        Assert.False(r.IsComplete);
+        Assert.Contains("REX00018", r.MissingChildren);
+    }
 }
 
 public class ComponentQuantityAggregatorTests
@@ -167,5 +215,22 @@ public class ComponentQuantityAggregatorTests
         Assert.Equal(2.21, perPiece, 6);
         Assert.Equal(17.68, 8 * perPiece, 6);  // trừ ở Inlay
         Assert.Equal(4.42, 2 * perPiece, 6);   // trừ ở Base_FF
+    }
+
+    [Fact]
+    public void GramMaterials_AreAggregatedIntoPieces()
+    {
+        var puStep = new[]
+        {
+            new BomWinlineModel { ItemStepCode = "4-FC992601-SG11-0000", Quantity = 1, Unit = "G" },
+            new BomWinlineModel { ItemStepCode = "2-FC992601", Quantity = 1, Unit = "PCS" },
+            new BomWinlineModel { ItemStepCode = "REX00172", Quantity = 5.715, Unit = "G" },
+            new BomWinlineModel { ItemStepCode = "RPU00001", Quantity = 118.59, Unit = "G" },
+        };
+        var map = new Dictionary<string, IReadOnlyList<BomWinlineModel>> { ["4-FC992601-SG11-F05L"] = puStep };
+        var total = ComponentQuantityAggregator.Aggregate(map);
+
+        Assert.Equal(5.715, total["REX00172"], 6);
+        Assert.Equal(118.59, total["RPU00001"], 6);
     }
 }

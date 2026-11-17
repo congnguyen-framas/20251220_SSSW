@@ -1431,7 +1431,7 @@ namespace SSSW.UI.WPF.ViewModels
 
             _rowSelected.IsReusedFromHistory = false; // cân lại trong phiên này
 
-            if (!(_rowSelected.C002?.StartsWith("REX") ?? false))
+            if (!(IsNonInj(_rowSelected.C002)))
             {
                 // ── Injection items ──────────────────────────────────────────
                 if (_rowSelected.C024 == 0)
@@ -1499,8 +1499,10 @@ namespace SSSW.UI.WPF.ViewModels
                 else
                 {
                     // Nonwoven / Mesh: chỉ dùng một phần theo %
+                    // REX/RPU (g): % sử dụng theo dòng (mặc định 100); non-woven/mesh giữ cách cũ (% dùng chung)
+                    var pct = IsGramRaw(_rowSelected) ? ((_rowSelected.C035 ?? 0) > 0 ? _rowSelected.C035!.Value : 100) : _percentOfUsage;
                     var usage = (double)Math.Round(
-                        (decimal)(_scaleValue * _percentOfUsage / 100) /
+                        (decimal)(_scaleValue * pct / 100) /
                         (decimal)(_rowSelected.C028 ?? 1), 3);
                     var unusage = (_scaleValue - usage * (_rowSelected.C028 ?? 1)) /
                                   (_rowSelected.C028 ?? 1);
@@ -1509,13 +1511,15 @@ namespace SSSW.UI.WPF.ViewModels
                     _rowSelected.C023 = usage;
                     _rowSelected.C021 = usage;
                     _rowSelected.C022 = unusage;
-                    _rowSelected.C036 = Math.Round(usage / 2, 2);
+                    _rowSelected.C036 = IsGramRaw(_rowSelected) ? usage : Math.Round(usage / 2, 2);   // g: lưu đúng phần sử dụng
                 }
             }
 
             // ── Multi-size mold: phân bổ C024 và tính C022 theo tỉ lệ ────────
             var pfx2 = GlobalVariable.PrefixUpToSecondHyphen(_rowSelected.C002);
+            // REX/RPU (g): mã không có '-' nên prefix rỗng → không được coi là "cùng khuôn nhiều size"
             var sameMolds = _scaleDataFinal.Where(x =>
+                !IsGramRaw(_rowSelected) && !IsGramRaw(x) &&
                 x.C020 == _rowSelected.C020 &&
                 x.C004 == _rowSelected.C004 &&
                 GlobalVariable.PrefixUpToSecondHyphen(x.C002) == pfx2 &&
@@ -1544,7 +1548,7 @@ namespace SSSW.UI.WPF.ViewModels
                         x.C015 >= _rowSelected.C015 && x.C024 > 0 &&
                         !x.C003!.StartsWith("Stud") && !x.C003.StartsWith("Inlay") &&
                         !x.C003.StartsWith("Cleat_Ring") &&
-                        !(x.C002?.StartsWith("REX") ?? false) &&
+                        !(IsNonInj(x.C002)) &&
                         x.C002 != _rowSelected.C002 &&
                         GlobalVariable.PrefixUpToSecondHyphen(x.C002) != pfx2)
                     .OrderBy(x => x.C015).ToList();
@@ -1615,7 +1619,7 @@ namespace SSSW.UI.WPF.ViewModels
                 {
                     var code = row.C002?.Trim();
                     if (string.IsNullOrEmpty(code) || code == "Z-VHXXXXXX" ||
-                        code.StartsWith("REX", StringComparison.OrdinalIgnoreCase)) continue;
+                        IsNonInj(code)) continue;
 
                     _level2ByStep[code] = await _bom.GetLevel2Async(code);
                 }
@@ -1674,7 +1678,7 @@ namespace SSSW.UI.WPF.ViewModels
         /// <summary>C036 (g/chiếc) = C021 / C039; C039 = 0 (không có trong Level 2) → C036 = 0. REX giữ công thức riêng khi cân (scale / C039).</summary>
         private static void UpdateWeightPerPiece(FT600 row)
         {
-            if (row.C002?.StartsWith("REX") ?? false) return;
+            if (IsNonInj(row.C002)) return;
             if ((row.C021 ?? 0) <= 0) return;
             if (row.IsPu) { row.C036 = Math.Round(row.C021!.Value, 3); return; }   // PU: C021 đã là g/chiếc
             var pcs = PiecesStrict(row);
@@ -1708,7 +1712,7 @@ namespace SSSW.UI.WPF.ViewModels
 
                 foreach (var row in _scaleDataFinal)
                 {
-                    row.C039 = PiecesFor(row);
+                    row.C039 = IsGramRaw(row) ? 1 : PiecesFor(row);   // REX/RPU (g): 1 pcs (khối lượng nằm ở Weight per Unit)
                     // Dòng cùng khuôn / group size không có trong BOM Level 2 của FG → số chiếc & Quantity copy từ step chọn cân
                     if (row.C039 == 0 && _sameMoldAnchor.TryGetValue(row.id, out var anchor))
                     {
@@ -1724,7 +1728,7 @@ namespace SSSW.UI.WPF.ViewModels
 
                     // Bản ghi cũ chưa có C039: dùng số chiếc của FG hiện tại; C036 cũ theo nghĩa cũ (trừ REX) → tính lại
                     saved.C039 = PiecesFor(saved);
-                    if (!(saved.C002?.StartsWith("REX") ?? false)) saved.C036 = 0;
+                    if (!(IsNonInj(saved.C002))) saved.C036 = 0;
                 }
             }
             catch (Exception ex)
@@ -1753,28 +1757,44 @@ namespace SSSW.UI.WPF.ViewModels
                     .ToHashSet(StringComparer.OrdinalIgnoreCase);
 
                 var seen = _scaleDataFinal
-                    .Where(x => x.C002?.StartsWith("REX", StringComparison.OrdinalIgnoreCase) ?? false)
+                    .Where(x => IsNonInj(x.C002))
                     .Select(x => x.C002!.Trim())
                     .ToHashSet(StringComparer.OrdinalIgnoreCase);
 
                 var parents = _scaleDataFinal
-                    .Where(x => !(x.C002?.StartsWith("REX", StringComparison.OrdinalIgnoreCase) ?? false)
+                    .Where(x => !(IsNonInj(x.C002))
                                 && x.C002 != null && fgSteps.Contains(x.C002.Trim()) && GetLevel2(x) != null)
                     .OrderBy(x => x.C015).ToList();
+
+                var unconfigured = new SortedSet<string>(StringComparer.OrdinalIgnoreCase);
 
                 foreach (var parent in parents)
                 {
                     foreach (var child in GetLevel2(parent)!)
                     {
                         var code = child.ItemStepCode?.Trim();
-                        if (string.IsNullOrEmpty(code) || !code.StartsWith("REX", StringComparison.OrdinalIgnoreCase)) continue;
-                        if ((child.Quantity ?? 0) <= 0 || !seen.Add(code)) continue;
+                        if (string.IsNullOrEmpty(code) || !IsNonInj(code)) continue;
+                        if ((child.Quantity ?? 0) <= 0 || seen.Contains(code)) continue;
+
+                        // REX / RPU tính theo gram: category phải nằm trong CategoryOfNonInjectionUsagePartial (cấu hình trên OMS)
+                        if (PartWeightCalculator.IsGramMaterial(child) && !IsNonwovenCategory(child.CategoryCode))
+                        {
+                            unconfigured.Add($"{code} (category {child.CategoryCode})");
+                            continue;   // chưa cấu hình: không đưa ra lưới, vẫn trừ theo BOM Level 2 khi tính Part Weight
+                        }
+                        seen.Add(code);
 
                         var row = CreateLevel2RexRow(parent, child, code);
                         _scaleDataFinal.Insert(created.Count, row);   // step thứ tự 0 → đầu danh sách
                         created.Add(row);
                     }
                 }
+
+                if (unconfigured.Count > 0)
+                    _dialog.Warn("These materials are not configured, so they cannot be weighed and are deducted by their BOM value:" +
+                        $"{Environment.NewLine}{Environment.NewLine}{string.Join(Environment.NewLine, unconfigured)}" +
+                        $"{Environment.NewLine}{Environment.NewLine}Please ask the admin to add their category to " +
+                        "CategoryOfNonInjectionUsagePartial in the machine config on OMS.", "Warning");
             }
             catch (Exception ex)
             {
@@ -1818,8 +1838,8 @@ namespace SSSW.UI.WPF.ViewModels
             C032 = parent.C032,
             C033 = child.CategoryCode,
             C034 = child.CategoryName,
-            C035 = _percentOfUsage,
-            C036 = 0,
+            C035 = PartWeightCalculator.IsGramMaterial(child) ? 100 : _percentOfUsage,   // REX/RPU (g): mặc định 100% nếu chưa có lịch sử
+            C036 = PartWeightCalculator.IsGramMaterial(child) ? child.Quantity ?? 0 : 0,   // chưa có lịch sử/chưa cân: g theo BOM Level 2
             C037 = child.Unit,
             C038 = parent.C038,
             AllowScale = true
@@ -1840,7 +1860,8 @@ namespace SSSW.UI.WPF.ViewModels
                 var percent = (saved.C035 ?? 0) > 0 ? saved.C035!.Value : _percentOfUsage;
                 var pairs = (row.C028 ?? 0) > 0 ? row.C028!.Value : 1;
 
-                double total = catCheck == null ? saved.C036!.Value * PiecesOf(row) : saved.C036!.Value;
+                double total = IsGramRaw(row) && (saved.C024 ?? 0) > 0 ? saved.C024!.Value      // REX/RPU (g): tổng đã cân
+                             : catCheck == null ? saved.C036!.Value * PiecesOf(row) : saved.C036!.Value;
                 var usage = (double)Math.Round((decimal)(total * percent / 100), 3);
                 var unusage = total - usage;
 
@@ -1884,11 +1905,11 @@ namespace SSSW.UI.WPF.ViewModels
         {
             foreach (var r in rows)
             {
-                bool isRex = r.C002?.StartsWith("REX", StringComparison.OrdinalIgnoreCase) == true;
+                bool isRex = IsNonInj(r.C002) == true;
                 if (isRex)
                 {
                     var sib = rows.FirstOrDefault(x => x != r && x.C015 == r.C015 &&
-                        x.C002?.StartsWith("REX", StringComparison.OrdinalIgnoreCase) != true);
+                        IsNonInj(x.C002) != true);
                     if (string.IsNullOrWhiteSpace(r.C005)) r.C005 = sib?.C005;
                     if (string.IsNullOrWhiteSpace(r.C027)) r.C027 = sib?.C027;
                     continue;
@@ -1905,12 +1926,19 @@ namespace SSSW.UI.WPF.ViewModels
         /// </summary>
         private bool IsMultiSizeMold(FT600 row)
         {
-            if (row.C002?.StartsWith("REX", StringComparison.OrdinalIgnoreCase) ?? false) return false;
+            if (IsNonInj(row.C002)) return false;
             var pfx2 = GlobalVariable.PrefixUpToSecondHyphen(row.C002);
             return _scaleDataFinal.Count(x =>
                 x.C020 == row.C020 && x.C004 == row.C004 && x.C015 == row.C015 &&
                 GlobalVariable.PrefixUpToSecondHyphen(x.C002) == pfx2) > 1;
         }
+
+        /// <summary>REX hoặc RPU (vật liệu non-injection).</summary>
+        private static bool IsNonInj(string? code) => PartWeightCalculator.IsNonInjectionCode(code);
+
+        /// <summary>Dòng REX / RPU tiêu hao tính theo gram (đơn vị G) của step PU — không làm step chuyển sang công thức non-woven cũ.</summary>
+        private static bool IsGramRaw(FT600 x)
+            => IsNonInj(x.C002) && string.Equals(x.C037?.Trim(), "G", StringComparison.OrdinalIgnoreCase);
 
         private static bool IsNonwovenCategory(int? categoryCode)
             => categoryCode != null &&
@@ -1919,11 +1947,11 @@ namespace SSSW.UI.WPF.ViewModels
         /// <summary>Step có chi tiết REX loại nonwoven / mesh (chỉ dùng một phần theo %) trong cùng step hoặc trong BOM Level 2.</summary>
         private bool HasNonwovenRex(FT600 row)
         {
-            if (_scaleDataFinal.Any(x => x != row && x.C015 == row.C015 && (x.C002?.StartsWith("REX", StringComparison.OrdinalIgnoreCase) ?? false)
-                                         && IsNonwovenCategory(x.C033))) return true;
+            if (_scaleDataFinal.Any(x => x != row && x.C015 == row.C015 && (IsNonInj(x.C002))
+                                         && !IsGramRaw(x) && IsNonwovenCategory(x.C033))) return true;
             var code = row.C002?.Trim();
             return code != null && _level2ByStep.TryGetValue(code, out var l2) &&
-                   l2.Any(c => (c.ItemStepCode?.StartsWith("REX", StringComparison.OrdinalIgnoreCase) ?? false) && IsNonwovenCategory(c.CategoryCode));
+                   l2.Any(c => (IsNonInj(c.ItemStepCode)) && !PartWeightCalculator.IsGramMaterial(c) && IsNonwovenCategory(c.CategoryCode));
         }
 
         /// <summary>
@@ -1952,7 +1980,7 @@ namespace SSSW.UI.WPF.ViewModels
         /// </summary>
         private IEnumerable<FT600> PreviousStepsToCheck(FT600 row)
         {
-            if (row.C002?.StartsWith("REX", StringComparison.OrdinalIgnoreCase) ?? false) return Enumerable.Empty<FT600>();
+            if (IsNonInj(row.C002)) return Enumerable.Empty<FT600>();
             return UsesLegacyPartWeight(row)
                 ? _scaleDataFinal.Where(x => x.C015 > 0 && x.C015 < row.C015 && SameSide(row, x))   // bỏ dòng REX Level 2 (C015 = 0); PU: chỉ cùng chân L/R
                 : ChainPredecessors(row);
@@ -1964,7 +1992,7 @@ namespace SSSW.UI.WPF.ViewModels
 
         private List<FT600> FgStepRows() => _scaleDataFinal.Where(x =>
             !string.IsNullOrWhiteSpace(x.C002) && x.C002 != "Z-VHXXXXXX" &&
-            !x.C002.StartsWith("REX", StringComparison.OrdinalIgnoreCase)).ToList();
+            !IsNonInj(x.C002)).ToList();
 
         /// <summary>
         /// Step P là "chain": trong BOM Level 2 của các step FG, P chỉ được tham chiếu bởi step kế liền sau nó
@@ -2068,20 +2096,27 @@ namespace SSSW.UI.WPF.ViewModels
                 var weighed = FindWeighedChild(code, row);
                 var perPiece = weighed == null ? null : PartWeightCalculator.UnitWeightPerPiece(weighed);
                 double? deduct = perPiece == null ? null : qty * perPiece;
+                bool gram = PartWeightCalculator.IsGramMaterial(child);
+                if (gram)
+                {
+                    // REX / RPU (g): đã cân → trừ phần sử dụng đã cân; chưa cân → trừ theo giá trị BOM Level 2
+                    deduct = weighed?.C021 is > 0 ? weighed.C021 : qty;
+                    perPiece = deduct;
+                }
 
                 items.Add(new Level2DetailItem
                 {
                     Component = child.ItemStepName?.Trim() ?? code,
                     ComponentCode = code,
-                    Step = code.StartsWith("REX", StringComparison.OrdinalIgnoreCase)
-                        ? "REX" : (weighed?.C015?.ToString() ?? "—"),
+                    Step = IsNonInj(code)
+                        ? code.TrimStart()[..3].ToUpperInvariant() : (weighed?.C015?.ToString() ?? "—"),
                     Qty = qty,
                     // Qty ở Level 2 là số chiếc → hàng thường hiển thị PCS (chỉ dòng "previous step" mới là PRS); hàng PU giữ đơn vị BOM
-                    Unit = row.IsPu ? child.Unit?.Trim() : "PCS",
-                    Weighed = perPiece == null ? null : weighed!.C021,
+                    Unit = row.IsPu || gram ? child.Unit?.Trim() : "PCS",
+                    Weighed = perPiece == null || weighed == null || (gram && !(weighed.C021 is > 0)) ? null : weighed.C021,
                     PerPiece = perPiece,
                     Deduct = deduct,
-                    IsWeighed = perPiece != null,
+                    IsWeighed = perPiece != null,   // REX/RPU (g) chưa cân: giá trị BOM Level 2 là giá trị hợp lệ → không báo thiếu
                     IsPu = row.IsPu
                 });
 
@@ -2193,7 +2228,7 @@ namespace SSSW.UI.WPF.ViewModels
 
             foreach (var parent in _scaleDataFinal.Where(x =>
                          x != _rowSelected && (x.C023 ?? 0) > 0 && (x.C021 ?? 0) > 0 &&
-                         !(x.C002?.StartsWith("REX") ?? false) && !UsesLegacyPartWeight(x)).ToList())
+                         !(IsNonInj(x.C002)) && !UsesLegacyPartWeight(x)).ToList())
             {
                 var l2 = GetLevel2(parent);
                 bool usesChanged =
@@ -2205,9 +2240,10 @@ namespace SSSW.UI.WPF.ViewModels
                 var part = ComputePartWeight(parent, out _, out var available);
                 if (!available || part == null) continue;
 
+                // Chỉ tính lại Part Weight (C021) / g/chiếc. Runner (C022) không phụ thuộc chi tiết con nên giữ nguyên
+                // (trước đây C022 = C024 − C021 làm Runner gồm cả trọng lượng các chi tiết đã trừ).
                 parent.C021 = part;
                 UpdateWeightPerPiece(parent);
-                parent.C022 = parent.C024 - parent.C021;
             }
         }
 
@@ -2222,13 +2258,19 @@ namespace SSSW.UI.WPF.ViewModels
                             .Where(x => x.C015 > 0 && x.C015 <= _rowSelected.C015 - 1 && SameSide(_rowSelected, x)).ToList();
 
                         // REX nonwoven chỉ có ở Level 2 (dòng C015 = 0) vẫn được trừ như REX cùng step
-                        var l2Codes = _level2ByStep.TryGetValue(_rowSelected.C002?.Trim() ?? "", out var l2c)
-                            ? l2c.Select(c => c.ItemStepCode?.Trim()).ToHashSet(StringComparer.OrdinalIgnoreCase)
-                            : new HashSet<string?>();
+                        // 1 khuôn nhiều size: REX nonwoven dùng chung cho mọi size, nhưng BOM Level 2 có thể chỉ liệt kê ở 1 size
+                        // → gộp mã Level 2 của mọi size cùng khuôn để size nào cũng được trừ
+                        var selPrefix = GlobalVariable.PrefixUpToSecondHyphen(_rowSelected.C002);
+                        var l2Codes = new HashSet<string?>(StringComparer.OrdinalIgnoreCase);
+                        foreach (var sib in _scaleDataFinal.Where(x => x == _rowSelected || (
+                                     x.C020 == _rowSelected.C020 && x.C004 == _rowSelected.C004 && x.C015 == _rowSelected.C015 &&
+                                     GlobalVariable.PrefixUpToSecondHyphen(x.C002) == selPrefix)))
+                            if (_level2ByStep.TryGetValue(sib.C002?.Trim() ?? "", out var l2c))
+                                foreach (var c in l2c) l2Codes.Add(c.ItemStepCode?.Trim());
                         var nonInjection = _scaleDataFinal
                             .Where(x => (x.C015 == _rowSelected.C015 &&
                                         (x.C002 == "Z-VHXXXXXX" ||
-                                         (x.C002?.StartsWith("REX") ?? false)))
+                                         (IsNonInj(x.C002))))
                                         || ((x.C015 ?? 0) == 0 && IsNonwovenCategory(x.C033) && l2Codes.Contains(x.C002?.Trim()))).ToList();
 
                          //tạm thời thêm vào để chạy đưuọc bước item có cleat nhưng ko dùng ở bước Inlay ở fVN đã, sau này khi sửa công thức BOM theo level 2 và update code xong thì bỏ phần này đi
@@ -2338,8 +2380,8 @@ namespace SSSW.UI.WPF.ViewModels
                 {
                     foreach (var item in _scaleDataFinal)
                     {
-                        if (item.AllowScale && item.C023 == 0 &&
-                            (item.C024 == 0 && (item.C002?.StartsWith("REX") ?? false)))
+                        if (item.AllowScale && item.C023 == 0 && !IsGramRaw(item) &&
+                            (item.C024 == 0 && (IsNonInj(item.C002))))
                         {
                             HideBusy(); _dialog.Warn($"Scale not completed for step: {item.C002}.", "Warning");
                             return;
@@ -2348,7 +2390,7 @@ namespace SSSW.UI.WPF.ViewModels
                 }
                 else
                 {
-                    var nonInjectionCheck = _scaleDataFinal.FirstOrDefault(x => x.C015 == confirmRow.C015 && x.C002.StartsWith("REX"));
+                    var nonInjectionCheck = _scaleDataFinal.FirstOrDefault(x => x.C015 == confirmRow.C015 && IsNonInj(x.C002));
 
                     var category = await db.Database
                           .SqlQueryRaw<CategoryOfItemModel>(
@@ -2360,13 +2402,13 @@ namespace SSSW.UI.WPF.ViewModels
 
                     if (catCheck != null && nonInjectionCheck != null)
                     {
-                        var sizes = _scaleDataFinal.Where(x => x.C015 == confirmRow.C015 && !x.C002.StartsWith("REX")).ToList();
+                        var sizes = _scaleDataFinal.Where(x => x.C015 == confirmRow.C015 && !IsNonInj(x.C002)).ToList();
                         //nonInjectionCheck.C008 = 
 
 
                         foreach (var item in sizes)
                         {
-                            var upSize = _scaleDataFinal.FirstOrDefault(x => x.C002.StartsWith("REX") && x.C015 == item.C015 && x.C008 != item.C008 && string.IsNullOrEmpty(x.C008));
+                            var upSize = _scaleDataFinal.FirstOrDefault(x => IsNonInj(x.C002) && x.C015 == item.C015 && x.C008 != item.C008 && string.IsNullOrEmpty(x.C008));
 
                             if (upSize != null)
                             {
@@ -2466,7 +2508,7 @@ namespace SSSW.UI.WPF.ViewModels
                 if (insert.Any(r => r.IsPu))
                 {
                     foreach (var r in insert.Where(r => string.IsNullOrEmpty(r.C019) && !string.IsNullOrWhiteSpace(r.C002) &&
-                                 !r.C002.StartsWith("REX", StringComparison.OrdinalIgnoreCase)))
+                                 !IsNonInj(r.C002)))
                         r.C019 = FT600.PuMachineGroup;
                     ApplyPuUnits(insert);
                 }
@@ -2679,7 +2721,7 @@ namespace SSSW.UI.WPF.ViewModels
 
             var lastSeq = _allStepsFG
                 .Where(x => !string.IsNullOrWhiteSpace(x.ItemStepCode) &&
-                            !x.ItemStepCode!.StartsWith("REX", StringComparison.OrdinalIgnoreCase))
+                            !IsNonInj(x.ItemStepCode!))
                 .Max(x => x.ParallelSequence);
             if (lastSeq == null || row.C015 == null || row.C015 >= lastSeq) return false;
 
@@ -2722,7 +2764,7 @@ namespace SSSW.UI.WPF.ViewModels
             try
             {
                 var rows = (_scaleDataFinal ?? new()).Where(x => !string.IsNullOrWhiteSpace(x.C002) && x.C002 != "Z-VHXXXXXX" &&
-                                !x.C002.StartsWith("REX", StringComparison.OrdinalIgnoreCase)).ToList();
+                                !IsNonInj(x.C002)).ToList();
                 var codes = rows.Select(x => x.C002!.Trim()).Distinct().ToList();
                 if (codes.Count == 0) return;
 
@@ -3170,12 +3212,13 @@ namespace SSSW.UI.WPF.ViewModels
         {
             var catCheck = GlobalVariable.ConfigSystem.CategoryOfNonInjectionUsagePartial?
                 .FirstOrDefault(x => x.CategoryCode == _rowSelected.C033);
-            if (!(_rowSelected?.C002?.StartsWith("REX") ?? false) ||
-                (_rowSelected?.C002?.StartsWith("REX") == true && catCheck == null)) return;
+            if (!(IsNonInj(_rowSelected?.C002)) ||
+                (IsNonInj(_rowSelected?.C002) == true && catCheck == null)) return;
 
             _percentOfUsage = double.TryParse(text, out var v) ? v : 0;
 
-            _scaleDataFinal?.Where(x => x.C002?.StartsWith("REX") ?? false).ToList().ForEach(x =>
+            // REX/RPU (g) chỉ cập nhật chính dòng đang chọn; nhóm non-woven giữ cách cũ (cập nhật mọi dòng REX)
+            _scaleDataFinal?.Where(x => IsNonInj(x.C002) && (!IsGramRaw(x) || x == _rowSelected)).ToList().ForEach(x =>
             {
                 var usage = x.C035 == 100
                     ? (double)Math.Round(
@@ -3345,7 +3388,7 @@ namespace SSSW.UI.WPF.ViewModels
                 var catCheck = GlobalVariable.ConfigSystem.CategoryOfNonInjectionUsagePartial?
                     .FirstOrDefault(x => x.CategoryCode == _rowSelected?.C033);
                 IsUsagePctReadOnly =
-                    !(_rowSelected?.C002?.StartsWith("REX") == true && catCheck != null);
+                    !(IsNonInj(_rowSelected?.C002) == true && catCheck != null);
 
                 // Status dots + bars
                 UpdateStepStatuses();
@@ -3387,7 +3430,7 @@ namespace SSSW.UI.WPF.ViewModels
             {
                 // Done chỉ khi đủ thông số cân: REX cần Total Part (C023); step ép cần Total Part (C023) và Part Weight (C021).
                 // Không dùng riêng Total Weight (C024): khi cân 1 khuôn nhiều size, C024 được copy cho mọi size cùng khuôn nhưng chưa size nào khác đủ thông số.
-                bool isDone = (item.C002?.StartsWith("REX") ?? false)
+                bool isDone = (IsNonInj(item.C002))
                     ? item.C023 > 0
                     : item.C021 > 0 && item.C023 > 0;
                 bool isActive = item.C002 == _rowSelected?.C002 &&

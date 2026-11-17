@@ -53,6 +53,14 @@ namespace SSSW.UI.WPF.Services
                 if (qty <= 0) continue;
 
                 var weighed = findWeighed(code);
+
+                // REX / RPU tiêu hao tính theo gram: đã cân → trừ đúng phần sử dụng (C021); chưa cân → trừ theo Quantity (g) của BOM Level 2
+                if (IsGramMaterial(child))
+                {
+                    deduction += weighed?.C021 is > 0 ? weighed.C021!.Value : qty;
+                    continue;
+                }
+
                 var unitWeight = weighed == null ? null : UnitWeightPerPiece(weighed);
                 if (unitWeight == null)
                 {
@@ -78,21 +86,38 @@ namespace SSSW.UI.WPF.Services
         public static string StepMainCode(string? code)
         {
             var c = code?.Trim() ?? string.Empty;
-            if (c.StartsWith("REX", StringComparison.OrdinalIgnoreCase) || !c.Contains('-')) return c;
+            if (IsNonInjectionCode(c) || !c.Contains('-')) return c;
             return string.Join("-", c.Split('-').Take(2));
         }
 
         public static bool SameStep(string? a, string? b)
             => string.Equals(StepMainCode(a), StepMainCode(b), StringComparison.OrdinalIgnoreCase);
 
-        /// <summary>Dòng self: chính phần nhựa của step (mã kết thúc "-0000", đơn vị G).</summary>
+        /// <summary>Mã vật liệu non-injection: REX (receptacle / non-woven / mesh) hoặc RPU (keo PU...).</summary>
+        public static bool IsNonInjectionCode(string? code)
+        {
+            var c = code?.TrimStart();
+            return c != null &&
+                   (c.StartsWith("REX", StringComparison.OrdinalIgnoreCase) || c.StartsWith("RPU", StringComparison.OrdinalIgnoreCase));
+        }
+
+        /// <summary>REX / RPU tiêu hao tính theo gram (đơn vị G) trong BOM Level 2 của step PU: không phải dòng self.</summary>
+        public static bool IsGramMaterial(BomWinlineModel row)
+            => IsNonInjectionCode(row.ItemStepCode)
+               && !(row.ItemStepCode!.Trim().EndsWith("-0000", StringComparison.Ordinal))
+               && string.Equals(row.Unit?.Trim(), "G", StringComparison.OrdinalIgnoreCase);
+
+        /// <summary>
+        /// Dòng self: chính phần nhựa của step (mã kết thúc "-0000", cùng step, đơn vị G).
+        /// Ngoại lệ: mã REX / RPU đơn vị G là vật liệu tiêu hao (không phải self) nên vẫn được hiển thị và trừ.
+        /// </summary>
         public static bool IsSelfRow(BomWinlineModel row, string stepCode)
         {
             var code = row.ItemStepCode?.Trim();
             if (string.IsNullOrEmpty(code)) return true;
             return SameStep(code, stepCode)
                 || code.EndsWith("-0000", StringComparison.Ordinal)
-                || string.Equals(row.Unit?.Trim(), "G", StringComparison.OrdinalIgnoreCase);
+                || (string.Equals(row.Unit?.Trim(), "G", StringComparison.OrdinalIgnoreCase) && !IsNonInjectionCode(code));
         }
 
         /// <summary>
@@ -107,7 +132,7 @@ namespace SSSW.UI.WPF.Services
             // Hàng PU: Part Weight đã là g/chiếc (N = số chiếc/shot) → không chia thêm C039
             if (weighed.IsPu && weighed.C021 is > 0) return weighed.C021;
 
-            bool isRex = weighed.C002?.Trim().StartsWith("REX", StringComparison.OrdinalIgnoreCase) ?? false;
+            bool isRex = IsNonInjectionCode(weighed.C002);
             if (!isRex && weighed.C021 is > 0 && weighed.C039 is > 0)
                 return weighed.C021 / weighed.C039;
 

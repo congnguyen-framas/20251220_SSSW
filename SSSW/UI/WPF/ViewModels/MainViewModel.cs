@@ -27,6 +27,22 @@ namespace SSSW.UI.WPF.ViewModels
         private readonly IDbContextFactory<DbContextDogeWH> _dbFactory;
         private readonly DeviceConnectionService _deviceService;
         private readonly ILogger<MainViewModel> _logger;
+        private readonly IDialogService _dialog;
+
+        // ── Lớp phủ chờ cấp app (hiện ngay khi bấm nút Hydra, che cả header lẫn tab đang mở) ──
+        private bool _isOverlayVisible;
+        public bool IsOverlayVisible
+        {
+            get => _isOverlayVisible;
+            private set => SetProperty(ref _isOverlayVisible, value);
+        }
+
+        private string _overlayMessage = "Loading…";
+        public string OverlayMessage
+        {
+            get => _overlayMessage;
+            private set => SetProperty(ref _overlayMessage, value);
+        }
 
         // RFID/operator identity dùng chung cho cả 2 tab Step/FG — xem OperatorSessionService
         // để biết lý do gộp về đây (chuyển tab không còn làm "mất" operator đã quét).
@@ -94,8 +110,10 @@ namespace SSSW.UI.WPF.ViewModels
             IDbContextFactory<DbContextDogeWH> dbFactory,
             DeviceConnectionService deviceService,
             OperatorSessionService operatorSession,
-            ILogger<MainViewModel> logger)
+            ILogger<MainViewModel> logger,
+            IDialogService dialog)
         {
+            _dialog = dialog;
             _serviceProvider = serviceProvider;
             _dbFactory = dbFactory;
             _deviceService = deviceService;
@@ -283,68 +301,155 @@ namespace SSSW.UI.WPF.ViewModels
         // ─────────────────────────────────────────────────────────────────────
         private async Task GetDataHydraAsync(object? _)
         {
+            if (IsOverlayVisible) return;   // đang chạy: bỏ qua bấm lặp
+
+            // Hiện lớp phủ chờ NGAY và đợi WPF vẽ xong rồi mới làm việc nặng
+            OverlayMessage = "Getting data from Hydra…";
+            IsOverlayVisible = true;
+
+            int fetched = 0, inserted = 0, alreadyExist = 0, skipped = 0;
+            string? error = null;
             try
             {
+                await System.Windows.Application.Current.Dispatcher.InvokeAsync(
+                    () => { }, System.Windows.Threading.DispatcherPriority.Render);
+
                 using var db = _dbFactory.CreateDbContext();
+                db.Database.SetCommandTimeout(200);
                 var hydraItemDetails = await db.Database
                     .SqlQueryRaw<HydraItemDetailModel>("sp_GetFullStepItemHydraIsRun")
                     .AsNoTracking().ToListAsync();
-                hydraItemDetails = hydraItemDetails
+                fetched = hydraItemDetails.Count;
+
+                // Cùng logic với OMS WorkerShotWeight.GetDataHydra: bổ sung thông tin thiếu (FG, tên step, step index, main, size)
+                // từ sp_sssw_getproductInfo, rồi loại dòng không đủ thông tin trước khi insert FT601.
+                OverlayMessage = "Completing item information…";
+                var needInfo = hydraItemDetails.Where(HydraItemEnricher.NeedsInfo).ToList();
+                if (needInfo.Count > 0) await FillMissingHydraInfoAsync(db, needInfo);
+
+                hydraItemDetails = HydraItemEnricher.KeepWithFg(hydraItemDetails);
+                var missingFg = HydraItemEnricher.FgMissingInfo(hydraItemDetails);
+                if (missingFg.Count > 0)
+                    _logger.LogWarning("These FG items missing information: {Items}", string.Join(",", missingFg));
+
+                hydraItemDetails = HydraItemEnricher.KeepComplete(hydraItemDetails)
                     .OrderBy(x => x.FGItemCode).ThenBy(x => x.StepIndex).ToList();
+                skipped = fetched - hydraItemDetails.Count;
 
-                if (!hydraItemDetails.Any()) return;
-
-                var ft601s = new List<FT601>();
-                var now = DateTime.Now;
-                var machine = Environment.MachineName;
-                var toInsert = hydraItemDetails.Where(d =>
-                    !db.FT601s.Any(ft => ft.C004 == d.StepItemCode &&
-                                         ft.C015 == d.Machine &&
-                                         ft.C018 == d.OrderHydraNum &&
-                                         ft.Actived == true)).ToList();
-
-                foreach (var item in toInsert)
-                    ft601s.Add(new FT601
-                    {
-                        Id = Guid.NewGuid(),
-                        C000 = item.HydraOrderType,
-                        C001 = item.Location == "Sample"
-                                     ? EnumSampleLocation.Sample : EnumSampleLocation.Production,
-                        C002 = item.Size,
-                        C003 = item.MainName,
-                        C004 = item.StepItemCode,
-                        C005 = item.StepItemName,
-                        C006 = item.Artikel,
-                        C007 = item.FGItemCode,
-                        C008 = item.FGItemName,
-                        C009 = item.StepIndexHydra,
-                        C010 = item.StepIndex,
-                        C011 = item.ColorCode,
-                        C012 = item.ColorName,
-                        C013 = item.ArticlePairShot,
-                        C014 = item.MoldPairShot,
-                        C015 = item.Machine,
-                        C016 = item.MachineGroup,
-                        C017 = false,
-                        C018 = item.OrderHydraNum,
-                        C019 = item.MoldId,
-                        C020 = item.MainCode,
-                        Actived = true,
-                        CreatedMachine = machine,
-                        CreatedDate = now,
-                        Mesoyear = item.MesoYear,
-                        Mesocomp = item.MesoComp
-                    });
-
-                if (ft601s.Any())
+                if (hydraItemDetails.Count > 0)
                 {
-                    await db.FT601s.AddRangeAsync(ft601s);
-                    await db.SaveChangesAsync();
+                    // Một truy vấn lấy các FT601 đã có (mã step + máy + lệnh Hydra) thay cho 1 truy vấn / item
+                    // (trước đây chạy trên UI thread nên đơ giao diện khi nhiều item).
+                    OverlayMessage = "Saving to FT601…";
+                    var stepCodes = hydraItemDetails.Select(x => x.StepItemCode).Distinct().ToList();
+                    var existing = (await db.FT601s.AsNoTracking()
+                            .Where(ft => ft.Actived == true && stepCodes.Contains(ft.C004))
+                            .Select(ft => new { ft.C004, ft.C015, ft.C018 }).ToListAsync())
+                        .Select(x => HydraKey(x.C004, x.C015, x.C018)).ToHashSet();
+
+                    var now = DateTime.Now;
+                    var machine = Environment.MachineName;
+                    var ft601s = new List<FT601>();
+
+                    foreach (var item in hydraItemDetails)
+                    {
+                        // Add trả false khi key đã có: trùng trong DB hoặc trùng ngay trong đợt này → không insert lại
+                        if (!existing.Add(HydraKey(item.StepItemCode, item.Machine, item.OrderHydraNum))) continue;
+
+                        ft601s.Add(new FT601
+                        {
+                            Id = Guid.NewGuid(),
+                            C000 = item.HydraOrderType,
+                            C001 = item.Location == "Sample"
+                                         ? EnumSampleLocation.Sample : EnumSampleLocation.Production,
+                            C002 = item.Size,
+                            C003 = item.MainName,
+                            C004 = item.StepItemCode,
+                            C005 = item.StepItemName,
+                            C006 = item.Artikel,
+                            C007 = item.FGItemCode,
+                            C008 = item.FGItemName,
+                            C009 = item.StepIndexHydra,
+                            C010 = item.StepIndex,
+                            C011 = item.ColorCode,
+                            C012 = item.ColorName,
+                            C013 = item.ArticlePairShot,
+                            C014 = item.MoldPairShot,
+                            C015 = item.Machine,
+                            C016 = item.MachineGroup,
+                            C017 = false,
+                            C018 = item.OrderHydraNum,
+                            C019 = item.MoldId,
+                            C020 = item.MainCode,
+                            Actived = true,
+                            CreatedMachine = machine,
+                            CreatedBy = machine,
+                            CreatedDate = now,
+                            Mesoyear = item.MesoYear,
+                            Mesocomp = item.MesoComp
+                        });
+                    }
+
+                    alreadyExist = hydraItemDetails.Count - ft601s.Count;
+                    if (ft601s.Count > 0)
+                    {
+                        await db.FT601s.AddRangeAsync(ft601s);
+                        await db.SaveChangesAsync();
+                    }
+                    inserted = ft601s.Count;
                 }
 
-                RefreshActiveContent();
+                if (fetched > 0) RefreshActiveContent();
             }
-            catch (Exception ex) { _logger.LogError(ex, "GetDataHydra error"); }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "GetDataHydra error");
+                error = ex.Message;
+            }
+            finally
+            {
+                IsOverlayVisible = false;
+            }
+
+            if (error != null)
+            {
+                _dialog.Error($"Failed to get data from Hydra.{Environment.NewLine}{error}", "Hydra");
+                return;
+            }
+
+            var msg = $"Data from Hydra has been updated.{Environment.NewLine}{Environment.NewLine}" +
+                      $"Items retrieved from Hydra: {fetched}{Environment.NewLine}" +
+                      $"Items inserted into FT601: {inserted}";
+            if (alreadyExist > 0) msg += $"{Environment.NewLine}Already in FT601 (not inserted again): {alreadyExist}";
+            if (skipped > 0) msg += $"{Environment.NewLine}Skipped (missing FG / Main code / Size): {skipped}";
+            _dialog.Info(msg, "Hydra");
+        }
+
+        /// <summary>Khóa nhận diện 1 dòng Hydra đã có trong FT601: mã step + máy + lệnh Hydra (null coi như rỗng).</summary>
+        private static string HydraKey(string? step, string? machine, string? order)
+            => $"{step?.Trim()}|{machine?.Trim()}|{order?.Trim()}";
+
+        /// <summary>
+        /// Bổ sung thông tin còn thiếu của các dòng Hydra bằng sp_sssw_getproductInfo (gọi theo lô 100 mã).
+        /// Lỗi chỉ ghi log cảnh báo, không làm dừng cả phiên đồng bộ.
+        /// </summary>
+        private async Task FillMissingHydraInfoAsync(DbContextDogeWH db, List<HydraItemDetailModel> items)
+        {
+            try
+            {
+                var rows = new List<ProductInfoStoreModel>();
+                foreach (var chunk in HydraItemEnricher.LookupCodes(items).Chunk(100))
+                {
+                    rows.AddRange(await db.Database
+                        .SqlQueryRaw<ProductInfoStoreModel>("EXEC dbo.sp_sssw_getproductInfo @itemCode = {0}", string.Join(",", chunk))
+                        .AsNoTracking().ToListAsync());
+                }
+                HydraItemEnricher.FillMissingInfo(items, rows);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning(ex, "Error occurred while filling missing info from sp_sssw_getproductInfo.");
+            }
         }
 
         /// <summary>Mở màn hình Settings (frmUpdateMasterData) — dùng chung cho cả Step/FG

@@ -219,5 +219,36 @@
 
         <!--  ═══════════════════════════════ BODY ═══════════════════════════════  -->
         <ContentControl Grid.Row="1" Content="{Binding ActiveContent}" />
+
+        <!--  Lớp phủ chờ cấp app (nút Hydra...): hiện ngay khi bấm, chặn thao tác cho đến khi xong  -->
+        <Grid
+            Grid.RowSpan="2"
+            Panel.ZIndex="100"
+            d:Visibility="Collapsed"
+            Background="#80000000"
+            Visibility="{Binding IsOverlayVisible, Converter={StaticResource BoolToVisibility}}">
+            <Border
+                MinWidth="240"
+                Padding="40,28"
+                HorizontalAlignment="Center"
+                VerticalAlignment="Center"
+                Background="White"
+                CornerRadius="8">
+                <StackPanel Width="360" HorizontalAlignment="Center">
+                    <TextBlock
+                        Margin="0,0,0,14"
+                        HorizontalAlignment="Center"
+                        FontFamily="Segoe UI"
+                        FontSize="18"
+                        FontWeight="Bold"
+                        Foreground="#D0021B"
+                        Text="{Binding OverlayMessage}" />
+                    <ProgressBar
+                        Height="8"
+                        Foreground="#D0021B"
+                        IsIndeterminate="True" />
+                </StackPanel>
+            </Border>
+        </Grid>
     </Grid>
 </Window>

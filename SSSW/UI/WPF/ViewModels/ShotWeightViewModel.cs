@@ -1211,14 +1211,12 @@ namespace SSSW.UI.WPF.ViewModels
                     #endregion
 
                     // Hàng PU: bấm Scale ở step không phải step cuối → load thêm chân đối xứng của chính step đó (F05L ↔ F05R)
-                    // và coi 2 chân là 1 khuôn nhiều size để cân. KHÔNG xóa các step khác khỏi lưới — step trước còn trong lưới để trừ.
+                    // và coi 2 chân là 1 khuôn nhiều size để cân. Chỉ áp dụng khi step chọn KHÔNG phải step cuối; "step cuối" xác định theo
+                    // ParallelSequence của chính step đó trong BOM (không dùng FT601.C010 — số của Hydra có thể lệch BOM, làm mất step 1/2 ở step cuối).
+                    // Bên dưới (khi áp dụng) chỉ giữ step đang cân + step chain ngay trước, các step còn lại bị bỏ khỏi lưới.
                     if (fgIsPu && !(stepCode.C005?.StartsWith("Logo") ?? false) && !(stepCode.C005?.StartsWith("Cleat_Ring") ?? false))
                     {
-                        var lastSeq = _allStepsFG
-                            .Where(x => !string.IsNullOrWhiteSpace(x.ItemStepCode) &&
-                                        !x.ItemStepCode!.StartsWith("REX", StringComparison.OrdinalIgnoreCase))
-                            .Max(x => x.ParallelSequence);
-                        if (lastSeq != null && stepCode.C010 != null && stepCode.C010 < lastSeq)
+                        if (StepSequence.IsNotLastStep(_allStepsFG, stepCode.C004, stepCode.C010))
                         {
                             await AddLogoGroupSizesAsync(db, stepCode, isLogo: false, pairOnly: true);
 
@@ -2023,15 +2021,17 @@ namespace SSSW.UI.WPF.ViewModels
             return before.Where(x => x.C015 == prevSeq && IsChainOnly(x, steps)).ToList();
         }
 
-        /// <summary>Step chain ngay trước cần trừ (cùng thứ tự có nhiều size thì ưu tiên cùng size).</summary>
+        /// <summary>
+        /// Các step chain ngay trước cần trừ. Cùng thứ tự có nhiều step khác nhau (vd. Studs và Rim cùng Step No. 1) → trừ TẤT CẢ
+        /// (mỗi component một dòng); cùng một component nhiều size (cùng mã chính) thì chỉ lấy 1, ưu tiên cùng size.
+        /// </summary>
         private List<FT600> ChainPredecessors(FT600 row)
         {
             var cands = ChainCandidatesBefore(row);
             if (cands.Count == 0) return cands;
             var sameSide = cands.Where(x => SameSide(row, x)).ToList();   // PU: ưu tiên component cùng chân L/R
             if (sameSide.Count > 0) cands = sameSide;
-            var pick = cands.FirstOrDefault(x => x.C008 == row.C008) ?? cands.First();
-            return new List<FT600> { pick };
+            return StepSequence.PickPerComponent(cands, row.C008);
         }
 
         /// <summary>Chỉ mã của step chain thực sự bị trừ (ChainPredecessors); step cùng thứ tự không được chọn (vd. Studs) vẫn tính như chi tiết con Level 2.</summary>

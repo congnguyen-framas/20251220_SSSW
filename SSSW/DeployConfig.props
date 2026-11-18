@@ -10,9 +10,9 @@
   -->
   <PropertyGroup>
     <!--fFT-->
-    <!--<DeployDir>\\10.40.10.9\Public$\98_Public_Share\99_Shared\05_IT\01_Update\36_SSSW\</DeployDir>-->
+    <DeployDir>\\10.40.10.9\Public$\98_Public_Share\99_Shared\05_IT\01_Update\36_SSSW\</DeployDir>
 
     <!--fVN-->
-    <DeployDir>\\192.168.1.241\FramasPublic\PUBLIC_Able to deleted\22 IT\01-UpdateApp\48.SSSW\</DeployDir>
+    <!--<DeployDir>\\192.168.1.241\FramasPublic\PUBLIC_Able to deleted\22 IT\01-UpdateApp\48.SSSW\</DeployDir>-->
   </PropertyGroup>
 </Project>

@@ -9,6 +9,7 @@
 
 | Ngày | File Session | Tóm tắt mục tiêu & kết quả |
 |------|--------------|---------------------------|
+| **2026-11-17** | [`2026-11-17_pu-last-step-by-bom-sequence.md`](2026-11-17_pu-last-step-by-bom-sequence.md) | PU: "step cuối" xác định theo `ParallelSequence` trong BOM thay vì `FT601.C010` — sửa lỗi mất step 1/2 khỏi grid khi cân step cuối (FG F00L). |
 | **2026-11-16** | [`2026-11-16_rex-rpu-gram-materials.md`](2026-11-16_rex-rpu-gram-materials.md) | REX/RPU (đơn vị G, category 34/101 cấu hình OMS) của step PU: lên lưới, trừ theo lịch sử/BOM/cân mới; công thức các step khác không đổi; doc test có ảnh. |
 | **2026-11-13** | [`2026-11-13_user-manuals-operator-developer.md`](2026-11-13_user-manuals-operator-developer.md) | User Manual Operator + Developer (EN/VI) có ảnh chú thích chụp từ màn hình thật với dữ liệu giả lập; harness chụp ảnh trong `manual/screenshot-harness/`. |
 | **2026-11-12** | [`2026-11-12_bom-l2-match-by-main-code.md`](2026-11-12_bom-l2-match-by-main-code.md) | Ghép child BOM Level 2 với step theo mã chính (bỏ màu & size, REX giữ nguyên); nhiều size thì ưu tiên cùng size step cha. |

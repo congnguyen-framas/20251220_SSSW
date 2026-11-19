@@ -500,7 +500,7 @@
                             <DataGrid.Columns>
 
                                 <!--  Action buttons – Command binding lên Window DataContext  -->
-                                <DataGridTemplateColumn Width="140" IsReadOnly="False">
+                                <DataGridTemplateColumn Width="130" IsReadOnly="False">
                                     <!--  HEADER TEMPLATE  -->
                                     <DataGridTemplateColumn.HeaderTemplate>
                                         <DataTemplate>
@@ -545,7 +545,7 @@
                                 </DataGridTemplateColumn>
 
                                 <!--  STATUS  -->
-                                <DataGridTemplateColumn Width="65">
+                                <DataGridTemplateColumn Width="62">
                                     <!--  HEADER TEMPLATE  -->
                                     <DataGridTemplateColumn.HeaderTemplate>
                                         <DataTemplate>
@@ -583,7 +583,7 @@
                                 </DataGridTemplateColumn>
 
                                 <DataGridTextColumn
-                                    Width="75"
+                                    Width="62"
                                     Binding="{Binding C004}"
                                     ElementStyle="{StaticResource CenterCell}">
                                     <DataGridTextColumn.Header>
@@ -594,7 +594,7 @@
                                     </DataGridTextColumn.Header>
                                 </DataGridTextColumn>
 
-                                <DataGridTemplateColumn Width="150">
+                                <DataGridTemplateColumn Width="120">
                                     <!--  HEADER TEMPLATE  -->
                                     <DataGridTemplateColumn.HeaderTemplate>
                                         <DataTemplate>
@@ -630,7 +630,7 @@
                                 </DataGridTemplateColumn>
 
                                 <DataGridTextColumn
-                                    Width="80"
+                                    Width="58"
                                     Binding="{Binding StepNoText}"
                                     SortMemberPath="C015"
                                     ElementStyle="{StaticResource CenterCell}">
@@ -642,7 +642,7 @@
                                     </DataGridTextColumn.Header>
                                 </DataGridTextColumn>
 
-                                <DataGridTemplateColumn Width="300">
+                                <DataGridTemplateColumn Width="220">
                                     <!--  HEADER TEMPLATE  -->
                                     <DataGridTemplateColumn.HeaderTemplate>
                                         <DataTemplate>
@@ -675,7 +675,7 @@
                                 </DataGridTemplateColumn>
 
                                 <DataGridTextColumn
-                                    Width="60"
+                                    Width="55"
                                     Binding="{Binding C008}"
                                     ElementStyle="{StaticResource CenterWrapCell}">
                                     <DataGridTextColumn.Header>
@@ -687,7 +687,7 @@
                                 </DataGridTextColumn>
 
                                 <DataGridTextColumn
-                                    Width="100"
+                                    Width="78"
                                     Binding="{Binding C024, StringFormat=F3}"
                                     ElementStyle="{StaticResource CenterCell}">
                                     <DataGridTextColumn.HeaderTemplate>
@@ -708,7 +708,7 @@
                                 </DataGridTextColumn>
 
                                 <DataGridTextColumn
-                                    Width="95"
+                                    Width="72"
                                     Binding="{Binding C023, StringFormat=F3}"
                                     ElementStyle="{StaticResource CenterCell}">
                                     <DataGridTextColumn.HeaderTemplate>
@@ -729,7 +729,7 @@
                                 </DataGridTextColumn>
 
                                 <DataGridTextColumn
-                                    Width="95"
+                                    Width="72"
                                     
                                     ElementStyle="{StaticResource CenterWrapCell}">
 <DataGridTextColumn.Binding><MultiBinding Converter="{StaticResource ValueUnit}" ConverterParameter="g:F3"><Binding Path="C021" /><Binding Path="C037" /></MultiBinding></DataGridTextColumn.Binding>
@@ -752,7 +752,7 @@
                                 </DataGridTextColumn>
 
                                 <DataGridTextColumn
-                                    Width="105"
+                                    Width="80"
                                     
                                     ElementStyle="{StaticResource CenterWrapCell}">
 <DataGridTextColumn.Binding><MultiBinding Converter="{StaticResource ValueUnit}" ConverterParameter="g:F3"><Binding Path="C022" /><Binding Path="C037" /></MultiBinding></DataGridTextColumn.Binding>
@@ -773,34 +773,52 @@
                                     </DataGridTextColumn.HeaderTemplate>
                                 </DataGridTextColumn>
 
-                                <DataGridTextColumn
-                                    Width="100"
-                                    
-                                    ElementStyle="{StaticResource CenterWrapCell}">
-<DataGridTextColumn.Binding><MultiBinding Converter="{StaticResource ValueUnit}" ConverterParameter="count:F2"><Binding Path="C028" /><Binding Path="C037" /></MultiBinding></DataGridTextColumn.Binding>
-                                    <DataGridTextColumn.HeaderTemplate>
+                                <!--  Sửa tay trực tiếp (ô nền vàng): Enter / rời ô → tính lại Part, Runner, Weight per Unit và các step liên quan  -->
+                                <DataGridTemplateColumn Width="85">
+                                    <DataGridTemplateColumn.HeaderTemplate>
                                         <DataTemplate>
                                             <TextBlock
                                                 Text="Actual Partitioning"
                                                 TextAlignment="Center"
                                                 TextWrapping="WrapWithOverflow"
                                                 ToolTipService.ShowDuration="20000">
-                                                <!--<TextBlock.ToolTip>
+                                                <TextBlock.ToolTip>
                                                     <TextBlock Width="250" TextWrapping="Wrap">
-                                                        Runner weight of the current step. Calculation = (TOTAL WEIGHT INJECTION - TOTAL PART WEIGHT) / pairs per shot
+                                                        Editable (highlighted cell). Number of pairs / pieces made per shot. Changing it recalculates Part Weight, Runner, Weight per Unit and the steps that depend on this one.
                                                     </TextBlock>
-                                                </TextBlock.ToolTip>-->
+                                                </TextBlock.ToolTip>
                                             </TextBlock>
                                         </DataTemplate>
-                                    </DataGridTextColumn.HeaderTemplate>
-                                </DataGridTextColumn>
+                                    </DataGridTemplateColumn.HeaderTemplate>
+                                    <DataGridTemplateColumn.CellTemplate>
+                                        <DataTemplate>
+                                            <StackPanel Margin="4,6" VerticalAlignment="Center">
+                                                <TextBox
+                                                    GotKeyboardFocus="EditCell_GotKeyboardFocus"
+                                                    PreviewMouseLeftButtonDown="EditCell_PreviewMouseLeftButtonDown"
+                                                    KeyDown="EditCell_KeyDown"
+                                                    LostKeyboardFocus="EditCell_LostKeyboardFocus"
+                                                    Style="{StaticResource EditableGridCellBox}"
+                                                    Tag="C028"
+                                                    Text="{Binding C028, Mode=OneWay, StringFormat='0.###'}" />
+                                                <TextBlock
+                                                    HorizontalAlignment="Center"
+                                                    FontSize="11"
+                                                    Foreground="#78909C">
+                                                    <TextBlock.Text>
+                                                        <MultiBinding Converter="{StaticResource ValueUnit}" ConverterParameter="unit:count">
+                                                            <Binding Path="C037" />
+                                                        </MultiBinding>
+                                                    </TextBlock.Text>
+                                                </TextBlock>
+                                            </StackPanel>
+                                        </DataTemplate>
+                                    </DataGridTemplateColumn.CellTemplate>
+                                </DataGridTemplateColumn>
 
-                                <DataGridTextColumn
-                                    Width="95"
-                                    
-                                    ElementStyle="{StaticResource CenterWrapCell}">
-<DataGridTextColumn.Binding><MultiBinding Converter="{StaticResource ValueUnit}" ConverterParameter="pcs:F3"><Binding Path="C039" /><Binding Path="C037" /></MultiBinding></DataGridTextColumn.Binding>
-                                    <DataGridTextColumn.HeaderTemplate>
+                                <!--  Sửa tay trực tiếp (ô nền vàng). Để trống + Enter = quay về tổng theo BOM Level 2  -->
+                                <DataGridTemplateColumn Width="78">
+                                    <DataGridTemplateColumn.HeaderTemplate>
                                         <DataTemplate>
                                             <TextBlock
                                                 Text="Pieces Qty"
@@ -809,16 +827,40 @@
                                                 ToolTipService.ShowDuration="20000">
                                                 <TextBlock.ToolTip>
                                                     <TextBlock Width="250" TextWrapping="Wrap">
-                                                        Pieces of this item in 1 pair, aggregated from BOM level 2 (sum of the quantities of every step that uses it). Weight per Unit = Part Weight / this value.
+                                                        Editable (highlighted cell). Pieces of this item in 1 pair, summed from BOM level 2 (every step that uses it). Type a value + Enter when only part of the pieces are used (applies to every size of this main code); leave it empty + Enter to go back to the BOM sum. Weight per Unit = Part Weight / this value.
                                                     </TextBlock>
                                                 </TextBlock.ToolTip>
                                             </TextBlock>
                                         </DataTemplate>
-                                    </DataGridTextColumn.HeaderTemplate>
-                                </DataGridTextColumn>
+                                    </DataGridTemplateColumn.HeaderTemplate>
+                                    <DataGridTemplateColumn.CellTemplate>
+                                        <DataTemplate>
+                                            <StackPanel Margin="4,6" VerticalAlignment="Center">
+                                                <TextBox
+                                                    GotKeyboardFocus="EditCell_GotKeyboardFocus"
+                                                    PreviewMouseLeftButtonDown="EditCell_PreviewMouseLeftButtonDown"
+                                                    KeyDown="EditCell_KeyDown"
+                                                    LostKeyboardFocus="EditCell_LostKeyboardFocus"
+                                                    Style="{StaticResource EditableGridCellBox}"
+                                                    Tag="C039"
+                                                    Text="{Binding C039, Mode=OneWay, StringFormat='0.###'}" />
+                                                <TextBlock
+                                                    HorizontalAlignment="Center"
+                                                    FontSize="11"
+                                                    Foreground="#78909C">
+                                                    <TextBlock.Text>
+                                                        <MultiBinding Converter="{StaticResource ValueUnit}" ConverterParameter="unit:pcs">
+                                                            <Binding Path="C037" />
+                                                        </MultiBinding>
+                                                    </TextBlock.Text>
+                                                </TextBlock>
+                                            </StackPanel>
+                                        </DataTemplate>
+                                    </DataGridTemplateColumn.CellTemplate>
+                                </DataGridTemplateColumn>
 
                                 <DataGridTextColumn
-                                    Width="105"
+                                    Width="80"
                                     
                                     ElementStyle="{StaticResource CenterWrapCell}">
 <DataGridTextColumn.Binding><MultiBinding Converter="{StaticResource ValueUnit}" ConverterParameter="g:F3"><Binding Path="C036" /><Binding Path="C037" /></MultiBinding></DataGridTextColumn.Binding>
@@ -839,50 +881,6 @@
                                     </DataGridTextColumn.HeaderTemplate>
                                 </DataGridTextColumn>
 
-                                <DataGridTextColumn
-                                    Width="100"
-                                    
-                                    ElementStyle="{StaticResource CenterWrapCell}">
-<DataGridTextColumn.Binding><MultiBinding Converter="{StaticResource ValueUnit}" ConverterParameter="count:F2"><Binding Path="C017" /><Binding Path="C037" /></MultiBinding></DataGridTextColumn.Binding>
-                                    <DataGridTextColumn.HeaderTemplate>
-                                        <DataTemplate>
-                                            <TextBlock
-                                                Text="PPIC Partitioning"
-                                                TextAlignment="Center"
-                                                TextWrapping="WrapWithOverflow"
-                                                ToolTipService.ShowDuration="20000">
-                                                <!--<TextBlock.ToolTip>
-                    <TextBlock Width="250" TextWrapping="Wrap">
-                        Runner weight of the current step. Calculation = (TOTAL WEIGHT INJECTION - TOTAL PART WEIGHT) / pairs per shot
-                    </TextBlock>
-                </TextBlock.ToolTip>-->
-                                            </TextBlock>
-                                        </DataTemplate>
-                                    </DataGridTextColumn.HeaderTemplate>
-                                </DataGridTextColumn>
-
-
-                                <DataGridTextColumn
-                                    Width="95"
-                                    
-                                    ElementStyle="{StaticResource CenterWrapCell}">
-<DataGridTextColumn.Binding><MultiBinding Converter="{StaticResource ValueUnit}" ConverterParameter="mold:F2"><Binding Path="C018" /><Binding Path="C037" /><Binding Path="C003" /></MultiBinding></DataGridTextColumn.Binding>
-                                    <DataGridTextColumn.HeaderTemplate>
-                                        <DataTemplate>
-                                            <TextBlock
-                                                Text="Mold Pairs Shot"
-                                                TextAlignment="Center"
-                                                TextWrapping="WrapWithOverflow"
-                                                ToolTipService.ShowDuration="20000">
-                                                <!--<TextBlock.ToolTip>
-                    <TextBlock Width="250" TextWrapping="Wrap">
-                        Runner weight of the current step. Calculation = (TOTAL WEIGHT INJECTION - TOTAL PART WEIGHT) / pairs per shot
-                    </TextBlock>
-                </TextBlock.ToolTip>-->
-                                            </TextBlock>
-                                        </DataTemplate>
-                                    </DataGridTextColumn.HeaderTemplate>
-                                </DataGridTextColumn>
 
                                 <DataGridTextColumn
                                     Width="50"
@@ -1030,17 +1028,39 @@
                                     </DataGridTemplateColumn.CellTemplate>
                                 </DataGridTemplateColumn>
 
-                                <DataGridTextColumn
-                                    Width="90"
-                                    Binding="{Binding C035}"
-                                    ElementStyle="{StaticResource CenterCell}">
-                                    <DataGridTextColumn.Header>
-                                        <TextBlock
-                                            Text="PERCENT OF USAGE (%)"
-                                            TextAlignment="Center"
-                                            TextWrapping="WrapWithOverflow" />
-                                    </DataGridTextColumn.Header>
-                                </DataGridTextColumn>
+                                <!--  Sửa tay được với REX/RPU chỉ dùng một phần (non-woven / mesh); dòng khác chỉ đọc  -->
+                                <DataGridTemplateColumn Width="100">
+                                    <DataGridTemplateColumn.HeaderTemplate>
+                                        <DataTemplate>
+                                            <TextBlock
+                                                Text="PERCENT OF USAGE (%)"
+                                                TextAlignment="Center"
+                                                TextWrapping="WrapWithOverflow"
+                                                ToolTipService.ShowDuration="20000">
+                                                <TextBlock.ToolTip>
+                                                    <TextBlock Width="250" TextWrapping="Wrap">
+                                                        Editable (highlighted cell) for materials that are only partly used (non-woven / mesh). Changing it recalculates Part Weight, Runner, Weight per Unit and the steps that deduct this material.
+                                                    </TextBlock>
+                                                </TextBlock.ToolTip>
+                                            </TextBlock>
+                                        </DataTemplate>
+                                    </DataGridTemplateColumn.HeaderTemplate>
+                                    <DataGridTemplateColumn.CellTemplate>
+                                        <DataTemplate>
+                                            <TextBox
+                                                Margin="4,6"
+                                                VerticalAlignment="Center"
+                                                GotKeyboardFocus="EditCell_GotKeyboardFocus"
+                                                IsReadOnly="{Binding UsageReadOnly, Mode=OneWay}"
+                                                PreviewMouseLeftButtonDown="EditCell_PreviewMouseLeftButtonDown"
+                                                KeyDown="EditCell_KeyDown"
+                                                LostKeyboardFocus="EditCell_LostKeyboardFocus"
+                                                Style="{StaticResource EditableGridCellBox}"
+                                                Tag="C035"
+                                                Text="{Binding C035, Mode=OneWay, StringFormat='0.###'}" />
+                                        </DataTemplate>
+                                    </DataGridTemplateColumn.CellTemplate>
+                                </DataGridTemplateColumn>
 
                                 <DataGridTextColumn
                                     Width="90"
@@ -1071,6 +1091,50 @@
         Runner weight of the current step. Calculation = (TOTAL WEIGHT INJECTION - TOTAL PART WEIGHT) / pairs per shot
     </TextBlock>
 </TextBlock.ToolTip>-->
+                                            </TextBlock>
+                                        </DataTemplate>
+                                    </DataGridTextColumn.HeaderTemplate>
+                                </DataGridTextColumn>
+                                <DataGridTextColumn
+                                    Width="100"
+                                    
+                                    ElementStyle="{StaticResource CenterWrapCell}">
+<DataGridTextColumn.Binding><MultiBinding Converter="{StaticResource ValueUnit}" ConverterParameter="count:F2"><Binding Path="C017" /><Binding Path="C037" /></MultiBinding></DataGridTextColumn.Binding>
+                                    <DataGridTextColumn.HeaderTemplate>
+                                        <DataTemplate>
+                                            <TextBlock
+                                                Text="PPIC Partitioning"
+                                                TextAlignment="Center"
+                                                TextWrapping="WrapWithOverflow"
+                                                ToolTipService.ShowDuration="20000">
+                                                <!--<TextBlock.ToolTip>
+                    <TextBlock Width="250" TextWrapping="Wrap">
+                        Runner weight of the current step. Calculation = (TOTAL WEIGHT INJECTION - TOTAL PART WEIGHT) / pairs per shot
+                    </TextBlock>
+                </TextBlock.ToolTip>-->
+                                            </TextBlock>
+                                        </DataTemplate>
+                                    </DataGridTextColumn.HeaderTemplate>
+                                </DataGridTextColumn>
+
+
+                                <DataGridTextColumn
+                                    Width="95"
+                                    
+                                    ElementStyle="{StaticResource CenterWrapCell}">
+<DataGridTextColumn.Binding><MultiBinding Converter="{StaticResource ValueUnit}" ConverterParameter="mold:F2"><Binding Path="C018" /><Binding Path="C037" /><Binding Path="C003" /></MultiBinding></DataGridTextColumn.Binding>
+                                    <DataGridTextColumn.HeaderTemplate>
+                                        <DataTemplate>
+                                            <TextBlock
+                                                Text="Mold Pairs Shot"
+                                                TextAlignment="Center"
+                                                TextWrapping="WrapWithOverflow"
+                                                ToolTipService.ShowDuration="20000">
+                                                <!--<TextBlock.ToolTip>
+                    <TextBlock Width="250" TextWrapping="Wrap">
+                        Runner weight of the current step. Calculation = (TOTAL WEIGHT INJECTION - TOTAL PART WEIGHT) / pairs per shot
+                    </TextBlock>
+                </TextBlock.ToolTip>-->
                                             </TextBlock>
                                         </DataTemplate>
                                     </DataGridTextColumn.HeaderTemplate>

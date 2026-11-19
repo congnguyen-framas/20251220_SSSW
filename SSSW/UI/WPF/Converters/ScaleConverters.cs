@@ -26,6 +26,10 @@ namespace SSSW.UI.WPF.Converters
     {
         public object Convert(object[] values, Type targetType, object parameter, CultureInfo culture)
         {
+            // "unit:count" → chỉ đơn vị đếm (prs / pcs / pcs-L / pcs-R) theo Unit ở values[0]; "unit:pcs" → "pcs" (nhãn dưới ô sửa tay)
+            if (parameter as string == "unit:count") return CountFromUnit(values.Length > 0 ? values[0] as string : null);
+            if (parameter as string == "unit:pcs") return "pcs";
+
             if (values.Length < 1 || values[0] is not IConvertible raw || values[0] == DependencyProperty.UnsetValue) return string.Empty;
             var num = raw.ToDouble(CultureInfo.InvariantCulture);
             var spec = (parameter as string ?? "g").Split(':');          // "g:F3" → đơn vị g, format F3

@@ -186,9 +186,9 @@
                         ToolTip="Settings" />
                     <Button
                         Command="{Binding UpdateCommand}"
-                        Content="&#xE777;"
+                        Content="&#xE896;"
                         Style="{StaticResource TitleIconBtn}"
-                        ToolTip="Update" />
+                        ToolTip="Check for updates" />
                 </StackPanel>
 
                 <!--  WINDOW CONTROLS  -->

@@ -77,6 +77,21 @@ namespace SSSW.models
             return side == null ? "PCS" : $"PCS-{side}";
         }
 
+        /// <summary>
+        /// Ô Percent of Use sửa tay được: REX/RPU thuộc category chỉ dùng một phần (non-woven / mesh... theo cấu hình) —
+        /// cùng điều kiện với ô Usage % ở card Step Information. Dòng khác % không có ý nghĩa nên chỉ đọc. UI only.
+        /// </summary>
+        [NotMapped]
+        [Browsable(false)]
+        public bool UsageEditable =>
+            SSSW.UI.WPF.Services.PartWeightCalculator.IsNonInjectionCode(C002) &&
+            (SSSW.GlobalVariable.ConfigSystem?.CategoryOfNonInjectionUsagePartial?.Any(c => c.CategoryCode == C033) ?? false);
+
+        /// <summary>Nghịch đảo của <see cref="UsageEditable"/> (bind IsReadOnly). UI only.</summary>
+        [NotMapped]
+        [Browsable(false)]
+        public bool UsageReadOnly => !UsageEditable;
+
         /// <summary>true khi còn chi tiết con chưa cân. UI only.</summary>
         [NotMapped]
         [Browsable(false)]

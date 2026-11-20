@@ -9,6 +9,7 @@
 
 | Ngày | File Session | Tóm tắt mục tiêu & kết quả |
 |------|--------------|---------------------------|
+| **2026-11-19** | [`2026-11-19_grid-manual-edit-partition-pieces-usage.md`](2026-11-19_grid-manual-edit-partition-pieces-usage.md) | Lưới Total Steps: Actual Partitioning / Pieces Qty / Percent of Usage sửa tay trực tiếp (ô tô nổi), tính lại Part / Runner / Weight per Unit và cascade các step liên quan; Pieces mặc định vẫn là tổng BOM Level 2. |
 | **2026-11-18** | [`2026-11-18_hydra-sync-enrich-like-oms-worker.md`](2026-11-18_hydra-sync-enrich-like-oms-worker.md) | Nút Hydra: bổ sung thông tin thiếu bằng `sp_sssw_getproductInfo`, lọc dòng thiếu FG/Main/Size trước khi insert FT601 (theo OMS WorkerShotWeight). |
 | **2026-11-17** | [`2026-11-17_pu-last-step-by-bom-sequence.md`](2026-11-17_pu-last-step-by-bom-sequence.md) | PU: "step cuối" xác định theo `ParallelSequence` trong BOM thay vì `FT601.C010` — sửa lỗi mất step 1/2 khỏi grid khi cân step cuối (FG F00L). |
 | **2026-11-16** | [`2026-11-16_rex-rpu-gram-materials.md`](2026-11-16_rex-rpu-gram-materials.md) | REX/RPU (đơn vị G, category 34/101 cấu hình OMS) của step PU: lên lưới, trừ theo lịch sử/BOM/cân mới; công thức các step khác không đổi; doc test có ảnh. |

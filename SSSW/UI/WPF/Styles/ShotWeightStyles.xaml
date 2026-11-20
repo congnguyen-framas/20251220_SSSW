@@ -516,6 +516,41 @@
         <Setter Property="TextAlignment" Value="Center" />
     </Style>
 
+    <!--
+        Ô sửa tay trực tiếp trên lưới TOTAL STEPS (Actual Partitioning / Pieces Qty / Percent of Use):
+        nền vàng nhạt + viền cam để người dùng biết ô này thay đổi được; ReadOnly → trông như chữ thường.
+    -->
+    <Style x:Key="EditableGridCellBox" TargetType="TextBox">
+        <Setter Property="Background" Value="#FFF8E1" />
+        <Setter Property="BorderBrush" Value="#F9A825" />
+        <Setter Property="BorderThickness" Value="1" />
+        <Setter Property="Foreground" Value="#0D47A1" />
+        <Setter Property="FontWeight" Value="SemiBold" />
+        <Setter Property="TextAlignment" Value="Center" />
+        <Setter Property="HorizontalContentAlignment" Value="Center" />
+        <Setter Property="VerticalContentAlignment" Value="Center" />
+        <Setter Property="Padding" Value="2,3" />
+        <Setter Property="MinWidth" Value="56" />
+        <Setter Property="Cursor" Value="IBeam" />
+        <Setter Property="ToolTip" Value="Editable: type a value and press Enter. All related values are recalculated." />
+        <Style.Triggers>
+            <Trigger Property="IsKeyboardFocused" Value="True">
+                <Setter Property="BorderBrush" Value="#E65100" />
+                <Setter Property="BorderThickness" Value="2" />
+                <Setter Property="Background" Value="White" />
+            </Trigger>
+            <Trigger Property="IsReadOnly" Value="True">
+                <Setter Property="Background" Value="Transparent" />
+                <Setter Property="BorderThickness" Value="0" />
+                <Setter Property="Foreground" Value="#37474F" />
+                <Setter Property="FontWeight" Value="Normal" />
+                <Setter Property="Focusable" Value="False" />
+                <Setter Property="IsHitTestVisible" Value="False" />
+                <Setter Property="ToolTip" Value="{x:Null}" />
+            </Trigger>
+        </Style.Triggers>
+    </Style>
+
     <Style x:Key="RightCell" TargetType="TextBlock">
         <Setter Property="HorizontalAlignment" Value="Right" />
         <Setter Property="VerticalAlignment" Value="Center" />

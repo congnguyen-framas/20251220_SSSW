@@ -373,10 +373,65 @@ namespace SSSW.UI.WPF
                 System.Windows.Threading.DispatcherPriority.Background);
         }
 
+        // ════════════════════════════════════════════════════════════════════
+        //  Ô SỬA TAY TRÊN LƯỚI (Actual Partitioning / Pieces Qty / Percent of Use)
+        //  Enter hoặc rời ô → VM.OnGridCellEdited tính lại mọi giá trị liên quan; Esc → hủy.
+        // ════════════════════════════════════════════════════════════════════
+        private TextBox? _cellCommitted;   // ô vừa commit — chặn commit lần 2 khi mất focus (vd. do hộp thoại cảnh báo / dựng lại lưới)
+
+        /// <summary>Click vào ô trong CellTemplate: focus thẳng TextBox (không cần click lần 2) mà không chọn / bỏ chọn dòng.</summary>
+        private void EditCell_PreviewMouseLeftButtonDown(object sender, MouseButtonEventArgs e)
+        {
+            if (sender is TextBox { IsReadOnly: false } tb && !tb.IsKeyboardFocusWithin)
+            {
+                tb.Focus();
+                e.Handled = true;
+            }
+        }
+
+        private void EditCell_GotKeyboardFocus(object sender, KeyboardFocusChangedEventArgs e)
+        {
+            if (sender is not TextBox tb) return;
+            if (_cellCommitted == tb) _cellCommitted = null;
+            tb.SelectAll();
+        }
+
+        private void EditCell_KeyDown(object sender, KeyEventArgs e)
+        {
+            if (sender is not TextBox tb) return;
+            if (e.Key == Key.Enter)
+            {
+                CommitCell(tb);
+                e.Handled = true;
+            }
+            else if (e.Key == Key.Escape)
+            {
+                tb.GetBindingExpression(TextBox.TextProperty)?.UpdateTarget();   // trả về giá trị đang lưu
+                _cellCommitted = tb;
+                Keyboard.ClearFocus();
+                e.Handled = true;
+            }
+        }
+
+        private void EditCell_LostKeyboardFocus(object sender, KeyboardFocusChangedEventArgs e)
+        {
+            if (sender is TextBox tb && _cellCommitted != tb) CommitCell(tb);
+        }
+
+        private void CommitCell(TextBox tb)
+        {
+            _cellCommitted = tb;
+            if (tb.IsReadOnly || tb.DataContext is not FT600 row || tb.Tag is not string field) return;
+            var text = tb.Text;
+            // Hoãn: việc tính lại dựng lại cả lưới, không làm ngay trong event của ô nằm trong lưới đó
+            Dispatcher.BeginInvoke(new Action(() => _vm?.OnGridCellEdited(row, field, text)),
+                System.Windows.Threading.DispatcherPriority.Background);
+        }
+
         private static bool IsInsideButtonOrDetails(DependencyObject src)
         {
             for (var cur = src; cur != null; cur = VisualTreeHelper.GetParent(cur))
-                if (cur is System.Windows.Controls.Primitives.ButtonBase || cur is DataGridDetailsPresenter)
+                if (cur is System.Windows.Controls.Primitives.ButtonBase || cur is DataGridDetailsPresenter || cur is TextBox)
                     return true;
                 else if (cur is DataGridRow) return false;
             return false;

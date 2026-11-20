@@ -675,7 +675,7 @@
                                 </DataGridTemplateColumn>
 
                                 <DataGridTextColumn
-                                    Width="55"
+                                    Width="80"
                                     Binding="{Binding C008}"
                                     ElementStyle="{StaticResource CenterWrapCell}">
                                     <DataGridTextColumn.Header>
@@ -774,7 +774,7 @@
                                 </DataGridTextColumn>
 
                                 <!--  Sửa tay trực tiếp (ô nền vàng): Enter / rời ô → tính lại Part, Runner, Weight per Unit và các step liên quan  -->
-                                <DataGridTemplateColumn Width="85">
+                                <DataGridTemplateColumn Width="90">
                                     <DataGridTemplateColumn.HeaderTemplate>
                                         <DataTemplate>
                                             <TextBlock
@@ -863,7 +863,7 @@
                                     Width="80"
                                     
                                     ElementStyle="{StaticResource CenterWrapCell}">
-<DataGridTextColumn.Binding><MultiBinding Converter="{StaticResource ValueUnit}" ConverterParameter="g:F3"><Binding Path="C036" /><Binding Path="C037" /></MultiBinding></DataGridTextColumn.Binding>
+<DataGridTextColumn.Binding><MultiBinding Converter="{StaticResource ValueUnit}" ConverterParameter="gpcs:F3"><Binding Path="C036" /><Binding Path="C037" /></MultiBinding></DataGridTextColumn.Binding>
                                     <DataGridTextColumn.HeaderTemplate>
                                         <DataTemplate>
                                             <TextBlock

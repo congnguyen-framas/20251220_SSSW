@@ -759,6 +759,9 @@ namespace SSSW.UI.WPF.ViewModels
                         if (full != null) _stepSelected = full;
                     }
 
+                    // Popup cân từ màn hình chính: đúng FG đang cân (mã step có thể dùng chung nhiều FG)
+                    AlignStepToSelectedFg(selected);
+
                     // Vẫn thiếu tên step: lấy từ dòng cùng mã step có tên, không có thì từ tên đang chọn trong droplist
                     if (string.IsNullOrWhiteSpace(_stepSelected.C005))
                         _stepSelected.C005 = _dataHydra.FirstOrDefault(x => x.C004?.Trim() == _stepSelected.C004?.Trim() &&
@@ -795,6 +798,42 @@ namespace SSSW.UI.WPF.ViewModels
         private static bool IsStudsName(string? name)
             => name != null && (name.StartsWith("Studs") || name.StartsWith("Outer_Studs") || name.StartsWith("Inner_Studs"));
 
+        /// <summary>Step Logo / Cleat_Ring: FT601 ghi FG là chính step nên không đối chiếu FG như step khác.</summary>
+        private static bool IsLogoOrRingName(string? name)
+            => name != null && (name.StartsWith("Logo") || name.StartsWith("Cleat_Ring"));
+
+        /// <summary>
+        /// FT601 tìm được cho step thuộc FG khác (cùng mã step dùng chung nhiều FG, vd. Outer_Studs) so với FG đang cân
+        /// (<paramref name="s"/>.FGCode, từ màn hình chính) → chuyển sang FT601 đúng FG; không có thì dựng FT601 tạm (bản sao,
+        /// FG / sequence theo FG đang cân) để popup đọc đúng BOM của FG đó thay vì BOM của FG khác.
+        /// </summary>
+        private void AlignStepToSelectedFg(StepSelectModel s)
+        {
+            var fg = s.FGCode?.Trim();
+            if (string.IsNullOrEmpty(fg) || string.IsNullOrWhiteSpace(_stepSelected?.C004)) return;
+            if (IsLogoOrRingName(_stepSelected.C005) || IsLogoOrRingName(s.StepItemName)) return;
+            if (string.Equals(_stepSelected.C007?.Trim(), fg, StringComparison.OrdinalIgnoreCase)) return;
+
+            var code = _stepSelected.C004.Trim();
+            var sameFg = _dataHydra
+                .Where(x => string.Equals(x.C004?.Trim(), code, StringComparison.OrdinalIgnoreCase) &&
+                            string.Equals(x.C007?.Trim(), fg, StringComparison.OrdinalIgnoreCase))
+                .OrderByDescending(x => x.C015?.Trim() == _stepSelected.C015?.Trim())
+                .FirstOrDefault();
+            if (sameFg != null) { _stepSelected = sameFg; return; }
+
+            var src = _stepSelected;
+            var clone = new FT601();
+            foreach (var pi in typeof(FT601).GetProperties().Where(p => p.CanRead && p.CanWrite))
+                pi.SetValue(clone, pi.GetValue(src));
+            clone.Id = Guid.NewGuid();
+            clone.C007 = fg;
+            clone.C008 = !string.IsNullOrWhiteSpace(s.FGName) ? s.FGName : src.C008;
+            if (_switchRowSeq != null) clone.C010 = _switchRowSeq;   // sequence theo BOM của FG đang cân (Hydra C010 của FG khác có thể lệch)
+            _syntheticStepIds.Add(clone.Id);
+            _stepSelected = clone;
+        }
+
         private async Task GetDataAsync(FT601 stepCode)
         {
             try
@@ -830,10 +869,15 @@ namespace SSSW.UI.WPF.ViewModels
                         //kiểm tra xem bước hiện tại có đúng với step đang chọn hay không
                         ckHydra = stepCodeTrim.Equals(_stepSelected.C004?.Trim(), StringComparison.OrdinalIgnoreCase)
                             ? _stepSelected
-                            : _dataHydra.FirstOrDefault(x =>
+                            // Mã step (vd. Outer_Studs) dùng chung nhiều FG cùng main: ưu tiên FT601 đúng FG đang cân, rồi mới khớp theo main code
+                            : (_dataHydra.FirstOrDefault(x =>
+                                    x.C004?.Trim().Equals(stepCodeTrim, StringComparison.OrdinalIgnoreCase) == true &&
+                                    !string.IsNullOrWhiteSpace(item.ItemFgCode) &&
+                                    string.Equals(x.C007?.Trim(), item.ItemFgCode.Trim(), StringComparison.OrdinalIgnoreCase))
+                               ?? _dataHydra.FirstOrDefault(x =>
                                 x.C004?.Trim().Equals(stepCodeTrim, StringComparison.OrdinalIgnoreCase) == true &&
                                 (x.C020?.Trim().Equals(fgMainCodeTrim, StringComparison.OrdinalIgnoreCase) == true ||
-                                 (!string.IsNullOrEmpty(fgMainCodeTrim) && x.C007?.Contains(fgMainCodeTrim) == true)));
+                                 (!string.IsNullOrEmpty(fgMainCodeTrim) && x.C007?.Contains(fgMainCodeTrim) == true))));
 
                         if (ckHydra == null)
                         {
@@ -914,6 +958,14 @@ namespace SSSW.UI.WPF.ViewModels
                         // → tự lấy từ mã step bỏ phần màu. (Step chọn từ master FT601 / khớp đúng mã step giữ nguyên.)
                         bool exactHydra = ckHydra != null &&
                             string.Equals(ckHydra.C004?.Trim(), stepCodeTrim, StringComparison.OrdinalIgnoreCase);
+
+                        // FT601 khớp đúng mã step nhưng của FG khác (mã step dùng chung nhiều FG): FG của dòng phải là FG đang cân (theo BOM)
+                        if (exactHydra && !string.IsNullOrWhiteSpace(item.ItemFgCode) && !IsLogoOrRingName(item.ItemStepName) &&
+                            !string.Equals(ckHydra!.C007?.Trim(), item.ItemFgCode.Trim(), StringComparison.OrdinalIgnoreCase))
+                        {
+                            line.C013 = item.ItemFgCode;
+                            line.C014 = item.ItemFgName;
+                        }
                         if (!exactHydra && !stepCodeTrim.StartsWith("REX", StringComparison.OrdinalIgnoreCase))
                         {
                             line.C005 = RemoveColorFromStepCode(stepCodeTrim);
@@ -1045,6 +1097,7 @@ namespace SSSW.UI.WPF.ViewModels
                     // Phía dưới gọi C003.StartsWith(...) trực tiếp → chuẩn hóa về chuỗi rỗng để không NullReferenceException.
                     foreach (var r in _scaleData) r.C003 ??= string.Empty;
                     _scaleDataFinal = _scaleData.OrderBy(x => x.C015).ThenBy(x => x.C027).ToList();
+                    var fullList = _scaleDataFinal.ToList();   // trước khi lọc theo nhóm Logo / Studs / Cleat_Ring / Inlay
 
                     // Khôi phục logic khóa / lọc nút cân như bản gốc (2026-11-05): Logo, Cleat_Ring, Studs, Inlay (1 khuôn nhiều size, group size)
                     // phải cân riêng — các step không thuộc nhóm đang cân bị khóa (AllowScale = false) hoặc bị loại khỏi danh sách.
@@ -1129,11 +1182,17 @@ namespace SSSW.UI.WPF.ViewModels
 
                         var inlaySteps = _scaleDataFinal.Where(x => x.C003.StartsWith("Inlay")).ToList();
 
-                        var previousStep = _allStepsFG.FirstOrDefault(x => x.ParallelSequence == stepCode.C010 - 1);
+                        // Step đứng trước theo thứ tự BOM của chính step đang cân (không dùng FT601.C010: số của Hydra có thể lệch BOM,
+                        // vd. Outer_Studs bị coi là có step trước → lưới load cả Logo / Base / Rim)
+                        var selSeq = _allStepsFG.FirstOrDefault(x =>
+                                string.Equals(x.ItemStepCode?.Trim(), stepCode.C004?.Trim(), StringComparison.OrdinalIgnoreCase))?.ParallelSequence
+                            ?? stepCode.C010;
+                        var previousStep = _allStepsFG.FirstOrDefault(x => x.ParallelSequence == selSeq - 1);
 
+                        // Cân Studs: chỉ giữ các step Studs (Outer / Inner...); chỉ khi Studs đứng ngay sau Base mới cân cùng các step khác
                         if (!stepCode.C005.StartsWith("Inlay")
                             && (startWith != "Studs"
-                                || (startWith == "Studs" && previousStep != null && (previousStep.ItemStepName.StartsWith("Base") || previousStep.ItemStepName.StartsWith("Outer_Studs")))
+                                || (startWith == "Studs" && previousStep != null && previousStep.ItemStepName.StartsWith("Base"))
                                 )
                             )
                         {
@@ -1211,6 +1270,33 @@ namespace SSSW.UI.WPF.ViewModels
                     }
                     #endregion
 
+                    // Lưới đã bị lọc theo nhóm (cân riêng Studs / Logo / Cleat_Ring / Inlay): giữ thêm các step cân ngay trước step đang chọn
+                    // (step "chain" bị trừ khi tính Part Weight, vd. Inlay trước Studs) — nếu không thì không trừ được và không có chỗ cân bù.
+                    var previousKept = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+                    if (_scaleDataFinal.Count < fullList.Count)
+                    {
+                        var selRow = fullList.FirstOrDefault(x => string.Equals(x.C002?.Trim(), stepCode.C004?.Trim(), StringComparison.OrdinalIgnoreCase));
+                        if (selRow != null)
+                        {
+                            await PreloadLevel2Async();   // IsChainOnly cần BOM Level 2 của mọi step trong FG
+
+                            var filtered = _scaleDataFinal;
+                            List<FT600> preds;
+                            _scaleDataFinal = fullList;   // ChainPredecessors đọc danh sách đầy đủ để biết step trước
+                            try { preds = ChainPredecessors(selRow); }
+                            finally { _scaleDataFinal = filtered; }
+
+                            foreach (var pr in preds)
+                            {
+                                if (filtered.Contains(pr)) continue;
+                                filtered.Add(pr);
+                                previousKept.Add(pr.C002!.Trim());
+                            }
+                            if (previousKept.Count > 0)
+                                _scaleDataFinal = filtered.OrderBy(x => x.C015).ThenBy(x => x.C027).ToList();
+                        }
+                    }
+
                     // Hàng PU: bấm Scale ở step không phải step cuối → load thêm chân đối xứng của chính step đó (F05L ↔ F05R)
                     // và coi 2 chân là 1 khuôn nhiều size để cân. Chỉ áp dụng khi step chọn KHÔNG phải step cuối; "step cuối" xác định theo
                     // ParallelSequence của chính step đó trong BOM (không dùng FT601.C010 — số của Hydra có thể lệch BOM, làm mất step 1/2 ở step cuối).
@@ -1278,7 +1364,7 @@ namespace SSSW.UI.WPF.ViewModels
                         }
 
                         bool puPreviousStep = item1.IsPu && (item1.C015 ?? 0) > 0 && (item1.C015 ?? 0) < selectedSeqForHistory;
-                        if (!puPreviousStep &&
+                        if (!puPreviousStep && !previousKept.Contains(item1.C002?.Trim() ?? string.Empty) &&
                             !item1.C003!.StartsWith("Stud") && !item1.C003!.StartsWith("Outer_Stud") && !item1.C003!.StartsWith("Inner_Stud") && !item1.C003.StartsWith("Logo") &&
                             !item1.C003.StartsWith("Cleat_Ring") && !item1.C002!.StartsWith("REX") && !item1.C003!.StartsWith("Inlay"))
                             continue;
@@ -1303,10 +1389,13 @@ namespace SSSW.UI.WPF.ViewModels
                         {
                             item1.IsReusedFromHistory = true;
                             _percentOfUsage = (double)stepPrevious.C035!;
+                            // Có lịch sử cân: Pieces Qty lấy theo lần cân trước (Actual Partitioning lấy bên dưới); không có thì theo BOM Level 2
+                            if ((stepPrevious.C039 ?? 0) > 0)
+                                _pieceOverrideByCode[item1.C002!.Trim()] = stepPrevious.C039!.Value;
                             if (item1.C002.StartsWith("REX"))
                             {
                                 var total = catCheck == null
-                                    ? stepPrevious?.C036 * item1.C025
+                                    ? stepPrevious?.C036 * ((stepPrevious?.C039 ?? 0) > 0 ? stepPrevious!.C039 : item1.C025)
                                     : stepPrevious?.C036;
                                 var usage = (double)Math.Round(
                                     (decimal)(total * _percentOfUsage / 100), 3);
@@ -2995,6 +3084,7 @@ namespace SSSW.UI.WPF.ViewModels
 
                     row.C021 = saved.C021; row.C022 = saved.C022; row.C023 = saved.C023; row.C024 = saved.C024;
                     row.C028 = saved.C028; row.C035 = saved.C035;
+                    if ((saved.C039 ?? 0) > 0) _pieceOverrideByCode[row.C002!.Trim()] = saved.C039!.Value;   // lịch sử cân: Pieces Qty theo lần cân trước
                     row.C036 = (saved.C039 ?? 0) > 0 ? saved.C036 : 0;   // C036 cũ (chưa có C039) tính lại ở ApplyPieceQuantities
                     row.IsReusedFromHistory = true;
                 }
@@ -3027,6 +3117,21 @@ namespace SSSW.UI.WPF.ViewModels
                 bool inMaster = item != null;
                 _switchRowIsPu = row.IsPu;
                 _switchRowSeq = row.C015;
+
+                // Popup phải cân đúng FG đang cân ở màn hình chính: FT601 tìm được theo mã step có thể thuộc FG khác
+                // (cùng mã step dùng chung nhiều FG) → bản sao với FG đang cân; OnStepSelectedAsync đối chiếu lại theo FG này
+                var currentFg = !string.IsNullOrWhiteSpace(_stepItemCodeScale?.C007) ? _stepItemCodeScale!.C007 : row.C013;
+                if (item != null && !string.IsNullOrWhiteSpace(currentFg) && !IsLogoOrRingName(row.C003) &&
+                    !string.Equals(item.FGCode?.Trim(), currentFg.Trim(), StringComparison.OrdinalIgnoreCase))
+                {
+                    item = new StepSelectModel
+                    {
+                        StepItemCode = item.StepItemCode, StepItemName = item.StepItemName, Size = item.Size,
+                        ArticlePairsShot = item.ArticlePairsShot, MoldPairsShot = item.MoldPairsShot, Machine = item.Machine,
+                        HydraOrderNo = item.HydraOrderNo, FT601Id = item.FT601Id,
+                        FGCode = currentFg, FGName = !string.IsNullOrWhiteSpace(_stepItemCodeScale?.C008) ? _stepItemCodeScale!.C008 : row.C014
+                    };
+                }
                 item ??= new StepSelectModel
                 {
                     StepItemCode = row.C002?.Trim() ?? string.Empty,

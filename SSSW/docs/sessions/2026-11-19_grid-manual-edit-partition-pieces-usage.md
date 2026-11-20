@@ -22,6 +22,13 @@ FG `6112042509-C562-3101`: step Studs ép 22 chiếc/đôi nhưng các step sau 
 - **Lỗi Outer_Studs bị coi là step "chain" trong popup cân**: `IsChainOnly` chỉ xét các dòng còn trên lưới (đã lọc, mất Base dùng Outer_Studs ở Level 2) → nay xét toàn bộ step của FG theo BOM; `PreloadLevel2Async` nạp Level 2 của mọi step trong BOM.
 - **Bố cục lưới**: thu hẹp 14 cột đầu để Weight per Unit hiện không cần cuộn ngang; PPIC Partitioning và Mold Pairs Shot chuyển xuống cuối lưới.
 
+## 2c. Bổ sung — popup cân phụ (Scale từ màn hình chính) và lịch sử
+- **FG đúng cho popup**: mã step (vd. Outer_Studs) dùng chung nhiều FG cùng main → FT601 ghép theo mã step có thể thuộc FG khác, popup đọc BOM / sequence của FG đó. Nay: màn hình chính ưu tiên FT601 đúng FG đang cân (`item.ItemFgCode`) và cột FG của hàng luôn là FG đang cân (trừ Logo / Cleat_Ring); `SwitchToLockedStepAsync` truyền FG đang cân; `OnStepSelectedAsync` gọi `AlignStepToSelectedFg` (chuyển sang FT601 đúng FG hoặc dựng bản sao tạm với FG / sequence theo BOM của FG đang cân).
+- **Lọc nhóm Studs**: step đứng trước tính theo `ParallelSequence` trong BOM của chính step (không dùng `FT601.C010`); chỉ khi Studs đứng ngay sau Base mới cân cùng các step khác, còn lại (Outer / Inner) chỉ giữ nhóm Studs.
+- **Giữ step cân ngay trước**: sau khi lọc nhóm (Studs / Inlay / Logo / Cleat_Ring), thêm lại các step "chain" ngay trước step đang chọn (`ChainPredecessors` trên danh sách đầy đủ; vd. Inlay trước Studs) và nạp lịch sử cân cho chúng.
+- **Lịch sử cân → Pieces Qty / Actual Partitioning**: step có lịch sử (FT600 gần nhất, `C039` > 0) lấy Pieces Qty theo lịch sử (qua `_pieceOverrideByCode`); không có lịch sử thì theo BOM Level 2. REX có lịch sử: tổng = g/chiếc × `C039` đã lưu.
+- **Weight per Unit** luôn hiện đơn vị g/pcs (`ValueUnitConverter` kiểu `gpcs`; PU giữ hậu tố -L / -R). Nút cập nhật phiên bản đổi icon (E896).
+
 ## 3. Quyết định / Giả định
 - Pieces Qty sửa tay áp cho **mọi size cùng mã chính** (đúng với cách C039 được gộp theo mã chính).
 - Runner = NO (C022 đang 0) giữ 0 khi đổi N; Runner = YES tính lại (Total − Total Part) / N.
